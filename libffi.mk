@@ -1,8 +1,6 @@
 # -*- makefile -*-
 
 OS = $(shell uname -s | tr '[A-Z]' '[a-z]')
-CPU ?= $(shell uname -p)
-MODEL = 32 # Default to 32bit compiles
 LDFLAGS += $(SOFLAGS)
 #FFI_MMAP_EXEC = -DFFI_MMAP_EXEC_WRIT
 FFI_CFLAGS = $(FFI_MMAP_EXEC) $(OFLAGS)
