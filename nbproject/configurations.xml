@@ -201,6 +201,7 @@
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
                    projectFiles="false">
+      <itemPath>libffi.mk</itemPath>
       <itemPath>Makefile</itemPath>
       <itemPath>ruby-ffi-Makefile.mk</itemPath>
     </logicalFolder>
@@ -220,6 +221,11 @@
           <buildCommand>make -f Makefile</buildCommand>
           <cleanCommand>make -f Makefile clean</cleanCommand>
           <executablePath></executablePath>
+          <cCompilerTool>
+            <includeDirectories>
+              <directoryPath>/opt/local/include</directoryPath>
+            </includeDirectories>
+          </cCompilerTool>
         </makeTool>
         <requiredProjects>
         </requiredProjects>

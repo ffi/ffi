@@ -2,3 +2,4 @@ Makefile
 \.o$
 mkmf.log
 nbproject/private
+.dep.inc
