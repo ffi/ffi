@@ -1,3 +1,4 @@
 Makefile
 \.o$
 mkmf.log
+nbproject/private
