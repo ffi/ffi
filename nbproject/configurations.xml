@@ -1,0 +1,682 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="47">
+  <logicalFolder name="root" displayName="root" projectFiles="true">
+    <logicalFolder name="ruby-ffi" displayName="ruby-ffi" projectFiles="true">
+      <logicalFolder name="libffi" displayName="libffi" projectFiles="true">
+        <logicalFolder name="include" displayName="include" projectFiles="true">
+          <itemPath>libffi/include/ffi_common.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="src" displayName="src" projectFiles="true">
+          <logicalFolder name="alpha" displayName="alpha" projectFiles="true">
+            <itemPath>libffi/src/alpha/ffi.c</itemPath>
+            <itemPath>libffi/src/alpha/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="arm" displayName="arm" projectFiles="true">
+            <itemPath>libffi/src/arm/ffi.c</itemPath>
+            <itemPath>libffi/src/arm/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="cris" displayName="cris" projectFiles="true">
+            <itemPath>libffi/src/cris/ffi.c</itemPath>
+            <itemPath>libffi/src/cris/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="frv" displayName="frv" projectFiles="true">
+            <itemPath>libffi/src/frv/ffi.c</itemPath>
+            <itemPath>libffi/src/frv/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="ia64" displayName="ia64" projectFiles="true">
+            <itemPath>libffi/src/ia64/ffi.c</itemPath>
+            <itemPath>libffi/src/ia64/ffitarget.h</itemPath>
+            <itemPath>libffi/src/ia64/ia64_flags.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="m32r" displayName="m32r" projectFiles="true">
+            <itemPath>libffi/src/m32r/ffi.c</itemPath>
+            <itemPath>libffi/src/m32r/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="m68k" displayName="m68k" projectFiles="true">
+            <itemPath>libffi/src/m68k/ffi.c</itemPath>
+            <itemPath>libffi/src/m68k/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="mips" displayName="mips" projectFiles="true">
+            <itemPath>libffi/src/mips/ffi.c</itemPath>
+            <itemPath>libffi/src/mips/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="pa" displayName="pa" projectFiles="true">
+            <itemPath>libffi/src/pa/ffi.c</itemPath>
+            <itemPath>libffi/src/pa/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="powerpc" displayName="powerpc" projectFiles="true">
+            <itemPath>libffi/src/powerpc/asm.h</itemPath>
+            <itemPath>libffi/src/powerpc/ffi.c</itemPath>
+            <itemPath>libffi/src/powerpc/ffi_darwin.c</itemPath>
+            <itemPath>libffi/src/powerpc/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="s390" displayName="s390" projectFiles="true">
+            <itemPath>libffi/src/s390/ffi.c</itemPath>
+            <itemPath>libffi/src/s390/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="sh" displayName="sh" projectFiles="true">
+            <itemPath>libffi/src/sh/ffi.c</itemPath>
+            <itemPath>libffi/src/sh/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="sh64" displayName="sh64" projectFiles="true">
+            <itemPath>libffi/src/sh64/ffi.c</itemPath>
+            <itemPath>libffi/src/sh64/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="sparc" displayName="sparc" projectFiles="true">
+            <itemPath>libffi/src/sparc/ffi.c</itemPath>
+            <itemPath>libffi/src/sparc/ffitarget.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="x86" displayName="x86" projectFiles="true">
+            <itemPath>libffi/src/x86/ffi.c</itemPath>
+            <itemPath>libffi/src/x86/ffi64.c</itemPath>
+            <itemPath>libffi/src/x86/ffitarget.h</itemPath>
+          </logicalFolder>
+          <itemPath>libffi/src/closures.c</itemPath>
+          <itemPath>libffi/src/debug.c</itemPath>
+          <itemPath>libffi/src/dlmalloc.c</itemPath>
+          <itemPath>libffi/src/java_raw_api.c</itemPath>
+          <itemPath>libffi/src/prep_cif.c</itemPath>
+          <itemPath>libffi/src/raw_api.c</itemPath>
+          <itemPath>libffi/src/types.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="testsuite" displayName="testsuite" projectFiles="true">
+          <logicalFolder name="libffi.call" displayName="libffi.call" projectFiles="true">
+            <itemPath>libffi/testsuite/libffi.call/closure_fn0.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/closure_fn1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/closure_fn2.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/closure_fn3.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/closure_fn4.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/closure_fn5.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/closure_fn6.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/closure_stdcall.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_12byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_16byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_18byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_19byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_1_1byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_20byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_20byte1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_24byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_2byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_3_1byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_3byte1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_3byte2.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_4_1byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_4byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_5_1_byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_5byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_64byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_6_1_byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_6byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_7_1_byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_7byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_8byte.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_9byte1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_9byte2.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_double.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_float.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_longdouble.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_pointer.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_sint16.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_sint32.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_sint64.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_uint16.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_uint32.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_align_uint64.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_double.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_float.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_multi_schar.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_multi_sshort.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_multi_sshortchar.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_multi_uchar.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_multi_ushort.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_multi_ushortchar.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_schar.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_sint.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_sshort.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_uchar.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_uint.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_ulonglong.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/cls_ushort.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/ffitest.h</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/float.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/float1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/float2.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/float3.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/float4.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/many.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/many_win32.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/negint.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct10.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct2.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct3.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct4.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct5.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct6.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct7.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct8.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/nested_struct9.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/problem1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/promotion.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/pyobjc-tc.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_dbl.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_dbl1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_dbl2.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_fl.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_fl1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_fl2.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_fl3.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_ldl.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_ll.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_ll1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_sc.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_sl.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_uc.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/return_ul.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/strlen.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/strlen_win32.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct1.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct2.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct3.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct4.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct5.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct6.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct7.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct8.c</itemPath>
+            <itemPath>libffi/testsuite/libffi.call/struct9.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="libffi.special"
+                         displayName="libffi.special"
+                         projectFiles="true">
+            <itemPath>libffi/testsuite/libffi.special/ffitestcxx.h</itemPath>
+            <itemPath>libffi/testsuite/libffi.special/unwindtest.cc</itemPath>
+            <itemPath>libffi/testsuite/libffi.special/unwindtest_ffi_call.cc</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+      </logicalFolder>
+      <itemPath>ffi.c</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false">
+      <itemPath>Makefile</itemPath>
+      <itemPath>ruby-ffi-Makefile.mk</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceEncoding>UTF-8</sourceEncoding>
+  <projectmakefile>ruby-ffi-Makefile.mk</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <compilerSet>GNU|GNU</compilerSet>
+        <platform>4</platform>
+      </toolsSet>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>make -f Makefile</buildCommand>
+          <cleanCommand>make -f Makefile clean</cleanCommand>
+          <executablePath></executablePath>
+        </makeTool>
+        <requiredProjects>
+        </requiredProjects>
+      </makefileType>
+      <item path="ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/include/ffi_common.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/alpha/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/alpha/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/arm/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/arm/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/closures.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/cris/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/cris/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/debug.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/dlmalloc.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/frv/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/frv/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/ia64/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/ia64/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/ia64/ia64_flags.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/java_raw_api.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/m32r/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/m32r/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/m68k/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/m68k/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/mips/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/mips/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/pa/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/pa/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/powerpc/asm.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/powerpc/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/powerpc/ffi_darwin.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/powerpc/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/prep_cif.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/raw_api.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/s390/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/s390/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/sh/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/sh/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/sh64/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/sh64/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/sparc/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/sparc/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/src/types.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/x86/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/x86/ffi64.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/src/x86/ffitarget.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/closure_fn0.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/closure_fn1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/closure_fn2.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/closure_fn3.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/closure_fn4.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/closure_fn5.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/closure_fn6.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/closure_stdcall.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_12byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_16byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_18byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_19byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_1_1byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_20byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_20byte1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_24byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_2byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_3_1byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_3byte1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_3byte2.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_4_1byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_4byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_5_1_byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_5byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_64byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_6_1_byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_6byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_7_1_byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_7byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_8byte.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_9byte1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_9byte2.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_double.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_float.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_longdouble.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_pointer.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_sint16.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_sint32.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_sint64.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_uint16.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_uint32.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_align_uint64.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_double.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_float.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_multi_schar.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_multi_sshort.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_multi_sshortchar.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_multi_uchar.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_multi_ushort.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_multi_ushortchar.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_schar.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_sint.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_sshort.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_uchar.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_uint.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_ulonglong.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/cls_ushort.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/ffitest.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/float.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/float1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/float2.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/float3.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/float4.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/many.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/many_win32.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/negint.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct10.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct2.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct3.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct4.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct5.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct6.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct7.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct8.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/nested_struct9.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/problem1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/promotion.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/pyobjc-tc.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_dbl.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_dbl1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_dbl2.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_fl.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_fl1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_fl2.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_fl3.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_ldl.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_ll.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_ll1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_sc.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_sl.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_uc.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/return_ul.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/strlen.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/strlen_win32.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct1.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct2.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct3.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct4.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct5.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct6.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct7.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct8.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.call/struct9.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.special/ffitestcxx.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.special/unwindtest.cc">
+        <itemTool>1</itemTool>
+      </item>
+      <item path="libffi/testsuite/libffi.special/unwindtest_ffi_call.cc">
+        <itemTool>1</itemTool>
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>
