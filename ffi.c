@@ -22,7 +22,6 @@ typedef struct Invoker {
 
 static VALUE invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes, 
         VALUE returnType, VALUE convention);
-static VALUE invoker_attach(VALUE self, VALUE mod, VALUE methodName);
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
 static VALUE invoker_call(int argc, VALUE* argv, VALUE self);
@@ -34,9 +33,8 @@ static VALUE classInvoker = Qnil;
 static VALUE moduleNativeType = Qnil;
 
 static ffi_type*
-getFFIType(int paramType) {
-    ffi_type* ffiType;
-
+getFFIType(int paramType)
+{
     switch (paramType) {
         case VOID:
             return &ffi_type_void;
@@ -69,7 +67,6 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
         VALUE returnType, VALUE convention)
 {
     Invoker* invoker = NULL;
-    int paramCount;
     ffi_type* ffiReturnType;
     ffi_abi abi;
     ffi_status ffiStatus;
@@ -156,7 +153,6 @@ invoker_call(int argc, VALUE* argv, VALUE self)
         double f64;
     } params[MAX_PARAMETERS], retval;
     void* ffiValues[MAX_PARAMETERS];    
-    int pointerCount = 0;
     int i;
 
     Data_Get_Struct(self, Invoker, invoker);
@@ -202,6 +198,8 @@ invoker_call(int argc, VALUE* argv, VALUE self)
                 Check_Type(argv[i], T_STRING);
                 params[i].ptr = StringValuePtr(argv[i]);
                 break;
+            default:
+                rb_raise(rb_eArgError, "Invalid parameter type: %d", invoker->paramTypes[i]);
         }
         ffiValues[i] = &params[i];
     }
