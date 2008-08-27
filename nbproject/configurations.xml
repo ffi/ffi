@@ -197,6 +197,7 @@
         </logicalFolder>
       </logicalFolder>
       <itemPath>ffi.c</itemPath>
+      <itemPath>rbffi.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -231,6 +232,7 @@
         </requiredProjects>
       </makefileType>
       <item path="ffi.c">
+        <itemExcluded>true</itemExcluded>
         <itemTool>0</itemTool>
       </item>
       <item path="libffi/include/ffi_common.h">
@@ -682,6 +684,9 @@
       </item>
       <item path="libffi/testsuite/libffi.special/unwindtest_ffi_call.cc">
         <itemTool>1</itemTool>
+      </item>
+      <item path="rbffi.h">
+        <itemTool>3</itemTool>
       </item>
     </conf>
   </confs>
