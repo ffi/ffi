@@ -23,47 +23,59 @@ static VALUE classMemory = Qnil;
 
 #define ADDRESS(self, offset) (memory_address((self)) + NUM2ULONG(offset))
 
-#define INT_OP(name, type) \
+#define INT_OP(name, type, toNative, fromNative) \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
 static VALUE \
 memory_put_##name(VALUE self, VALUE offset, VALUE value) \
 { \
-    *(type *) ADDRESS(self, offset) = (type) NUM2INT(value); \
+    *(type *) ADDRESS(self, offset) = (type) toNative(value); \
     return self; \
 } \
 static VALUE memory_get_##name(VALUE self, VALUE offset); \
 static VALUE \
 memory_get_##name(VALUE self, VALUE offset) \
 { \
-    return INT2FIX(*(type *) ADDRESS(self, offset)); \
+    return fromNative(*(type *) ADDRESS(self, offset)); \
+} \
+static VALUE memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary); \
+static VALUE \
+memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
+{ \
+    long count = RARRAY(ary)->len; \
+    long off = NUM2LONG(offset); \
+    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
+    caddr_t address = memory->address; \
+    long i; \
+    for (i = 0; i < count; i++) { \
+        *((type *)(address + off + (i * sizeof(type)))) = (type) toNative(rb_ary_entry(ary, i)); \
+    } \
+    return self; \
+} \
+static VALUE memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length); \
+static VALUE \
+memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
+{ \
+    long count = NUM2LONG(length); \
+    long off = NUM2LONG(offset); \
+    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
+    caddr_t address = memory->address; \
+    long last = off + count; \
+    long i; \
+    VALUE retVal = rb_ary_new2(count); \
+    for (i = off; i < last; ++i) { \
+        rb_ary_push(retVal, fromNative(*((type *) (address + (i * sizeof(type)))))); \
+    } \
+    return retVal; \
 }
-#define INT(type) INT_OP(type, type##_t); INT_OP(u##type, u_##type##_t)
-INT(int8);
-INT(int16);
-INT(int32);
 
-static VALUE
-memory_put_int64(VALUE self, VALUE offset, VALUE value)
-{
-    *(int64_t *) ADDRESS(self, offset) = NUM2LL(value);
-    return self;
-}
-static VALUE memory_get_int64(VALUE self, VALUE offset)
-{
-    return LL2NUM(*(int64_t *) ADDRESS(self, offset));
-}
+#define INT(type, toNative, fromNative) INT_OP(type, type##_t, toNative, fromNative); \
+        INT_OP(u##type, u_##type##_t, toNative, fromNative)
+INT(int8, NUM2INT, INT2FIX);
+INT(int16, NUM2INT, INT2FIX);
+INT(int32, NUM2INT, INT2FIX);
+INT_OP(int64, int64_t, NUM2LL, LL2NUM);
+INT_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
 
-static VALUE
-memory_put_uint64(VALUE self, VALUE offset, VALUE value)
-{
-    *(u_int64_t *) ADDRESS(self, offset) = NUM2ULL(value);
-    return self;
-}
-
-static VALUE memory_get_uint64(VALUE self, VALUE offset)
-{
-    return ULL2NUM(*(u_int64_t *) ADDRESS(self, offset));
-}
 
 static VALUE
 memory_put_float32(VALUE self, VALUE offset, VALUE value)
@@ -98,12 +110,13 @@ memory_put_pointer(VALUE self, VALUE offset, VALUE value)
     } else if (TYPE(value) == T_NIL) {
         *(caddr_t *) ADDRESS(self, offset) = NULL;
     } else if (TYPE(value) == T_FIXNUM) {
-        *(caddr_t *) ADDRESS(self, offset) = (caddr_t) (uintptr_t) FIX2INT(value);
+        *(uintptr_t *) ADDRESS(self, offset) = (uintptr_t) FIX2INT(value);
     } else if (TYPE(value) == T_BIGNUM) {
-        *(caddr_t *) ADDRESS(self, offset) = (caddr_t) (uintptr_t) NUM2ULL(value);
+        *(uintptr_t *) ADDRESS(self, offset) = (uintptr_t) NUM2ULL(value);
     } else {
         rb_raise(rb_eArgError, "value is not a pointer");
     }
+    return self;
 }
 
 static VALUE
@@ -142,27 +155,31 @@ rb_FFI_AbstractMemory_Init()
     rb_define_method(classMemory, "put_" #type, memory_put_##type, 2); \
     rb_define_method(classMemory, "get_" #type, memory_get_##type, 1); \
     rb_define_method(classMemory, "put_u" #type, memory_put_u##type, 2); \
-    rb_define_method(classMemory, "get_u" #type, memory_get_u##type, 1);
+    rb_define_method(classMemory, "get_u" #type, memory_get_u##type, 1); \
+    rb_define_method(classMemory, "put_array_of_" #type, memory_put_array_of_##type, 2); \
+    rb_define_method(classMemory, "get_array_of_" #type, memory_get_array_of_##type, 1); \
+    rb_define_method(classMemory, "put_array_of_u" #type, memory_put_array_of_u##type, 2); \
+    rb_define_method(classMemory, "get_array_of_u" #type, memory_get_array_of_u##type, 1);
+    
     INT(int8);
     INT(int16);
     INT(int32);
     INT(int64);
-    rb_define_alias(classMemory, "put_char", "put_int8");
-    rb_define_alias(classMemory, "get_char", "get_int8");
-    rb_define_alias(classMemory, "put_uchar", "put_uint8");
-    rb_define_alias(classMemory, "get_uchar", "get_uint8");
-    rb_define_alias(classMemory, "put_short", "put_int16");
-    rb_define_alias(classMemory, "get_short", "get_int16");
-    rb_define_alias(classMemory, "put_ushort", "put_uint16");
-    rb_define_alias(classMemory, "get_ushort", "get_uint16");
-    rb_define_alias(classMemory, "put_int", "put_int32");
-    rb_define_alias(classMemory, "get_int", "get_int32");
-    rb_define_alias(classMemory, "put_uint", "put_uint32");
-    rb_define_alias(classMemory, "get_uint", "get_uint32");
-    rb_define_alias(classMemory, "put_long_long", "put_int64");
-    rb_define_alias(classMemory, "get_long_long", "get_int64");
-    rb_define_alias(classMemory, "put_ulong_long", "put_uint64");
-    rb_define_alias(classMemory, "get_ulong_long", "get_uint64");
+    
+#define ALIAS(name, old) \
+    rb_define_alias(classMemory, "put_" #name, "put_" #old); \
+    rb_define_alias(classMemory, "get_" #name, "get_" #old); \
+    rb_define_alias(classMemory, "put_u" #name, "put_u" #old); \
+    rb_define_alias(classMemory, "get_u" #name, "get_u" #old); \
+    rb_define_alias(classMemory, "put_array_of_" #name, "put_array_of_" #old); \
+    rb_define_alias(classMemory, "get_array_of_" #name, "get_array_of_" #old); \
+    rb_define_alias(classMemory, "put_array_of_u" #name, "put_array_of_u" #old); \
+    rb_define_alias(classMemory, "get_array_of_u" #name, "get_array_of_u" #old);
+    
+    ALIAS(char, int8);
+    ALIAS(short, int16);
+    ALIAS(int, int32);
+    ALIAS(long_long, int64);
     
     if (sizeof(long) == 4) {
         rb_define_alias(classMemory, "put_long", "put_int32");

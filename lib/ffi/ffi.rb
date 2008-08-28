@@ -52,7 +52,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'ffi.so'
-require 'memorypointer'
 
 module FFI
   #  Specialised error classes
