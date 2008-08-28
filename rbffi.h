@@ -8,6 +8,8 @@
 #ifndef _RBFFI_H
 #define	_RBFFI_H
 
+#include <ruby.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -40,6 +42,9 @@ typedef enum {
     RBXSTRING
 } NativeType;
 
+void rb_FFI_AbstractMemory_Init();
+void rb_FFI_MemoryPointer_Init();
+extern VALUE rb_FFI_AbstractMemory_class;
 
 #ifdef	__cplusplus
 }

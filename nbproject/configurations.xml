@@ -196,7 +196,11 @@
           </logicalFolder>
         </logicalFolder>
       </logicalFolder>
+      <itemPath>AbstractMemory.c</itemPath>
+      <itemPath>AbstractMemory.h</itemPath>
       <itemPath>ffi.c</itemPath>
+      <itemPath>MemoryPointer.c</itemPath>
+      <itemPath>MemoryPointer.h</itemPath>
       <itemPath>rbffi.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -231,6 +235,21 @@
         <requiredProjects>
         </requiredProjects>
       </makefileType>
+      <item path="AbstractMemory.c">
+        <itemExcluded>true</itemExcluded>
+        <itemTool>0</itemTool>
+      </item>
+      <item path="AbstractMemory.h">
+        <itemExcluded>true</itemExcluded>
+        <itemTool>3</itemTool>
+      </item>
+      <item path="MemoryPointer.c">
+        <itemExcluded>true</itemExcluded>
+        <itemTool>0</itemTool>
+      </item>
+      <item path="MemoryPointer.h">
+        <itemTool>3</itemTool>
+      </item>
       <item path="ffi.c">
         <itemExcluded>true</itemExcluded>
         <itemTool>0</itemTool>
@@ -686,6 +705,7 @@
         <itemTool>1</itemTool>
       </item>
       <item path="rbffi.h">
+        <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
     </conf>
