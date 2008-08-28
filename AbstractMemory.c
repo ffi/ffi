@@ -115,7 +115,7 @@ memory_get_pointer(VALUE self, VALUE offset)
 static VALUE
 memory_clear(VALUE self)
 {
-    AbstractMemory ptr = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
     memset(ptr->address, 0, ptr->size);
     return self;
 }
