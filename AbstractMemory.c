@@ -112,6 +112,20 @@ memory_get_pointer(VALUE self, VALUE offset)
     return rb_FFI_MemoryPointer_new(*(caddr_t *) ADDRESS(self, offset));
 }
 
+static VALUE
+memory_clear(VALUE self)
+{
+    AbstractMemory ptr = (AbstractMemory *) DATA_PTR(self);
+    memset(ptr->address, 0, ptr->size);
+    return self;
+}
+
+static VALUE
+memory_size(VALUE self) 
+{
+    return LONG2FIX(((AbstractMemory *) DATA_PTR(self))->size);
+}
+
 static inline caddr_t
 memory_address(VALUE self)
 {
@@ -167,5 +181,8 @@ rb_FFI_AbstractMemory_Init()
     rb_define_method(classMemory, "get_float64", memory_get_float64, 1);
     rb_define_method(classMemory, "put_pointer", memory_put_pointer, 2);
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
+
+    rb_define_method(classMemory, "clear", memory_clear, 0);
+    rb_define_method(classMemory, "total", memory_size, 0);
 }
 
