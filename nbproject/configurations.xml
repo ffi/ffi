@@ -248,6 +248,7 @@
         <itemTool>0</itemTool>
       </item>
       <item path="MemoryPointer.h">
+        <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
       <item path="ffi.c">

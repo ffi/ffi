@@ -9,6 +9,8 @@
 #include <ffi/ffi.h>
 
 #include "rbffi.h"
+#include "AbstractMemory.h"
+#include "MemoryPointer.h"
 
 typedef struct Invoker {
     void* dlhandle;
@@ -198,6 +200,21 @@ invoker_call(int argc, VALUE* argv, VALUE self)
                 Check_Type(argv[i], T_STRING);
                 params[i].ptr = StringValuePtr(argv[i]);
                 break;
+            case POINTER:
+                if (rb_obj_is_kind_of(argv[i], rb_FFI_AbstractMemory_class)) {
+                    params[i].ptr = ((AbstractMemory *) DATA_PTR(argv[i]))->address;
+                } else if (TYPE(argv[i]) == T_STRING) {
+                    params[i].ptr = StringValuePtr(argv[i]);
+                } else if (TYPE(argv[i] == T_NIL)) {
+                    params[i].ptr = NULL;
+                } else if (TYPE(argv[i] == T_FIXNUM)) {
+                    params[i].ptr = (void *) (uintptr_t) FIX2INT(argv[i]);
+                } else if (TYPE(argv[i] == T_BIGNUM)) {
+                    params[i].ptr = (void *) (uintptr_t) NUM2ULL(argv[i]);
+                } else {
+                    rb_raise(rb_eArgError, ":pointer argument is not a valid pointer");
+                }
+                break;
             default:
                 rb_raise(rb_eArgError, "Invalid parameter type: %d", invoker->paramTypes[i]);
         }
@@ -221,6 +238,8 @@ invoker_call(int argc, VALUE* argv, VALUE self)
             return rb_float_new(retval.f64);
         case STRING:
             return rb_str_new2((char *) retval.ptr);
+        case POINTER:
+            return rb_FFI_MemoryPointer_new(retval.ptr);
         default:
             rb_raise(rb_eRuntimeError, "Unknown return type: %d", invoker->returnType);
     }

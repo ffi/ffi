@@ -2,6 +2,7 @@
 #include <ruby.h>
 #include "rbffi.h"
 #include "AbstractMemory.h"
+#include "MemoryPointer.h"
 
 typedef struct MemoryPointer {
     AbstractMemory memory;
@@ -12,9 +13,20 @@ static VALUE memptr_allocate(VALUE self, VALUE size, VALUE clear);
 static void memptr_free(MemoryPointer* ptr);
 static void memptr_mark(MemoryPointer* ptr);
 
+VALUE rb_FFI_MemoryPointer_class;
 static VALUE classMemoryPointer = Qnil;
 
-
+VALUE
+rb_FFI_MemoryPointer_new(caddr_t addr)
+{
+    MemoryPointer* p;
+    
+    p = ALLOC(MemoryPointer);
+    memset(p, 0, sizeof(*p));
+    p->memory.address = addr;
+    p->memory.size = (size_t) ~0L;
+    return Data_Wrap_Struct(classMemoryPointer, NULL, NULL, p);
+}
 static VALUE
 memptr_allocate(VALUE self, VALUE size, VALUE clear)
 {
@@ -55,6 +67,7 @@ void
 rb_FFI_MemoryPointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
-    classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_AbstractMemory_class);
+    rb_FFI_MemoryPointer_class = classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_AbstractMemory_class);
     rb_define_singleton_method(classMemoryPointer, "__allocate", memptr_allocate, 2);
+    
 }
