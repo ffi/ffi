@@ -4,11 +4,6 @@
 #include "AbstractMemory.h"
 #include "MemoryPointer.h"
 
-static VALUE memory_put_int64(VALUE self, VALUE offset, VALUE value);
-static VALUE memory_get_int64(VALUE self, VALUE offset);
-static VALUE memory_put_uint64(VALUE self, VALUE offset, VALUE value);
-static VALUE memory_get_uint64(VALUE self, VALUE offset);
-
 static VALUE memory_put_float32(VALUE self, VALUE offset, VALUE value);
 static VALUE memory_get_float32(VALUE self, VALUE offset);
 static VALUE memory_put_float64(VALUE self, VALUE offset, VALUE value);
@@ -23,7 +18,7 @@ static VALUE classMemory = Qnil;
 
 #define ADDRESS(self, offset) (memory_address((self)) + NUM2ULONG(offset))
 
-#define INT_OP(name, type, toNative, fromNative) \
+#define NUM_OP(name, type, toNative, fromNative) \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
 static VALUE \
 memory_put_##name(VALUE self, VALUE offset, VALUE value) \
@@ -68,39 +63,15 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     return retVal; \
 }
 
-#define INT(type, toNative, fromNative) INT_OP(type, type##_t, toNative, fromNative); \
-        INT_OP(u##type, u_##type##_t, toNative, fromNative)
+#define INT(type, toNative, fromNative) NUM_OP(type, type##_t, toNative, fromNative); \
+        NUM_OP(u##type, u_##type##_t, toNative, fromNative)
 INT(int8, NUM2INT, INT2FIX);
 INT(int16, NUM2INT, INT2FIX);
 INT(int32, NUM2INT, INT2FIX);
-INT_OP(int64, int64_t, NUM2LL, LL2NUM);
-INT_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
-
-
-static VALUE
-memory_put_float32(VALUE self, VALUE offset, VALUE value)
-{
-    *(float *) ADDRESS(self, offset) = NUM2DBL(value);
-    return self;
-}
-
-static VALUE memory_get_float32(VALUE self, VALUE offset)
-{
-    return rb_float_new(*(float *) ADDRESS(self, offset));
-}
-
-static VALUE
-memory_put_float64(VALUE self, VALUE offset, VALUE value)
-{
-    *(double *) ADDRESS(self, offset) = NUM2DBL(value);
-    return self;
-}
-
-static VALUE
-memory_get_float64(VALUE self, VALUE offset)
-{
-    return rb_float_new(*(double *) ADDRESS(self, offset));
-}
+NUM_OP(int64, int64_t, NUM2LL, LL2NUM);
+NUM_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
+NUM_OP(float32, float, NUM2DBL, rb_float_new);
+NUM_OP(float64, double, NUM2DBL, rb_float_new);
 
 static VALUE
 memory_put_pointer(VALUE self, VALUE offset, VALUE value)

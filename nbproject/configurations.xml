@@ -2,6 +2,14 @@
 <configurationDescriptor version="47">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="ruby-ffi" displayName="ruby-ffi" projectFiles="true">
+      <logicalFolder name="ext" displayName="ext" projectFiles="true">
+        <itemPath>ext/AbstractMemory.c</itemPath>
+        <itemPath>ext/AbstractMemory.h</itemPath>
+        <itemPath>ext/ffi.c</itemPath>
+        <itemPath>ext/MemoryPointer.c</itemPath>
+        <itemPath>ext/MemoryPointer.h</itemPath>
+        <itemPath>ext/rbffi.h</itemPath>
+      </logicalFolder>
       <logicalFolder name="libffi" displayName="libffi" projectFiles="true">
         <logicalFolder name="include" displayName="include" projectFiles="true">
           <itemPath>libffi/include/ffi_common.h</itemPath>
@@ -196,12 +204,6 @@
           </logicalFolder>
         </logicalFolder>
       </logicalFolder>
-      <itemPath>AbstractMemory.c</itemPath>
-      <itemPath>AbstractMemory.h</itemPath>
-      <itemPath>ffi.c</itemPath>
-      <itemPath>MemoryPointer.c</itemPath>
-      <itemPath>MemoryPointer.h</itemPath>
-      <itemPath>rbffi.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -235,25 +237,27 @@
         <requiredProjects>
         </requiredProjects>
       </makefileType>
-      <item path="AbstractMemory.c">
+      <item path="ext/AbstractMemory.c">
         <itemExcluded>true</itemExcluded>
         <itemTool>0</itemTool>
       </item>
-      <item path="AbstractMemory.h">
+      <item path="ext/AbstractMemory.h">
         <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
-      <item path="MemoryPointer.c">
-        <itemExcluded>true</itemExcluded>
-        <itemTool>0</itemTool>
-      </item>
-      <item path="MemoryPointer.h">
+      <item path="ext/MemoryPointer.c">
         <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
-      <item path="ffi.c">
+      <item path="ext/MemoryPointer.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/ffi.c">
         <itemExcluded>true</itemExcluded>
         <itemTool>0</itemTool>
+      </item>
+      <item path="ext/rbffi.h">
+        <itemTool>3</itemTool>
       </item>
       <item path="libffi/include/ffi_common.h">
         <itemTool>3</itemTool>
@@ -704,10 +708,6 @@
       </item>
       <item path="libffi/testsuite/libffi.special/unwindtest_ffi_call.cc">
         <itemTool>1</itemTool>
-      </item>
-      <item path="rbffi.h">
-        <itemExcluded>true</itemExcluded>
-        <itemTool>3</itemTool>
       </item>
     </conf>
   </confs>
