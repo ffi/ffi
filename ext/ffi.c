@@ -11,6 +11,7 @@
 #include "rbffi.h"
 #include "AbstractMemory.h"
 #include "MemoryPointer.h"
+#include "Platform.h"
 
 typedef struct Invoker {
     void* dlhandle;
@@ -289,6 +290,7 @@ Init_ffi() {
         rb_define_const(moduleNativeType, "LONG", INT2FIX(INT64));
         rb_define_const(moduleNativeType, "ULONG", INT2FIX(UINT64));
     }
+    rb_FFI_Platform_Init();
     rb_FFI_AbstractMemory_Init();
     rb_FFI_MemoryPointer_Init();
 }

@@ -52,6 +52,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'ffi.so'
+puts "Loading ffi/platform"
+require 'ffi/platform'
+require 'ffi/memorypointer'
 
 module FFI
   #  Specialised error classes
@@ -160,11 +163,6 @@ module FFI
     4 => :int,
     8 => :long_long,
   }
-end
-module FFI::Platform
-  LIBC = 'c'
-  LIBPREFIX = 'lib'
-  LIBSUFFIX = '.dylib'
 end
 module FFI
   def self.create_invoker(lib, name, args, ret, convention = :default)
