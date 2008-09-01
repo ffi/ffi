@@ -5,7 +5,6 @@ module FFI
       OS =~ /#{os}/ ? true : false
     end
     public
-    puts "Platform ruby init"
     NAME = "#{ARCH}-#{OS}"
     IS_LINUX = is_os("linux")
     IS_MAC = is_os("darwin")
@@ -21,5 +20,6 @@ module FFI
     when /(linux|.*bsd)/
       '.so'
     end
+    
   end
 end

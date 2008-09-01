@@ -52,9 +52,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'ffi.so'
-puts "Loading ffi/platform"
 require 'ffi/platform'
 require 'ffi/memorypointer'
+require 'ffi/struct'
 
 module FFI
   #  Specialised error classes

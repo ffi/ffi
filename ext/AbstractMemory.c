@@ -63,11 +63,12 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     return retVal; \
 }
 
-#define INT(type, toNative, fromNative) NUM_OP(type, type##_t, toNative, fromNative); \
-        NUM_OP(u##type, u_##type##_t, toNative, fromNative)
-INT(int8, NUM2INT, INT2FIX);
-INT(int16, NUM2INT, INT2FIX);
-INT(int32, NUM2INT, INT2FIX);
+NUM_OP(int8, int8_t, NUM2INT, INT2NUM);
+NUM_OP(uint8, u_int8_t, NUM2UINT, UINT2NUM);
+NUM_OP(int16, int16_t, NUM2INT, INT2NUM);
+NUM_OP(uint16, u_int16_t, NUM2UINT, UINT2NUM);
+NUM_OP(int32, int32_t, NUM2INT, INT2NUM);
+NUM_OP(uint32, u_int32_t, NUM2UINT, UINT2NUM);
 NUM_OP(int64, int64_t, NUM2LL, LL2NUM);
 NUM_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
 NUM_OP(float32, float, NUM2DBL, rb_float_new);
