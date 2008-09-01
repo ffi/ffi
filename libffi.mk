@@ -8,23 +8,12 @@ BUILD_DIR = build
 LIBFFI_SRC_DIR = $(shell pwd)/libffi
 LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi
 LIBFFI = $(LIBFFI_BUILD_DIR)/.libs/libffi_convenience.a
-
 FFI_CONFIGURE = $(LIBFFI_SRC_DIR)/configure --disable-static \
 	--with-pic=yes --disable-dependency-tracking
 
-all:	$(LIBFFI)
-	
-ifeq ($(OS), darwin)
-$(BUILD_DIR)/%.o:	$(SRC_DIR)/%.c $(JFFI_SRC_DIR)/jffi.h
+%.o : %.c
 	@mkdir -p $(@D)
-	$(CC) -arch i386 -I$(BUILD_DIR)/libffi-i386/include $(CFLAGS) -c $< -o $@.i386
-	$(CC) -arch x86_64 -I$(BUILD_DIR)/libffi-x86_64/include $(CFLAGS) -c $< -o $@.x86_64
-	lipo -create -output $@ -arch x86_64 $@.x86_64 -arch i386 $@.i386
-else
-$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c jffi.h
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
-endif
+	$(CC) -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include $(INCFLAGS) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 ifeq ($(OS), darwin)
 build_ffi = \
@@ -39,14 +28,29 @@ build_ffi = \
 	
 $(LIBFFI):
 	@$(call build_ffi,i386)
-	@$(call build_ffi,x86_64)
+	@$(call build_ffi,ppc)
 	
-	# Assemble into a FAT (i386, x86_64) library
+	# Assemble into a FAT (i386, ppc) library
 	@mkdir -p $(BUILD_DIR)/libffi/.libs
 	env MACOSX_DEPLOYMENT_TARGET=10.4 /usr/bin/libtool -static -o $@ \
             $(BUILD_DIR)/libffi-i386/.libs/libffi_convenience.a \
-	    $(BUILD_DIR)/libffi-x86_64/.libs/libffi_convenience.a
-            
+	    $(BUILD_DIR)/libffi-ppc/.libs/libffi_convenience.a
+	@mkdir -p $(LIBFFI_BUILD_DIR)/include
+	$(RM) $(LIBFFI_BUILD_DIR)/include/ffi.h
+	@( \
+		printf "#if defined(__i386__)\n"; \
+		printf "#include \"libffi-i386/include/ffi.h\"\n"; \
+		printf "#elif defined(__ppc__)\n"; \
+		printf "#include \"libffi-ppc/include/ffi.h\"\n";\
+		printf "#endif\n";\
+	) > $(LIBFFI_BUILD_DIR)/include/ffi.h
+	@( \
+		printf "#if defined(__i386__)\n"; \
+		printf "#include \"libffi-i386/include/ffitarget.h\"\n"; \
+		printf "#elif defined(__ppc__)\n"; \
+		printf "#include \"libffi-ppc/include/ffitarget.h\"\n";\
+		printf "#endif\n";\
+	) > $(LIBFFI_BUILD_DIR)/include/ffitarget.h
 else
 $(LIBFFI):		
 	@mkdir -p $(BUILD_DIR)/libffi
@@ -58,5 +62,5 @@ $(LIBFFI):
 	$(MAKE) -C $(BUILD_DIR)/libffi
 endif
 
-clean::
+libffi_clean::
 	$(RM) -r $(BUILD_DIR)
