@@ -5,6 +5,7 @@
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
         <itemPath>ext/AbstractMemory.c</itemPath>
         <itemPath>ext/AbstractMemory.h</itemPath>
+        <itemPath>ext/Callback.c</itemPath>
         <itemPath>ext/ffi.c</itemPath>
         <itemPath>ext/MemoryPointer.c</itemPath>
         <itemPath>ext/MemoryPointer.h</itemPath>
@@ -16,6 +17,8 @@
         <logicalFolder name="ffi" displayName="ffi" projectFiles="true">
           <itemPath>lib/ffi/ffi.rb</itemPath>
           <itemPath>lib/ffi/memorypointer.rb</itemPath>
+          <itemPath>lib/ffi/platform.rb</itemPath>
+          <itemPath>lib/ffi/struct.rb</itemPath>
         </logicalFolder>
         <itemPath>lib/ffi.rb</itemPath>
       </logicalFolder>
@@ -60,6 +63,10 @@
         <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
+      <item path="ext/Callback.c">
+        <itemExcluded>true</itemExcluded>
+        <itemTool>0</itemTool>
+      </item>
       <item path="ext/MemoryPointer.c">
         <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
@@ -79,6 +86,7 @@
         <itemTool>0</itemTool>
       </item>
       <item path="ext/rbffi.h">
+        <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi.rb">
@@ -88,6 +96,12 @@
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/memorypointer.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="lib/ffi/platform.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="lib/ffi/struct.rb">
         <itemTool>3</itemTool>
       </item>
     </conf>

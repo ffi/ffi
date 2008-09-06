@@ -29,6 +29,7 @@ typedef enum {
     FLOAT32,
     FLOAT64,
     POINTER,
+    CALLBACK,
     BUFFER_IN,
     BUFFER_OUT,
     BUFFER_INOUT,
@@ -42,8 +43,9 @@ typedef enum {
     RBXSTRING
 } NativeType;
 
-void rb_FFI_AbstractMemory_Init();
-void rb_FFI_MemoryPointer_Init();
+extern void rb_FFI_AbstractMemory_Init();
+extern void rb_FFI_MemoryPointer_Init();
+extern void rb_FFI_Callback_Init();
 extern VALUE rb_FFI_AbstractMemory_class;
 
 #ifdef	__cplusplus
