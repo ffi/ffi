@@ -7,11 +7,14 @@
         <itemPath>ext/AbstractMemory.h</itemPath>
         <itemPath>ext/Callback.c</itemPath>
         <itemPath>ext/ffi.c</itemPath>
+        <itemPath>/Users/wayne/src/ruby-ffi/ext/Invoker.c</itemPath>
         <itemPath>ext/MemoryPointer.c</itemPath>
         <itemPath>ext/MemoryPointer.h</itemPath>
         <itemPath>ext/Platform.c</itemPath>
         <itemPath>ext/Platform.h</itemPath>
         <itemPath>ext/rbffi.h</itemPath>
+        <itemPath>/Users/wayne/src/ruby-ffi/ext/Types.c</itemPath>
+        <itemPath>/Users/wayne/src/ruby-ffi/ext/Types.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <logicalFolder name="ffi" displayName="ffi" projectFiles="true">
@@ -55,6 +58,18 @@
         <requiredProjects>
         </requiredProjects>
       </makefileType>
+      <item path="/Users/wayne/src/ruby-ffi/ext/Invoker.c">
+        <itemExcluded>true</itemExcluded>
+        <itemTool>0</itemTool>
+      </item>
+      <item path="/Users/wayne/src/ruby-ffi/ext/Types.c">
+        <itemExcluded>true</itemExcluded>
+        <itemTool>0</itemTool>
+      </item>
+      <item path="/Users/wayne/src/ruby-ffi/ext/Types.h">
+        <itemExcluded>true</itemExcluded>
+        <itemTool>3</itemTool>
+      </item>
       <item path="ext/AbstractMemory.c">
         <itemExcluded>true</itemExcluded>
         <itemTool>0</itemTool>

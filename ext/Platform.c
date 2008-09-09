@@ -19,7 +19,7 @@ strtolower(char* dst, const char* src)
 void
 rb_FFI_Platform_Init()
 {
-    char osname[100], arch[100], name[100];
+    char osname[100], arch[100];
 
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE platform = rb_define_module_under(moduleFFI, "Platform");
