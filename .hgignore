@@ -3,3 +3,4 @@ Makefile
 mkmf.log
 nbproject/private
 .dep.inc
+^build
