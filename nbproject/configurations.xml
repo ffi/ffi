@@ -6,6 +6,7 @@
         <itemPath>ext/AbstractMemory.c</itemPath>
         <itemPath>ext/AbstractMemory.h</itemPath>
         <itemPath>ext/Callback.c</itemPath>
+        <itemPath>/Users/wayne/src/ruby-ffi/ext/Callback.h</itemPath>
         <itemPath>ext/ffi.c</itemPath>
         <itemPath>/Users/wayne/src/ruby-ffi/ext/Invoker.c</itemPath>
         <itemPath>ext/MemoryPointer.c</itemPath>
@@ -18,6 +19,7 @@
       </logicalFolder>
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <logicalFolder name="ffi" displayName="ffi" projectFiles="true">
+          <itemPath>/Users/wayne/src/ruby-ffi/lib/ffi/callback.rb</itemPath>
           <itemPath>lib/ffi/ffi.rb</itemPath>
           <itemPath>lib/ffi/memorypointer.rb</itemPath>
           <itemPath>lib/ffi/platform.rb</itemPath>
@@ -58,6 +60,10 @@
         <requiredProjects>
         </requiredProjects>
       </makefileType>
+      <item path="/Users/wayne/src/ruby-ffi/ext/Callback.h">
+        <itemExcluded>true</itemExcluded>
+        <itemTool>3</itemTool>
+      </item>
       <item path="/Users/wayne/src/ruby-ffi/ext/Invoker.c">
         <itemExcluded>true</itemExcluded>
         <itemTool>0</itemTool>
@@ -68,6 +74,9 @@
       </item>
       <item path="/Users/wayne/src/ruby-ffi/ext/Types.h">
         <itemExcluded>true</itemExcluded>
+        <itemTool>3</itemTool>
+      </item>
+      <item path="/Users/wayne/src/ruby-ffi/lib/ffi/callback.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="ext/AbstractMemory.c">

@@ -40,8 +40,8 @@ typedef enum {
 } NativeType;
 
 #include <ffi.h>
-extern ffi_type* rb_ffi_NativeTypeToFFI(NativeType type);
-VALUE rb_ffi_NativeValueToRuby(NativeType type, const void* ptr);
+extern ffi_type* rb_FFI_NativeTypeToFFI(NativeType type);
+VALUE rb_FFI_NativeValueToRuby(NativeType type, const void* ptr);
 
 #ifdef	__cplusplus
 }

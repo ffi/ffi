@@ -47,5 +47,6 @@ Init_ffi() {
     rb_FFI_Platform_Init();
     rb_FFI_AbstractMemory_Init();
     rb_FFI_MemoryPointer_Init();
-    rb_FFI_Invoker_Init();
+    rb_FFI_Callback_Init();
+    rb_FFI_Invoker_Init();    
 }

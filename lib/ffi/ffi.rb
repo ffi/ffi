@@ -238,9 +238,15 @@ module FFI::Library
     }
     invoker = FFI.create_invoker lib, cname.to_s, arg_types, ret_type, convention    
     raise ArgumentError, "Unable to find function '#{cname}' to bind to #{self.name}.#{mname}" unless invoker
-    self.class.send(:define_method, mname) do |*args|
-      invoker.call(*args)
-    end
+    #
+    # Attach the invoker to this module as 'mname'.
+    #
+    self.module_eval <<-code
+      @ffi_invoker_#{mname} = invoker
+      def self.#{mname}(*args, &block)
+        @ffi_invoker_#{mname}.call(*args, &block)
+      end
+    code
     invoker
   end
   def callback(name, args, ret)

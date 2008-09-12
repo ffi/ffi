@@ -3,7 +3,7 @@
 #include "Types.h"
 
 ffi_type*
-rb_ffi_NativeTypeToFFI(NativeType type)
+rb_FFI_NativeTypeToFFI(NativeType type)
 {
     switch (type) {
         case VOID:
@@ -34,7 +34,7 @@ rb_ffi_NativeTypeToFFI(NativeType type)
 }
 
 VALUE
-rb_ffi_NativeValueToRuby(NativeType type, const void* ptr)
+rb_FFI_NativeValueToRuby(NativeType type, const void* ptr)
 {
     switch (type) {
         case VOID:

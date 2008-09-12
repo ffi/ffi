@@ -9,6 +9,7 @@
 #include "AbstractMemory.h"
 #include "MemoryPointer.h"
 #include "Platform.h"
+#include "Callback.h"
 #include "Types.h"
 
 typedef struct Invoker {
@@ -19,6 +20,9 @@ typedef struct Invoker {
     ffi_type** ffiParamTypes;
     NativeType* paramTypes;
     NativeType returnType;
+    VALUE callbackArray;
+    int callbackCount;
+    VALUE* callbackParameters;
 } Invoker;
 
 static VALUE invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes, 
@@ -26,8 +30,9 @@ static VALUE invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameter
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
 static VALUE invoker_call(int argc, VALUE* argv, VALUE self);
-
+static void* callback_param(VALUE proc, VALUE cbinfo);
 static VALUE classInvoker = Qnil;
+static ID cbTableID;
 
 static VALUE
 invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes, 
@@ -52,17 +57,28 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     invoker->paramCount = RARRAY(parameterTypes)->len;
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
     invoker->ffiParamTypes = ALLOC_N(ffi_type *, invoker->paramCount);
+
     for (i = 0; i < invoker->paramCount; ++i) {
-        int paramType = FIX2INT(rb_ary_entry(parameterTypes, i));
-        invoker->paramTypes[i] = paramType;
-        invoker->ffiParamTypes[i] = rb_ffi_NativeTypeToFFI(paramType);
+        VALUE entry = rb_ary_entry(parameterTypes, i);
+        if (rb_obj_is_kind_of(entry, rb_FFI_Callback_class)) {
+            invoker->callbackParameters = REALLOC_N(invoker->callbackParameters, VALUE,
+                    invoker->callbackCount + 1);
+            invoker->callbackParameters[invoker->callbackCount++] = entry;
+            rb_gc_mark(entry);
+            invoker->paramTypes[i] = CALLBACK;
+            invoker->ffiParamTypes[i] = &ffi_type_pointer;            
+        } else {
+            int paramType = FIX2INT(entry);
+            invoker->paramTypes[i] = paramType;
+            invoker->ffiParamTypes[i] = rb_FFI_NativeTypeToFFI(paramType);
+        }
         if (invoker->ffiParamTypes[i] == NULL) {
             errmsg = "Invalid parameter type";
             goto error;
         }
     }
     invoker->returnType = FIX2INT(returnType);
-    ffiReturnType = rb_ffi_NativeTypeToFFI(invoker->returnType);
+    ffiReturnType = rb_FFI_NativeTypeToFFI(invoker->returnType);
     if (ffiReturnType == NULL) {
         errmsg = "Invalid return type";
         goto error;
@@ -119,66 +135,85 @@ invoker_call(int argc, VALUE* argv, VALUE self)
         float f32;
         double f64;
     } params[MAX_PARAMETERS], retval;
-    void* ffiValues[MAX_PARAMETERS];    
-    int i;
+    void* ffiValues[MAX_PARAMETERS];
+    VALUE callbackProc = Qnil;
+    int i, argidx, cbidx;
 
     Data_Get_Struct(self, Invoker, invoker);
-    if (argc != invoker->paramCount) {
+    if (argc < invoker->paramCount && invoker->callbackCount == 1 && rb_block_given_p()) {
+        callbackProc = rb_block_proc();
+    } else if (argc != invoker->paramCount) {
         rb_raise(rb_eArgError, "wrong number of arguments (%d for %d)", argc, invoker->paramCount);
     }
 
-    for (i = 0; i < invoker->paramCount; ++i) {
+    for (i = 0, argidx = 0, cbidx = 0; i < invoker->paramCount; ++i) {
         switch (invoker->paramTypes[i]) {
             case INT8:
             case INT16:
             case INT32:
-                Check_Type(argv[i], T_FIXNUM);
-                params[i].i = NUM2INT(argv[i]);
+                Check_Type(argv[argidx], T_FIXNUM);
+                params[i].i = NUM2INT(argv[argidx]);
+                ++argidx;
                 break;
             case UINT8:
             case UINT16:
             case UINT32:
-                Check_Type(argv[i], T_FIXNUM);
-                params[i].u = NUM2UINT(argv[i]);
+                Check_Type(argv[argidx], T_FIXNUM);
+                params[i].u = NUM2UINT(argv[argidx]);
+                ++argidx;
                 break;
             case INT64:
-                Check_Type(argv[i], T_FIXNUM);
-                params[i].i64 = NUM2LL(argv[i]);
+                Check_Type(argv[argidx], T_FIXNUM);
+                params[i].i64 = NUM2LL(argv[argidx]);
+                ++argidx;
                 break;
             case UINT64:
-                Check_Type(argv[i], T_FIXNUM);
-                params[i].i64 = NUM2ULL(argv[i]);
+                Check_Type(argv[argidx], T_FIXNUM);
+                params[i].i64 = NUM2ULL(argv[argidx]);
+                ++argidx;
                 break;
             case FLOAT32:
-                if (TYPE(argv[i]) != T_FLOAT && TYPE(argv[i]) != T_FIXNUM) {
-                    Check_Type(argv[i], T_FLOAT);
+                if (TYPE(argv[argidx]) != T_FLOAT && TYPE(argv[argidx]) != T_FIXNUM) {
+                    Check_Type(argv[argidx], T_FLOAT);
                 }
-                params[i].f32 = (float) NUM2DBL(argv[i]);
+                params[i].f32 = (float) NUM2DBL(argv[argidx]);
+                ++argidx;
                 break;
             case FLOAT64:
-                if (TYPE(argv[i]) != T_FLOAT && TYPE(argv[i]) != T_FIXNUM) {
-                    Check_Type(argv[i], T_FLOAT);
+                if (TYPE(argv[argidx]) != T_FLOAT && TYPE(argv[argidx]) != T_FIXNUM) {
+                    Check_Type(argv[argidx], T_FLOAT);
                 }
-                params[i].f64 = NUM2DBL(argv[i]);
+                params[i].f64 = NUM2DBL(argv[argidx]);
+                ++argidx;
                 break;
             case STRING:
-                Check_Type(argv[i], T_STRING);
-                params[i].ptr = StringValuePtr(argv[i]);
+                Check_Type(argv[argidx], T_STRING);
+                params[i].ptr = StringValuePtr(argv[argidx]);
+                ++argidx;
                 break;
             case POINTER:
-                if (rb_obj_is_kind_of(argv[i], rb_FFI_AbstractMemory_class)) {
-                    params[i].ptr = ((AbstractMemory *) DATA_PTR(argv[i]))->address;
-                } else if (TYPE(argv[i]) == T_STRING) {
-                    params[i].ptr = StringValuePtr(argv[i]);
-                } else if (TYPE(argv[i] == T_NIL)) {
+                if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class)) {
+                    params[i].ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
+                } else if (TYPE(argv[argidx]) == T_STRING) {
+                    params[i].ptr = StringValuePtr(argv[argidx]);
+                } else if (TYPE(argv[argidx] == T_NIL)) {
                     params[i].ptr = NULL;
-                } else if (TYPE(argv[i] == T_FIXNUM)) {
-                    params[i].ptr = (void *) (uintptr_t) FIX2INT(argv[i]);
-                } else if (TYPE(argv[i] == T_BIGNUM)) {
-                    params[i].ptr = (void *) (uintptr_t) NUM2ULL(argv[i]);
+                } else if (TYPE(argv[argidx] == T_FIXNUM)) {
+                    params[i].ptr = (void *) (uintptr_t) FIX2INT(argv[argidx]);
+                } else if (TYPE(argv[argidx] == T_BIGNUM)) {
+                    params[i].ptr = (void *) (uintptr_t) NUM2ULL(argv[argidx]);
                 } else {
                     rb_raise(rb_eArgError, ":pointer argument is not a valid pointer");
                 }
+                ++argidx;
+                break;
+            case CALLBACK:
+                if (callbackProc != Qnil) {
+                    params[i].ptr = callback_param(callbackProc, invoker->callbackParameters[cbidx++]);
+                } else {
+                    params[i].ptr = callback_param(argv[argidx], invoker->callbackParameters[cbidx++]);
+                    ++argidx;
+                }                
                 break;
             default:
                 rb_raise(rb_eArgError, "Invalid parameter type: %d", invoker->paramTypes[i]);
@@ -186,24 +221,44 @@ invoker_call(int argc, VALUE* argv, VALUE self)
         ffiValues[i] = &params[i];
     }
     ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
-    return rb_ffi_NativeValueToRuby(invoker->returnType, &retval);
+    return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
 }
 
 static void
 invoker_mark(Invoker *invoker)
 {
-
+    if (invoker->callbackCount > 0) {
+        rb_gc_mark_locations(&invoker->callbackParameters[0], &invoker->callbackParameters[invoker->callbackCount]);
+    }
 }
+
 static void
 invoker_free(Invoker *invoker)
 {
+    xfree(invoker->callbackParameters);
     xfree(invoker->paramTypes);
     xfree(invoker->ffiParamTypes);
     dlclose(invoker->dlhandle);
     xfree(invoker);
 }
 
-
+static void* 
+callback_param(VALUE proc, VALUE cbInfo)
+{
+    VALUE callback;
+    VALUE cbTable = rb_ivar_get(proc, cbTableID);
+    if (!cbTable || cbTable == Qnil) {
+        cbTable = rb_hash_new();
+        rb_ivar_set(proc, cbTableID, cbTable);
+    }
+    callback = rb_hash_aref(cbTable, cbInfo);
+    if (callback != Qnil) {
+        return ((NativeCallback *) DATA_PTR(callback))->code;
+    }
+    callback = rb_FFI_NativeCallback_new(cbInfo, proc);
+    rb_hash_aset(cbTable, cbInfo, callback);
+    return ((NativeCallback *) DATA_PTR(callback))->code;
+}
 void 
 rb_FFI_Invoker_Init()
 {
@@ -211,5 +266,5 @@ rb_FFI_Invoker_Init()
     classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_define_singleton_method(classInvoker, "new", invoker_new, 5);
     rb_define_method(classInvoker, "call", invoker_call, -1);
-    
+    cbTableID = rb_intern("__ffi_callback_table__");
 }
