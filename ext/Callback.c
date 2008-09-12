@@ -1,5 +1,7 @@
 #include <sys/types.h>
 #include <ruby.h>
+#include "MemoryPointer.h"
+#include "AbstractMemory.h"
 #include "Callback.h"
 #include "Types.h"
 #include "rbffi.h"
@@ -11,6 +13,7 @@ static void callback_free(CallbackInfo *);
 
 static VALUE classCallback = Qnil;
 static VALUE classNativeCallback = Qnil;
+static ID callID = Qnil;
 
 //static VALUE classCallbackImpl = Qnil;
 VALUE rb_FFI_Callback_class = Qnil;
@@ -23,6 +26,7 @@ callback_new(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
     ffi_status status;
     int i;
 
+    cbInfo->parameterCount = paramCount;
     cbInfo->parameterTypes = calloc(paramCount, sizeof(NativeType));
     cbInfo->ffiParameterTypes = calloc(paramCount, sizeof(ffi_type *));
     if (cbInfo->parameterTypes == NULL || cbInfo->ffiParameterTypes == NULL) {
@@ -105,8 +109,98 @@ native_callback_mark(NativeCallback* cb)
 static void
 native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
-    //NativeCallback* cb = (NativeCallback *) user_data;
-    //rb_gc_mark(cb->rbProc);
+    NativeCallback* cb = (NativeCallback *) user_data;
+    CallbackInfo *cbInfo = cb->cbInfo;
+    VALUE* rbParams;
+    VALUE rbReturnValue;
+    int i;
+
+    rbParams = ALLOCA_N(VALUE, cbInfo->parameterCount);
+    for (i = 0; i < cbInfo->parameterCount; ++i) {
+        VALUE param;
+        switch (cbInfo->parameterTypes[i]) {
+            case INT8:
+                param = INT2FIX(*(int8_t *) parameters[i]);
+                break;
+            case UINT8:
+                param = UINT2NUM(*(u_int8_t *) parameters[i]);
+                break;
+            case INT16:
+                param = INT2FIX(*(int16_t *) parameters[i]);
+                break;
+            case UINT16:
+                param = UINT2NUM(*(u_int16_t *) parameters[i]);
+                break;
+            case INT32:
+                param = INT2FIX(*(int32_t *) parameters[i]);
+                break;
+            case UINT32:
+                param = UINT2NUM(*(u_int32_t *) parameters[i]);
+                break;
+            case INT64:
+                param = LL2NUM(*(int64_t *) parameters[i]);
+                break;
+            case UINT64:
+                param = ULL2NUM(*(u_int64_t *) parameters[i]);
+                break;
+            case FLOAT32:
+                param = rb_float_new(*(float *) parameters[i]);
+                break;
+            case FLOAT64:
+                param = rb_float_new(*(double *) parameters[i]);
+                break;
+            case STRING:
+                param = rb_str_new2(*(char **) parameters[i]);
+                break;
+            case POINTER:
+                param = rb_FFI_MemoryPointer_new(*(caddr_t *) parameters[i]);
+                break;
+            default:
+                param = Qnil;
+                break;
+        }
+        rbParams[i] = param;
+    }
+    rbReturnValue = rb_funcall2(cb->rbProc, callID, cbInfo->parameterCount, rbParams);
+    if (rbReturnValue == Qnil || TYPE(rbReturnValue) == T_NIL) {
+        memset(retval, 0, cbInfo->ffiReturnType->size);
+    } else switch (cbInfo->returnType) {
+        case INT8:
+            *((int8_t *) retval) = NUM2INT(rbReturnValue);
+            break;
+        case UINT8:
+            *((u_int8_t *) retval) = NUM2UINT(rbReturnValue);
+            break;
+        case INT16:
+            *((int16_t *) retval) = NUM2INT(rbReturnValue);
+            break;
+        case UINT16:
+            *((u_int16_t *) retval) = NUM2UINT(rbReturnValue);
+            break;
+        case INT32:
+            *((int32_t *) retval) = NUM2INT(rbReturnValue);
+            break;
+        case UINT32:
+            *((u_int32_t *) retval) = NUM2UINT(rbReturnValue);
+            break;
+        case INT64:
+            *((int64_t *) retval) = NUM2LL(rbReturnValue);
+            break;
+        case UINT64:
+            *((u_int64_t *) retval) = NUM2ULL(rbReturnValue);
+            break;
+        case FLOAT32:
+            *((float *) retval) = (float) NUM2DBL(rbReturnValue);
+            break;
+        case FLOAT64:
+            *((double *) retval) = NUM2DBL(rbReturnValue);
+            break;
+        case POINTER:
+            *((caddr_t *) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
+            break;
+        default:
+            break;
+    }
 }
 
 VALUE
@@ -142,4 +236,5 @@ rb_FFI_Callback_Init()
     rb_FFI_Callback_class = classCallback = rb_define_class_under(moduleFFI, "Callback", rb_cObject);
     rb_define_singleton_method(classCallback, "new", callback_new, 2);
     classNativeCallback = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
+    callID = rb_intern("call");
 }

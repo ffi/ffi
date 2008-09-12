@@ -50,6 +50,14 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_free, p);
 }
 
+static VALUE
+memptr_inspect(VALUE self)
+{
+    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
+    char tmp[100];
+    snprintf(tmp, sizeof(tmp), "Pointer: [address=%p]", ptr->memory.address);
+    return rb_str_new2(tmp);
+}
 static void
 memptr_free(MemoryPointer* ptr)
 {
@@ -70,4 +78,5 @@ rb_FFI_MemoryPointer_Init()
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_MemoryPointer_class = classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_AbstractMemory_class);
     rb_define_singleton_method(classMemoryPointer, "__allocate", memptr_allocate, 3);
+    rb_define_method(classMemoryPointer, "inspect", memptr_inspect, 0);
 }
