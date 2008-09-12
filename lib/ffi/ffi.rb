@@ -55,14 +55,15 @@ require 'ffi.so'
 require 'ffi/platform'
 require 'ffi/memorypointer'
 require 'ffi/struct'
+require 'ffi/callback'
 
 module FFI
   #  Specialised error classes
-  class TypeError < RuntimeError; end
+  class TypeError < LoadError; end
   
-  class SignatureError < RuntimeError; end
+  class SignatureError < LoadError; end
   
-  class NotFoundError < RuntimeError
+  class NotFoundError < LoadError
     def initialize(function, library)
       super("Function '#{function}' not found! (Looking in '#{library}' or this process)")
     end
@@ -81,6 +82,8 @@ module FFI
   end
   def self.find_type(name)
     code = TypeDefs[name]
+    code = name if !code && name.kind_of?(Integer)
+    code = name if !code && name.kind_of?(FFI::Callback)
     raise TypeError, "Unable to resolve type '#{name}'" unless code
     return code
   end
@@ -163,8 +166,28 @@ module FFI
     4 => :int,
     8 => :long_long,
   }
-end
-module FFI
+  
+  SizeTypes = {
+    NativeType::INT8 => 1,
+    NativeType::UINT8 => 1,
+    NativeType::INT16 => 2,
+    NativeType::UINT16 => 2,
+    NativeType::INT32 => 4,
+    NativeType::UINT32 => 4,
+    NativeType::INT64 => 8,
+    NativeType::UINT64 => 8,
+    NativeType::FLOAT32 => 4,
+    NativeType::FLOAT64 => 8,
+    NativeType::LONG => FFI::Platform::LONG_SIZE / 8,
+    NativeType::ULONG => FFI::Platform::LONG_SIZE / 8,
+    NativeType::POINTER => FFI::Platform::ADDRESS_SIZE / 8,
+  }
+  def self.type_size(type)
+    if sz = SizeTypes[find_type(type)]
+      return sz
+    end
+    raise ArgumentError, "Unknown native type"
+  end
   def self.create_invoker(lib, name, args, ret, convention = :default)
     # Ugly hack to simulate the effect of dlopen(NULL, x) - not quite correct
     lib = FFI::Platform::LIBC unless lib
@@ -175,7 +198,7 @@ module FFI
     
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
-
+        
     invoker = FFI::Invoker.new(lib, name, args.map { |e| find_type(e) },
       find_type(ret), convention.to_s)
     raise NotFoundError.new(name, lib) unless invoker
@@ -205,11 +228,23 @@ module FFI::Library
     cname, arg_types, ret_type = a5 ? [ a3, a4, a5 ] : [ mname.to_s, a3, a4 ]
     lib = @ffi_lib
     convention = @ffi_convention ? @ffi_convention : :default
-    invoker = FFI.create_invoker lib, cname.to_s, arg_types, ret_type, convention
+    # Convert :foo to the native type
+    arg_types.map! { |e|
+      begin
+        FFI.find_type(e)
+      rescue FFI::TypeError
+        @ffi_callbacks[e] || e
+      end
+    }
+    invoker = FFI.create_invoker lib, cname.to_s, arg_types, ret_type, convention    
     raise ArgumentError, "Unable to find function '#{cname}' to bind to #{self.name}.#{mname}" unless invoker
     self.class.send(:define_method, mname) do |*args|
       invoker.call(*args)
     end
     invoker
+  end
+  def callback(name, args, ret)
+    @ffi_callbacks = Hash.new unless @ffi_callbacks
+    @ffi_callbacks[name] = FFI::Callback.new(FFI.find_type(ret), args.map { |e| FFI.find_type(e) })
   end
 end
