@@ -6,4 +6,5 @@ nbproject/private
 ^build
 ext/build
 ext/ffi_c.bundle
+ffi_c.bundle
 ^pkg

@@ -16,7 +16,7 @@ extern "C" {
 
     typedef struct {
         caddr_t address;
-        size_t size;
+        long size;
     } AbstractMemory;
 
 

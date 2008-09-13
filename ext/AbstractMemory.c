@@ -12,7 +12,7 @@ static VALUE memory_put_pointer(VALUE self, VALUE offset, VALUE value);
 static VALUE memory_get_pointer(VALUE self, VALUE offset);
 
 static inline caddr_t memory_address(VALUE self);
-
+static inline void checkBounds(AbstractMemory* mem, long off, long len);
 VALUE rb_FFI_AbstractMemory_class = Qnil;
 static VALUE classMemory = Qnil;
 
@@ -23,14 +23,23 @@ static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
 static VALUE \
 memory_put_##name(VALUE self, VALUE offset, VALUE value) \
 { \
-    *(type *) ADDRESS(self, offset) = (type) toNative(value); \
+    long off = NUM2LONG(offset); \
+    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
+    type tmp = (type) toNative(value); \
+    checkBounds(memory, off, sizeof(type)); \
+    memcpy(memory->address + off, &tmp, sizeof(tmp)); \
     return self; \
 } \
 static VALUE memory_get_##name(VALUE self, VALUE offset); \
 static VALUE \
 memory_get_##name(VALUE self, VALUE offset) \
 { \
-    return fromNative(*(type *) ADDRESS(self, offset)); \
+    long off = NUM2LONG(offset); \
+    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
+    type tmp; \
+    checkBounds(memory, off, sizeof(type)); \
+    memcpy(&tmp, memory->address + off, sizeof(tmp)); \
+    return fromNative(tmp); \
 } \
 static VALUE memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary); \
 static VALUE \
@@ -41,8 +50,10 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
     caddr_t address = memory->address; \
     long i; \
+    checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
-        *((type *)(address + off + (i * sizeof(type)))) = (type) toNative(rb_ary_entry(ary, i)); \
+        type tmp = (type) toNative(rb_ary_entry(ary, i)); \
+        memcpy(address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
     } \
     return self; \
 } \
@@ -56,9 +67,12 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     caddr_t address = memory->address; \
     long last = off + count; \
     long i; \
+    checkBounds(memory, off, count * sizeof(type)); \
     VALUE retVal = rb_ary_new2(count); \
     for (i = off; i < last; ++i) { \
-        rb_ary_push(retVal, fromNative(*((type *) (address + (i * sizeof(type)))))); \
+        type tmp; \
+        memcpy(&tmp, address + (i * sizeof(type)), sizeof(tmp)); \
+        rb_ary_push(retVal, fromNative(tmp)); \
     } \
     return retVal; \
 }
@@ -76,15 +90,22 @@ NUM_OP(float64, double, NUM2DBL, rb_float_new);
 
 static VALUE
 memory_put_pointer(VALUE self, VALUE offset, VALUE value)
-{
-    if (rb_obj_is_kind_of(value, rb_FFI_MemoryPointer_class)) {
-        *(caddr_t *) ADDRESS(self, offset) = memory_address(value);
+{ 
+    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
+    long off = NUM2LONG(offset);
+    checkBounds(memory, off, sizeof(void *));
+    if (rb_obj_is_kind_of(value, rb_FFI_MemoryPointer_class)) {        
+        void* tmp = memory_address(value);
+        memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else if (TYPE(value) == T_NIL) {
-        *(caddr_t *) ADDRESS(self, offset) = NULL;
+        void* tmp = NULL;
+        memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else if (TYPE(value) == T_FIXNUM) {
-        *(uintptr_t *) ADDRESS(self, offset) = (uintptr_t) FIX2INT(value);
+        uintptr_t tmp = (uintptr_t) FIX2INT(value);
+        memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else if (TYPE(value) == T_BIGNUM) {
-        *(uintptr_t *) ADDRESS(self, offset) = (uintptr_t) NUM2ULL(value);
+        uintptr_t tmp = (uintptr_t) NUM2ULL(value);
+        memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else {
         rb_raise(rb_eArgError, "value is not a pointer");
     }
@@ -94,7 +115,12 @@ memory_put_pointer(VALUE self, VALUE offset, VALUE value)
 static VALUE
 memory_get_pointer(VALUE self, VALUE offset)
 {
-    return rb_FFI_MemoryPointer_new(*(caddr_t *) ADDRESS(self, offset));
+    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
+    long off = NUM2LONG(offset);
+    caddr_t tmp;
+    checkBounds(memory, off, sizeof(tmp));
+    memcpy(&tmp, memory->address + off, sizeof(tmp));
+    return rb_FFI_MemoryPointer_new(tmp);
 }
 
 static VALUE
@@ -115,6 +141,15 @@ static inline caddr_t
 memory_address(VALUE self)
 {
     return ((AbstractMemory *)DATA_PTR((self)))->address;
+}
+
+static inline void
+checkBounds(AbstractMemory* mem, long off, long len)
+{
+    if ((off | len | (off + len) | (mem->size - (off + len))) < 0) {
+        rb_raise(rb_eIndexError, "Memory access offset=%ld size=%ld is out of bounds",
+                off, len);
+    }
 }
 
 void
