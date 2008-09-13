@@ -38,8 +38,8 @@ module FFI
     end
     class Signed8 < Field
       def self.size; 8; end
-      def set(ptr, val)
-        ptr.set_int8(@off, val)
+      def put(ptr, val)
+        ptr.put_int8(@off, val)
       end
       def get(ptr)
         ptr.get_int8(@off)
@@ -47,8 +47,8 @@ module FFI
     end
     class Unsigned8 < Field
       def self.size; 8; end
-      def set(ptr, val)
-        ptr.set_uint8(@off, val)
+      def put(ptr, val)
+        ptr.put_uint8(@off, val)
       end
       def get(ptr)
         ptr.get_uint8(@off)
@@ -56,8 +56,8 @@ module FFI
     end
     class Signed16 < Field
       def self.size; 16; end
-      def set(ptr, val)
-        ptr.set_int16(@off, val)
+      def put(ptr, val)
+        ptr.put_int16(@off, val)
       end
       def get(ptr)
         ptr.get_int16(@off)
@@ -65,8 +65,8 @@ module FFI
     end
     class Unsigned16 < Field
       def self.size; 16; end
-      def set(ptr, val)
-        ptr.set_uint16(@off, val)
+      def put(ptr, val)
+        ptr.put_uint16(@off, val)
       end
       def get(ptr)
         ptr.get_uint16(@off)
@@ -74,8 +74,8 @@ module FFI
     end
     class Signed32 < Field
       def self.size; 32; end
-      def set(ptr, val)
-        ptr.set_int32(@off, val)
+      def put(ptr, val)
+        ptr.put_int32(@off, val)
       end
       def get(ptr)
         ptr.get_int32(@off)
@@ -83,8 +83,8 @@ module FFI
     end
     class Unsigned32 < Field
       def self.size; 32; end
-      def set(ptr, val)
-        ptr.set_uint32(@off, val)
+      def put(ptr, val)
+        ptr.put_uint32(@off, val)
       end
       def get(ptr)
         ptr.get_uint32(@off)
@@ -93,8 +93,8 @@ module FFI
     class Signed64 < Field
       def self.size; 64; end
       def self.align; LONG_ALIGN; end
-      def set(ptr, val)
-        ptr.set_int64(@off, val)
+      def put(ptr, val)
+        ptr.put_int64(@off, val)
       end
       def get(ptr)
         ptr.get_int64(@off)
@@ -103,8 +103,8 @@ module FFI
     class Unsigned64 < Field
       def self.size; 64; end
       def self.align; LONG_ALIGN; end
-      def set(ptr, val)
-        ptr.set_uint64(@off, val)
+      def put(ptr, val)
+        ptr.put_uint64(@off, val)
       end
       def get(ptr)
         ptr.get_uint64(@off)
