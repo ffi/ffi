@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'rake/gempackagetask'
 require 'rubygems/specification'
+require "spec/rake/spectask"
 require 'date'
 
 GEM = "ffi"
@@ -27,6 +28,17 @@ spec = Gem::Specification.new do |s|
   s.require_path = 'lib'
   s.autorequire = GEM
   s.files = %w(LICENSE README Rakefile) + Dir.glob("{ext,lib,nbproject,samples,specs}/**/*")
+end
+
+desc "Run all specs"
+Spec::Rake::SpecTask.new("specs") do |t|
+  t.spec_opts = ["--format", "specdoc", "--colour"]
+  t.spec_files = Dir["spec/**/*_spec.rb"].sort
+end
+
+desc "Run specs"
+task :specs do
+  sh %{#{Gem.ruby} -S spec specs/*_spec.rb -fs --color}
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|

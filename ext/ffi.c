@@ -18,7 +18,7 @@ static VALUE moduleFFI = Qnil;
 static VALUE moduleNativeType = Qnil;
 
 void
-Init_ffi() {
+Init_ffi_c() {
     moduleFFI = rb_define_module("FFI");
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
     

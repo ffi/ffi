@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'mkmf'
-dir_config("ffi")
-create_makefile("ffi")
+dir_config("ffi_c")
+create_makefile("ffi_c")
 File.open("Makefile", "a") do |mf|
   mf.puts "OS=$(shell uname -s)"
   mf.puts "ARCH=$(shell uname -p)"
