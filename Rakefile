@@ -38,7 +38,7 @@ end
 
 desc "Run specs"
 task :specs do
-  sh %{#{Gem.ruby} -S spec specs/*_spec.rb -fs --color}
+  sh %{MRI_FFI=1 #{Gem.ruby} -S spec specs/*_spec.rb -fs --color}
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
