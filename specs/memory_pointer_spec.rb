@@ -1,5 +1,4 @@
 require "rubygems"
-require "inline"
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 module CTest
