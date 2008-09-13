@@ -12,7 +12,6 @@ static VALUE memory_put_pointer(VALUE self, VALUE offset, VALUE value);
 static VALUE memory_get_pointer(VALUE self, VALUE offset);
 
 static inline caddr_t memory_address(VALUE self);
-static inline void checkBounds(AbstractMemory* mem, long off, long len);
 VALUE rb_FFI_AbstractMemory_class = Qnil;
 static VALUE classMemory = Qnil;
 
@@ -141,15 +140,6 @@ static inline caddr_t
 memory_address(VALUE self)
 {
     return ((AbstractMemory *)DATA_PTR((self)))->address;
-}
-
-static inline void
-checkBounds(AbstractMemory* mem, long off, long len)
-{
-    if ((off | len | (off + len) | (mem->size - (off + len))) < 0) {
-        rb_raise(rb_eIndexError, "Memory access offset=%ld size=%ld is out of bounds",
-                off, len);
-    }
 }
 
 void

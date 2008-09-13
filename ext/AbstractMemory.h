@@ -14,11 +14,19 @@
 extern "C" {
 #endif
 
-    typedef struct {
-        caddr_t address;
-        long size;
-    } AbstractMemory;
+typedef struct {
+    caddr_t address;
+    long size;
+} AbstractMemory;
 
+static inline void
+checkBounds(AbstractMemory* mem, long off, long len)
+{
+    if ((off | len | (off + len) | (mem->size - (off + len))) < 0) {
+        rb_raise(rb_eIndexError, "Memory access offset=%ld size=%ld is out of bounds",
+                off, len);
+    }
+}
 
 #ifdef	__cplusplus
 }
