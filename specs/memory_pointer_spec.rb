@@ -1,5 +1,4 @@
 require "rubygems"
-require "inline"
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 module CTest
@@ -10,8 +9,8 @@ end
 
 describe MemoryPointer do
   it "makes a pointer from a string" do
-    m = MemoryPointer.from_string("FFI")
-    m.size.should == 3
+    m = MemoryPointer.from_string("FFI is Awesome")
+    m.type_size.should == 15
   end
   
   it "makes a pointer for a certain number of bytes" do
@@ -21,10 +20,10 @@ describe MemoryPointer do
   end
 
   it "allows access to an element of the pointer (as an array)" do
-    m = MemoryPointer.new(8)
+    m = MemoryPointer.new(:int, 2)
     m.write_array_of_int([1,2])
-    m[0].should == 1
-    m[1].should == 2
+    m[0].read_int.should == 1
+    m[1].read_int.should == 2
   end
   
   it "allows writing as an int" do

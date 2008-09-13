@@ -4,3 +4,6 @@ mkmf.log
 nbproject/private
 .dep.inc
 ^build
+ext/build
+ext/ffi_c.bundle
+^pkg
