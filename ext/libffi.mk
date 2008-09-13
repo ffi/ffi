@@ -8,7 +8,7 @@ BUILD_DIR = $(shell pwd)/build
 LIBFFI_SRC_DIR = $(shell pwd)/$(srcdir)/libffi
 LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi
 LIBFFI = $(LIBFFI_BUILD_DIR)/.libs/libffi_convenience.a
-FFI_CONFIGURE = $(LIBFFI_SRC_DIR)/configure --disable-static \
+FFI_CONFIGURE = sh $(LIBFFI_SRC_DIR)/configure --disable-static \
 	--with-pic=yes --disable-dependency-tracking
 
 %.o : %.c
