@@ -78,7 +78,7 @@ memptr_inspect(VALUE self)
 {
     MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
     char tmp[100];
-    snprintf(tmp, sizeof(tmp), "Pointer: [address=%p]", ptr->memory.address);
+    snprintf(tmp, sizeof(tmp), "#<MemoryPointer address=%p>", ptr->memory.address);
     return rb_str_new2(tmp);
 }
 
