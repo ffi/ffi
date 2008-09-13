@@ -36,9 +36,17 @@ Spec::Rake::SpecTask.new("specs") do |t|
   t.spec_files = Dir["spec/**/*_spec.rb"].sort
 end
 
-desc "Run specs"
-task :specs do
-  sh %{MRI_FFI=1 #{Gem.ruby} -S spec specs/*_spec.rb -fs --color}
+if RUBY_PLATFORM == "java"
+  desc "Run specs"
+  task :specs do
+    sh %{#{Gem.ruby} -S spec #{Dir["specs/*_spec.rb"].join(" ")} -fs --color}
+  end
+else
+  desc "Run specs"
+  task :specs do
+    ENV["MRI_FFI"] = "1"
+    sh %{#{Gem.ruby} -S spec #{Dir["specs/*_spec.rb"].join(" ")} -fs --color}
+  end
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
