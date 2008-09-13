@@ -13,6 +13,17 @@ describe MemoryPointer do
     m.type_size.should == 15
   end
   
+  it "reads back a string" do
+    m = MemoryPointer.from_string("FFI is Awesome")
+    m.read_string.should == "FFI is Awesome"
+  end
+  
+  it "reads back a string from an Array of ints" do
+    m = MemoryPointer.new(:int, 4)
+    m.write_array_of_int([541673030, 1092645737, 1869833591, 538994029])
+    m.read_string(16).should == "FFI is Awesome  "
+  end
+  
   it "makes a pointer for a certain number of bytes" do
     m = MemoryPointer.new(8)
     m.write_array_of_int([1,2])
