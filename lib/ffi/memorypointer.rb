@@ -33,7 +33,12 @@ module FFI
         ptr = self.__allocate(size, count ? count : 1, clear)
         ptr.type_size = size
         if block_given?
-          yield ptr
+          begin
+            value = yield ptr
+          ensure
+            ptr.free
+          end
+          value
         else
           ptr
         end
@@ -83,6 +88,16 @@ module FFI
       def read_long
         get_long(0)
       end
+      def read_pointer
+        get_pointer(0)
+      end
+      def read_float
+        get_float32(0)
+      end
+      def write_float(obj)
+        put_float32(0, obj)
+      end
+      
       def read_string(len=nil)
         if len
           get_string(0, len)
@@ -90,7 +105,15 @@ module FFI
           get_string(0)
         end
       end
-
+      def read_string_length(len)
+        get_string(0, len)
+      end
+      def read_string_to_null
+        get_string(0)
+      end
+      def write_string_length(str, len)
+        put_string(0, str, len)
+      end
       def write_string(str, len=nil)
         len = str.size unless len
         # Write the string data without NUL termination
