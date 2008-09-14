@@ -82,6 +82,12 @@ memptr_inspect(VALUE self)
     return rb_str_new2(tmp);
 }
 
+static VALUE
+memptr_null_p(VALUE self)
+{
+    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
+    return ptr->memory.address == NULL ? Qtrue : Qfalse;
+}
 
 static void
 memptr_free(MemoryPointer* ptr)
@@ -108,4 +114,5 @@ rb_FFI_MemoryPointer_Init()
     rb_define_singleton_method(classMemoryPointer, "__allocate", memptr_allocate, 3);
     rb_define_method(classMemoryPointer, "inspect", memptr_inspect, 0);
     rb_define_method(classMemoryPointer, "+", memptr_plus, 1);
+    rb_define_method(classMemoryPointer, "null?", memptr_null_p, 0);
 }
