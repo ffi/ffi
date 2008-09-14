@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <dlfcn.h>
 #include <ruby.h>
 
