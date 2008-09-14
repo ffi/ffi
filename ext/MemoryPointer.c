@@ -109,6 +109,13 @@ memptr_autorelease(VALUE self, VALUE autorelease)
     return self;
 }
 
+static VALUE
+memptr_address(VALUE self)
+{
+    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);    
+    return ULL2NUM((uintptr_t) ptr->memory.address);
+}
+
 static void
 memptr_release(MemoryPointer* ptr)
 {
@@ -137,4 +144,5 @@ rb_FFI_MemoryPointer_Init()
     rb_define_method(classMemoryPointer, "null?", memptr_null_p, 0);
     rb_define_method(classMemoryPointer, "autorelease=", memptr_autorelease, 1);
     rb_define_method(classMemoryPointer, "free", memptr_free, 0);
+    rb_define_method(classMemoryPointer, "address", memptr_address, 0);
 }
