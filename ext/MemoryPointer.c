@@ -12,7 +12,7 @@ typedef struct MemoryPointer {
 } MemoryPointer;
 
 static VALUE memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear);
-static void memptr_free(MemoryPointer* ptr);
+static void memptr_release(MemoryPointer* ptr);
 static void memptr_mark(MemoryPointer* ptr);
 
 VALUE rb_FFI_MemoryPointer_class;
@@ -28,7 +28,7 @@ rb_FFI_MemoryPointer_new(caddr_t addr)
     p->memory.address = addr;
     p->memory.size = ~0L;
     p->parent = Qnil;
-    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_free, p);
+    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_release, p);
 }
 
 static VALUE
@@ -52,7 +52,7 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     if (TYPE(clear) == T_TRUE) {
         memset(p->memory.address, 0, p->memory.size);
     }
-    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_free, p);
+    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_release, p);
 }
 
 static VALUE
@@ -70,7 +70,7 @@ memptr_plus(VALUE self, VALUE offset)
     p->parent = self;
     p->allocated = false;
     p->autorelease = true;
-    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_free, p);
+    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_release, p);
 }
 
 static VALUE
@@ -89,8 +89,28 @@ memptr_null_p(VALUE self)
     return ptr->memory.address == NULL ? Qtrue : Qfalse;
 }
 
+static VALUE
+memptr_free(VALUE self)
+{
+    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
+    if (ptr->allocated) {
+        free(ptr->memory.address);
+        ptr->memory.address = NULL;
+        ptr->allocated = false;
+    }
+    return self;
+}
+
+static VALUE
+memptr_autorelease(VALUE self, VALUE autorelease)
+{
+    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
+    ptr->autorelease = autorelease == Qtrue;
+    return self;
+}
+
 static void
-memptr_free(MemoryPointer* ptr)
+memptr_release(MemoryPointer* ptr)
 {
     if (ptr->autorelease && ptr->allocated) {
         free(ptr->memory.address);
@@ -115,4 +135,6 @@ rb_FFI_MemoryPointer_Init()
     rb_define_method(classMemoryPointer, "inspect", memptr_inspect, 0);
     rb_define_method(classMemoryPointer, "+", memptr_plus, 1);
     rb_define_method(classMemoryPointer, "null?", memptr_null_p, 0);
+    rb_define_method(classMemoryPointer, "autorelease=", memptr_autorelease, 1);
+    rb_define_method(classMemoryPointer, "free", memptr_free, 0);
 }
