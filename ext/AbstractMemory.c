@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <stdbool.h>
 #include <ruby.h>
 #include "rbffi.h"
 #include "AbstractMemory.h"
@@ -136,6 +137,50 @@ memory_size(VALUE self)
     return LONG2FIX(((AbstractMemory *) DATA_PTR(self))->size);
 }
 
+static VALUE
+memory_get_string(int argc, VALUE* argv, VALUE self)
+{
+    VALUE length = Qnil, offset = Qnil;
+    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    long off, len;
+    int nargs = rb_scan_args(argc, argv, "11", &offset, &length);
+
+    off = NUM2LONG(offset);    
+    if (nargs > 1) {
+        len = NUM2LONG(length);
+    } else {        
+        caddr_t end;
+        checkBounds(ptr, off, 1);
+        end = memchr(ptr->address + off, 0, ptr->size - off);
+        len = ((end != NULL) ? end - ptr->address: ptr->size) - off;
+    }
+    checkBounds(ptr, off, len);
+    return rb_str_new((char *) ptr->address + off, len);
+}
+
+static VALUE
+memory_put_string(int argc, VALUE* argv, VALUE self)
+{
+    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    VALUE offset = Qnil, str = Qnil, length = Qnil;
+    bool nulTerminate = true;
+    long off, len;
+    int nargs = rb_scan_args(argc, argv, "21", &offset, &str, &length);
+    off = NUM2LONG(offset);
+    len = RSTRING_LEN(str);
+    if (nargs > 2 && length != Qnil) {
+        len = MIN(NUM2ULONG(length), len);
+        nulTerminate = false;
+    }
+    checkBounds(ptr, off, len);
+    memcpy(ptr->address + off, RSTRING_PTR(str), len);
+
+    if (nulTerminate) {
+        char nul = '\0';
+        memcpy(ptr->address + off + len, &nul, sizeof(nul));
+    }
+    return self;
+}
 static inline caddr_t
 memory_address(VALUE self)
 {
@@ -199,7 +244,8 @@ rb_FFI_AbstractMemory_Init()
     rb_define_method(classMemory, "get_array_of_float64", memory_get_array_of_float64, 2);
     rb_define_method(classMemory, "put_pointer", memory_put_pointer, 2);
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
-
+    rb_define_method(classMemory, "get_string", memory_get_string, -1);
+    rb_define_method(classMemory, "put_string", memory_put_string, -1);
     rb_define_method(classMemory, "clear", memory_clear, 0);
     rb_define_method(classMemory, "total", memory_size, 0);
 }

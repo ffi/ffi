@@ -26,7 +26,7 @@ rb_FFI_MemoryPointer_new(caddr_t addr)
     p = ALLOC(MemoryPointer);
     memset(p, 0, sizeof(*p));
     p->memory.address = addr;
-    p->memory.size = (size_t) ~0L;
+    p->memory.size = ~0L;
     p->parent = Qnil;
     return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_free, p);
 }
