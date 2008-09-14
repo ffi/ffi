@@ -13,7 +13,13 @@ module FFI
     IS_WINDOWS = is_os("windows") || is_os("win32")
     IS_BSD = IS_MAC || IS_FREEBSD || IS_OPENBSD
     public
-    LIBC = IS_WINDOWS ? "msvcrt" : "c"
+    LIBC = if IS_WINDOWS
+      "msvcrt"
+    elsif IS_LINUX
+      "libc.so.6"
+    else
+      "c"
+    end
     LIBPREFIX = IS_WINDOWS ? '' : 'lib'
     LIBSUFFIX = case OS
     when /darwin/
@@ -37,3 +43,4 @@ module FFI
     end
   end
 end
+

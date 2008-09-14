@@ -194,8 +194,8 @@ module FFI
     
     # Mangle the library name to reflect the native library naming conventions
     lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
-    lib += Platform::LIBSUFFIX unless lib =~ /#{Platform::LIBPREFIX}$/
-    
+    lib += Platform::LIBSUFFIX unless lib =~ /#{Platform::LIBSUFFIX}/
+
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
         
@@ -254,3 +254,4 @@ module FFI::Library
     @ffi_callbacks[name] = FFI::Callback.new(FFI.find_type(ret), args.map { |e| FFI.find_type(e) })
   end
 end
+
