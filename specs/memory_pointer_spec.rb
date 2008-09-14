@@ -82,5 +82,25 @@ describe MemoryPointer do
     m.write_array_of_int([1,2])
     m.read_array_of_int(2).should == [1,2]
   end  
-  
+  it "MemoryPointer#address returns correct value" do
+    m = MemoryPointer.new(:long_long)
+    magic = 0x12345678
+    if FFI::Platform::ADDRESS_SIZE == 32
+      m.put_uint32(0, magic)
+      m.get_pointer(0).address.should == magic
+    else
+      m.put_uint64(0, magic)
+      m.get_pointer(0).address.should == magic
+    end
+  end
+  it "MemoryPointer#null? returns true for zero value" do
+    m = MemoryPointer.new(:long_long)
+    m.put_int64(0, 0)
+    m.get_pointer(0).null?.should == true
+  end
+  it "MemoryPointer#null? returns false for non-zero value" do
+    m = MemoryPointer.new(:long_long)
+    m.put_int64(0, 0xdeadbeef)
+    m.get_pointer(0).null?.should == false
+  end
 end
