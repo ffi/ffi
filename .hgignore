@@ -1,4 +1,5 @@
-Makefile
+^ext/Makefile$
+^Makefile$
 \.o$
 mkmf.log
 nbproject/private
