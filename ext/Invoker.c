@@ -47,7 +47,6 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     int i;
 
     Check_Type(cname, T_STRING);
-    Check_Type(libname, T_STRING);
     Check_Type(parameterTypes, T_ARRAY);
     Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
@@ -96,7 +95,7 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
         goto error;
     }
 
-    invoker->dlhandle = dlopen(StringValuePtr(libname), RTLD_LAZY);
+    invoker->dlhandle = dlopen(libname != Qnil ? StringValuePtr(libname) : NULL, RTLD_LAZY);
     if (invoker->dlhandle == NULL) {
         errmsg = "No such library";
         goto error;

@@ -188,14 +188,12 @@ module FFI
     end
     raise ArgumentError, "Unknown native type"
   end
-  def self.create_invoker(lib, name, args, ret, convention = :default)
-    # Ugly hack to simulate the effect of dlopen(NULL, x) - not quite correct
-    lib = FFI::Platform::LIBC unless lib
-    
+  def self.create_invoker(lib, name, args, ret, convention = :default)    
     # Mangle the library name to reflect the native library naming conventions
-    lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
-    lib += Platform::LIBSUFFIX unless lib =~ /#{Platform::LIBSUFFIX}/
-
+    if lib
+      lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
+      lib += Platform::LIBSUFFIX unless lib =~ /#{Platform::LIBSUFFIX}/
+    end
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
         
