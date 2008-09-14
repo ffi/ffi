@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"
 #include "AbstractMemory.h"
@@ -27,7 +28,7 @@ rb_FFI_MemoryPointer_new(caddr_t addr)
     p = ALLOC(MemoryPointer);
     memset(p, 0, sizeof(*p));
     p->memory.address = addr;
-    p->memory.size = ~0L;
+    p->memory.size = LONG_MAX;
     p->parent = Qnil;
     return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_release, p);
 }

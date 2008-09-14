@@ -58,6 +58,12 @@ describe MemoryPointer do
     m = MemoryPointer.new(1)
     lambda { m.write_int(10) }.should raise_error
   end
+  it "does not raise IndexError for opaque pointers" do
+    m = MemoryPointer.new(8)
+    m.put_pointer(0, MemoryPointer.new(1024))
+    p = m.get_pointer(0)
+    lambda { p.write_int(10) }.should_not raise_error
+  end
   
   it "makes a pointer for a certain type" do
     m = MemoryPointer.new(:int)
