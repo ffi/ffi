@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdint.h>
 #include <ruby.h>
 #include "rbffi.h"
 #include "AbstractMemory.h"

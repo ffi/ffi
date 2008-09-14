@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <ruby.h>
 #include "rbffi.h"
