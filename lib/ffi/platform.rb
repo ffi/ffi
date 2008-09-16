@@ -1,9 +1,9 @@
-
+require 'rbconfig'
 module FFI
   class PlatformError < FFI::NativeError; end
 
   module Platform
-    OS = case OS_.downcase
+    OS = case Config::CONFIG['host_os'].downcase
     when /linux/
       "linux"
     when /darwin/
@@ -19,7 +19,7 @@ module FFI
     else
       raise FFI::PlatformError, "Unknown operating system: #{OS_}"
     end
-    ARCH = case ARCH_.downcase
+    ARCH = case CPU.downcase
     when /i?86|x86|i86pc/
       "i386"
     when /amd64|x86_64/

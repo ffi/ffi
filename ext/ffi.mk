@@ -1,7 +1,5 @@
 # -*- makefile -*-
 
-OS = $(shell uname -s | tr '[A-Z]' '[a-z]')
-ARCH=$(shell uname -m | sed -e 's/i[345678]86/i386/')
 CFLAGS += -DOS=\"$(OS)\"
 INCFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
 LOCAL_LIBS += $(LIBFFI)
@@ -22,4 +20,4 @@ clean:	libffi_clean
 libffi_clean::
 	$(RM) -r $(BUILD_DIR)
 
-#include $(srcdir)/libffi.darwin.mk
+

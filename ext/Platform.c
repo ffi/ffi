@@ -36,7 +36,6 @@ rb_FFI_Platform_Init()
     rb_define_const(platform, "BYTE_ORDER", INT2FIX(BYTE_ORDER));
     rb_define_const(platform, "LITTLE_ENDIAN", INT2FIX(LITTLE_ENDIAN));
     rb_define_const(platform, "BIG_ENDIAN", INT2FIX(BIG_ENDIAN));
-    rb_define_const(platform, "OS_", rb_str_new2(OS));
-    rb_define_const(platform, "ARCH_", rb_str_new2(CPU));
+    rb_define_const(platform, "CPU", rb_str_new2(CPU));
     modulePlatform = platform;
 }

@@ -7,4 +7,4 @@ $(LIBFFI):
 	    cd $(LIBFFI_BUILD_DIR) && env CC="$(CC)" LD="$(LD)" CFLAGS="$(FFI_CFLAGS)" \
 		$(FFI_CONFIGURE) > /dev/null; \
 	fi
-	$(MAKE) -C $(BUILD_DIR)/libffi
+	cd $(BUILD_DIR)/libffi && $(MAKE)
