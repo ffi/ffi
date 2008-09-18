@@ -36,21 +36,6 @@ typedef struct {
     VALUE rbProc;
 } NativeCallback;
 
-#ifdef obsolete
-static inline void
-callbackinfo_copy(CallbackInfo* dst, const CallbackInfo *src)
-{
-    int i;
-    dst->returnType = src->returnType;
-    dst->parameterCount = src->parameterCount;
-    dst->parameterTypes = ALLOC_N(NativeType, src->parameterCount);
-    dst->flags = src->flags;
-    for (i = 0; i < src->parameterCount; ++i) {
-        dst->parameterTypes[i] = src->parameterTypes[i];
-    }
-}
-#endif // obsolete
-
 extern VALUE rb_FFI_Callback_class;
 extern VALUE rb_FFI_NativeCallback_new(VALUE, VALUE);
 

@@ -64,7 +64,6 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
             invoker->callbackParameters = REALLOC_N(invoker->callbackParameters, VALUE,
                     invoker->callbackCount + 1);
             invoker->callbackParameters[invoker->callbackCount++] = entry;
-            rb_gc_mark(entry);
             invoker->paramTypes[i] = CALLBACK;
             invoker->ffiParamTypes[i] = &ffi_type_pointer;            
         } else {
