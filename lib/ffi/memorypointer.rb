@@ -30,7 +30,7 @@ module FFI
         else
           type.size
         end
-        ptr = self.__allocate(size, count ? count : 1, clear)
+        ptr = self.__allocate(size, count, clear)
         ptr.type_size = size
         if block_given?
           begin

@@ -68,6 +68,7 @@ end
 
 require 'ffi/platform'
 require 'ffi/memorypointer'
+require 'ffi/buffer'
 require 'ffi/struct'
 require 'ffi/callback'
 

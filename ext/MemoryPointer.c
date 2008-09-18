@@ -41,15 +41,15 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     p = ALLOC(MemoryPointer);
     memset(p, 0, sizeof(*p));
     p->autorelease = true;
-    p->memory.size = NUM2ULONG(size) * NUM2ULONG(count);
-    p->memory.address = malloc(p->memory.size);
+    p->memory.size = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
+    p->memory.address = p->memory.size > 0 ? malloc(p->memory.size) : NULL;
     p->parent = Qnil;
     p->allocated = true;
 
     if (p->memory.address == NULL) {
         int size = p->memory.size;
         xfree(p);
-        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%u bytes", size);
+        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", size);
     }
     if (TYPE(clear) == T_TRUE) {
         memset(p->memory.address, 0, p->memory.size);

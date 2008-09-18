@@ -24,8 +24,8 @@ buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
 
     p = ALLOC(Buffer);
     memset(p, 0, sizeof(*p));
-    p->memory.size = NUM2LONG(size) * NUM2LONG(count);
-    p->memory.address = malloc(p->memory.size);
+    p->memory.size = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
+    p->memory.address = p->memory.size > 0 ? malloc(p->memory.size) : NULL;
     p->parent = Qnil;
 
     if (p->memory.address == NULL) {
@@ -86,7 +86,9 @@ rb_FFI_Buffer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_Buffer_class = classBuffer = rb_define_class_under(moduleFFI, "Buffer", rb_FFI_AbstractMemory_class);
-    rb_define_singleton_method(classBuffer, "__allocate", buffer_allocate, 3);
+    rb_define_singleton_method(classBuffer, "__alloc_inout", buffer_allocate, 3);
+    rb_define_singleton_method(classBuffer, "__alloc_out", buffer_allocate, 3);
+    rb_define_singleton_method(classBuffer, "__alloc_in", buffer_allocate, 3);
     rb_define_method(classBuffer, "inspect", buffer_inspect, 0);
     rb_define_method(classBuffer, "+", buffer_plus, 1);
 }
