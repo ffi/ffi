@@ -9,7 +9,7 @@ GEM_VERSION = "0.5.0"
 AUTHOR = "Wayne Meissner"
 EMAIL = "wmeissner@gmail.com"
 HOMEPAGE = "http://kenai.com/projects/ruby-ffi"
-SUMMARY = "A Ruby binding to libffi (compatible with Rubinius and JRuby's FFI)"
+SUMMARY = "A Ruby foreign function interface (compatible with Rubinius and JRuby FFI)"
 
 spec = Gem::Specification.new do |s|
   s.name = GEM
