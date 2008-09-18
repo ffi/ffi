@@ -14,7 +14,6 @@ static VALUE buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear);
 static void buffer_release(Buffer* ptr);
 static void buffer_mark(Buffer* ptr);
 
-VALUE rb_FFI_Buffer_class;
 static VALUE classBuffer = Qnil;
 
 static VALUE
@@ -50,7 +49,7 @@ buffer_plus(VALUE self, VALUE offset)
     p = ALLOC(Buffer);
     memset(p, 0, sizeof(*p));
     p->memory.address = ptr->memory.address + off;;
-    p->memory.size = ptr->memory.size - off;;
+    p->memory.size = ptr->memory.size - off;
     p->parent = self;
     return Data_Wrap_Struct(classBuffer, buffer_mark, buffer_release, p);
 }
@@ -67,7 +66,7 @@ buffer_inspect(VALUE self)
 static void
 buffer_release(Buffer* ptr)
 {
-    if (ptr->parent != Qnil) {
+    if (ptr->parent != Qnil && ptr->memory.address != NULL) {
         free(ptr->memory.address);
     }
     xfree(ptr);
@@ -85,7 +84,7 @@ void
 rb_FFI_Buffer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
-    rb_FFI_Buffer_class = classBuffer = rb_define_class_under(moduleFFI, "Buffer", rb_FFI_AbstractMemory_class);
+    classBuffer = rb_define_class_under(moduleFFI, "Buffer", rb_FFI_AbstractMemory_class);
     rb_define_singleton_method(classBuffer, "__alloc_inout", buffer_allocate, 3);
     rb_define_singleton_method(classBuffer, "__alloc_out", buffer_allocate, 3);
     rb_define_singleton_method(classBuffer, "__alloc_in", buffer_allocate, 3);

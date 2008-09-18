@@ -46,11 +46,18 @@ if RUBY_PLATFORM == "java"
   task :specs do
     sh %{#{Gem.ruby} -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
   end
+  task :rbxspecs do
+    sh %{#{Gem.ruby} -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
+  end
 else
   desc "Run specs"
   task :specs do
     ENV["MRI_FFI"] = "1"
     sh %{#{Gem.ruby} -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
+  end
+  task :rbxspecs do
+    ENV["MRI_FFI"] = "1"
+    sh %{#{Gem.ruby} -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
   end
 end
 

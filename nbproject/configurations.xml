@@ -5,6 +5,7 @@
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
         <itemPath>ext/AbstractMemory.c</itemPath>
         <itemPath>ext/AbstractMemory.h</itemPath>
+        <itemPath>/Users/wayne/src/ruby-ffi/ext/Buffer.c</itemPath>
         <itemPath>ext/Callback.c</itemPath>
         <itemPath>/Users/wayne/src/ruby-ffi/ext/Callback.h</itemPath>
         <itemPath>ext/ffi.c</itemPath>
@@ -60,6 +61,9 @@
         <requiredProjects>
         </requiredProjects>
       </makefileType>
+      <item path="/Users/wayne/src/ruby-ffi/ext/Buffer.c">
+        <itemTool>0</itemTool>
+      </item>
       <item path="/Users/wayne/src/ruby-ffi/ext/Callback.h">
         <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>

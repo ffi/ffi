@@ -92,6 +92,19 @@ memptr_null_p(VALUE self)
 }
 
 static VALUE
+memptr_equals(VALUE self, VALUE other)
+{
+    MemoryPointer* p1 = (MemoryPointer *) DATA_PTR(self);
+    MemoryPointer* p2;
+    
+    if (!rb_obj_is_kind_of(other, classMemoryPointer)) {
+        rb_raise(rb_eArgError, "Comparing MemoryPointer with non MemoryPointer");
+    }
+    p2 = (MemoryPointer *) DATA_PTR(other);
+    return p1->memory.address == p2->memory.address ? Qtrue : Qfalse;
+}
+
+static VALUE
 memptr_free(VALUE self)
 {
     MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
@@ -147,4 +160,5 @@ rb_FFI_MemoryPointer_Init()
     rb_define_method(classMemoryPointer, "autorelease=", memptr_autorelease, 1);
     rb_define_method(classMemoryPointer, "free", memptr_free, 0);
     rb_define_method(classMemoryPointer, "address", memptr_address, 0);
+    rb_define_method(classMemoryPointer, "==", memptr_equals, 1);
 }
