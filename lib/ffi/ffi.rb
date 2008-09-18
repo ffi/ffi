@@ -51,24 +51,27 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#require 'ffi.so'
+module FFI
+  #  Specialised error classes
+  class NativeError < LoadError; end
+  
+  class TypeError < NativeError; end
+  
+  class SignatureError < NativeError; end
+  
+  class NotFoundError < NativeError
+    def initialize(function, library)
+      super("Function '#{function}' not found! (Looking in '#{library}' or this process)")
+    end
+  end
+end
+
 require 'ffi/platform'
 require 'ffi/memorypointer'
 require 'ffi/struct'
 require 'ffi/callback'
 
 module FFI
-  #  Specialised error classes
-  class TypeError < LoadError; end
-  
-  class SignatureError < LoadError; end
-  
-  class NotFoundError < LoadError
-    def initialize(function, library)
-      super("Function '#{function}' not found! (Looking in '#{library}' or this process)")
-    end
-  end
-  
   TypeDefs = Hash.new
   def self.add_typedef(current, add)
     if current.kind_of? Integer
