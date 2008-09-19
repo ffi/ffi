@@ -156,7 +156,7 @@ module FFI
     end
   end
   class BaseStruct
-    Buffer = FFI::MemoryPointer
+    Buffer = FFI::Buffer
     attr_reader :pointer
 
     def initialize(pointer = nil, *spec)
