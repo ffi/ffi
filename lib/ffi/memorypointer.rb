@@ -88,6 +88,15 @@ module FFI
       def read_long
         get_long(0)
       end
+      # Write +obj+ as a C long long at the memory pointed to.
+      def write_long_long(obj)
+        put_int64(0, obj)
+      end
+
+      # Read a C long long from the memory pointed to.
+      def read_long_long
+        get_int64(0)
+      end
       def read_pointer
         get_pointer(0)
       end

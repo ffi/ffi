@@ -60,8 +60,9 @@ describe MemoryPointer do
   end
   it "does not raise IndexError for opaque pointers" do
     m = MemoryPointer.new(8)
-    m.put_pointer(0, MemoryPointer.new(1024))
-    p = m.get_pointer(0)
+    p2 = MemoryPointer.new(1024)
+    m.write_long(p2.address)
+    p = m.read_pointer
     lambda { p.write_int(10) }.should_not raise_error
   end
   
@@ -91,22 +92,17 @@ describe MemoryPointer do
   it "MemoryPointer#address returns correct value" do
     m = MemoryPointer.new(:long_long)
     magic = 0x12345678
-    if FFI::Platform::ADDRESS_SIZE == 32
-      m.put_uint32(0, magic)
-      m.get_pointer(0).address.should == magic
-    else
-      m.put_uint64(0, magic)
-      m.get_pointer(0).address.should == magic
-    end
+    m.write_long(magic)
+    m.read_pointer.address.should == magic
   end
   it "MemoryPointer#null? returns true for zero value" do
     m = MemoryPointer.new(:long_long)
-    m.put_int64(0, 0)
-    m.get_pointer(0).null?.should == true
+    m.write_long(0)    
+    m.read_pointer.null?.should == true
   end
   it "MemoryPointer#null? returns false for non-zero value" do
     m = MemoryPointer.new(:long_long)
-    m.put_int64(0, 0xdeadbeef)
-    m.get_pointer(0).null?.should == false
+    m.write_long(0x12345678)
+    m.read_pointer.null?.should == false
   end
 end
