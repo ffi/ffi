@@ -28,6 +28,17 @@
         </logicalFolder>
         <itemPath>lib/ffi.rb</itemPath>
       </logicalFolder>
+      <logicalFolder name="specs" displayName="specs" projectFiles="true">
+        <logicalFolder name="rbx" displayName="rbx" projectFiles="true">
+          <itemPath>specs/rbx/attach_function_spec.rb</itemPath>
+          <itemPath>specs/rbx/memory_pointer_spec.rb</itemPath>
+          <itemPath>specs/rbx/spec_helper.rb</itemPath>
+          <itemPath>specs/rbx/struct_spec.rb</itemPath>
+        </logicalFolder>
+        <itemPath>specs/buffer_spec.rb</itemPath>
+        <itemPath>specs/callback_spec.rb</itemPath>
+        <itemPath>specs/spec_helper.rb</itemPath>
+      </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -130,6 +141,27 @@
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/struct.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/buffer_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/callback_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/rbx/attach_function_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/rbx/memory_pointer_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/rbx/spec_helper.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/rbx/struct_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/spec_helper.rb">
         <itemTool>3</itemTool>
       </item>
     </conf>
