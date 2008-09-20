@@ -1,6 +1,6 @@
 # -*- makefile -*-
 
-CFLAGS += -DOS=\"$(OS)\"
+LIBS += -lpthread
 INCFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
 LOCAL_LIBS += $(LIBFFI)
 
