@@ -1,5 +1,6 @@
 # -*- makefile -*-
 
+CFLAGS += -Werror
 LIBS += -lpthread
 INCFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
 LOCAL_LIBS += $(LIBFFI)

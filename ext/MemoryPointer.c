@@ -47,7 +47,7 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     p->allocated = true;
 
     if (p->memory.address == NULL) {
-        int size = p->memory.size;
+        long size = p->memory.size;
         xfree(p);
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", size);
     }
