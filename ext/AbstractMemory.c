@@ -19,6 +19,9 @@ VALUE rb_FFI_AbstractMemory_class = Qnil;
 static VALUE classMemory = Qnil;
 
 #define ADDRESS(self, offset) (memory_address((self)) + NUM2ULONG(offset))
+#ifndef RARRAY_LEN
+#  define RARRAY_LEN(ary) RARRAY(ary)->len
+#endif
 
 #define NUM_OP(name, type, toNative, fromNative) \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
@@ -47,7 +50,7 @@ static VALUE memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary); \
 static VALUE \
 memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
 { \
-    long count = RARRAY(ary)->len; \
+    long count = RARRAY_LEN(ary); \
     long off = NUM2LONG(offset); \
     AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
     caddr_t address = memory->address; \

@@ -7,6 +7,8 @@
 #include <ffi.h>
 
 #include "rbffi.h"
+#include "compat.h"
+
 #include "AbstractMemory.h"
 #include "MemoryPointer.h"
 #include "Platform.h"
@@ -54,7 +56,7 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     invoker = ALLOC(Invoker);
     MEMZERO(invoker, Invoker, 1);
     
-    invoker->paramCount = RARRAY(parameterTypes)->len;
+    invoker->paramCount = RARRAY_LEN(parameterTypes);
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
     invoker->ffiParamTypes = ALLOC_N(ffi_type *, invoker->paramCount);
 
