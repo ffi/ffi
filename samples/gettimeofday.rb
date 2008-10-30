@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'ffi'
 class Timeval < FFI::Struct
 #  layout :tv_sec => :ulong, :tv_usec => :ulong

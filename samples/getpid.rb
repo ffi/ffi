@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'ffi'
 module Foo
   extend FFI::Library
