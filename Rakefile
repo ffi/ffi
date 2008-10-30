@@ -3,9 +3,10 @@ require 'rake/gempackagetask'
 require 'rubygems/specification'
 require "spec/rake/spectask"
 require 'date'
+require 'fileutils'
 
 GEM = "ffi"
-GEM_VERSION = "0.5.0"
+GEM_VERSION = "0.1.0"
 AUTHOR = "Wayne Meissner"
 EMAIL = "wmeissner@gmail.com"
 HOMEPAGE = "http://kenai.com/projects/ruby-ffi"
@@ -75,4 +76,14 @@ task :make_spec do
   File.open("#{GEM}.gemspec", "w") do |file|
     file.puts spec.to_ruby
   end
+end
+file "Makefile" do
+  sh %{#{Gem.ruby} ext/extconf.rb}
+end
+task :compile => "Makefile" do
+  sh %{make}
+end
+task :clean do
+  FileUtils.rm_rf("build")
+  FileUtils.rm_f(Dir["pkg/*.gem", "Makefile"])
 end
