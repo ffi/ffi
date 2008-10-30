@@ -23,7 +23,7 @@ spec = Gem::Specification.new do |s|
   s.author = AUTHOR
   s.email = EMAIL
   s.homepage = HOMEPAGE
-  
+  s.rubyforge_project = 'ffi' 
   s.extensions = %w(ext/extconf.rb)
   
   s.require_path = 'lib'
@@ -84,6 +84,7 @@ task :compile => "Makefile" do
   sh %{make}
 end
 task :clean do
+  sh %{make clean} if File.exists?("Makefile")
   FileUtils.rm_rf("build")
   FileUtils.rm_f(Dir["pkg/*.gem", "Makefile"])
 end
