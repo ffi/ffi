@@ -193,6 +193,9 @@ invoker_call(int argc, VALUE* argv, VALUE self)
                 ++argidx;
                 break;
             case POINTER:
+            case BUFFER_IN:
+            case BUFFER_OUT:
+            case BUFFER_INOUT:
                 if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class)) {
                     params[i].ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
                 } else if (TYPE(argv[argidx]) == T_STRING) {

@@ -163,6 +163,10 @@ module FFI
   
   # Use for a C struct with a char [] embedded inside.
   add_typedef(NativeType::CHAR_ARRAY, :char_array)
+
+  add_typedef(NativeType::BUFFER_IN, :buffer_in)
+  add_typedef(NativeType::BUFFER_OUT, :buffer_out)
+  add_typedef(NativeType::BUFFER_INOUT, :buffer_inout)
   
   TypeSizes = {
     1 => :char,
@@ -235,7 +239,11 @@ module FFI::Library
       begin
         FFI.find_type(e)
       rescue FFI::TypeError
-        @ffi_callbacks[e] || e
+        if defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(e)
+          @ffi_callbacks[e]
+        else
+          e
+        end
       end
     }
     invoker = FFI.create_invoker lib, cname.to_s, arg_types, ret_type, convention    
@@ -252,7 +260,7 @@ module FFI::Library
     invoker
   end
   def callback(name, args, ret)
-    @ffi_callbacks = Hash.new unless @ffi_callbacks
+    @ffi_callbacks = Hash.new unless defined?(@ffi_callbacks)
     @ffi_callbacks[name] = FFI::Callback.new(FFI.find_type(ret), args.map { |e| FFI.find_type(e) })
   end
 end

@@ -37,6 +37,9 @@ Init_ffi_c() {
     rb_define_const(moduleNativeType, "STRING", INT2FIX(STRING));
     rb_define_const(moduleNativeType, "RBXSTRING", INT2FIX(RBXSTRING));
     rb_define_const(moduleNativeType, "CHAR_ARRAY", INT2FIX(CHAR_ARRAY));
+    rb_define_const(moduleNativeType, "BUFFER_IN", INT2FIX(BUFFER_IN));
+    rb_define_const(moduleNativeType, "BUFFER_OUT", INT2FIX(BUFFER_OUT));
+    rb_define_const(moduleNativeType, "BUFFER_INOUT", INT2FIX(BUFFER_INOUT));
     if (sizeof(long) == 4) {
         rb_define_const(moduleNativeType, "LONG", INT2FIX(INT32));
         rb_define_const(moduleNativeType, "ULONG", INT2FIX(UINT32));

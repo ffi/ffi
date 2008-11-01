@@ -27,6 +27,9 @@ rb_FFI_NativeTypeToFFI(NativeType type)
         case STRING:
         case RBXSTRING:
         case POINTER:
+        case BUFFER_IN:
+        case BUFFER_OUT:
+        case BUFFER_INOUT:
             return &ffi_type_pointer;
         default:
             return NULL;
