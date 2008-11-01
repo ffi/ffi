@@ -6,7 +6,7 @@ require 'date'
 require 'fileutils'
 
 GEM = "ffi"
-GEM_VERSION = "0.1.1"
+GEM_VERSION = "0.2.0"
 AUTHOR = "Wayne Meissner"
 EMAIL = "wmeissner@gmail.com"
 HOMEPAGE = "http://kenai.com/projects/ruby-ffi"
