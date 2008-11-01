@@ -1,4 +1,17 @@
 # -*- makefile -*-
+ARCHES := 
+ifneq ($(findstring -arch ppc,$(CFLAGS)),)
+  ARCHES += ppc
+endif
+ifneq ($(findstring -arch i386,$(CFLAGS)),)
+  ARCHES += i386
+endif
+ifneq ($(findstring -arch x86_64,$(CFLAGS)),)
+  ARCHES += x86_64
+endif
+ifeq ($(ARCHES),)
+  ARCHES = $(shell arch)
+endif
 
 build_ffi = \
 	mkdir -p $(BUILD_DIR)/libffi-$(1); \
@@ -11,16 +24,12 @@ build_ffi = \
 	env MACOSX_DEPLOYMENT_TARGET=10.4 $(MAKE) -C $(BUILD_DIR)/libffi-$(1)
 	
 $(LIBFFI):
-	@$(call build_ffi,i386)
-	@$(call build_ffi,ppc)
-	@$(call build_ffi,x86_64)
+	@for arch in $(ARCHES); do $(call build_ffi,$$arch);done
 	
 	# Assemble into a FAT (i386, ppc) library
 	@mkdir -p $(BUILD_DIR)/libffi/.libs
 	env MACOSX_DEPLOYMENT_TARGET=10.4 /usr/bin/libtool -static -o $@ \
-            $(BUILD_DIR)/libffi-i386/.libs/libffi_convenience.a \
-	    $(BUILD_DIR)/libffi-x86_64/.libs/libffi_convenience.a \
-	    $(BUILD_DIR)/libffi-ppc/.libs/libffi_convenience.a
+	    $(foreach arch, $(ARCHES),$(BUILD_DIR)/libffi-$(arch)/.libs/libffi_convenience.a)
 	@mkdir -p $(LIBFFI_BUILD_DIR)/include
 	$(RM) $(LIBFFI_BUILD_DIR)/include/ffi.h
 	@( \
@@ -42,3 +51,4 @@ $(LIBFFI):
 		printf "#endif\n";\
 	) > $(LIBFFI_BUILD_DIR)/include/ffitarget.h
 	
+
