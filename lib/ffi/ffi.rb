@@ -251,10 +251,14 @@ module FFI::Library
     #
     # Attach the invoker to this module as 'mname'.
     #
+    arity = invoker.arity
+    args = 1.upto(arity).map {|i| "a#{i}" }.join(",")
+    args += "," if arity > 0
+    call = arity <=3 ? "call#{arity}" : "call"
     self.module_eval <<-code
       @ffi_invoker_#{mname} = invoker
-      def self.#{mname}(*args, &block)
-        @ffi_invoker_#{mname}.call(*args, &block)
+      def self.#{mname}(#{args} &block)
+        @ffi_invoker_#{mname}.#{call}(#{args} &block)
       end
     code
     invoker
