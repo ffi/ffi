@@ -235,30 +235,39 @@ module FFI::Library
     lib = @ffi_lib
     convention = @ffi_convention ? @ffi_convention : :default
     # Convert :foo to the native type
+    callback_count = 0
     arg_types.map! { |e|
       begin
         FFI.find_type(e)
       rescue FFI::TypeError
         if defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(e)
+          callback_count += 1
           @ffi_callbacks[e]
         else
           e
         end
       end
     }
-    invoker = FFI.create_invoker lib, cname.to_s, arg_types, ret_type, convention    
+    invoker = FFI.create_invoker lib, cname.to_s, arg_types, ret_type, convention
     raise ArgumentError, "Unable to find function '#{cname}' to bind to #{self.name}.#{mname}" unless invoker
+
+    # Setup the parameter list for the module function as (a1, a2)
+    arity = arg_types.length
+    params = 1.upto(arity).map {|i| "a#{i}" }.join(",")
+    
+    # Always use rest args for functions with callback parameters
+    if callback_count > 0
+      params = "*args, &block"
+    end
+    call = arity <= 3 && callback_count < 1 ? "call#{arity}" : "call"
+
     #
     # Attach the invoker to this module as 'mname'.
     #
-    arity = invoker.arity
-    args = 1.upto(arity).map {|i| "a#{i}" }.join(",")
-    args += "," if arity > 0
-    call = arity <=3 ? "call#{arity}" : "call"
     self.module_eval <<-code
       @ffi_invoker_#{mname} = invoker
-      def self.#{mname}(#{args} &block)
-        @ffi_invoker_#{mname}.#{call}(#{args} &block)
+      def self.#{mname}(#{params})
+        @ffi_invoker_#{mname}.#{call}(#{params})
       end
     code
     invoker

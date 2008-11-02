@@ -133,16 +133,12 @@ typedef union {
     float f32;
     double f64;
 } FFIStorage;
-static VALUE
-invoker_call(int argc, VALUE* argv, VALUE self)
+
+static void
+ffi_arg_setup(Invoker* invoker, int argc, VALUE* argv, FFIStorage *params, void** ffiValues)
 {
-    Invoker* invoker;
-    FFIStorage params[MAX_PARAMETERS], retval;
-    void* ffiValues[MAX_PARAMETERS];
     VALUE callbackProc = Qnil;
     int i, argidx, cbidx;
-
-    Data_Get_Struct(self, Invoker, invoker);
     if (argc < invoker->paramCount && invoker->callbackCount == 1 && rb_block_given_p()) {
         callbackProc = rb_block_proc();
     } else if (argc != invoker->paramCount) {
@@ -219,13 +215,23 @@ invoker_call(int argc, VALUE* argv, VALUE self)
                 } else {
                     params[i].ptr = callback_param(argv[argidx], invoker->callbackParameters[cbidx++]);
                     ++argidx;
-                }                
+                }
                 break;
             default:
                 rb_raise(rb_eArgError, "Invalid parameter type: %d", invoker->paramTypes[i]);
         }
         ffiValues[i] = &params[i];
     }
+}
+static VALUE
+invoker_call(int argc, VALUE* argv, VALUE self)
+{
+    Invoker* invoker;
+    FFIStorage params[MAX_PARAMETERS], retval;
+    void* ffiValues[MAX_PARAMETERS];
+
+    Data_Get_Struct(self, Invoker, invoker);
+    ffi_arg_setup(invoker, argc, argv, params, ffiValues);
     ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
     return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
 }
@@ -237,6 +243,44 @@ invoker_call0(VALUE self)
     Data_Get_Struct(self, Invoker, invoker);
     void* ffiValues[] = { NULL };
     FFIStorage retval;
+    ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
+    return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
+}
+
+static VALUE
+invoker_call1(VALUE self, VALUE arg1)
+{
+    Invoker* invoker;
+    Data_Get_Struct(self, Invoker, invoker);
+    void* ffiValues[1];
+    FFIStorage retval, params[1];
+    ffi_arg_setup(invoker, 1, &arg1, params, ffiValues);
+    ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
+    return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
+}
+
+static VALUE
+invoker_call2(VALUE self, VALUE arg1, VALUE arg2)
+{
+    Invoker* invoker;
+    Data_Get_Struct(self, Invoker, invoker);
+    void* ffiValues[2];
+    FFIStorage retval, params[2];
+    VALUE argv[] = { arg1, arg2 };
+    ffi_arg_setup(invoker, 2, argv, params, ffiValues);
+    ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
+    return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
+}
+
+static VALUE
+invoker_call3(VALUE self, VALUE arg1, VALUE arg2, VALUE arg3)
+{
+    Invoker* invoker;
+    Data_Get_Struct(self, Invoker, invoker);
+    void* ffiValues[3];
+    FFIStorage retval, params[3];
+    VALUE argv[] = { arg1, arg2, arg3 };
+    ffi_arg_setup(invoker, 3, argv, params, ffiValues);
     ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
     return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
 }
@@ -292,9 +336,9 @@ rb_FFI_Invoker_Init()
     rb_define_singleton_method(classInvoker, "new", invoker_new, 5);
     rb_define_method(classInvoker, "call", invoker_call, -1);
     rb_define_method(classInvoker, "call0", invoker_call0, 0);
-    rb_define_method(classInvoker, "call1", invoker_call, -1);
-    rb_define_method(classInvoker, "call2", invoker_call, -1);
-    rb_define_method(classInvoker, "call3", invoker_call, -1);
+    rb_define_method(classInvoker, "call1", invoker_call1, 1);
+    rb_define_method(classInvoker, "call2", invoker_call2, 2);
+    rb_define_method(classInvoker, "call3", invoker_call3, 3);
     rb_define_method(classInvoker, "arity", invoker_arity, 0);
     cbTableID = rb_intern("__ffi_callback_table__");
 }
