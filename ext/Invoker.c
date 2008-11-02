@@ -240,9 +240,10 @@ static VALUE
 invoker_call0(VALUE self)
 {
     Invoker* invoker;
-    Data_Get_Struct(self, Invoker, invoker);
     void* ffiValues[] = { NULL };
     FFIStorage retval;
+    
+    Data_Get_Struct(self, Invoker, invoker);
     ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
     return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
 }
@@ -251,9 +252,10 @@ static VALUE
 invoker_call1(VALUE self, VALUE arg1)
 {
     Invoker* invoker;
-    Data_Get_Struct(self, Invoker, invoker);
     void* ffiValues[1];
     FFIStorage retval, params[1];
+
+    Data_Get_Struct(self, Invoker, invoker);
     ffi_arg_setup(invoker, 1, &arg1, params, ffiValues);
     ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
     return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
@@ -263,10 +265,11 @@ static VALUE
 invoker_call2(VALUE self, VALUE arg1, VALUE arg2)
 {
     Invoker* invoker;
-    Data_Get_Struct(self, Invoker, invoker);
     void* ffiValues[2];
     FFIStorage retval, params[2];
     VALUE argv[] = { arg1, arg2 };
+
+    Data_Get_Struct(self, Invoker, invoker);
     ffi_arg_setup(invoker, 2, argv, params, ffiValues);
     ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
     return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
@@ -276,10 +279,11 @@ static VALUE
 invoker_call3(VALUE self, VALUE arg1, VALUE arg2, VALUE arg3)
 {
     Invoker* invoker;
-    Data_Get_Struct(self, Invoker, invoker);
     void* ffiValues[3];
     FFIStorage retval, params[3];
     VALUE argv[] = { arg1, arg2, arg3 };
+
+    Data_Get_Struct(self, Invoker, invoker);
     ffi_arg_setup(invoker, 3, argv, params, ffiValues);
     ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
     return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
