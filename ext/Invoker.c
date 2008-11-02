@@ -33,6 +33,7 @@ static VALUE invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameter
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
 static VALUE invoker_call(int argc, VALUE* argv, VALUE self);
+static VALUE invoker_call0(VALUE self);
 static VALUE invoker_arity(VALUE self);
 static void* callback_param(VALUE proc, VALUE cbinfo);
 static VALUE classInvoker = Qnil;
@@ -123,20 +124,20 @@ error:
     }
     rb_raise(rb_eRuntimeError, errmsg);
 }
-
+typedef union {
+    signed long i;
+    unsigned long u;
+    signed long long i64;
+    unsigned long long u64;
+    void* ptr;
+    float f32;
+    double f64;
+} FFIStorage;
 static VALUE
 invoker_call(int argc, VALUE* argv, VALUE self)
 {
     Invoker* invoker;
-    union {
-        signed long i;
-        unsigned long u;
-        signed long long i64;
-        unsigned long long u64;
-        void* ptr;
-        float f32;
-        double f64;
-    } params[MAX_PARAMETERS], retval;
+    FFIStorage params[MAX_PARAMETERS], retval;
     void* ffiValues[MAX_PARAMETERS];
     VALUE callbackProc = Qnil;
     int i, argidx, cbidx;
@@ -230,6 +231,17 @@ invoker_call(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
+invoker_call0(VALUE self)
+{
+    Invoker* invoker;
+    Data_Get_Struct(self, Invoker, invoker);
+    void* ffiValues[] = { NULL };
+    FFIStorage retval;
+    ffi_call(&invoker->cif, FFI_FN(invoker->function), &retval, ffiValues);
+    return rb_FFI_NativeValueToRuby(invoker->returnType, &retval);
+}
+
+static VALUE
 invoker_arity(VALUE self)
 {
     Invoker* invoker;
@@ -279,7 +291,7 @@ rb_FFI_Invoker_Init()
     classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_define_singleton_method(classInvoker, "new", invoker_new, 5);
     rb_define_method(classInvoker, "call", invoker_call, -1);
-    rb_define_method(classInvoker, "call0", invoker_call, -1);
+    rb_define_method(classInvoker, "call0", invoker_call0, 0);
     rb_define_method(classInvoker, "call1", invoker_call, -1);
     rb_define_method(classInvoker, "call2", invoker_call, -1);
     rb_define_method(classInvoker, "call3", invoker_call, -1);
