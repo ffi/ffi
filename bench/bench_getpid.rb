@@ -15,11 +15,16 @@ end
 
 puts "pid=#{Process.pid} Foo.getpid=#{Posix.getpid}"
 puts "Benchmark FFI getpid performance, #{iter}x calls"
-
-
 10.times {
   puts Benchmark.measure {
     iter.times { Posix.getpid }
+  }
+}
+puts "Benchmark FFI Invoker#call0() getpid performance, #{iter}x calls"
+invoker = FFI.create_invoker('c', 'getpid', [], :uint)
+10.times {
+  puts Benchmark.measure {
+    iter.times { invoker.call0() }
   }
 }
 puts "Benchmark Process.pid performance, #{iter}x calls"
