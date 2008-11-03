@@ -122,7 +122,7 @@ error:
         }
         xfree(invoker);        
     }
-    rb_raise(rb_eRuntimeError, errmsg);
+    rb_raise(rb_eRuntimeError, "%s", errmsg);
 }
 typedef union {
     signed long i;
