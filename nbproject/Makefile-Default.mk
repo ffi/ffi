@@ -17,11 +17,14 @@ CCC=g++
 CXX=g++
 FC=
 
+# Macros
+PLATFORM=GNU-MacOSX
+
 # Include project Makefile
 include ruby-ffi-Makefile.mk
 
 # Object Directory
-OBJECTDIR=build/Default/GNU-MacOSX
+OBJECTDIR=build/Default/${PLATFORM}
 
 # Object Files
 OBJECTFILES=

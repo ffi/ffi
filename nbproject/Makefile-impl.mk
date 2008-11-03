@@ -35,19 +35,19 @@ ALLCONFS=Default
 
 
 # build
-.build-impl: .validate-impl .depcheck-impl
+.build-impl: .build-pre .validate-impl .depcheck-impl
 	@#echo "=> Running $@... Configuration=$(CONF)"
 	${MAKE} -f nbproject/Makefile-${CONF}.mk SUBPROJECTS=${SUBPROJECTS} .build-conf
 
 
 # clean
-.clean-impl: .validate-impl .depcheck-impl
+.clean-impl: .clean-pre .validate-impl .depcheck-impl
 	@#echo "=> Running $@... Configuration=$(CONF)"
 	${MAKE} -f nbproject/Makefile-${CONF}.mk SUBPROJECTS=${SUBPROJECTS} .clean-conf
 
 
 # clobber 
-.clobber-impl: .depcheck-impl
+.clobber-impl: .clobber-pre .depcheck-impl
 	@#echo "=> Running $@..."
 	for CONF in ${ALLCONFS}; \
 	do \
@@ -55,7 +55,7 @@ ALLCONFS=Default
 	done
 
 # all 
-.all-impl: .depcheck-impl
+.all-impl: .all-pre .depcheck-impl
 	@#echo "=> Running $@..."
 	for CONF in ${ALLCONFS}; \
 	do \
@@ -92,7 +92,7 @@ ALLCONFS=Default
 
 
 # help
-.help-impl:
+.help-impl: .help-pre
 	@echo "This makefile supports the following configurations:"
 	@echo "    ${ALLCONFS}"
 	@echo ""

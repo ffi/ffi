@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="47">
+<configurationDescriptor version="51">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="ruby-ffi" displayName="ruby-ffi" projectFiles="true">
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
@@ -22,6 +22,7 @@
         <logicalFolder name="ffi" displayName="ffi" projectFiles="true">
           <itemPath>/Users/wayne/src/ruby-ffi/lib/ffi/callback.rb</itemPath>
           <itemPath>lib/ffi/ffi.rb</itemPath>
+          <itemPath>lib/ffi/io.rb</itemPath>
           <itemPath>lib/ffi/memorypointer.rb</itemPath>
           <itemPath>lib/ffi/platform.rb</itemPath>
           <itemPath>lib/ffi/struct.rb</itemPath>
@@ -48,7 +49,6 @@
       <itemPath>ruby-ffi-Makefile.mk</itemPath>
     </logicalFolder>
   </logicalFolder>
-  <sourceEncoding>UTF-8</sourceEncoding>
   <projectmakefile>ruby-ffi-Makefile.mk</projectmakefile>
   <confs>
     <conf name="Default" type="0">
@@ -132,6 +132,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/ffi.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="lib/ffi/io.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/memorypointer.rb">
