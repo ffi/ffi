@@ -186,8 +186,12 @@ ffi_arg_setup(Invoker* invoker, int argc, VALUE* argv, FFIStorage *params, void*
                 ++argidx;
                 break;
             case STRING:
-                Check_Type(argv[argidx], T_STRING);
-                params[i].ptr = StringValuePtr(argv[argidx]);
+                if (TYPE(argv[argidx] == T_NIL)) {
+                    params[i].ptr = NULL;
+                } else {
+                    Check_Type(argv[argidx], T_STRING);
+                    params[i].ptr = StringValuePtr(argv[argidx]);
+                }
                 ++argidx;
                 break;
             case POINTER:
