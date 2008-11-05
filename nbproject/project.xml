@@ -8,8 +8,8 @@
             <c-extensions>c</c-extensions>
             <cpp-extensions/>
             <header-extensions>h</header-extensions>
-            <make-dep-projects/>
             <sourceEncoding>UTF-8</sourceEncoding>
+            <make-dep-projects/>
         </data>
     </configuration>
 </project>
