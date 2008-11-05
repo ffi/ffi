@@ -24,6 +24,8 @@ module FFI
       "i386"
     when /amd64|x86_64/
       "x86_64"
+    when /ppc|powerpc/
+      "powerpc"
     else
       raise FFI::PlatformError, "Unknown cpu architecture: #{ARCH_}"
     end
