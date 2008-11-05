@@ -46,7 +46,6 @@
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
                    projectFiles="false">
-      <itemPath>libffi.mk</itemPath>
       <itemPath>Makefile</itemPath>
       <itemPath>ruby-ffi-Makefile.mk</itemPath>
     </logicalFolder>
@@ -83,6 +82,7 @@
         <itemTool>3</itemTool>
       </item>
       <item path="ext/Buffer.c">
+        <itemExcluded>true</itemExcluded>
         <itemTool>0</itemTool>
       </item>
       <item path="ext/Callback.c">
@@ -102,6 +102,7 @@
         <itemTool>3</itemTool>
       </item>
       <item path="ext/MemoryPointer.h">
+        <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
       <item path="ext/Platform.c">
@@ -109,12 +110,15 @@
         <itemTool>0</itemTool>
       </item>
       <item path="ext/Platform.h">
+        <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
       <item path="ext/Pointer.c">
-        <itemTool>0</itemTool>
+        <itemExcluded>true</itemExcluded>
+        <itemTool>3</itemTool>
       </item>
       <item path="ext/Pointer.h">
+        <itemExcluded>true</itemExcluded>
         <itemTool>3</itemTool>
       </item>
       <item path="ext/Types.c">
