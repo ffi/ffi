@@ -2,6 +2,7 @@
 require 'mkmf'
 require 'rbconfig'
 dir_config("ffi_c")
+libffi_ok = have_library("ffi", "ffi_prep_closure_loc")
 create_makefile("ffi_c")
 File.open("Makefile", "a") do |mf|
   mf.puts "include $(srcdir)/ffi.mk"
@@ -10,4 +11,4 @@ File.open("Makefile", "a") do |mf|
   else
     mf.puts "include $(srcdir)/libffi.mk"
   end
-end
+end unless libffi_ok
