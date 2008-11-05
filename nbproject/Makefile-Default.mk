@@ -44,14 +44,14 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	cd . && make -f Makefile
+	cd . && rake compile
 
 # Subprojects
 .build-subprojects:
 
 # Clean Targets
 .clean-conf:
-	cd . && make -f Makefile clean
+	cd . && rake clean
 
 # Subprojects
 .clean-subprojects:

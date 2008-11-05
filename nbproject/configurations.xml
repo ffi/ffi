@@ -62,8 +62,8 @@
       <makefileType>
         <makeTool>
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
-          <buildCommand>make -f Makefile</buildCommand>
-          <cleanCommand>make -f Makefile clean</cleanCommand>
+          <buildCommand>rake compile</buildCommand>
+          <cleanCommand>rake clean</cleanCommand>
           <executablePath></executablePath>
           <cCompilerTool>
             <includeDirectories>
