@@ -24,23 +24,22 @@ static VALUE
 memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
 {
     MemoryPointer* p;
-    
-    p = ALLOC(MemoryPointer);
-    memset(p, 0, sizeof(*p));
-    p->autorelease = true;
-    p->memory.size = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
-    p->memory.address = p->memory.size > 0 ? malloc(p->memory.size) : NULL;
-    p->allocated = true;
-
-    if (p->memory.address == NULL) {
-        long size = p->memory.size;
-        xfree(p);
-        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", size);
+    VALUE retval;
+    caddr_t memory;
+    unsigned long msize = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
+    memory = malloc(msize);
+    if (memory == NULL) {
+        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", msize);
     }
-    if (TYPE(clear) == T_TRUE) {
+    retval = Data_Make_Struct(classMemoryPointer, MemoryPointer, NULL, memptr_release, p);
+    p->autorelease = true;
+    p->memory.size = msize;
+    p->memory.address = memory;
+    p->allocated = true;
+    if (TYPE(clear) == T_TRUE && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
-    return Data_Wrap_Struct(classMemoryPointer, NULL, memptr_release, p);
+    return retval;
 }
 
 

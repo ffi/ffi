@@ -21,11 +21,13 @@ VALUE rb_FFI_Callback_class = Qnil;
 static VALUE
 callback_new(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
 {
-    CallbackInfo *cbInfo = ALLOC(CallbackInfo);
+    CallbackInfo *cbInfo;
+    VALUE retval;
     int paramCount = RARRAY_LEN(rbParamTypes);
     ffi_status status;
     int i;
 
+    retval = Data_Make_Struct(classCallback, CallbackInfo, callback_mark, callback_free, cbInfo);
     cbInfo->parameterCount = paramCount;
     cbInfo->parameterTypes = calloc(paramCount, sizeof(NativeType));
     cbInfo->ffiParameterTypes = calloc(paramCount, sizeof(ffi_type *));
@@ -67,7 +69,7 @@ callback_new(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
             callback_free(cbInfo);
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
-    return Data_Wrap_Struct(classCallback, callback_mark, callback_free, cbInfo);
+    return retval;
 }
 
 static void

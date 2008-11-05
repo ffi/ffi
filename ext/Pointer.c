@@ -20,12 +20,12 @@ VALUE
 rb_FFI_Pointer_new(caddr_t addr)
 {
     Pointer* p;
-
-    p = ALLOC(Pointer);
+    VALUE retval;
+    retval = Data_Make_Struct(classPointer, Pointer, NULL, ptr_free, p);
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
     p->parent = Qnil;
-    return Data_Wrap_Struct(classPointer, NULL, ptr_free, p);
+    return retval;
 }
 
 static VALUE
@@ -33,14 +33,15 @@ ptr_plus(VALUE self, VALUE offset)
 {
     AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
     Pointer* p;
+    VALUE retval;
     long off = NUM2LONG(offset);
 
     checkBounds(ptr, off, 1);
-    p = ALLOC(Pointer);
+    retval = Data_Make_Struct(classPointer, Pointer, ptr_mark, ptr_free, p);
     p->memory.address = ptr->address + off;
     p->memory.size = ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off;
     p->parent = self;
-    return Data_Wrap_Struct(classPointer, ptr_mark, ptr_free, p);
+    return retval;
 }
 
 static VALUE

@@ -47,6 +47,7 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     ffi_type* ffiReturnType;
     ffi_abi abi;
     ffi_status ffiStatus;
+    VALUE retval;
     const char* errmsg = "Failed to create invoker";
     int i;
 
@@ -54,9 +55,8 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     Check_Type(parameterTypes, T_ARRAY);
     Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
-    
-    invoker = ALLOC(Invoker);
-    MEMZERO(invoker, Invoker, 1);
+
+    retval = Data_Make_Struct(classInvoker, Invoker, invoker_mark, invoker_free, invoker);
     
     invoker->paramCount = RARRAY_LEN(parameterTypes);
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
@@ -108,7 +108,7 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
         errmsg = "Could not locate function within library";
         goto error;
     }
-    return Data_Wrap_Struct(classInvoker, invoker_mark, invoker_free, invoker);
+    return retval;
 error:
     if (invoker != NULL) {
         if (invoker->dlhandle != NULL) {
