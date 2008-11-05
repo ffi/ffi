@@ -80,6 +80,7 @@ end
 file "Makefile" do
   sh %{#{Gem.ruby} ext/extconf.rb}
 end
+desc "Compile the native module"
 task :compile => "Makefile" do
   sh %{make}
 end
