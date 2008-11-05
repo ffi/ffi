@@ -42,7 +42,6 @@ build: .build-pre .build-impl .build-post
 
 .build-pre:
 # Add your pre 'build' code here...
-	$(shell "/usr/bin/ruby extconf.rb")
 
 .build-post:
 # Add your post 'build' code here...
