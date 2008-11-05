@@ -5,7 +5,7 @@
 #include <ruby.h>
 #include "rbffi.h"
 #include "AbstractMemory.h"
-#include "MemoryPointer.h"
+#include "Pointer.h"
 
 static VALUE memory_put_float32(VALUE self, VALUE offset, VALUE value);
 static VALUE memory_get_float32(VALUE self, VALUE offset);
@@ -99,7 +99,7 @@ memory_put_pointer(VALUE self, VALUE offset, VALUE value)
     AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
     long off = NUM2LONG(offset);
     checkBounds(memory, off, sizeof(void *));
-    if (rb_obj_is_kind_of(value, rb_FFI_MemoryPointer_class)) {        
+    if (rb_obj_is_kind_of(value, rb_FFI_Pointer_class)) {        
         void* tmp = memory_address(value);
         memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else if (TYPE(value) == T_NIL) {
@@ -125,7 +125,7 @@ memory_get_pointer(VALUE self, VALUE offset)
     caddr_t tmp;
     checkBounds(memory, off, sizeof(tmp));
     memcpy(&tmp, memory->address + off, sizeof(tmp));
-    return rb_FFI_MemoryPointer_new(tmp);
+    return rb_FFI_Pointer_new(tmp);
 }
 
 static VALUE

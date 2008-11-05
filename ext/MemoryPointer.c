@@ -4,11 +4,11 @@
 #include <ruby.h>
 #include "rbffi.h"
 #include "AbstractMemory.h"
+#include "Pointer.h"
 #include "MemoryPointer.h"
 
 typedef struct MemoryPointer {
     AbstractMemory memory;
-    VALUE parent;
     bool autorelease;
     bool allocated;
 } MemoryPointer;
@@ -20,19 +20,6 @@ static void memptr_mark(MemoryPointer* ptr);
 VALUE rb_FFI_MemoryPointer_class;
 static VALUE classMemoryPointer = Qnil;
 
-VALUE
-rb_FFI_MemoryPointer_new(caddr_t addr)
-{
-    MemoryPointer* p;
-    
-    p = ALLOC(MemoryPointer);
-    memset(p, 0, sizeof(*p));
-    p->memory.address = addr;
-    p->memory.size = LONG_MAX;
-    p->parent = Qnil;
-    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_release, p);
-}
-
 static VALUE
 memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
 {
@@ -43,7 +30,6 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     p->autorelease = true;
     p->memory.size = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
     p->memory.address = p->memory.size > 0 ? malloc(p->memory.size) : NULL;
-    p->parent = Qnil;
     p->allocated = true;
 
     if (p->memory.address == NULL) {
@@ -54,54 +40,17 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     if (TYPE(clear) == T_TRUE) {
         memset(p->memory.address, 0, p->memory.size);
     }
-    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_release, p);
+    return Data_Wrap_Struct(classMemoryPointer, NULL, memptr_release, p);
 }
 
-static VALUE
-memptr_plus(VALUE self, VALUE offset)
-{
-    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
-    MemoryPointer* p;
-    long off = NUM2LONG(offset);
-
-    checkBounds(&ptr->memory, off, 1);
-    p = ALLOC(MemoryPointer);
-    memset(p, 0, sizeof(*p));
-    p->memory.address = ptr->memory.address + off;;
-    p->memory.size = ptr->memory.size - off;;
-    p->parent = self;
-    p->allocated = false;
-    p->autorelease = true;
-    return Data_Wrap_Struct(classMemoryPointer, memptr_mark, memptr_release, p);
-}
 
 static VALUE
 memptr_inspect(VALUE self)
 {
     MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
     char tmp[100];
-    snprintf(tmp, sizeof(tmp), "#<MemoryPointer address=%p>", ptr->memory.address);
+    snprintf(tmp, sizeof(tmp), "#<MemoryPointer address=%p size=%lu>", ptr->memory.address, ptr->memory.size);
     return rb_str_new2(tmp);
-}
-
-static VALUE
-memptr_null_p(VALUE self)
-{
-    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
-    return ptr->memory.address == NULL ? Qtrue : Qfalse;
-}
-
-static VALUE
-memptr_equals(VALUE self, VALUE other)
-{
-    MemoryPointer* p1 = (MemoryPointer *) DATA_PTR(self);
-    MemoryPointer* p2;
-    
-    if (!rb_obj_is_kind_of(other, classMemoryPointer)) {
-        rb_raise(rb_eArgError, "Comparing MemoryPointer with non MemoryPointer");
-    }
-    p2 = (MemoryPointer *) DATA_PTR(other);
-    return p1->memory.address == p2->memory.address ? Qtrue : Qfalse;
 }
 
 static VALUE
@@ -124,13 +73,6 @@ memptr_autorelease(VALUE self, VALUE autorelease)
     return self;
 }
 
-static VALUE
-memptr_address(VALUE self)
-{
-    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);    
-    return ULL2NUM((uintptr_t) ptr->memory.address);
-}
-
 static void
 memptr_release(MemoryPointer* ptr)
 {
@@ -140,25 +82,14 @@ memptr_release(MemoryPointer* ptr)
     xfree(ptr);
 
 }
-static void
-memptr_mark(MemoryPointer* ptr)
-{
-    if (ptr->parent != Qnil) {
-        rb_gc_mark(ptr->parent);
-    }
-}
 
 void
 rb_FFI_MemoryPointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
-    rb_FFI_MemoryPointer_class = classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_AbstractMemory_class);
+    rb_FFI_MemoryPointer_class = classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_Pointer_class);
     rb_define_singleton_method(classMemoryPointer, "__allocate", memptr_allocate, 3);
     rb_define_method(classMemoryPointer, "inspect", memptr_inspect, 0);
-    rb_define_method(classMemoryPointer, "+", memptr_plus, 1);
-    rb_define_method(classMemoryPointer, "null?", memptr_null_p, 0);
     rb_define_method(classMemoryPointer, "autorelease=", memptr_autorelease, 1);
     rb_define_method(classMemoryPointer, "free", memptr_free, 0);
-    rb_define_method(classMemoryPointer, "address", memptr_address, 0);
-    rb_define_method(classMemoryPointer, "==", memptr_equals, 1);
 }

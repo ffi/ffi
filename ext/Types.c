@@ -1,5 +1,5 @@
 #include <ruby.h>
-#include "MemoryPointer.h"
+#include "Pointer.h"
 #include "Types.h"
 
 ffi_type*
@@ -61,7 +61,7 @@ rb_FFI_NativeValueToRuby(NativeType type, const void* ptr)
         case STRING:
             return rb_str_new2(*(char **) ptr);
         case POINTER:
-            return rb_FFI_MemoryPointer_new(*(void **) ptr);
+            return rb_FFI_Pointer_new(*(void **) ptr);
         default:
             rb_raise(rb_eRuntimeError, "Unknown type: %d", type);
     }

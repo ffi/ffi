@@ -153,7 +153,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
                 param = rb_str_new2(*(char **) parameters[i]);
                 break;
             case POINTER:
-                param = rb_FFI_MemoryPointer_new(*(caddr_t *) parameters[i]);
+                param = rb_FFI_Pointer_new(*(caddr_t *) parameters[i]);
                 break;
             default:
                 param = Qnil;
