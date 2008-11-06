@@ -13,6 +13,7 @@ TEST_BUILD_DIR = $(BUILD_DIR)/libtest
 PREFIX = lib
 LIBEXT = so
 JNIEXT = so
+LIBNAME = $(PREFIX)test.$(LIBEXT)
 
 export MACOSX_DEPLOYMENT_TARGET=10.4
 
@@ -53,7 +54,7 @@ ifeq ($(OS), darwin)
 endif
 
 ifeq ($(OS), linux)
-  SOFLAGS += -Wl,-soname,lib$(LIBNAME).so
+  SOFLAGS += -Wl,-soname,$(LIBNAME).so
 endif
 
 ifeq ($(CPU), sparcv9)
@@ -69,7 +70,7 @@ ifeq ($(MODEL), 64)
   LD += -m64
 endif
 
-LIBTEST = $(BUILD_DIR)/$(PREFIX)$(LIBNAME)test.$(LIBEXT)
+LIBTEST = $(BUILD_DIR)/$(LIBNAME)
 
 all:	$(LIBTEST)
 

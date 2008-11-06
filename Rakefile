@@ -4,6 +4,7 @@ require 'rubygems/specification'
 require "spec/rake/spectask"
 require 'date'
 require 'fileutils'
+require 'rbconfig'
 
 GEM = "ffi"
 GEM_VERSION = "0.2.0"
@@ -84,8 +85,17 @@ desc "Compile the native module"
 task :compile => "Makefile" do
   sh %{make}
 end
+desc "Clean all built files"
 task :clean do
   sh %{make clean} if File.exists?("Makefile")
   FileUtils.rm_rf("build")
   FileUtils.rm_f(Dir["pkg/*.gem", "Makefile"])
+end
+LIBEXT = if Config::CONFIG['host_os'].downcase =~ /darwin/; "dylib"; else "so"; end
+file "build/libtest.#{LIBEXT}" do
+  sh %{make -f libtest/GNUmakefile}
+end
+desc "Test the extension"
+task :test => [ :compile, "build/libtest.#{LIBEXT}", :specs ] do
+
 end
