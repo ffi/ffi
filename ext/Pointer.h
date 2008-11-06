@@ -1,9 +1,3 @@
-/* 
- * File:   Pointer.h
- * Author: wayne
- *
- * Created on November 5, 2008, 2:37 PM
- */
 
 #ifndef _POINTER_H
 #define	_POINTER_H

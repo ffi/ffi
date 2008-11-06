@@ -83,7 +83,9 @@ ptr_address(VALUE self)
 static void
 ptr_mark(Pointer* ptr)
 {
-    rb_gc_mark(ptr->parent);
+    if (ptr->parent != Qnil) {
+        rb_gc_mark(ptr->parent);
+    }
 }
 
 static void
