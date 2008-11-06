@@ -189,6 +189,9 @@ memory_put_string(int argc, VALUE* argv, VALUE self)
         nulTerminate = false;
     }
     checkBounds(ptr, off, len);
+    if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
+        rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
+    }
     memcpy(ptr->address + off, RSTRING_PTR(str), len);
 
     if (nulTerminate) {

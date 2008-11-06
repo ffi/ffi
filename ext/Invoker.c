@@ -190,11 +190,16 @@ ffi_arg_setup(Invoker* invoker, int argc, VALUE* argv, FFIStorage *params, void*
                 ++argidx;
                 break;
             case STRING:
-                if (TYPE(argv[argidx] == T_NIL)) {
+                type = TYPE(argv[argidx]);
+                if (type == T_STRING) {
+                    if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
+                        rb_raise(rb_eSecurityError, "Unsafe string parameter");
+                    }
+                    params[i].ptr = StringValuePtr(argv[argidx]);
+                } else if (type == T_NIL) {
                     params[i].ptr = NULL;
                 } else {
-                    Check_Type(argv[argidx], T_STRING);
-                    params[i].ptr = StringValuePtr(argv[argidx]);
+                    rb_raise(rb_eArgError, "Invalid String value");
                 }
                 ++argidx;
                 break;
@@ -206,6 +211,9 @@ ffi_arg_setup(Invoker* invoker, int argc, VALUE* argv, FFIStorage *params, void*
                 if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class) && type == T_DATA) {
                     params[i].ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
                 } else if (type == T_STRING) {
+                    if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
+                        rb_raise(rb_eSecurityError, "Unsafe string parameter");
+                    }
                     params[i].ptr = StringValuePtr(argv[argidx]);
                 } else if (type == T_NIL) {
                     params[i].ptr = NULL;

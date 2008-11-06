@@ -5,6 +5,7 @@ describe "String tests" do
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
+    attach_function :string_equals, [ :string, :string ], :int
   end
   it "MemoryPointer#get_string returns a tainted string" do
     mp = MemoryPointer.new 1024
@@ -20,5 +21,14 @@ describe "String tests" do
     str = LibTest.ptr_ret_pointer(mp, 0)
     str.should == "test"
     str.tainted?.should == true
+  end
+  it "Tainted String parameter should throw a SecurityError" do
+    $SAFE = 1
+    str = "test"
+    str.taint
+    begin
+      LibTest.string_equals(str, str).should == false
+    rescue SecurityError => e
+    end
   end
 end
