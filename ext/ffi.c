@@ -50,6 +50,7 @@ Init_ffi_c() {
     rb_FFI_Platform_Init();
     rb_FFI_AbstractMemory_Init();
     rb_FFI_Pointer_Init();
+    rb_FFI_AutoPointer_Init();
     rb_FFI_MemoryPointer_Init();
     rb_FFI_Buffer_Init();
     rb_FFI_Callback_Init();

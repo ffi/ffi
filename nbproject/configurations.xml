@@ -5,6 +5,8 @@
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
         <itemPath>ext/AbstractMemory.c</itemPath>
         <itemPath>ext/AbstractMemory.h</itemPath>
+        <itemPath>ext/AutoPointer.c</itemPath>
+        <itemPath>ext/AutoPointer.h</itemPath>
         <itemPath>ext/Buffer.c</itemPath>
         <itemPath>ext/Callback.c</itemPath>
         <itemPath>ext/Callback.h</itemPath>
@@ -22,11 +24,13 @@
       </logicalFolder>
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <logicalFolder name="ffi" displayName="ffi" projectFiles="true">
+          <itemPath>lib/ffi/autopointer.rb</itemPath>
           <itemPath>lib/ffi/callback.rb</itemPath>
           <itemPath>lib/ffi/ffi.rb</itemPath>
           <itemPath>lib/ffi/io.rb</itemPath>
           <itemPath>lib/ffi/memorypointer.rb</itemPath>
           <itemPath>lib/ffi/platform.rb</itemPath>
+          <itemPath>lib/ffi/pointer.rb</itemPath>
           <itemPath>lib/ffi/struct.rb</itemPath>
         </logicalFolder>
         <itemPath>lib/ffi.rb</itemPath>
@@ -79,6 +83,12 @@
       </item>
       <item path="ext/AbstractMemory.h">
         <itemExcluded>true</itemExcluded>
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/AutoPointer.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="ext/AutoPointer.h">
         <itemTool>3</itemTool>
       </item>
       <item path="ext/Buffer.c">
@@ -140,6 +150,9 @@
       <item path="lib/ffi.rb">
         <itemTool>3</itemTool>
       </item>
+      <item path="lib/ffi/autopointer.rb">
+        <itemTool>3</itemTool>
+      </item>
       <item path="lib/ffi/callback.rb">
         <itemTool>3</itemTool>
       </item>
@@ -153,6 +166,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/platform.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="lib/ffi/pointer.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/struct.rb">

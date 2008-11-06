@@ -72,6 +72,7 @@ require 'ffi/buffer'
 require 'ffi/struct'
 require 'ffi/callback'
 require 'ffi/io'
+require 'ffi/autopointer'
 
 module FFI
   TypeDefs = Hash.new
