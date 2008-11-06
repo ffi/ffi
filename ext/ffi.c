@@ -7,7 +7,9 @@
 
 #include "rbffi.h"
 #include "AbstractMemory.h"
+#include "Pointer.h"
 #include "MemoryPointer.h"
+#include "AutoPointer.h"
 #include "Platform.h"
 #include "Types.h"
 

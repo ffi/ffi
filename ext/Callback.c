@@ -1,7 +1,8 @@
 #include <sys/types.h>
 #include <ruby.h>
-#include "MemoryPointer.h"
 #include "AbstractMemory.h"
+#include "Pointer.h"
+#include "MemoryPointer.h"
 #include "Callback.h"
 #include "Types.h"
 #include "rbffi.h"

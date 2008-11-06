@@ -15,7 +15,6 @@ typedef struct MemoryPointer {
 
 static VALUE memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear);
 static void memptr_release(MemoryPointer* ptr);
-static void memptr_mark(MemoryPointer* ptr);
 
 VALUE rb_FFI_MemoryPointer_class;
 static VALUE classMemoryPointer = Qnil;

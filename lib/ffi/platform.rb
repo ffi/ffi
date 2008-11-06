@@ -52,11 +52,11 @@ module FFI
     LIBPREFIX = IS_WINDOWS ? '' : 'lib'
     LIBSUFFIX = case OS
     when /darwin/
-      '.dylib'
+      'dylib'
     when /linux|bsd|solaris/
-      '.so'
+      'so'
     when /win/
-      '.dll'
+      'dll'
     else
       raise PlatformError, "Cannot determine shared library extension for #{OS}"
     end

@@ -201,8 +201,9 @@ module FFI
   def self.create_invoker(lib, name, args, ret, convention = :default)    
     # Mangle the library name to reflect the native library naming conventions
     if lib && File.basename(lib) == lib
+      ext = ".#{Platform::LIBSUFFIX}"
       lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
-      lib += Platform::LIBSUFFIX unless lib =~ /#{Platform::LIBSUFFIX}/
+      lib += ext unless lib =~ /#{ext}/
     end
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
@@ -255,7 +256,7 @@ module FFI::Library
 
     # Setup the parameter list for the module function as (a1, a2)
     arity = arg_types.length
-    params = 1.upto(arity).map {|i| "a#{i}" }.join(",")
+    params = (1..arity).map {|i| "a#{i}" }.join(",")
     
     # Always use rest args for functions with callback parameters
     if callback_count > 0

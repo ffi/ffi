@@ -26,7 +26,7 @@ buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
 
     memory = malloc(msize);
     if (memory == NULL) {
-        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%u bytes", msize);
+        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", msize);
     }
     retval = Data_Make_Struct(classBuffer, Buffer, buffer_mark, buffer_release, p);
     p->memory.size = msize;

@@ -48,6 +48,7 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     ffi_abi abi;
     ffi_status ffiStatus;
     VALUE retval;
+    char errbuf[1024];
     const char* errmsg = "Failed to create invoker";
     int i;
 
@@ -100,12 +101,15 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
 
     invoker->dlhandle = dlopen(libname != Qnil ? StringValuePtr(libname) : NULL, RTLD_LAZY);
     if (invoker->dlhandle == NULL) {
-        errmsg = "No such library";
+        snprintf(errbuf, sizeof(errbuf), "No such library: %s", StringValuePtr(libname));
+        errmsg = errbuf;
         goto error;
     }
     invoker->function = dlsym(invoker->dlhandle, StringValuePtr(cname));
     if (invoker->function == NULL) {
-        errmsg = "Could not locate function within library";
+        snprintf(errbuf, sizeof(errbuf), "Could not locate function '%s' in library '%s'",
+                StringValuePtr(cname), libname != Qnil ? StringValuePtr(libname) : "[current process]");
+        errmsg = errbuf;
         goto error;
     }
     return retval;
@@ -122,7 +126,7 @@ error:
         }
         xfree(invoker);        
     }
-    rb_raise(rb_eRuntimeError, "%s", errmsg);
+    rb_raise(rb_eLoadError, "%s", errmsg);
 }
 typedef union {
     signed long i;
