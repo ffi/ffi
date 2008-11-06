@@ -59,7 +59,7 @@ rb_FFI_NativeValueToRuby(NativeType type, const void* ptr)
         case FLOAT64:
             return rb_float_new(*(double *) ptr);
         case STRING:
-            return rb_str_new2(*(char **) ptr);
+            return rb_tainted_str_new2(*(char **) ptr);
         case POINTER:
             return rb_FFI_Pointer_new(*(void **) ptr);
         default:

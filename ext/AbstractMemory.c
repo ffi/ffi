@@ -171,7 +171,7 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
         len = ((end != NULL) ? end - ptr->address: ptr->size) - off;
     }
     checkBounds(ptr, off, len);
-    return rb_str_new((char *) ptr->address + off, len);
+    return rb_tainted_str_new((char *) ptr->address + off, len);
 }
 
 static VALUE
