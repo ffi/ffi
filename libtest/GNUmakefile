@@ -17,7 +17,7 @@ LIBNAME = $(PREFIX)test.$(LIBEXT)
 
 export MACOSX_DEPLOYMENT_TARGET=10.4
 
-CCACHE=$(shell type -p ccache)
+CCACHE := $(shell type -p ccache)
 
 TEST_OBJS = Benchmark.o BufferTest.o ClosureTest.o LastErrorTest.o NumberTest.o \
 	PointerTest.o ReferenceTest.o StringTest.o StructTest.o
@@ -76,11 +76,13 @@ all:	$(LIBTEST)
 
 $(TEST_BUILD_DIR)/%.o : $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CCACHE) $(CC) $(CFLAGS) -c $< -o $@
 
 $(LIBTEST):  $(TEST_OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(TEST_OBJS) -lm
 
 clean::
 	# nothing to do - ant will delete the build dir
-	
+
+debug::
+	@echo "CCACHE=$(CCACHE)"	

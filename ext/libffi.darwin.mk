@@ -1,5 +1,6 @@
 # -*- makefile -*-
 ARCHES := 
+CCACHE := $(shell type -p ccache)
 ifneq ($(findstring -arch ppc,$(CFLAGS)),)
   ARCHES += ppc
 endif
@@ -18,7 +19,7 @@ build_ffi = \
 	(if [ ! -f $(BUILD_DIR)/libffi-$(1)/Makefile ]; then \
 	    echo "Configuring libffi for $(1)"; \
 	    cd $(BUILD_DIR)/libffi-$(1) && \
-	      env CFLAGS="-arch $(1) $(FFI_CFLAGS)" LDFLAGS="-arch $(1)" \
+	      env CC="$(CCACHE) $(CC)" CFLAGS="-arch $(1) $(FFI_CFLAGS)" LDFLAGS="-arch $(1)" \
 		$(FFI_CONFIGURE) --host=$(1)-apple-darwin > /dev/null; \
 	fi); \
 	env MACOSX_DEPLOYMENT_TARGET=10.4 $(MAKE) -C $(BUILD_DIR)/libffi-$(1)
