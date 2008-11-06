@@ -17,6 +17,7 @@ static VALUE memory_get_pointer(VALUE self, VALUE offset);
 static inline caddr_t memory_address(VALUE self);
 VALUE rb_FFI_AbstractMemory_class = Qnil;
 static VALUE classMemory = Qnil;
+static ID to_ptr = 0;
 
 #define ADDRESS(self, offset) (memory_address((self)) + NUM2ULONG(offset))
 #ifndef RARRAY_LEN
@@ -98,19 +99,29 @@ memory_put_pointer(VALUE self, VALUE offset, VALUE value)
 { 
     AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
     long off = NUM2LONG(offset);
+    const int type = TYPE(value);
     checkBounds(memory, off, sizeof(void *));
-    if (rb_obj_is_kind_of(value, rb_FFI_Pointer_class)) {        
+
+    if (rb_obj_is_kind_of(value, rb_FFI_Pointer_class) && type == T_DATA) {
         void* tmp = memory_address(value);
         memcpy(memory->address + off, &tmp, sizeof(tmp));
-    } else if (TYPE(value) == T_NIL) {
+    } else if (type == T_NIL) {
         void* tmp = NULL;
         memcpy(memory->address + off, &tmp, sizeof(tmp));
-    } else if (TYPE(value) == T_FIXNUM) {
+    } else if (type == T_FIXNUM) {
         uintptr_t tmp = (uintptr_t) FIX2INT(value);
         memcpy(memory->address + off, &tmp, sizeof(tmp));
-    } else if (TYPE(value) == T_BIGNUM) {
+    } else if (type == T_BIGNUM) {
         uintptr_t tmp = (uintptr_t) NUM2ULL(value);
         memcpy(memory->address + off, &tmp, sizeof(tmp));
+    } else if (rb_respond_to(value, to_ptr)) {
+        VALUE ptr = rb_funcall2(value, to_ptr, 0, NULL);
+        if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
+            void* tmp = memory_address(ptr);
+            memcpy(memory->address + off, &tmp, sizeof(tmp));
+        } else {
+            rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
+        }
     } else {
         rb_raise(rb_eArgError, "value is not a pointer");
     }
@@ -253,5 +264,7 @@ rb_FFI_AbstractMemory_Init()
     rb_define_method(classMemory, "put_string", memory_put_string, -1);
     rb_define_method(classMemory, "clear", memory_clear, 0);
     rb_define_method(classMemory, "total", memory_size, 0);
+
+    to_ptr = rb_intern("to_ptr");
 }
 

@@ -44,6 +44,7 @@
         </logicalFolder>
         <itemPath>specs/buffer_spec.rb</itemPath>
         <itemPath>specs/callback_spec.rb</itemPath>
+        <itemPath>specs/pointer_spec.rb</itemPath>
         <itemPath>specs/spec_helper.rb</itemPath>
       </logicalFolder>
     </logicalFolder>
@@ -178,6 +179,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="specs/callback_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/pointer_spec.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="specs/rbx/attach_function_spec.rb">

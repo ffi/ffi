@@ -10,7 +10,7 @@
 #include "compat.h"
 
 #include "AbstractMemory.h"
-#include "MemoryPointer.h"
+#include "Pointer.h"
 #include "Platform.h"
 #include "Callback.h"
 #include "Types.h"
@@ -37,7 +37,7 @@ static VALUE invoker_call0(VALUE self);
 static VALUE invoker_arity(VALUE self);
 static void* callback_param(VALUE proc, VALUE cbinfo);
 static VALUE classInvoker = Qnil;
-static ID cbTableID;
+static ID cbTableID, to_ptr;
 
 static VALUE
 invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes, 
@@ -138,7 +138,7 @@ static void
 ffi_arg_setup(Invoker* invoker, int argc, VALUE* argv, FFIStorage *params, void** ffiValues)
 {
     VALUE callbackProc = Qnil;
-    int i, argidx, cbidx;
+    int i, argidx, cbidx, type;
     if (argc < invoker->paramCount && invoker->callbackCount == 1 && rb_block_given_p()) {
         callbackProc = rb_block_proc();
     } else if (argc != invoker->paramCount) {
@@ -198,16 +198,25 @@ ffi_arg_setup(Invoker* invoker, int argc, VALUE* argv, FFIStorage *params, void*
             case BUFFER_IN:
             case BUFFER_OUT:
             case BUFFER_INOUT:
-                if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class)) {
+                type = TYPE(argv[argidx]);
+                if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class) && type == T_DATA) {
                     params[i].ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
-                } else if (TYPE(argv[argidx]) == T_STRING) {
+                } else if (type == T_STRING) {
                     params[i].ptr = StringValuePtr(argv[argidx]);
-                } else if (TYPE(argv[argidx] == T_NIL)) {
+                } else if (type == T_NIL) {
                     params[i].ptr = NULL;
-                } else if (TYPE(argv[argidx] == T_FIXNUM)) {
+                } else if (type == T_FIXNUM) {
                     params[i].ptr = (void *) (uintptr_t) FIX2INT(argv[argidx]);
-                } else if (TYPE(argv[argidx] == T_BIGNUM)) {
+                } else if (type == T_BIGNUM) {
                     params[i].ptr = (void *) (uintptr_t) NUM2ULL(argv[argidx]);
+                } else if (rb_respond_to(argv[argidx], to_ptr)) {
+                    VALUE ptr = rb_funcall2(argv[argidx], to_ptr, 0, NULL);
+                    if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
+                        params[i].ptr = ((AbstractMemory *) DATA_PTR(ptr))->address;
+                    } else {
+                        rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
+                    }
+
                 } else {
                     rb_raise(rb_eArgError, ":pointer argument is not a valid pointer");
                 }
@@ -349,4 +358,5 @@ rb_FFI_Invoker_Init()
     rb_define_method(classInvoker, "call3", invoker_call3, 3);
     rb_define_method(classInvoker, "arity", invoker_arity, 0);
     cbTableID = rb_intern("__ffi_callback_table__");
+    to_ptr = rb_intern("to_ptr");
 }
