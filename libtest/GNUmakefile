@@ -44,7 +44,7 @@ ifeq ($(OS), win32)
 endif
 ifeq ($(OS), darwin)
   CFLAGS += -arch i386 -arch ppc -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -DTARGET_RT_MAC_CFM=0
-  LDFLAGS = -arch i386 -arch ppc -arch x86_64 -dynamiclib -framework JavaVM \
+  LDFLAGS = -arch i386 -arch ppc -arch x86_64 -dynamiclib \
 	-Wl,-syslibroot,$(SDKROOT) -mmacosx-version-min=10.4
   LIBEXT = dylib
   JNIEXT = jnilib
