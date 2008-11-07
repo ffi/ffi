@@ -110,6 +110,27 @@ module FFI
         ptr.get_uint64(@off)
       end
     end
+    class PointerField < Field
+      def self.size; Platform::ADDRESS_SIZE; end
+      def self.align; ADDRESS_ALIGN; end
+      def put(ptr, val)
+        ptr.put_pointer(@off, val)
+      end
+      def get(ptr)
+        ptr.get_pointer(@off)
+      end
+    end
+    class StringField < Field
+      def self.size; Platform::ADDRESS_SIZE; end
+      def self.align; ADDRESS_ALIGN; end
+      def put(ptr, val)
+        raise ArgumentError, "Cannot set :string fields"
+      end
+      def get(ptr)
+        strp = ptr.get_pointer(@off)
+        (strp.nil? || strp.null?) ? nil : strp.get_string(0)
+      end
+    end
     def initialize
       @fields = {}
       @size = 0
@@ -136,6 +157,10 @@ module FFI
         Signed64
       when :ulong_long, NativeType::UINT64
         Unsigned64
+      when :pointer, NativeType::POINTER
+        PointerField
+      when :string, NativeType::STRING
+        StringField
       else
         raise ArgumentError, "Unknown type: #{type}"
       end
