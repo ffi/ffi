@@ -60,7 +60,7 @@ module FFI
   class SignatureError < NativeError; end
   
   class NotFoundError < NativeError
-    def initialize(function, libraries)
+    def initialize(function, *libraries)
       super("Function '#{function}' not found in [#{libraries[0].nil? ? 'current process' : libraries.join(", ")}]")
     end
   end
@@ -235,8 +235,9 @@ module FFI::Library
 
   def attach_function(mname, a3, a4, a5=nil)
     cname, arg_types, ret_type = a5 ? [ a3, a4, a5 ] : [ mname.to_s, a3, a4 ]
-    libraries = @ffi_lib || [ nil ]
-    convention = @ffi_convention ? @ffi_convention : :default
+    libraries = defined?(@ffi_lib) ? @ffi_lib : [ nil ]
+    convention = defined?(@ffi_convention) ? @ffi_convention : :default
+    
     # Convert :foo to the native type
     callback_count = 0
     arg_types.map! { |e|
