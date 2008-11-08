@@ -229,7 +229,7 @@ module FFI
     end
   end
   class Struct < BaseStruct
-    def self.jruby_layout(spec)
+    def self.hash_layout(spec)
       raise "Ruby version not supported" if RUBY_VERSION =~ /1.8.*/
       builder = FFI::StructLayoutBuilder.new
       spec[0].each do |name,type|
@@ -237,7 +237,7 @@ module FFI
       end
       builder.build
     end
-    def self.rubinius_layout(spec)
+    def self.array_layout(spec)
       builder = FFI::StructLayoutBuilder.new
       i = 0
       while i < spec.size
@@ -252,36 +252,10 @@ module FFI
     def self.layout(*spec)
 
       return @layout if spec.size == 0
-      cspec = spec[0].kind_of?(Hash) ? jruby_layout(spec) : rubinius_layout(spec)
+      cspec = spec[0].kind_of?(Hash) ? hash_layout(spec) : array_layout(spec)
 
       @layout = cspec unless self == FFI::Struct
       @size = cspec.size
-      return cspec
-    end
-    def self.config(base, *fields)
-      config = Config::CONFIG
-      @size = config["#{base}.sizeof"]
-    
-      builder = StructLayoutBuilder.new
-    
-      fields.each do |field|
-        offset = config["#{base}.#{field}.offset"]
-        size   = config["#{base}.#{field}.size"]
-        type   = config["#{base}.#{field}.type"]
-        type   = type ? type.to_sym : FFI.size_to_type(size)
-
-        code = FFI.find_type type
-        if (code == NativeType::CHAR_ARRAY)
-          builder.add_char_array(field.to_s, size, offset)
-        else
-          builder.add_field(field.to_s, code, offset)
-        end
-      end
-      cspec = builder.build
-    
-      @layout = cspec
-      @size = cspec.size if @size < cspec.size
-    
       return cspec
     end
   end
