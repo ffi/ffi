@@ -445,7 +445,7 @@ rb_FFI_Invoker_Init()
     rb_define_method(classInvoker, "call3", invoker_call3, 3);
     rb_define_method(classInvoker, "arity", invoker_arity, 0);
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
-    rb_define_singleton_method(classVariadicInvoker, "new", variadic_invoker_new, 4);
+    rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 4);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     cbTableID = rb_intern("__ffi_callback_table__");
     to_ptr = rb_intern("to_ptr");

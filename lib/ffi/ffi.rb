@@ -73,6 +73,7 @@ require 'ffi/struct'
 require 'ffi/callback'
 require 'ffi/io'
 require 'ffi/autopointer'
+require 'ffi/variadic'
 
 module FFI
   TypeDefs = Hash.new
@@ -169,6 +170,7 @@ module FFI
   add_typedef(NativeType::BUFFER_IN, :buffer_in)
   add_typedef(NativeType::BUFFER_OUT, :buffer_out)
   add_typedef(NativeType::BUFFER_INOUT, :buffer_inout)
+  add_typedef(NativeType::VARARGS, :varargs)
   
   TypeSizes = {
     1 => :char,
@@ -210,8 +212,12 @@ module FFI
     library = NativeLibrary.open(lib, 0)
     function = library.find_symbol(name)
     raise NotFoundError.new(name, lib) unless function
-    invoker = FFI::Invoker.new(library, function, args.map { |e| find_type(e) },
-      find_type(ret), convention.to_s)
+    args = args.map {|e| find_type(e) }
+    if args.length > 0 && args[args.length - 1] == FFI::NativeType::VARARGS
+      invoker = FFI::VariadicInvoker.new(library, function, args, find_type(ret), convention.to_s)
+    else
+      invoker = FFI::Invoker.new(library, function, args, find_type(ret), convention.to_s)
+    end
     raise NotFoundError.new(name, lib) unless invoker
     return invoker
   end
@@ -271,10 +277,10 @@ module FFI::Library
     params = (1..arity).map {|i| "a#{i}" }.join(",")
     
     # Always use rest args for functions with callback parameters
-    if callback_count > 0
+    if callback_count > 0 || invoker.kind_of?(VariadicInvoker)
       params = "*args, &block"
     end
-    call = arity <= 3 && callback_count < 1 ? "call#{arity}" : "call"
+    call = arity <= 3 && callback_count < 1 && !invoker.kind_of?(VariadicInvoker)? "call#{arity}" : "call"
 
     #
     # Attach the invoker to this module as 'mname'.

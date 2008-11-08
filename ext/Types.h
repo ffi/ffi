@@ -36,7 +36,9 @@ typedef enum {
      */
     STRING,
     /** A Rubinus :string arg - copies data both ways, and nul terminates */
-    RBXSTRING
+    RBXSTRING,
+    /** The function takes a variable number of arguments */
+    VARARGS,
 } NativeType;
 
 #include <ffi.h>
