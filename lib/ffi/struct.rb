@@ -241,11 +241,17 @@ module FFI
       builder = FFI::StructLayoutBuilder.new
       i = 0
       while i < spec.size
-        name, type, offset = spec[i, 3]
-      
+        name, type = spec[i, 2]
+        i += 2
         code = FFI.find_type(type)
-        builder.add_field(name, code, offset)
-        i += 3
+        # If the next param is a Fixnu, it specifies the offset
+        if spec[i].kind_of?(Fixnum)
+          offset = spec[i]
+          i += 1
+          builder.add_field(name, code, offset)
+        else
+          builder.add_field(name, code)
+        end
       end
       builder.build
     end
