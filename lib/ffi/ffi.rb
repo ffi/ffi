@@ -278,9 +278,12 @@ module FFI::Library
     # Attach the invoker to this module as 'mname'.
     #
     self.module_eval <<-code
-      @#{mname} = invoker
+      @@#{mname} = invoker
       def self.#{mname}(#{params})
-        @#{mname}.#{call}(#{params})
+        @@#{mname}.#{call}(#{params})
+      end
+      def #{mname}(#{params})
+        @@#{mname}.#{call}(#{params})
       end
     code
     invoker
