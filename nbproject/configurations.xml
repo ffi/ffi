@@ -47,6 +47,7 @@
         <itemPath>specs/pointer_spec.rb</itemPath>
         <itemPath>specs/spec_helper.rb</itemPath>
         <itemPath>specs/string_spec.rb</itemPath>
+        <itemPath>specs/struct_spec.rb</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -201,6 +202,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="specs/string_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/struct_spec.rb">
         <itemTool>3</itemTool>
       </item>
     </conf>

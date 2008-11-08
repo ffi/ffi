@@ -56,8 +56,10 @@ memptr_free(VALUE self)
 {
     MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
     if (ptr->allocated) {
-        free(ptr->memory.address);
-        ptr->memory.address = NULL;
+        if (ptr->memory.address != NULL) {
+            free(ptr->memory.address);
+            ptr->memory.address = NULL;
+        }
         ptr->allocated = false;
     }
     return self;
@@ -74,8 +76,9 @@ memptr_autorelease(VALUE self, VALUE autorelease)
 static void
 memptr_release(MemoryPointer* ptr)
 {
-    if (ptr->autorelease && ptr->allocated) {
+    if (ptr->autorelease && ptr->allocated && ptr->memory.address != NULL) {
         free(ptr->memory.address);
+        ptr->memory.address = NULL;
     }
     xfree(ptr);
 

@@ -47,9 +47,8 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     ffi_type* ffiReturnType;
     ffi_abi abi;
     ffi_status ffiStatus;
-    VALUE retval;
-    char errbuf[1024];
-    const char* errmsg = "Failed to create invoker";
+    VALUE retval = Qnil;
+    VALUE eType = rb_eLoadError;
     int i;
 
     Check_Type(cname, T_STRING);
@@ -58,7 +57,15 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     Check_Type(convention, T_STRING);
 
     retval = Data_Make_Struct(classInvoker, Invoker, invoker_mark, invoker_free, invoker);
-    
+    invoker->dlhandle = dlopen(libname != Qnil ? StringValuePtr(libname) : NULL, RTLD_LAZY);
+    if (invoker->dlhandle == NULL) {
+        rb_raise(rb_eLoadError, "No such library: %s", StringValuePtr(libname));
+    }
+    invoker->function = dlsym(invoker->dlhandle, StringValuePtr(cname));
+    if (invoker->function == NULL) {
+        rb_raise(rb_eLoadError, "Could not locate function '%s' in library '%s'",
+                StringValuePtr(cname), libname != Qnil ? StringValuePtr(libname) : "[current process]");
+    }
     invoker->paramCount = RARRAY_LEN(parameterTypes);
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
     invoker->ffiParamTypes = ALLOC_N(ffi_type *, invoker->paramCount);
@@ -77,56 +84,33 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
             invoker->ffiParamTypes[i] = rb_FFI_NativeTypeToFFI(paramType);
         }
         if (invoker->ffiParamTypes[i] == NULL) {
-            errmsg = "Invalid parameter type";
-            goto error;
+            rb_raise(rb_eArgError, "Invalid parameter type");
         }
     }
     invoker->returnType = FIX2INT(returnType);
     ffiReturnType = rb_FFI_NativeTypeToFFI(invoker->returnType);
     if (ffiReturnType == NULL) {
-        errmsg = "Invalid return type";
-        goto error;
+        rb_raise(rb_eArgError, "Invalid return type");
     }
 #ifdef _WIN32
-    abi = strcmp(StringValuePtr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
+    abi = strcmp(StringValueCPtr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     abi = FFI_DEFAULT_ABI;
 #endif
     ffiStatus = ffi_prep_cif(&invoker->cif, abi, invoker->paramCount,
             ffiReturnType, invoker->ffiParamTypes);
-    if (ffiStatus != FFI_OK) {
-        errmsg = "ffi_prep_cif failed";
-        goto error;
+    switch (ffiStatus) {
+        case FFI_BAD_ABI:
+            rb_raise(rb_eArgError, "Invalid ABI specified");
+        case FFI_BAD_TYPEDEF:
+            rb_raise(rb_eArgError, "Invalid argument type specified");
+        case FFI_OK:
+            break;
+        default:
+            rb_raise(rb_eArgError, "Unknown FFI error");
     }
-
-    invoker->dlhandle = dlopen(libname != Qnil ? StringValuePtr(libname) : NULL, RTLD_LAZY);
-    if (invoker->dlhandle == NULL) {
-        snprintf(errbuf, sizeof(errbuf), "No such library: %s", StringValuePtr(libname));
-        errmsg = errbuf;
-        goto error;
-    }
-    invoker->function = dlsym(invoker->dlhandle, StringValuePtr(cname));
-    if (invoker->function == NULL) {
-        snprintf(errbuf, sizeof(errbuf), "Could not locate function '%s' in library '%s'",
-                StringValuePtr(cname), libname != Qnil ? StringValuePtr(libname) : "[current process]");
-        errmsg = errbuf;
-        goto error;
-    }
+    
     return retval;
-error:
-    if (invoker != NULL) {
-        if (invoker->dlhandle != NULL) {
-            dlclose(invoker->dlhandle);
-        }
-        if (invoker->paramTypes != NULL) {
-            xfree(invoker->paramTypes);
-        }
-        if (invoker->ffiParamTypes != NULL) {
-            xfree(invoker->ffiParamTypes);
-        }
-        xfree(invoker);        
-    }
-    rb_raise(rb_eLoadError, "%s", errmsg);
 }
 typedef union {
     signed long i;
@@ -333,11 +317,25 @@ invoker_mark(Invoker *invoker)
 static void
 invoker_free(Invoker *invoker)
 {
-    xfree(invoker->callbackParameters);
-    xfree(invoker->paramTypes);
-    xfree(invoker->ffiParamTypes);
-    dlclose(invoker->dlhandle);
-    xfree(invoker);
+    if (invoker != NULL) {
+        if (invoker->dlhandle != NULL) {
+            dlclose(invoker->dlhandle);
+            invoker->dlhandle = NULL;
+        }
+        if (invoker->paramTypes != NULL) {
+            xfree(invoker->paramTypes);
+            invoker->paramTypes = NULL;
+        }
+        if (invoker->ffiParamTypes != NULL) {
+            xfree(invoker->ffiParamTypes);
+            invoker->ffiParamTypes = NULL;
+        }
+        if (invoker->callbackParameters != NULL) {
+            xfree(invoker->callbackParameters);
+            invoker->callbackParameters = NULL;
+        }
+        xfree(invoker);
+    }
 }
 
 static void* 

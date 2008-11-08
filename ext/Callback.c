@@ -16,11 +16,10 @@ static VALUE classCallback = Qnil;
 static VALUE classNativeCallback = Qnil;
 static ID callID = Qnil;
 
-//static VALUE classCallbackImpl = Qnil;
 VALUE rb_FFI_Callback_class = Qnil;
 
 static VALUE
-callback_new(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
+callback_new(VALUE klass, VALUE rbReturnType, VALUE rbParamTypes)
 {
     CallbackInfo *cbInfo;
     VALUE retval;
@@ -28,26 +27,20 @@ callback_new(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
     ffi_status status;
     int i;
 
-    retval = Data_Make_Struct(classCallback, CallbackInfo, callback_mark, callback_free, cbInfo);
+    retval = Data_Make_Struct(klass, CallbackInfo, callback_mark, callback_free, cbInfo);
     cbInfo->parameterCount = paramCount;
-    cbInfo->parameterTypes = calloc(paramCount, sizeof(NativeType));
-    cbInfo->ffiParameterTypes = calloc(paramCount, sizeof(ffi_type *));
-    if (cbInfo->parameterTypes == NULL || cbInfo->ffiParameterTypes == NULL) {
-        callback_free(cbInfo);
-        rb_raise(rb_eNoMemError, "Failed to allocate native memory");
-    }
+    cbInfo->parameterTypes = xcalloc(paramCount, sizeof(NativeType));
+    cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
     for (i = 0; i < paramCount; ++i) {
         cbInfo->parameterTypes[i] = FIX2INT(rb_ary_entry(rbParamTypes, i));
         cbInfo->ffiParameterTypes[i] = rb_FFI_NativeTypeToFFI(cbInfo->parameterTypes[i]);
         if (cbInfo->ffiParameterTypes[i] == NULL) {
-            callback_free(cbInfo);
             rb_raise(rb_eArgError, "Unknown argument type: %#x", cbInfo->parameterTypes[i]);
         }
     }
     cbInfo->returnType = FIX2INT(rbReturnType);
     cbInfo->ffiReturnType = rb_FFI_NativeTypeToFFI(cbInfo->returnType);
     if (cbInfo->ffiReturnType == NULL) {
-        callback_free(cbInfo);
         rb_raise(rb_eArgError, "Unknown return type: %#x", cbInfo->returnType);
     }
 #ifdef _WIN32
@@ -59,15 +52,12 @@ callback_new(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
             cbInfo->ffiReturnType, cbInfo->ffiParameterTypes);
     switch (status) {
         case FFI_BAD_ABI:
-            callback_free(cbInfo);
             rb_raise(rb_eArgError, "Invalid ABI specified");
         case FFI_BAD_TYPEDEF:
-            callback_free(cbInfo);
             rb_raise(rb_eArgError, "Invalid argument type specified");
         case FFI_OK:
             break;
         default:
-            callback_free(cbInfo);
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
     return retval;
@@ -83,10 +73,12 @@ callback_free(CallbackInfo* cbInfo)
 {
     if (cbInfo != NULL) {
         if (cbInfo->parameterTypes != NULL) {
-            free(cbInfo->parameterTypes);
+            xfree(cbInfo->parameterTypes);
+            cbInfo->parameterTypes = NULL;
         }
         if (cbInfo->ffiParameterTypes != NULL) {
-            free(cbInfo->ffiParameterTypes);
+            xfree(cbInfo->ffiParameterTypes);
+            cbInfo->ffiParameterTypes = NULL;
         }
         xfree(cbInfo);
     }

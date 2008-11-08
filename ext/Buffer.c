@@ -68,6 +68,7 @@ buffer_release(Buffer* ptr)
 {
     if (ptr->parent == Qnil && ptr->memory.address != NULL) {
         free(ptr->memory.address);
+        ptr->memory.address = NULL;
     }
     xfree(ptr);
 
