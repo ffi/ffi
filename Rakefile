@@ -89,6 +89,7 @@ desc "Clean all built files"
 task :clean do
   sh %{make clean} if File.exists?("Makefile")
   FileUtils.rm_rf("build")
+  FileUtils.rm_rf("conftest.dSYM")
   FileUtils.rm_f(Dir["pkg/*.gem", "Makefile"])
 end
 LIBEXT = if Config::CONFIG['host_os'].downcase =~ /darwin/; "dylib"; else "so"; end
