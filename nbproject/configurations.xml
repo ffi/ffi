@@ -14,6 +14,8 @@
         <itemPath>ext/Invoker.c</itemPath>
         <itemPath>ext/MemoryPointer.c</itemPath>
         <itemPath>ext/MemoryPointer.h</itemPath>
+        <itemPath>ext/NativeLibrary.c</itemPath>
+        <itemPath>ext/NativeLibrary.h</itemPath>
         <itemPath>ext/Platform.c</itemPath>
         <itemPath>ext/Platform.h</itemPath>
         <itemPath>ext/Pointer.c</itemPath>
@@ -116,6 +118,12 @@
       </item>
       <item path="ext/MemoryPointer.h">
         <itemExcluded>true</itemExcluded>
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/NativeLibrary.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="ext/NativeLibrary.h">
         <itemTool>3</itemTool>
       </item>
       <item path="ext/Platform.c">

@@ -207,8 +207,10 @@ module FFI
     end
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
-        
-    invoker = FFI::Invoker.new(lib, name, args.map { |e| find_type(e) },
+    library = NativeLibrary.open(lib, 0)
+    function = library.find_symbol(name)
+    raise NotFoundError.new(name, lib) unless function
+    invoker = FFI::Invoker.new(library, function, args.map { |e| find_type(e) },
       find_type(ret), convention.to_s)
     raise NotFoundError.new(name, lib) unless invoker
     return invoker

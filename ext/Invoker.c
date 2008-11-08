@@ -16,7 +16,7 @@
 #include "Types.h"
 
 typedef struct Invoker {
-    void* dlhandle;
+    VALUE library;
     void* function;
     ffi_cif cif;
     int paramCount;
@@ -28,7 +28,7 @@ typedef struct Invoker {
     VALUE* callbackParameters;
 } Invoker;
 
-static VALUE invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes, 
+static VALUE invoker_new(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
         VALUE returnType, VALUE convention);
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
@@ -40,7 +40,7 @@ static VALUE classInvoker = Qnil;
 static ID cbTableID, to_ptr;
 
 static VALUE
-invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes, 
+invoker_new(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
         VALUE returnType, VALUE convention)
 {
     Invoker* invoker = NULL;
@@ -50,21 +50,14 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     VALUE retval = Qnil;
     int i;
 
-    Check_Type(cname, T_STRING);
     Check_Type(parameterTypes, T_ARRAY);
     Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
-
+    Check_Type(library, T_DATA);
+    Check_Type(function, T_DATA);
+    
     retval = Data_Make_Struct(classInvoker, Invoker, invoker_mark, invoker_free, invoker);
-    invoker->dlhandle = dlopen(libname != Qnil ? StringValuePtr(libname) : NULL, RTLD_LAZY);
-    if (invoker->dlhandle == NULL) {
-        rb_raise(rb_eLoadError, "No such library: %s", StringValuePtr(libname));
-    }
-    invoker->function = dlsym(invoker->dlhandle, StringValuePtr(cname));
-    if (invoker->function == NULL) {
-        rb_raise(rb_eLoadError, "Could not locate function '%s' in library '%s'",
-                StringValuePtr(cname), libname != Qnil ? StringValuePtr(libname) : "[current process]");
-    }
+    invoker->function = ((AbstractMemory *) DATA_PTR(function))->address;
     invoker->paramCount = RARRAY_LEN(parameterTypes);
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
     invoker->ffiParamTypes = ALLOC_N(ffi_type *, invoker->paramCount);
@@ -311,16 +304,15 @@ invoker_mark(Invoker *invoker)
     if (invoker->callbackCount > 0) {
         rb_gc_mark_locations(&invoker->callbackParameters[0], &invoker->callbackParameters[invoker->callbackCount]);
     }
+    if (invoker->library != Qnil) {
+        rb_gc_mark(invoker->library);
+    }
 }
 
 static void
 invoker_free(Invoker *invoker)
 {
     if (invoker != NULL) {
-        if (invoker->dlhandle != NULL) {
-            dlclose(invoker->dlhandle);
-            invoker->dlhandle = NULL;
-        }
         if (invoker->paramTypes != NULL) {
             xfree(invoker->paramTypes);
             invoker->paramTypes = NULL;

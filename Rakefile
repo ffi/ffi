@@ -34,11 +34,13 @@ end
 
 desc "Run all specs"
 Spec::Rake::SpecTask.new("specs") do |t|
+  t.ruby_opts = ["-I", ".", "-I", "lib" ]
   t.spec_opts = ["--format", "specdoc", "--colour"]
   t.spec_files = Dir["spec/**/*_spec.rb"].sort
 end
 desc "Run rubinius specs"
 Spec::Rake::SpecTask.new("rbxspecs") do |t|
+  t.ruby_opts = ["-I.", "-Ilib"]
   t.spec_opts = ["--format", "specdoc", "--colour"]
   t.spec_files = Dir["spec/rbx/*_spec.rb"].sort
 end
