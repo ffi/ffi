@@ -243,12 +243,14 @@ module FFI::Library
     arg_types.map! { |e|
       begin
         FFI.find_type(e)
-      rescue FFI::TypeError
+      rescue FFI::TypeError => ex
         if defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(e)
           callback_count += 1
           @ffi_callbacks[e]
+        elsif e == FFI::Struct || e.superclass == FFI::Struct
+          FFI::NativeType::BUFFER_INOUT
         else
-          e
+          raise ex
         end
       end
     }

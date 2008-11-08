@@ -112,4 +112,34 @@ describe "Struct tests" do
       mp.get_int64(4).should == 0xfee1deadbeef
       end
   end
+  it "Can use Struct subclass as parameter type" do
+    module StructParam
+      extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      class TestStruct < FFI::Struct
+        layout :c, :char
+      end
+      attach_function :struct_field_Signed8, [ TestStruct ], :char
+    end
+  end
+  it "Can use Struct subclass as IN parameter type" do
+    module StructParam
+      extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      class TestStruct < FFI::Struct
+        layout :c, :char
+      end
+      attach_function :struct_field_Signed8, [ TestStruct.in ], :char
+    end
+  end
+  it "Can use Struct subclass as OUT parameter type" do
+    module StructParam
+      extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      class TestStruct < FFI::Struct
+        layout :c, :char
+      end
+      attach_function :struct_field_Signed8, [ TestStruct.out ], :char
+    end
+  end
 end

@@ -227,6 +227,15 @@ module FFI
       @pointer.clear
       self
     end
+    def to_ptr
+      @pointer
+    end
+    def self.in
+      :buffer_in
+    end
+    def self.out
+      :buffer_out
+    end
   end
   class Struct < BaseStruct
     def self.hash_layout(spec)
