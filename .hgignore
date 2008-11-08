@@ -1,6 +1,7 @@
 ^ext/Makefile$
 ^Makefile$
 \.o$
+^conftest.dSYM
 mkmf.log
 nbproject/private
 .dep.inc
