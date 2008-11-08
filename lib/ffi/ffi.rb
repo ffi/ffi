@@ -247,8 +247,8 @@ module FFI::Library
         if defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(e)
           callback_count += 1
           @ffi_callbacks[e]
-        elsif e == FFI::Struct || e.superclass == FFI::Struct
-          FFI::NativeType::BUFFER_INOUT
+        elsif e.is_a?(Class) && e < FFI::Struct
+          FFI::NativeType::POINTER
         else
           raise ex
         end
