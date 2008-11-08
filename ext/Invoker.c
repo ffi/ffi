@@ -48,7 +48,6 @@ invoker_new(VALUE self, VALUE libname, VALUE cname, VALUE parameterTypes,
     ffi_abi abi;
     ffi_status ffiStatus;
     VALUE retval = Qnil;
-    VALUE eType = rb_eLoadError;
     int i;
 
     Check_Type(cname, T_STRING);
