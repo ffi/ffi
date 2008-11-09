@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'rake/gempackagetask'
 require 'rubygems/specification'
-require "spec/rake/spectask"
 require 'date'
 require 'fileutils'
 require 'rbconfig'
@@ -32,36 +31,25 @@ spec = Gem::Specification.new do |s|
   s.files = %w(LICENSE README Rakefile) + Dir.glob("{ext,lib,nbproject,samples,specs}/**/*")
 end
 
-desc "Run all specs"
-Spec::Rake::SpecTask.new("specs") do |t|
-  t.ruby_opts = ["-I", ".", "-I", "lib" ]
-  t.spec_opts = ["--format", "specdoc", "--colour"]
-  t.spec_files = Dir["spec/**/*_spec.rb"].sort
-end
-desc "Run rubinius specs"
-Spec::Rake::SpecTask.new("rbxspecs") do |t|
-  t.ruby_opts = ["-I.", "-Ilib"]
-  t.spec_opts = ["--format", "specdoc", "--colour"]
-  t.spec_files = Dir["spec/rbx/*_spec.rb"].sort
-end
-
 if RUBY_PLATFORM == "java"
-  desc "Run specs"
+  desc "Run all specs"
   task :specs do
     sh %{#{Gem.ruby} -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
   end
+  desc "Run rubinius specs"
   task :rbxspecs do
     sh %{#{Gem.ruby} -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
   end
 else
-  desc "Run specs"
+  desc "Run all specs"
   task :specs do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -I. -Ilib -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
   end
+  desc "Run rubinius specs"
   task :rbxspecs do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -I. -Ilib -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
   end
 end
 
