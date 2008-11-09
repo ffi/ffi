@@ -121,6 +121,7 @@
         <itemTool>3</itemTool>
       </item>
       <item path="ext/NativeLibrary.c">
+        <itemExcluded>true</itemExcluded>
         <itemTool>0</itemTool>
       </item>
       <item path="ext/NativeLibrary.h">

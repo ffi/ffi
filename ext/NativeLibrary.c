@@ -20,11 +20,12 @@ library_open(VALUE klass, VALUE libname, VALUE libflags)
 {
     VALUE retval;
     Library* library;
-    
+ 
     Check_Type(libflags, T_FIXNUM);
 
     retval = Data_Make_Struct(klass, Library, library_mark, library_free, library);
-    library->handle = dlopen(libname != Qnil ? StringValueCStr(libname) : NULL, FIX2INT(libflags));
+    library->handle = dlopen(libname != Qnil ? StringValueCStr(libname) : NULL,
+        RTLD_LAZY);
     if (library->handle == NULL) {
         rb_raise(rb_eLoadError, "Could not open library '%s': %s",
                 libname != Qnil ? StringValueCStr(libname) : "[current process]",
@@ -62,7 +63,7 @@ library_free(Library* library)
     if (library != NULL) {
         // dlclose() on MacOS tends to segfault - avoid it
 #ifndef __APPLE__
-        if (library->handle != NULL && library->handle != RTLD_DEFAULT) {
+        if (library->handle != NULL) {
             dlclose(library->handle);
         }
 #endif
@@ -80,3 +81,4 @@ rb_FFI_NativeLibrary_Init()
     rb_define_method(classLibrary, "find_symbol", library_dlsym, 1);
     rb_define_method(classLibrary, "last_error", library_dlerror, 0);
 }
+

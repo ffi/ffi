@@ -266,21 +266,21 @@ module FFI::Library
     invoker = libraries.collect do |lib|
       begin
         FFI.create_invoker lib, cname.to_s, arg_types, ret_type, convention
-      rescue Exception
+      rescue LoadError => ex
         nil
       end
     end.compact.shift
-    raise FFI::NotFoundError.new(cname.to_s, libraries) unless invoker
+    raise FFI::NotFoundError.new(cname.to_s, *libraries) unless invoker
 
     # Setup the parameter list for the module function as (a1, a2)
     arity = arg_types.length
     params = (1..arity).map {|i| "a#{i}" }.join(",")
     
     # Always use rest args for functions with callback parameters
-    if callback_count > 0 || invoker.kind_of?(VariadicInvoker)
+    if callback_count > 0 || invoker.kind_of?(FFI::VariadicInvoker)
       params = "*args, &block"
     end
-    call = arity <= 3 && callback_count < 1 && !invoker.kind_of?(VariadicInvoker)? "call#{arity}" : "call"
+    call = arity <= 3 && callback_count < 1 && !invoker.kind_of?(FFI::VariadicInvoker)? "call#{arity}" : "call"
 
     #
     # Attach the invoker to this module as 'mname'.

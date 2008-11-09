@@ -47,14 +47,13 @@ ifeq ($(OS), darwin)
   LDFLAGS = -arch i386 -arch ppc -arch x86_64 -dynamiclib \
 	-Wl,-syslibroot,$(SDKROOT) -mmacosx-version-min=10.4
   LIBEXT = dylib
-  JNIEXT = jnilib
   FFI_CFLAGS += -isysroot /Developer/SDKs/MacOSX10.4u.sdk
   PICFLAGS =
   SOFLAGS =
 endif
 
 ifeq ($(OS), linux)
-  SOFLAGS += -Wl,-soname,$(LIBNAME).so
+  SOFLAGS += -Wl,-soname,$(LIBNAME)
 endif
 
 ifeq ($(CPU), sparcv9)
