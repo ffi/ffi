@@ -58,6 +58,7 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
     Check_Type(function, T_DATA);
     
     retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
+    invoker->library = library;
     invoker->function = ((AbstractMemory *) DATA_PTR(function))->address;
     invoker->paramCount = RARRAY_LEN(parameterTypes);
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
@@ -118,6 +119,7 @@ variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE returnTyp
     Check_Type(function, T_DATA);
 
     retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
+    invoker->library = library;
     invoker->function = ((AbstractMemory *) DATA_PTR(function))->address;
 #ifdef _WIN32
     invoker->abi = strcmp(StringValueCPtr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
