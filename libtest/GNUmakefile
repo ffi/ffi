@@ -17,7 +17,7 @@ LIBNAME = $(PREFIX)test.$(LIBEXT)
 
 export MACOSX_DEPLOYMENT_TARGET=10.4
 
-CCACHE := $(shell type -p ccache)
+CCACHE := $(shell /usr/bin/which ccache)
 
 TEST_OBJS = Benchmark.o BufferTest.o ClosureTest.o LastErrorTest.o NumberTest.o \
 	PointerTest.o ReferenceTest.o StringTest.o StructTest.o
