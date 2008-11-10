@@ -1,6 +1,6 @@
 # -*- makefile -*-
-OS ?= $(shell uname -s | tr '[A-Z]' '[a-z]')
-CPU ?= $(shell uname -m | sed -e 's/i[345678]86/i386/')
+OS = $(shell uname -s | tr '[A-Z]' '[a-z]')
+CPU = $(shell uname -m | sed -e 's/i[345678]86/i386/')
 MODEL = 32 # Default to 32bit compiles
 PLATFORM = $(CPU)-$(OS)
 JDK_HOME=$(shell if [ -d $(JAVA_HOME)/include ];then echo $(JAVA_HOME); else echo $(JAVA_HOME)/..; fi)
