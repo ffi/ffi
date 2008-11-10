@@ -496,7 +496,7 @@ rb_FFI_Invoker_Init()
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     cbTableID = rb_intern("__ffi_callback_table__");
     to_ptr = rb_intern("to_ptr");
-    rb_define_module_function(moduleFFI, "last_error", last_error, 0);
+    rb_define_module_function(moduleFFI, "errno", last_error, 0);
 #if RUBY_VERSION_CODE >= 190
     pthread_key_create(&threadDatakey, thread_data_free);
 #endif
