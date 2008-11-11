@@ -20,10 +20,10 @@ module FFI
       raise FFI::PlatformError, "Unknown operating system: #{OS_}"
     end
     ARCH = case CPU.downcase
-    when /i?86|x86|i86pc/
-      "i386"
     when /amd64|x86_64/
       "x86_64"
+    when /i?86|x86|i86pc/
+      "i386"
     when /ppc|powerpc/
       "powerpc"
     else
