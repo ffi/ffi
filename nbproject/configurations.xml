@@ -34,6 +34,7 @@
           <itemPath>lib/ffi/platform.rb</itemPath>
           <itemPath>lib/ffi/pointer.rb</itemPath>
           <itemPath>lib/ffi/struct.rb</itemPath>
+          <itemPath>lib/ffi/variadic.rb</itemPath>
         </logicalFolder>
         <itemPath>lib/ffi.rb</itemPath>
       </logicalFolder>
@@ -184,6 +185,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/struct.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="lib/ffi/variadic.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="specs/buffer_spec.rb">
