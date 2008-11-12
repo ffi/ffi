@@ -84,8 +84,9 @@ task :clean do
   FileUtils.rm_f("Makefile")
 end
 LIBEXT = if Config::CONFIG['host_os'].downcase =~ /darwin/; "dylib"; else "so"; end
+GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd/ ? "gmake" : "make"
 task "build/libtest.#{LIBEXT}" do
-  sh %{make -f libtest/GNUmakefile}
+  sh %{#{GMAKE} -f libtest/GNUmakefile}
 end
 desc "Test the extension"
 task :test => [ :compile, "build/libtest.#{LIBEXT}", :specs ] do

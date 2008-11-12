@@ -16,7 +16,9 @@ LIBNAME = $(PREFIX)test.$(LIBEXT)
 
 export MACOSX_DEPLOYMENT_TARGET=10.4
 
+ifneq ($(OS),openbsd)
 CCACHE := $(shell /usr/bin/which ccache)
+endif
 
 TEST_OBJS = Benchmark.o BufferTest.o ClosureTest.o LastErrorTest.o NumberTest.o \
 	PointerTest.o ReferenceTest.o StringTest.o StructTest.o
@@ -25,16 +27,15 @@ TEST_OBJS := $(patsubst %.o, $(TEST_BUILD_DIR)/%.o, $(TEST_OBJS))
 #
 # Compiler/linker flags from:
 #   http://weblogs.java.net/blog/kellyohair/archive/2006/01/compilation_of_1.html
-JFLAGS = -fno-omit-frame-pointer -fno-strict-aliasing -DNDEBUG
+JFLAGS = -fno-omit-frame-pointer -fno-strict-aliasing
 OFLAGS = -O2 $(JFLAGS)
 WFLAGS = -W -Werror -Wall -Wno-unused -Wno-parentheses
-PICFLAGS = -fPIC -pthread
+PICFLAGS = -fPIC
 SOFLAGS = -shared -mimpure-text -Wl,-O1
 LDFLAGS += $(SOFLAGS)
 
 IFLAGS = -I"$(BUILD_DIR)"
 CFLAGS = $(OFLAGS) $(WFLAGS) $(IFLAGS) $(PICFLAGS)
-CFLAGS += -D_REENTRANT -D_LARGEFILE64_SOURCE -D_GNU_SOURCE
 
 ifeq ($(OS), win32)
 	CC += -mno-cygwin
