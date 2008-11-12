@@ -9,6 +9,7 @@
 
 typedef struct MemoryPointer {
     AbstractMemory memory;
+    caddr_t address;
     bool autorelease;
     bool allocated;
 } MemoryPointer;
@@ -26,14 +27,16 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     VALUE retval;
     caddr_t memory;
     unsigned long msize = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
-    memory = malloc(msize);
+    memory = malloc(msize + 7);
     if (memory == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", msize);
     }
     retval = Data_Make_Struct(classMemoryPointer, MemoryPointer, NULL, memptr_release, p);
+    p->address = memory;
     p->autorelease = true;
     p->memory.size = msize;
-    p->memory.address = memory;
+    /* ensure the memory is aligned on at least a 8 byte boundary */
+    p->memory.address = (caddr_t) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);;
     p->allocated = true;
     if (TYPE(clear) == T_TRUE && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
@@ -56,9 +59,9 @@ memptr_free(VALUE self)
 {
     MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
     if (ptr->allocated) {
-        if (ptr->memory.address != NULL) {
-            free(ptr->memory.address);
-            ptr->memory.address = NULL;
+        if (ptr->address != NULL) {
+            free(ptr->address);
+            ptr->address = NULL;
         }
         ptr->allocated = false;
     }
@@ -76,9 +79,9 @@ memptr_autorelease(VALUE self, VALUE autorelease)
 static void
 memptr_release(MemoryPointer* ptr)
 {
-    if (ptr->autorelease && ptr->allocated && ptr->memory.address != NULL) {
-        free(ptr->memory.address);
-        ptr->memory.address = NULL;
+    if (ptr->autorelease && ptr->allocated && ptr->address != NULL) {
+        free(ptr->address);
+        ptr->address = NULL;
     }
     xfree(ptr);
 
