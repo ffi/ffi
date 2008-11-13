@@ -44,12 +44,12 @@ else
   desc "Run all specs"
   task :specs do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -I. -Ilib -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -Ibuild -Ilib -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -I. -Ilib -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -Ibuild -Ilib -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
   end
 end
 
@@ -68,16 +68,17 @@ task :make_spec do
     file.puts spec.to_ruby
   end
 end
-file "Makefile" do
-  sh %{#{Gem.ruby} ext/extconf.rb}
+file "build/Makefile" do
+  FileUtils.mkdir_p("build") unless File.directory?("build")
+  sh %{cd build && #{Gem.ruby} ../ext/extconf.rb}
 end
 desc "Compile the native module"
-task :compile => "Makefile" do
-  sh %{make}
+task :compile => "build/Makefile" do
+  sh %{cd build; make}
 end
 desc "Clean all built files"
 task :clean do
-  sh %{make clean} if File.exists?("Makefile")
+  sh %{cd build;make distclean} if File.exists?("build/Makefile")
   FileUtils.rm_rf("build")
   FileUtils.rm_rf("conftest.dSYM")
   FileUtils.rm_f(Dir["pkg/*.gem", "Makefile"])
