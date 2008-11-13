@@ -24,7 +24,7 @@ spec = Gem::Specification.new do |s|
   s.email = EMAIL
   s.homepage = HOMEPAGE
   s.rubyforge_project = 'ffi' 
-  s.extensions = %w(ext/extconf.rb)
+  s.extensions = %w(ext/extconf.rb gen/Rakefile)
   
   s.require_path = 'lib'
   s.autorequire = GEM

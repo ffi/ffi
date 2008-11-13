@@ -146,7 +146,20 @@ module FFI
   add_typedef(NativeType::BUFFER_OUT, :buffer_out)
   add_typedef(NativeType::BUFFER_INOUT, :buffer_inout)
   add_typedef(NativeType::VARARGS, :varargs)
-  
+
+  # Load all the platform dependent types
+  begin
+    File.open(File.join(FFI::Platform::CONF_DIR, 'types.conf'), "r") do |f|
+      prefix = "rbx.platform.typedef."
+      f.each_line { |line|
+        if line.index(prefix) == 0
+          new_type, orig_type = line.chomp.slice(prefix.length..-1).split(/\s*=\s*/)
+          add_typedef(orig_type.to_sym, new_type.to_sym)
+        end
+      }
+    end
+  rescue Errno::ENOENT
+  end
   TypeSizes = {
     1 => :char,
     2 => :short,

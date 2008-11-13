@@ -1,0 +1,11 @@
+require "#{File.join(ENV['RUBYLIBDIR'], 'ffi', 'tools', 'types_generator.rb')}"
+types_conf = File.join(ENV['RUBYLIBDIR'], 'ffi', 'types.conf') 
+task types_conf do |task|
+  options = {}
+  FileUtils.mkdir_p(File.dirname(task.name), { :mode => 0644 })
+  File.open(task.name, "w") do |f|
+    f.puts FFI::TypesGenerator.generate(options)
+  end
+end
+task :default => types_conf do
+end
