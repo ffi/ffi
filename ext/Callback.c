@@ -1,16 +1,27 @@
+#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <ruby.h>
+#include <ffi.h>
 #include "AbstractMemory.h"
 #include "Pointer.h"
 #include "MemoryPointer.h"
 #include "Callback.h"
 #include "Types.h"
 #include "rbffi.h"
-
+#include "extconf.h"
 
 
 static void callback_mark(CallbackInfo *);
 static void callback_free(CallbackInfo *);
+
+#if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
+static void* ffi_closure_alloc(size_t size, void** code);
+static void ffi_closure_free(void* ptr);
+ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
+        void (*fun)(ffi_cif*, void*, void**, void*),
+        void* user_data, void* code);
+#endif /* HAVE_FFI_CLOSURE_ALLOC */
 
 static VALUE classCallback = Qnil;
 static VALUE classNativeCallback = Qnil;
@@ -161,22 +172,14 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
         memset(retval, 0, cbInfo->ffiReturnType->size);
     } else switch (cbInfo->returnType) {
         case INT8:
-            *((int8_t *) retval) = NUM2INT(rbReturnValue);
+        case INT16:
+        case INT32:
+            *((long *) retval) = NUM2INT(rbReturnValue);
             break;
         case UINT8:
-            *((u_int8_t *) retval) = NUM2UINT(rbReturnValue);
-            break;
-        case INT16:
-            *((int16_t *) retval) = NUM2INT(rbReturnValue);
-            break;
         case UINT16:
-            *((u_int16_t *) retval) = NUM2UINT(rbReturnValue);
-            break;
-        case INT32:
-            *((int32_t *) retval) = NUM2INT(rbReturnValue);
-            break;
         case UINT32:
-            *((u_int32_t *) retval) = NUM2UINT(rbReturnValue);
+            *((unsigned long *) retval) = NUM2UINT(rbReturnValue);
             break;
         case INT64:
             *((int64_t *) retval) = NUM2LL(rbReturnValue);
@@ -223,6 +226,45 @@ rb_FFI_NativeCallback_new(VALUE rbCallbackInfo, VALUE rbProc)
     }
     return Data_Wrap_Struct(classNativeCallback, native_callback_mark, native_callback_free, closure);
 }
+
+#if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
+/*
+ * versions of ffi_closure_alloc, ffi_closure_free and ffi_prep_closure_loc for older
+ * system libffi versions.
+ */
+static void*
+ffi_closure_alloc(size_t size, void** code)
+{
+    void* closure;
+    closure = mmap(NULL, size, PROT_READ | PROT_WRITE,
+             MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (closure == (void *) -1) {
+        return NULL;
+    }
+    memset(closure, 0, size);
+    *code = closure;
+    return closure;
+}
+
+static void
+ffi_closure_free(void* ptr)
+{
+    munmap(ptr, sizeof(ffi_closure));
+}
+
+ffi_status
+ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
+        void (*fun)(ffi_cif*, void*, void**, void*),
+        void* user_data, void* code)
+{
+    ffi_status retval = ffi_prep_closure(closure, cif, fun, user_data);
+    if (retval == FFI_OK) {
+        mprotect(closure, sizeof(ffi_closure), PROT_READ | PROT_EXEC);
+    }
+    return retval;
+}
+
+#endif /* HAVE_FFI_CLOSURE_ALLOC */
 
 void
 rb_FFI_Callback_Init()

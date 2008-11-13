@@ -3,6 +3,7 @@
 \.o$
 ^conftest.dSYM
 mkmf.log
+^extconf.h
 nbproject/private
 .dep.inc
 ^build
