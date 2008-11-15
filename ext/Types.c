@@ -12,6 +12,10 @@ rb_FFI_NativeTypeToFFI(NativeType type)
             return &ffi_type_sint8;
         case UINT8:
             return &ffi_type_uint8;
+        case INT16:
+            return &ffi_type_sint16;
+        case UINT16:
+            return &ffi_type_uint16;
         case INT32:
             return &ffi_type_sint32;
         case UINT32:
@@ -45,11 +49,11 @@ rb_FFI_NativeValueToRuby(NativeType type, const void* ptr)
         case INT8:
         case INT16:
         case INT32:
-            return INT2FIX(*(int *) ptr);
+            return INT2NUM(*(int *) ptr);
         case UINT8:
         case UINT16:
         case UINT32:
-            return INT2FIX(*(unsigned int *) ptr);
+            return UINT2NUM(*(unsigned int *) ptr);
         case INT64:
             return LL2NUM(*(signed long long *) ptr);
         case UINT64:

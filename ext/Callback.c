@@ -126,19 +126,19 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
         VALUE param;
         switch (cbInfo->parameterTypes[i]) {
             case INT8:
-                param = INT2FIX(*(int8_t *) parameters[i]);
+                param = INT2NUM(*(int8_t *) parameters[i]);
                 break;
             case UINT8:
                 param = UINT2NUM(*(u_int8_t *) parameters[i]);
                 break;
             case INT16:
-                param = INT2FIX(*(int16_t *) parameters[i]);
+                param = INT2NUM(*(int16_t *) parameters[i]);
                 break;
             case UINT16:
                 param = UINT2NUM(*(u_int16_t *) parameters[i]);
                 break;
             case INT32:
-                param = INT2FIX(*(int32_t *) parameters[i]);
+                param = INT2NUM(*(int32_t *) parameters[i]);
                 break;
             case UINT32:
                 param = UINT2NUM(*(u_int32_t *) parameters[i]);
