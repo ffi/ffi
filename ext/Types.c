@@ -47,11 +47,15 @@ rb_FFI_NativeValueToRuby(NativeType type, const void* ptr)
         case VOID:
             return Qnil;        
         case INT8:
+            return INT2NUM(*(char *) ptr);
         case INT16:
+            return INT2NUM(*(short *) ptr);
         case INT32:
             return INT2NUM(*(int *) ptr);
         case UINT8:
+            return UINT2NUM(*(unsigned char *) ptr);
         case UINT16:
+            return UINT2NUM(*(unsigned short *) ptr);
         case UINT32:
             return UINT2NUM(*(unsigned int *) ptr);
         case INT64:
