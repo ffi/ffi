@@ -148,6 +148,49 @@ typedef union {
     double f64;
 } FFIStorage;
 
+static int
+getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* typeName)
+{
+    int i;
+    if (type != T_FIXNUM && type != T_BIGNUM) {
+        rb_raise(rb_eTypeError, "Expected an Integer parameter");
+    }
+    i = NUM2INT(value);
+    if (i < minValue || i > maxValue) {
+        rb_raise(rb_eRangeError, "Value %d outside %s range", i, typeName);
+    }
+    return i;
+}
+
+static int
+getUnsignedInt(VALUE value, int type, int maxValue, const char* typeName)
+{
+    int i;
+    if (type != T_FIXNUM && type != T_BIGNUM) {
+        rb_raise(rb_eTypeError, "Expected an Integer parameter");
+    }
+    i = NUM2INT(value);
+    if (i < 0 || i > maxValue) {
+        rb_raise(rb_eRangeError, "Value %d outside %s range", i, typeName);
+    }
+    return i;
+}
+
+/* Special handling/checking for unsigned 32 bit integers */
+static unsigned int
+getUnsignedInt32(VALUE value, int type)
+{
+    long long i;
+    if (type != T_FIXNUM && type != T_BIGNUM) {
+        rb_raise(rb_eTypeError, "Expected an Integer parameter");
+    }
+    i = NUM2LL(value);
+    if (i < 0L || i > 0xffffffffL) {
+        rb_raise(rb_eRangeError, "Value %lld outside unsigned int range", i);
+    }
+    return (unsigned int) i;
+}
+
 static void
 ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTypes,
         FFIStorage *params, void** ffiValues)
@@ -164,47 +207,56 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
     }
     argCount = invoker->paramCount != -1 ? invoker->paramCount : argc;
     for (i = 0, argidx = 0, cbidx = 0; i < argCount; ++i) {
+        type = TYPE(argv[argidx]);
         switch (paramTypes[i]) {
             case INT8:
+                params[i].i = getSignedInt(argv[argidx++], type, -128, 127, "char");
+                break;
             case INT16:
+                params[i].i = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short");
+                break;
             case INT32:
-                Check_Type(argv[argidx], T_FIXNUM);
-                params[i].i = NUM2INT(argv[argidx]);
-                ++argidx;
+                params[i].i = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int");
                 break;
             case UINT8:
+                params[i].u = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
+                break;
             case UINT16:
+                params[i].u = getUnsignedInt(argv[argidx++], type, 0xffff, "unsigned short");
+                break;
             case UINT32:
-                Check_Type(argv[argidx], T_FIXNUM);
-                params[i].u = NUM2UINT(argv[argidx]);
-                ++argidx;
+                /* Special handling/checking for unsigned 32 bit integers */
+                params[i].u = getUnsignedInt32(argv[argidx++], type);
                 break;
             case INT64:
-                Check_Type(argv[argidx], T_FIXNUM);
+                if (type != T_FIXNUM && type != T_BIGNUM) {
+                    rb_raise(rb_eTypeError, "Expected an Integer parameter");
+                }
                 params[i].i64 = NUM2LL(argv[argidx]);
                 ++argidx;
                 break;
             case UINT64:
-                Check_Type(argv[argidx], T_FIXNUM);
+                if (type != T_FIXNUM && type != T_BIGNUM) {
+                    rb_raise(rb_eTypeError, "Expected an Integer parameter");
+                }
                 params[i].i64 = NUM2ULL(argv[argidx]);
                 ++argidx;
                 break;
             case FLOAT32:
-                if (TYPE(argv[argidx]) != T_FLOAT && TYPE(argv[argidx]) != T_FIXNUM) {
-                    Check_Type(argv[argidx], T_FLOAT);
+                if (type != T_FLOAT && type != T_FIXNUM) {
+                    rb_raise(rb_eTypeError, "Expected a Float parameter");
                 }
                 params[i].f32 = (float) NUM2DBL(argv[argidx]);
                 ++argidx;
                 break;
             case FLOAT64:
-                if (TYPE(argv[argidx]) != T_FLOAT && TYPE(argv[argidx]) != T_FIXNUM) {
-                    Check_Type(argv[argidx], T_FLOAT);
+                if (type != T_FLOAT && type != T_FIXNUM) {
+                    rb_raise(rb_eTypeError, "Expected a Float parameter");
                 }
                 params[i].f64 = NUM2DBL(argv[argidx]);
                 ++argidx;
                 break;
             case STRING:
-                type = TYPE(argv[argidx]);
                 if (type == T_STRING) {
                     if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
                         rb_raise(rb_eSecurityError, "Unsafe string parameter");
@@ -221,7 +273,6 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
             case BUFFER_IN:
             case BUFFER_OUT:
             case BUFFER_INOUT:
-                type = TYPE(argv[argidx]);
                 if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class) && type == T_DATA) {
                     params[i].ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
                 } else if (type == T_STRING) {
