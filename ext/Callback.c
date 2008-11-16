@@ -9,6 +9,7 @@
 #include "Callback.h"
 #include "Types.h"
 #include "rbffi.h"
+#include "compat.h"
 #include "extconf.h"
 
 

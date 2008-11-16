@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ruby.h>
 #include "rbffi.h"
+#include "compat.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
 
