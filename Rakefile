@@ -83,7 +83,7 @@ task :clean do
   FileUtils.rm_f(Dir["pkg/*.gem", "Makefile"])
 end
 LIBEXT = if Config::CONFIG['host_os'].downcase =~ /darwin/; "dylib"; else "so"; end
-file "build/libtest.#{LIBEXT}" do
+task "build/libtest.#{LIBEXT}" do
   sh %{make -f libtest/GNUmakefile}
 end
 desc "Test the extension"

@@ -47,6 +47,7 @@
         </logicalFolder>
         <itemPath>specs/buffer_spec.rb</itemPath>
         <itemPath>specs/callback_spec.rb</itemPath>
+        <itemPath>specs/number_spec.rb</itemPath>
         <itemPath>specs/pointer_spec.rb</itemPath>
         <itemPath>specs/spec_helper.rb</itemPath>
         <itemPath>specs/string_spec.rb</itemPath>
@@ -194,6 +195,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="specs/callback_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/number_spec.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="specs/pointer_spec.rb">
