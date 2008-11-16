@@ -6,7 +6,9 @@
 #include <ruby.h>
 
 #include <ffi.h>
-
+#ifdef HAVE_NATIVETHREAD
+# include <pthread.h>
+#endif
 #include "rbffi.h"
 #include "compat.h"
 
@@ -43,7 +45,10 @@ static void* callback_param(VALUE proc, VALUE cbinfo);
 static inline ThreadData* thread_data_get(void);
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID cbTableID, to_ptr;
+
+#ifdef HAVE_NATIVETHREAD
 static pthread_key_t threadDataKey;
+#endif
 
 #define threadData (thread_data_get())
 
@@ -498,12 +503,12 @@ callback_param(VALUE proc, VALUE cbInfo)
     rb_hash_aset(cbTable, cbInfo, callback);
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
-#if RUBY_VERSION_CODE >= 190
+#ifdef HAVE_NATIVETHREAD
 static inline ThreadData*
 thread_data_get()
 {
     ThreadData* td = pthread_getspecific(threadDataKey);
-    if (td == null) {
+    if (td == NULL) {
         td = ALLOC_N(ThreadData, 1);
         memset(td, 0, sizeof(*td));
         pthread_setspecific(threadDataKey, td);
@@ -516,7 +521,7 @@ thread_data_free(void *ptr)
 {
     xfree(ptr);
 }
-#else /* ruby version < 1.9.0 */
+#else /* !HAVE_NATIVETHREAD */
 static inline ThreadData*
 thread_data_get()
 {
@@ -527,7 +532,7 @@ thread_data_get()
 static VALUE
 last_error(VALUE self)
 {
-    return INT2FIX(threadData->td_errno);
+    return INT2NUM(threadData->td_errno);
 }
 
 void 
@@ -548,7 +553,7 @@ rb_FFI_Invoker_Init()
     cbTableID = rb_intern("__ffi_callback_table__");
     to_ptr = rb_intern("to_ptr");
     rb_define_module_function(moduleFFI, "errno", last_error, 0);
-#if RUBY_VERSION_CODE >= 190
-    pthread_key_create(&threadDatakey, thread_data_free);
+#ifdef HAVE_NATIVETHREAD
+    pthread_key_create(&threadDataKey, thread_data_free);
 #endif
 }
