@@ -118,7 +118,7 @@ describe "Three different size Integer arguments" do
           PACK_VALUES[t2].each do |v2|
             PACK_VALUES[t3].each do |v3|
               it "call(#{TYPE_MAP[t1]} (#{v1}), #{TYPE_MAP[t2]} (#{v2}), #{TYPE_MAP[t3]} (#{v3}))" do
-                p = Buffer.new :long_long, 3
+                p = FFI::Buffer.new :long_long, 3
                 LibTest.send("pack_#{t1}#{t2}#{t3}_s64", v1, v2, v3, p)
                 p.get_int64(0).should == v1
                 p.get_int64(8).should == v2
