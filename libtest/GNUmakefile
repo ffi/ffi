@@ -3,7 +3,6 @@ OS = $(shell uname -s | tr '[A-Z]' '[a-z]')
 CPU = $(shell uname -m | sed -e 's/i[345678]86/i386/')
 MODEL = 32 # Default to 32bit compiles
 PLATFORM = $(CPU)-$(OS)
-JDK_HOME=$(shell if [ -d $(JAVA_HOME)/include ];then echo $(JAVA_HOME); else echo $(JAVA_HOME)/..; fi)
 
 JNI_DIR = $(shell pwd)
 SRC_DIR = libtest
@@ -33,9 +32,8 @@ PICFLAGS = -fPIC -pthread
 SOFLAGS = -shared -mimpure-text -Wl,-O1
 LDFLAGS += $(SOFLAGS)
 
-JDK_INCLUDES= -I"$(JDK_HOME)/include" -I"$(JDK_HOME)/include/$(OS)"
-IFLAGS = -I"$(BUILD_DIR)" -I"$(JFFI_SRC_DIR)" -I"$(LIBFFI_BUILD_DIR)/include"
-CFLAGS = $(OFLAGS) $(WFLAGS) $(IFLAGS) $(PICFLAGS) $(JDK_INCLUDES)
+IFLAGS = -I"$(BUILD_DIR)"
+CFLAGS = $(OFLAGS) $(WFLAGS) $(IFLAGS) $(PICFLAGS)
 CFLAGS += -D_REENTRANT -D_LARGEFILE64_SOURCE -D_GNU_SOURCE
 
 ifeq ($(OS), win32)

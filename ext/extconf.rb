@@ -11,9 +11,10 @@ have_closure_alloc = have_library("ffi", "ffi_closure_alloc", [ "ffi.h" ])
 $defs.push("-DHAVE_FFI_CLOSURE_ALLOC") if have_closure_alloc
 libffi_ok = have_closure_alloc || (IS_MAC && have_library("ffi", "ffi_prep_closure", [ "ffi.h" ]))
 $defs << "-DHAVE_LIBFFI" if libffi_ok
+$defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 
 create_makefile("ffi_c")
-create_header
+create_header("extconf.h")
 File.open("Makefile", "a") do |mf|
   mf.puts "include $(srcdir)/ffi.mk"
   if Config::CONFIG['host_os'] =~ /darwin/

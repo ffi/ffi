@@ -80,7 +80,8 @@ task :clean do
   sh %{make clean} if File.exists?("Makefile")
   FileUtils.rm_rf("build")
   FileUtils.rm_rf("conftest.dSYM")
-  FileUtils.rm_f(Dir["pkg/*.gem", "Makefile"])
+  FileUtils.rm_f(Dir["pkg/*.gem"])
+  FileUtils.rm_f("Makefile")
 end
 LIBEXT = if Config::CONFIG['host_os'].downcase =~ /darwin/; "dylib"; else "so"; end
 task "build/libtest.#{LIBEXT}" do
