@@ -1,9 +1,9 @@
 # -*- makefile -*-
 
 CFLAGS += -Werror -Wformat
-LIBS += -lpthread
 INCFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
-LOCAL_LIBS += $(LIBFFI)
+CPPFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
+LOCAL_LIBS += $(LIBFFI) -lpthread
 
 FFI_MMAP_EXEC = -DFFI_MMAP_EXEC_WRIT
 FFI_CFLAGS = $(FFI_MMAP_EXEC) $(OFLAGS)

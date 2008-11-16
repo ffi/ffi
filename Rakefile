@@ -24,7 +24,7 @@ spec = Gem::Specification.new do |s|
   s.email = EMAIL
   s.homepage = HOMEPAGE
   s.rubyforge_project = 'ffi' 
-  s.extensions = %w(ext/extconf.rb)
+  s.extensions = %w(ext/extconf.rb gen/Rakefile)
   
   s.require_path = 'lib'
   s.autorequire = GEM
@@ -81,11 +81,13 @@ task :clean do
   sh %{cd build;make distclean} if File.exists?("build/Makefile")
   FileUtils.rm_rf("build")
   FileUtils.rm_rf("conftest.dSYM")
-  FileUtils.rm_f(Dir["pkg/*.gem", "Makefile"])
+  FileUtils.rm_f(Dir["pkg/*.gem"])
+  FileUtils.rm_f("Makefile")
 end
 LIBEXT = if Config::CONFIG['host_os'].downcase =~ /darwin/; "dylib"; else "so"; end
-file "build/libtest.#{LIBEXT}" do
-  sh %{make -f libtest/GNUmakefile}
+GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd/ ? "gmake" : "make"
+task "build/libtest.#{LIBEXT}" do
+  sh %{#{GMAKE} -f libtest/GNUmakefile}
 end
 desc "Test the extension"
 task :test => [ :compile, "build/libtest.#{LIBEXT}", :specs ] do

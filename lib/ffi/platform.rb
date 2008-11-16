@@ -41,6 +41,7 @@ module FFI
     IS_OPENBSD = is_os("openbsd")
     IS_WINDOWS = is_os("windows")
     IS_BSD = IS_MAC || IS_FREEBSD || IS_OPENBSD
+    CONF_DIR = File.dirname(__FILE__)
     public
     LIBC = if IS_WINDOWS
       "msvcrt"
