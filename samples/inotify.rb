@@ -46,7 +46,7 @@ if $0 == __FILE__
   fd = Inotify.init
   puts "fd=#{fd}"
   wd = Inotify.add_watch(fd, "/tmp/", Inotify::IN_ALL_EVENTS)
-  fp = IO.for_fd(fd)
+  fp = FFI::IO.for_fd(fd)
   puts "wfp=#{fp}"
   while true
     buf = FFI::Buffer.alloc_out(Inotify::Event.size + 4096, 1, false)
