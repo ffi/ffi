@@ -65,7 +65,7 @@ module FFI
   def self.find_type(name)
     code = TypeDefs[name]
     code = name if !code && name.kind_of?(Integer)
-    code = name if !code && name.kind_of?(FFI::Callback)
+    code = name if !code && name.kind_of?(FFI::CallbackInfo)
     raise TypeError, "Unable to resolve type '#{name}'" unless code
     return code
   end
@@ -286,7 +286,7 @@ module FFI::Library
   end
   def callback(name, args, ret)
     @ffi_callbacks = Hash.new unless defined?(@ffi_callbacks)
-    @ffi_callbacks[name] = FFI::Callback.new(FFI.find_type(ret), args.map { |e| FFI.find_type(e) })
+    @ffi_callbacks[name] = FFI::CallbackInfo.new(FFI.find_type(ret), args.map { |e| FFI.find_type(e) })
   end
 end
 

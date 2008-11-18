@@ -78,7 +78,7 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
 
     for (i = 0; i < invoker->paramCount; ++i) {
         VALUE entry = rb_ary_entry(parameterTypes, i);
-        if (rb_obj_is_kind_of(entry, rb_FFI_Callback_class)) {
+        if (rb_obj_is_kind_of(entry, rb_FFI_CallbackInfo_class)) {
             invoker->callbackParameters = REALLOC_N(invoker->callbackParameters, VALUE,
                     invoker->callbackCount + 1);
             invoker->callbackParameters[invoker->callbackCount++] = entry;

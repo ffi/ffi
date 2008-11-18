@@ -36,7 +36,7 @@ typedef struct {
     VALUE rbProc;
 } NativeCallback;
 
-extern VALUE rb_FFI_Callback_class;
+extern VALUE rb_FFI_CallbackInfo_class;
 extern VALUE rb_FFI_NativeCallback_new(VALUE, VALUE);
 
 #ifdef	__cplusplus

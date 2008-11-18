@@ -13,8 +13,8 @@
 #include "extconf.h"
 
 
-static void callback_mark(CallbackInfo *);
-static void callback_free(CallbackInfo *);
+static void CallbackInfo_mark(CallbackInfo *);
+static void CallbackInfo_free(CallbackInfo *);
 
 #if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
 static void* ffi_closure_alloc(size_t size, void** code);
@@ -24,14 +24,14 @@ ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
         void* user_data, void* code);
 #endif /* HAVE_FFI_CLOSURE_ALLOC */
 
-static VALUE classCallback = Qnil;
+static VALUE classCallbackInfo = Qnil;
 static VALUE classNativeCallback = Qnil;
 static ID callID = Qnil;
 
-VALUE rb_FFI_Callback_class = Qnil;
+VALUE rb_FFI_CallbackInfo_class = Qnil;
 
 static VALUE
-callback_new(VALUE klass, VALUE rbReturnType, VALUE rbParamTypes)
+CallbackInfo_new(VALUE klass, VALUE rbReturnType, VALUE rbParamTypes)
 {
     CallbackInfo *cbInfo;
     VALUE retval;
@@ -39,7 +39,7 @@ callback_new(VALUE klass, VALUE rbReturnType, VALUE rbParamTypes)
     ffi_status status;
     int i;
 
-    retval = Data_Make_Struct(klass, CallbackInfo, callback_mark, callback_free, cbInfo);
+    retval = Data_Make_Struct(klass, CallbackInfo, CallbackInfo_mark, CallbackInfo_free, cbInfo);
     cbInfo->parameterCount = paramCount;
     cbInfo->parameterTypes = xcalloc(paramCount, sizeof(NativeType));
     cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
@@ -76,12 +76,12 @@ callback_new(VALUE klass, VALUE rbReturnType, VALUE rbParamTypes)
 }
 
 static void
-callback_mark(CallbackInfo* cbinfo)
+CallbackInfo_mark(CallbackInfo* cbinfo)
 {
 }
 
 static void
-callback_free(CallbackInfo* cbInfo)
+CallbackInfo_free(CallbackInfo* cbInfo)
 {
     if (cbInfo != NULL) {
         if (cbInfo->parameterTypes != NULL) {
@@ -271,8 +271,8 @@ void
 rb_FFI_Callback_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
-    rb_FFI_Callback_class = classCallback = rb_define_class_under(moduleFFI, "Callback", rb_cObject);
-    rb_define_singleton_method(classCallback, "new", callback_new, 2);
+    rb_FFI_CallbackInfo_class = classCallbackInfo = rb_define_class_under(moduleFFI, "CallbackInfo", rb_cObject);
+    rb_define_singleton_method(classCallbackInfo, "new", CallbackInfo_new, 2);
     classNativeCallback = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
     callID = rb_intern("call");
 }

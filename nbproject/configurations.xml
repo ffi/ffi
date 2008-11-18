@@ -104,7 +104,7 @@
       </item>
       <item path="ext/Callback.c">
         <itemExcluded>true</itemExcluded>
-        <itemTool>0</itemTool>
+        <itemTool>3</itemTool>
       </item>
       <item path="ext/Callback.h">
         <itemExcluded>true</itemExcluded>
