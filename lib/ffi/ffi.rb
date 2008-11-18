@@ -190,6 +190,7 @@ module FFI
   end
   def self.create_invoker(lib, name, args, ret, convention = :default)    
     # Mangle the library name to reflect the native library naming conventions
+    lib = Platform::LIBC if Platform::IS_LINUX &&  lib == 'c'
     if lib && File.basename(lib) == lib
       ext = ".#{Platform::LIBSUFFIX}"
       lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
