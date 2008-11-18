@@ -1,5 +1,12 @@
+require 'ffi/platform'
 module FFI
   class Pointer
+    SIZE = Platform::ADDRESS_SIZE / 8
+
+    # Return the size of a pointer on the current platform, in bytes
+    def self.size
+      SIZE
+    end
     # Write +obj+ as a C int at the memory pointed to.
     def write_int(obj)
       put_int32(0, obj)
