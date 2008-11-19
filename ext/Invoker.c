@@ -153,7 +153,7 @@ typedef union {
     double f64;
 } FFIStorage;
 
-static int
+static inline int
 getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* typeName)
 {
     int i;
@@ -167,7 +167,7 @@ getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* type
     return i;
 }
 
-static int
+static inline int
 getUnsignedInt(VALUE value, int type, int maxValue, const char* typeName)
 {
     int i;
@@ -182,7 +182,7 @@ getUnsignedInt(VALUE value, int type, int maxValue, const char* typeName)
 }
 
 /* Special handling/checking for unsigned 32 bit integers */
-static unsigned int
+static inline unsigned int
 getUnsignedInt32(VALUE value, int type)
 {
     long long i;
@@ -195,12 +195,40 @@ getUnsignedInt32(VALUE value, int type)
     }
     return (unsigned int) i;
 }
+#if defined(__i386__) && defined(notyet)
+#  define USE_RAW
+#endif
 
+#ifdef USE_RAW
+
+#define INT8_SIZE (sizeof(char))
+#define INT16_SIZE (sizeof(short))
+#define INT32_SIZE (sizeof(int))
+#define INT64_SIZE (sizeof(long long))
+#define FLOAT32_SIZE (sizeof(float))
+#define FLOAT64_SIZE (sizeof(double))
+#define ADDRESS_SIZE (sizeof(void *))
+#define INT8_ADJ (4)
+#define INT16_ADJ (4)
+#define INT32_ADJ (4)
+#define INT64_ADJ (8)
+#define FLOAT32_ADJ (4)
+#define FLOAT64_ADJ (8)
+#define ADDRESS_ADJ (sizeof(void *))
+
+#endif /* USE_RAW */
+
+#ifdef USE_RAW
+#  define ADJ(p, a) ((p) = (FFIStorage*) (((caddr_t) p) + a##_ADJ))
+#else
+#  define ADJ(p, a) (++(p))
+#endif
 static void
 ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTypes,
-        FFIStorage *params, void** ffiValues)
+        FFIStorage* paramStorage, void** ffiValues)
 {
     VALUE callbackProc = Qnil;
+    FFIStorage* param = &paramStorage[0];
     int i, argidx, cbidx, argCount, type;
 
     if (invoker->paramCount != -1) {
@@ -212,53 +240,64 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
     }
     argCount = invoker->paramCount != -1 ? invoker->paramCount : argc;
     for (i = 0, argidx = 0, cbidx = 0; i < argCount; ++i) {
+        ffiValues[i] = param;
         type = TYPE(argv[argidx]);
         switch (paramTypes[i]) {
             case INT8:
-                params[i].i = getSignedInt(argv[argidx++], type, -128, 127, "char");
+                param->i = getSignedInt(argv[argidx++], type, -128, 127, "char");
+                ADJ(param, INT8);
                 break;
             case INT16:
-                params[i].i = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short");
+                param->i = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short");
+                ADJ(param, INT16);
                 break;
             case INT32:
-                params[i].i = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int");
+                param->i = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int");
+                ADJ(param, INT32);
                 break;
             case UINT8:
-                params[i].u = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
+                param->u = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
+                ADJ(param, INT8);
                 break;
             case UINT16:
-                params[i].u = getUnsignedInt(argv[argidx++], type, 0xffff, "unsigned short");
+                param->u = getUnsignedInt(argv[argidx++], type, 0xffff, "unsigned short");
+                ADJ(param, INT16);
                 break;
             case UINT32:
                 /* Special handling/checking for unsigned 32 bit integers */
-                params[i].u = getUnsignedInt32(argv[argidx++], type);
+                param->u = getUnsignedInt32(argv[argidx++], type);
+                ADJ(param, INT32);
                 break;
             case INT64:
                 if (type != T_FIXNUM && type != T_BIGNUM) {
                     rb_raise(rb_eTypeError, "Expected an Integer parameter");
                 }
-                params[i].i64 = NUM2LL(argv[argidx]);
+                param->i64 = NUM2LL(argv[argidx]);
+                ADJ(param, INT64);
                 ++argidx;
                 break;
             case UINT64:
                 if (type != T_FIXNUM && type != T_BIGNUM) {
                     rb_raise(rb_eTypeError, "Expected an Integer parameter");
                 }
-                params[i].i64 = NUM2ULL(argv[argidx]);
+                param->i64 = NUM2ULL(argv[argidx]);
+                ADJ(param, INT64);
                 ++argidx;
                 break;
             case FLOAT32:
                 if (type != T_FLOAT && type != T_FIXNUM) {
                     rb_raise(rb_eTypeError, "Expected a Float parameter");
                 }
-                params[i].f32 = (float) NUM2DBL(argv[argidx]);
+                param->f32 = (float) NUM2DBL(argv[argidx]);
+                ADJ(param, FLOAT32);
                 ++argidx;
                 break;
             case FLOAT64:
                 if (type != T_FLOAT && type != T_FIXNUM) {
                     rb_raise(rb_eTypeError, "Expected a Float parameter");
                 }
-                params[i].f64 = NUM2DBL(argv[argidx]);
+                param->f64 = NUM2DBL(argv[argidx]);
+                ADJ(param, FLOAT64);
                 ++argidx;
                 break;
             case STRING:
@@ -266,12 +305,13 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                     if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
                         rb_raise(rb_eSecurityError, "Unsafe string parameter");
                     }
-                    params[i].ptr = StringValuePtr(argv[argidx]);
+                    param->ptr = StringValuePtr(argv[argidx]);
                 } else if (type == T_NIL) {
-                    params[i].ptr = NULL;
+                    param->ptr = NULL;
                 } else {
                     rb_raise(rb_eArgError, "Invalid String value");
                 }
+                ADJ(param, ADDRESS);
                 ++argidx;
                 break;
             case POINTER:
@@ -279,22 +319,22 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
             case BUFFER_OUT:
             case BUFFER_INOUT:
                 if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class) && type == T_DATA) {
-                    params[i].ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
+                    param->ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
                 } else if (type == T_STRING) {
                     if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
                         rb_raise(rb_eSecurityError, "Unsafe string parameter");
                     }
-                    params[i].ptr = StringValuePtr(argv[argidx]);
+                    param->ptr = StringValuePtr(argv[argidx]);
                 } else if (type == T_NIL) {
-                    params[i].ptr = NULL;
+                    param->ptr = NULL;
                 } else if (type == T_FIXNUM) {
-                    params[i].ptr = (void *) (uintptr_t) FIX2INT(argv[argidx]);
+                    param->ptr = (void *) (uintptr_t) FIX2INT(argv[argidx]);
                 } else if (type == T_BIGNUM) {
-                    params[i].ptr = (void *) (uintptr_t) NUM2ULL(argv[argidx]);
+                    param->ptr = (void *) (uintptr_t) NUM2ULL(argv[argidx]);
                 } else if (rb_respond_to(argv[argidx], to_ptr)) {
                     VALUE ptr = rb_funcall2(argv[argidx], to_ptr, 0, NULL);
                     if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
-                        params[i].ptr = ((AbstractMemory *) DATA_PTR(ptr))->address;
+                        param->ptr = ((AbstractMemory *) DATA_PTR(ptr))->address;
                     } else {
                         rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
                     }
@@ -302,27 +342,32 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 } else {
                     rb_raise(rb_eArgError, ":pointer argument is not a valid pointer");
                 }
+                ADJ(param, ADDRESS);
                 ++argidx;
                 break;
             case CALLBACK:
                 if (callbackProc != Qnil) {
-                    params[i].ptr = callback_param(callbackProc, invoker->callbackParameters[cbidx++]);
+                    param->ptr = callback_param(callbackProc, invoker->callbackParameters[cbidx++]);
                 } else {
-                    params[i].ptr = callback_param(argv[argidx], invoker->callbackParameters[cbidx++]);
+                    param->ptr = callback_param(argv[argidx], invoker->callbackParameters[cbidx++]);
                     ++argidx;
                 }
+                ADJ(param, ADDRESS);
                 break;
             default:
                 rb_raise(rb_eArgError, "Invalid parameter type: %d", paramTypes[i]);
         }
-        ffiValues[i] = &params[i];
     }
 }
-static VALUE
+static inline VALUE
 ffi_invoke(ffi_cif* cif, void* function, NativeType returnType, void** ffiValues)
 {
     FFIStorage retval;
+#ifdef USE_RAW
+    ffi_raw_call(cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
+#else
     ffi_call(cif, FFI_FN(function), &retval, ffiValues);
+#endif
     threadData->td_errno = errno;
     return rb_FFI_NativeValueToRuby(returnType, &retval);
 }
@@ -330,7 +375,7 @@ static VALUE
 invoker_call(int argc, VALUE* argv, VALUE self)
 {
     Invoker* invoker;
-    FFIStorage params[MAX_PARAMETERS], retval;
+    FFIStorage params[MAX_PARAMETERS];
     void* ffiValues[MAX_PARAMETERS];
 
     Data_Get_Struct(self, Invoker, invoker);
@@ -342,8 +387,8 @@ static VALUE
 invoker_call0(VALUE self)
 {
     Invoker* invoker;
-    void* ffiValues[] = { NULL };
-    FFIStorage retval;
+    FFIStorage arg0;
+    void* ffiValues[] = { &arg0 };
     
     Data_Get_Struct(self, Invoker, invoker);
     return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
@@ -354,7 +399,7 @@ invoker_call1(VALUE self, VALUE arg1)
 {
     Invoker* invoker;
     void* ffiValues[1];
-    FFIStorage retval, params[1];
+    FFIStorage params[1];
 
     Data_Get_Struct(self, Invoker, invoker);
     ffi_arg_setup(invoker, 1, &arg1, invoker->paramTypes, params, ffiValues);
@@ -366,7 +411,7 @@ invoker_call2(VALUE self, VALUE arg1, VALUE arg2)
 {
     Invoker* invoker;
     void* ffiValues[2];
-    FFIStorage retval, params[2];
+    FFIStorage params[2];
     VALUE argv[] = { arg1, arg2 };
 
     Data_Get_Struct(self, Invoker, invoker);
@@ -379,7 +424,7 @@ invoker_call3(VALUE self, VALUE arg1, VALUE arg2, VALUE arg3)
 {
     Invoker* invoker;
     void* ffiValues[3];
-    FFIStorage retval, params[3];
+    FFIStorage params[3];
     VALUE argv[] = { arg1, arg2, arg3 };
 
     Data_Get_Struct(self, Invoker, invoker);
@@ -430,7 +475,7 @@ static VALUE
 variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 {
     Invoker* invoker;
-    FFIStorage* params, retval;
+    FFIStorage* params;
     ffi_cif cif;
     void** ffiValues;
     ffi_type** ffiParamTypes;
@@ -499,16 +544,19 @@ callback_param(VALUE proc, VALUE cbInfo)
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
 #ifdef HAVE_NATIVETHREAD
+static ThreadData*
+thread_data_init()
+{
+    ThreadData* td = ALLOC_N(ThreadData, 1);
+    memset(td, 0, sizeof(*td));
+    pthread_setspecific(threadDataKey, td);
+    return td;
+}
 static inline ThreadData*
 thread_data_get()
 {
     ThreadData* td = pthread_getspecific(threadDataKey);
-    if (td == NULL) {
-        td = ALLOC_N(ThreadData, 1);
-        memset(td, 0, sizeof(*td));
-        pthread_setspecific(threadDataKey, td);
-    }
-    return  td;
+    return td != NULL ? td : thread_data_init();
 }
 
 static void
