@@ -52,6 +52,39 @@ static pthread_key_t threadDataKey;
 
 #define threadData (thread_data_get())
 
+#if defined(__i386__)
+#  define USE_RAW
+#endif
+
+#ifdef USE_RAW
+#  ifndef __i386__
+#    error "RAW argument packing only supported on i386"
+#  endif
+
+#define INT8_SIZE (sizeof(char))
+#define INT16_SIZE (sizeof(short))
+#define INT32_SIZE (sizeof(int))
+#define INT64_SIZE (sizeof(long long))
+#define FLOAT32_SIZE (sizeof(float))
+#define FLOAT64_SIZE (sizeof(double))
+#define ADDRESS_SIZE (sizeof(void *))
+#define INT8_ADJ (4)
+#define INT16_ADJ (4)
+#define INT32_ADJ (4)
+#define INT64_ADJ (8)
+#define FLOAT32_ADJ (4)
+#define FLOAT64_ADJ (8)
+#define ADDRESS_ADJ (sizeof(void *))
+
+#endif /* USE_RAW */
+
+#ifdef USE_RAW
+#  define ADJ(p, a) ((p) = (FFIStorage*) (((caddr_t) p) + a##_ADJ))
+#else
+#  define ADJ(p, a) (++(p))
+#endif
+
+
 static VALUE
 invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
         VALUE returnType, VALUE convention)
@@ -195,34 +228,7 @@ getUnsignedInt32(VALUE value, int type)
     }
     return (unsigned int) i;
 }
-#if defined(__i386__) && defined(notyet)
-#  define USE_RAW
-#endif
 
-#ifdef USE_RAW
-
-#define INT8_SIZE (sizeof(char))
-#define INT16_SIZE (sizeof(short))
-#define INT32_SIZE (sizeof(int))
-#define INT64_SIZE (sizeof(long long))
-#define FLOAT32_SIZE (sizeof(float))
-#define FLOAT64_SIZE (sizeof(double))
-#define ADDRESS_SIZE (sizeof(void *))
-#define INT8_ADJ (4)
-#define INT16_ADJ (4)
-#define INT32_ADJ (4)
-#define INT64_ADJ (8)
-#define FLOAT32_ADJ (4)
-#define FLOAT64_ADJ (8)
-#define ADDRESS_ADJ (sizeof(void *))
-
-#endif /* USE_RAW */
-
-#ifdef USE_RAW
-#  define ADJ(p, a) ((p) = (FFIStorage*) (((caddr_t) p) + a##_ADJ))
-#else
-#  define ADJ(p, a) (++(p))
-#endif
 static void
 ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTypes,
         FFIStorage* paramStorage, void** ffiValues)
@@ -580,10 +586,10 @@ thread_data_free(void *ptr)
     xfree(ptr);
 }
 #else /* !HAVE_NATIVETHREAD */
+static ThreadData td0;
 static inline ThreadData*
 thread_data_get()
 {
-    static ThreadData td0;
     return &td0;
 }
 #endif
