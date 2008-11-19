@@ -38,6 +38,18 @@
         </logicalFolder>
         <itemPath>lib/ffi.rb</itemPath>
       </logicalFolder>
+      <logicalFolder name="libtest" displayName="libtest" projectFiles="true">
+        <itemPath>libtest/Benchmark.c</itemPath>
+        <itemPath>libtest/BufferTest.c</itemPath>
+        <itemPath>libtest/ClosureTest.c</itemPath>
+        <itemPath>libtest/LastErrorTest.c</itemPath>
+        <itemPath>libtest/NumberTest.c</itemPath>
+        <itemPath>libtest/PointerTest.c</itemPath>
+        <itemPath>libtest/ReferenceTest.c</itemPath>
+        <itemPath>libtest/StringTest.c</itemPath>
+        <itemPath>libtest/StructTest.c</itemPath>
+        <itemPath>libtest/VariadicTest.c</itemPath>
+      </logicalFolder>
       <logicalFolder name="specs" displayName="specs" projectFiles="true">
         <logicalFolder name="rbx" displayName="rbx" projectFiles="true">
           <itemPath>specs/rbx/attach_function_spec.rb</itemPath>
@@ -190,6 +202,36 @@
       </item>
       <item path="lib/ffi/variadic.rb">
         <itemTool>3</itemTool>
+      </item>
+      <item path="libtest/Benchmark.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/BufferTest.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/ClosureTest.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/LastErrorTest.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/NumberTest.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/PointerTest.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/ReferenceTest.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/StringTest.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/StructTest.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="libtest/VariadicTest.c">
+        <itemTool>0</itemTool>
       </item>
       <item path="specs/buffer_spec.rb">
         <itemTool>3</itemTool>
