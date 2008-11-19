@@ -20,9 +20,8 @@ ifneq ($(OS),openbsd)
 CCACHE := $(shell /usr/bin/which ccache)
 endif
 
-TEST_OBJS = Benchmark.o BufferTest.o ClosureTest.o LastErrorTest.o NumberTest.o \
-	PointerTest.o ReferenceTest.o StringTest.o StructTest.o
-TEST_OBJS := $(patsubst %.o, $(TEST_BUILD_DIR)/%.o, $(TEST_OBJS))
+TEST_SRCS = $(wildcard $(SRC_DIR)/*.c)
+TEST_OBJS := $(patsubst $(SRC_DIR)/%.c, $(TEST_BUILD_DIR)/%.o, $(TEST_SRCS))
 	
 #
 # Compiler/linker flags from:
@@ -83,4 +82,4 @@ clean::
 	# nothing to do - ant will delete the build dir
 
 debug::
-	@echo "CCACHE=$(CCACHE)"	
+	@echo "SRCS=$(TEST_SRCS)"
