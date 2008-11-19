@@ -77,7 +77,7 @@ describe "Three different size Integer arguments" do
   TYPE_MAP = {
     's8' => :char, 'u8' => :uchar, 's16' => :short, 'u16' => :ushort,
     's32' => :int, 'u32' => :uint, 's64' => :long_long, 'u64' => :ulong_long,
-    'sL' => :long, 'uL' => :ulong
+    'sL' => :long, 'uL' => :ulong, 'f32' => :float, 'f64' => :double
   }
   TYPES = TYPE_MAP.keys
   module LibTest
@@ -110,7 +110,20 @@ describe "Three different size Integer arguments" do
     'sL' => [ 0x1f2e3d4c ],
     'uL' => [ 0xf7e8d9ca ],
     's64' => [ 0x1eafdeadbeefa1b2 ],
+#    'f32' => [ 1.234567 ],
+    'f64' => [ 9.87654321 ]
   }
+  module Number
+    def self.verify(p, off, t, v)
+      if t == 'f32'
+        p.get_float32(off).should == v
+      elsif t == 'f64'
+        p.get_float64(off).should == v
+      else
+        p.get_int64(off).should == v
+      end
+    end
+  end
   PACK_VALUES.keys.each do |t1|
     PACK_VALUES.keys.each do |t2|
       PACK_VALUES.keys.each do |t3|
@@ -120,9 +133,9 @@ describe "Three different size Integer arguments" do
               it "call(#{TYPE_MAP[t1]} (#{v1}), #{TYPE_MAP[t2]} (#{v2}), #{TYPE_MAP[t3]} (#{v3}))" do
                 p = FFI::Buffer.new :long_long, 3
                 LibTest.send("pack_#{t1}#{t2}#{t3}_s64", v1, v2, v3, p)
-                p.get_int64(0).should == v1
-                p.get_int64(8).should == v2
-                p.get_int64(16).should == v3
+                Number.verify(p, 0, t1, v1)
+                Number.verify(p, 8, t2, v2)
+                Number.verify(p, 16, t3, v3)
               end
             end
           end

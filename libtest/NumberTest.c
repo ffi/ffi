@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdint.h>
 
 typedef int8_t s8;
@@ -39,6 +40,8 @@ typedef int64_t s64;
 typedef u_int64_t u64;
 typedef signed long sL;
 typedef unsigned long uL;
+typedef float f32;
+typedef double f64;
 
 #define ADD(T) T add_##T(T arg1, T arg2) { return arg1 + arg2; }
 #define SUB(T) T sub_##T(T arg1, T arg2) { return arg1 - arg2; }
@@ -84,8 +87,24 @@ TEST2(u64)
 #endif
 
 #define ADD3(R, T1, T2, T3) R add_##T1##T2##T3##_##R(T1 arg1, T2 arg2, T3 arg3) { return arg1 + arg2 + arg3; }
+#define pack_f32(buf, v) do { *(float *)(buf) = v; } while(0)
+#define pack_f64(buf, v) do { *(double *)(buf) = v; } while(0)
+#define pack_int(buf, v) do { *(buf) = v; } while(0)
+#define pack_s8 pack_int
+#define pack_u8 pack_int
+#define pack_s16 pack_int
+#define pack_u16 pack_int
+#define pack_s32 pack_int
+#define pack_u32 pack_int
+#define pack_s64 pack_int
+#define pack_u64 pack_int
+#define pack_sL pack_int
+#define pack_uL pack_int
+
 #define PACK3(R, T1, T2, T3) void pack_##T1##T2##T3##_##R(T1 arg1, T2 arg2, T3 arg3, R* r) { \
-    r[0] = arg1; r[1] = arg2; r[2] = arg3; \
+    pack_##T1(&r[0], arg1); \
+    pack_##T2(&r[1], arg2); \
+    pack_##T3(&r[2], arg3); \
 }
 
 #define T3___(R, T1, T2, T3) PACK3(R, T1, T2, T3) /* SUB2(R, T1, T2) MUL2(R, T1, T2) DIV2(R, T1, T2) */
@@ -95,6 +114,7 @@ TEST2(u64)
     T3___(R, T1, T2, s32) T3___(R, T1, T2, u32) \
     T3___(R, T1, T2, sL) T3___(R, T1, T2, uL) \
     T3___(R, T1, T2, s64) T3___(R, T1, T2, u64) \
+    T3___(R, T1, T2, f32) T3___(R, T1, T2, f64) \
 
 #define T3_(R, T1) \
     T3__(R, T1, s8) T3__(R, T1, u8) \
@@ -102,10 +122,11 @@ TEST2(u64)
     T3__(R, T1, s32) T3__(R, T1, u32) \
     T3__(R, T1, sL) T3__(R, T1, uL) \
     T3__(R, T1, s64) T3__(R, T1, u64) \
+    T3__(R, T1, f32) T3__(R, T1, f64) \
 
 #define TEST3(R) \
     T3_(R, s8) T3_(R, u8) T3_(R, s16) T3_(R, u16) T3_(R, s32) T3_(R, u32) \
-    T3_(R, sL) T3_(R, uL) T3_(R, s64) T3_(R, u64)
+    T3_(R, sL) T3_(R, uL) T3_(R, s64) T3_(R, u64) T3_(R, f32) T3_(R, f64)
 
 TEST3(s64)
 
