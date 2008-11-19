@@ -499,6 +499,21 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     for (i = 0; i < paramCount; ++i) {
         VALUE entry = rb_ary_entry(parameterTypes, i);
         int paramType = FIX2INT(entry);
+        switch (paramType) {
+            case INT8:
+            case INT16:
+            case INT32:
+                paramType = INT32;
+                break;
+            case UINT8:
+            case UINT16:
+            case UINT32:
+                paramType = UINT32;
+                break;
+            case FLOAT32:
+                paramType = FLOAT64;
+                break;
+        }
         paramTypes[i] = paramType;
         ffiParamTypes[i] = rb_FFI_NativeTypeToFFI(paramType);
         if (ffiParamTypes[i] == NULL) {
