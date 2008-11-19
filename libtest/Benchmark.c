@@ -41,3 +41,21 @@ int returnIntI(int arg) {
     return arg;
 }
 
+void benchIrV(int a1)
+{
+}
+void benchIIrV(int a1, int a2)
+{
+}
+void benchIIIrV(int a1, int a2, int a3)
+{
+}
+void benchIIIIrV(int a1, int a2, int a3, int a4)
+{
+}
+void benchIIIIIrV(int a1, int a2, int a3, int a4, int a5)
+{
+}
+void benchIIIIIIrV(int a1, int a2, int a3, int a4, int a5, int a6)
+{
+}

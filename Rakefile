@@ -11,6 +11,9 @@ AUTHOR = "Wayne Meissner"
 EMAIL = "wmeissner@gmail.com"
 HOMEPAGE = "http://kenai.com/projects/ruby-ffi"
 SUMMARY = "A Ruby foreign function interface (compatible with Rubinius and JRuby FFI)"
+LIBEXT = Config::CONFIG['host_os'].downcase =~ /darwin/ ? "dylib" : "so"
+GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd/ ? "gmake" : "make"
+LIBTEST = "build/libtest.#{LIBEXT}"
 
 spec = Gem::Specification.new do |s|
   s.name = GEM
@@ -84,12 +87,23 @@ task :clean do
   FileUtils.rm_f(Dir["pkg/*.gem"])
   FileUtils.rm_f("Makefile")
 end
-LIBEXT = if Config::CONFIG['host_os'].downcase =~ /darwin/; "dylib"; else "so"; end
-GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd/ ? "gmake" : "make"
 task "build/libtest.#{LIBEXT}" do
   sh %{#{GMAKE} -f libtest/GNUmakefile}
 end
 desc "Test the extension"
-task :test => [ :compile, "build/libtest.#{LIBEXT}", :specs ] do
+task :test => [ :compile, LIBTEST, :specs ] do
 
+end
+namespace :bench do
+  ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
+  Dir["bench/bench_*.rb"].each do |bench|
+    task File.basename(bench, ".rb")[6..-1] => [ LIBTEST, :compile ] do
+      sh %{#{Gem.ruby} -Ibuild -Ilib #{bench} #{ITER}}
+    end
+  end
+  task :all => LIBTEST do
+    Dir["bench/bench_*.rb"].each do |bench|
+      sh %{#{Gem.ruby} -Ibuild -Ilib #{bench}}
+    end
+  end
 end
