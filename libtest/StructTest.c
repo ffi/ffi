@@ -30,20 +30,19 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef char Signed8;
-typedef short Signed16;
-typedef int Signed32;
-typedef long long Signed64;
-typedef float Float32;
-typedef double Float64;
-typedef long SignedLong;
+typedef char s8;
+typedef short s16;
+typedef int s32;
+typedef long long s64;
+typedef float f32;
+typedef double f64;
 
 struct test1 {
     char b;
     short s;
     int i;
     long long j;
-    SignedLong l;
+    long l;
     float f;
     double d;
     char string[32];
@@ -51,19 +50,16 @@ struct test1 {
 
 #define T(x, type) \
     type struct_field_##type(struct test1* t) { return t->x; } \
-    struct type##Align { char first; type value; }; \
-    type struct_align_##type(struct type##Align* a) { return a->value; }
+    struct type##_align { char first; type value; }; \
+    type struct_align_##type(struct type##_align* a) { return a->value; }
 
-T(b, Signed8);
-T(s, Signed16);
-T(i, Signed32);
-T(j, Signed64);
-T(f, Float32);
-T(d, Float64);
-
-Signed64 struct_field_SignedLong(struct test1* t) { return t->l; } 
-struct SignedLongAlign { char first; SignedLong value; };
-Signed64 struct_align_SignedLong(struct SignedLongAlign* a) { return a->value; }
+T(b, s8);
+T(s, s16);
+T(i, s32);
+T(j, s64);
+T(f, f32);
+T(d, f64);
+T(l, long);
 
 void 
 struct_set_string(struct test1* t, char* s) 

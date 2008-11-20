@@ -1,11 +1,23 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 describe "Struct tests" do
   include FFI
+  StructTypes = {
+    's8' => :char,
+    's16' => :short,
+    's32' => :int,
+    's64' => :long_long,
+    'long' => :long,
+    'f32' => :float,
+    'f64' => :double
+  }
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
     attach_function :string_equals, [ :string, :string ], :int
+    [ 's8', 's16', 's32', 's64', 'f32', 'f64', 'long' ].each do |t|
+      attach_function "struct_align_#{t}", [ :pointer ], StructTypes[t]
+    end
   end
   class PointerMember < FFI::Struct
     layout :pointer, :pointer, 0
@@ -119,7 +131,7 @@ describe "Struct tests" do
       class TestStruct < FFI::Struct
         layout :c, :char
       end
-      attach_function :struct_field_Signed8, [ TestStruct ], :char
+      attach_function :struct_field_s8, [ TestStruct ], :char
     end
   end
   it "Can use Struct subclass as IN parameter type" do
@@ -129,7 +141,7 @@ describe "Struct tests" do
       class TestStruct < FFI::Struct
         layout :c, :char
       end
-      attach_function :struct_field_Signed8, [ TestStruct.in ], :char
+      attach_function :struct_field_s8, [ TestStruct.in ], :char
     end
   end
   it "Can use Struct subclass as OUT parameter type" do
@@ -139,7 +151,63 @@ describe "Struct tests" do
       class TestStruct < FFI::Struct
         layout :c, :char
       end
-      attach_function :struct_field_Signed8, [ TestStruct.out ], :char
+      attach_function :struct_field_s8, [ TestStruct.out ], :char
     end
   end
+  it ":char member aligned correctly" do
+    class AlignChar < FFI::Struct
+      layout :c, :char, :v, :char
+    end
+    s = AlignChar.new
+    s[:v] = 0x12
+    LibTest.struct_align_s8(s.pointer).should == 0x12
+  end
+  it ":short member aligned correctly" do
+    class AlignShort < FFI::Struct
+      layout :c, :char, :v, :short
+    end
+    s = AlignShort.alloc_in
+    s[:v] = 0x1234
+    LibTest.struct_align_s16(s.pointer).should == 0x1234
+  end
+  it ":int member aligned correctly" do
+    class AlignInt < FFI::Struct
+      layout :c, :char, :v, :int
+    end
+    s = AlignInt.alloc_in
+    s[:v] = 0x12345678
+    LibTest.struct_align_s32(s.pointer).should == 0x12345678
+  end
+  it ":long_long member aligned correctly" do
+    class AlignLongLong < FFI::Struct
+      layout :c, :char, :v, :long_long
+    end
+    s = AlignLongLong.alloc_in
+    s[:v] = 0x123456789abcdef0
+    LibTest.struct_align_s64(s.pointer).should == 0x123456789abcdef0
+  end
+  it ":long member aligned correctly" do
+    class AlignLong < FFI::Struct
+      layout :c, :char, :v, :long
+    end
+    s = AlignLong.alloc_in
+    s[:v] = 0x12345678
+    LibTest.struct_align_long(s.pointer).should == 0x12345678
+  end
+#  it ":float member aligned correctly" do
+#    class AlignFloat < FFI::Struct
+#      layout :c, :char, :v, :float
+#    end
+#    s = AlignFloat.alloc_in
+#    s[:v] = 1.23456
+#    LibTest.struct_align_f32(s.pointer).should == 1.23456
+#  end
+#  it ":double member aligned correctly" do
+#    class AlignDouble < FFI::Struct
+#      layout :c, :char, :v, :double
+#    end
+#    s = AlignDouble.alloc_in
+#    s[:v] = 1.23456789
+#    LibTest.struct_align_f64(s.pointer).should == 1.23456789
+#  end
 end
