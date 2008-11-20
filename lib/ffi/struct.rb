@@ -14,10 +14,6 @@ module FFI
     end
   end
   class StructLayoutBuilder
-    LONG_ALIGN = Platform::LONG_ALIGN
-    ADDRESS_ALIGN = Platform::ADDRESS_ALIGN
-    FLOAT_ALIGN = Platform::FLOAT_ALIGN
-    DOUBLE_ALIGN = Platform::DOUBLE_ALIGN
     class Field
       def initialize(off)
         @off = off
@@ -38,6 +34,7 @@ module FFI
     end
     class Signed8 < Field
       def self.size; 8; end
+      def self.align; Platform::INT8_ALIGN; end
       def put(ptr, val)
         ptr.put_int8(@off, val)
       end
@@ -47,6 +44,7 @@ module FFI
     end
     class Unsigned8 < Field
       def self.size; 8; end
+      def self.align; Platform::INT8_ALIGN; end
       def put(ptr, val)
         ptr.put_uint8(@off, val)
       end
@@ -56,6 +54,7 @@ module FFI
     end
     class Signed16 < Field
       def self.size; 16; end
+      def self.align; Platform::INT16_ALIGN; end
       def put(ptr, val)
         ptr.put_int16(@off, val)
       end
@@ -65,6 +64,7 @@ module FFI
     end
     class Unsigned16 < Field
       def self.size; 16; end
+      def self.align; Platform::INT16_ALIGN; end
       def put(ptr, val)
         ptr.put_uint16(@off, val)
       end
@@ -74,6 +74,7 @@ module FFI
     end
     class Signed32 < Field
       def self.size; 32; end
+      def self.align; Platform::INT32_ALIGN; end
       def put(ptr, val)
         ptr.put_int32(@off, val)
       end
@@ -83,6 +84,7 @@ module FFI
     end
     class Unsigned32 < Field
       def self.size; 32; end
+      def self.align; Platform::INT32_ALIGN; end
       def put(ptr, val)
         ptr.put_uint32(@off, val)
       end
@@ -92,7 +94,7 @@ module FFI
     end
     class Signed64 < Field
       def self.size; 64; end
-      def self.align; LONG_ALIGN; end
+      def self.align; Platform::INT64_ALIGN; end
       def put(ptr, val)
         ptr.put_int64(@off, val)
       end
@@ -102,7 +104,7 @@ module FFI
     end
     class Unsigned64 < Field
       def self.size; 64; end
-      def self.align; LONG_ALIGN; end
+      def self.align; Platform::INT64_ALIGN; end
       def put(ptr, val)
         ptr.put_uint64(@off, val)
       end
@@ -132,7 +134,7 @@ module FFI
     end
     class PointerField < Field
       def self.size; Platform::ADDRESS_SIZE; end
-      def self.align; ADDRESS_ALIGN; end
+      def self.align; Platform::ADDRESS_ALIGN; end
       def put(ptr, val)
         ptr.put_pointer(@off, val)
       end
@@ -142,7 +144,7 @@ module FFI
     end
     class StringField < Field
       def self.size; Platform::ADDRESS_SIZE; end
-      def self.align; ADDRESS_ALIGN; end
+      def self.align; Platform::ADDRESS_ALIGN; end
       def put(ptr, val)
         raise ArgumentError, "Cannot set :string fields"
       end
