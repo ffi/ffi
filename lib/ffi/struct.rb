@@ -14,10 +14,10 @@ module FFI
     end
   end
   class StructLayoutBuilder
-    LONG_ALIGN = Platform::ARCH =~ /sparc.*/ ? 64 : Platform::LONG_SIZE
-    ADDRESS_ALIGN = Platform::ARCH =~ /sparc.*/ ? 64 : Platform::ADDRESS_SIZE
-    FLOAT_ALIGN = Platform::ARCH =~ /sparc.*/ ? 64 : Platform::ADDRESS_SIZE
-    DOUBLE_ALIGN = Platform::ARCH =~ /sparc.*/ ? 64 : Platform::ADDRESS_SIZE
+    LONG_ALIGN = Platform::LONG_ALIGN
+    ADDRESS_ALIGN = Platform::ADDRESS_ALIGN
+    FLOAT_ALIGN = Platform::FLOAT_ALIGN
+    DOUBLE_ALIGN = Platform::DOUBLE_ALIGN
     class Field
       def initialize(off)
         @off = off

@@ -1,5 +1,6 @@
 #include <sys/param.h>
 #include <sys/types.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <ruby.h>
 #include <ctype.h>
@@ -26,16 +27,34 @@ static VALUE modulePlatform = Qnil;
 #error "Unknown cpu type"
 #endif
 
+static void
+export_primitive_types(VALUE module)
+{
+#define S(name, T) do { \
+    typedef struct { char c; T v; } s; \
+    rb_define_const(module, #name "_ALIGN", INT2NUM((sizeof(s) - sizeof(T)) * 8)); \
+    rb_define_const(module, #name "_SIZE", INT2NUM(sizeof(T)* 8)); \
+} while(0)
+    S(INT8, char);
+    S(INT16, short);
+    S(INT32, int);
+    S(INT64, long long);
+    S(LONG, long);
+    S(FLOAT, float);
+    S(DOUBLE, double);
+    S(ADDRESS, void*);
+#undef S
+}
+
 void
 rb_FFI_Platform_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE platform = rb_define_module_under(moduleFFI, "Platform");
-    rb_define_const(platform, "LONG_SIZE", INT2FIX(sizeof(long) * 8));
-    rb_define_const(platform, "ADDRESS_SIZE", INT2FIX(sizeof(void *) * 8));
     rb_define_const(platform, "BYTE_ORDER", INT2FIX(BYTE_ORDER));
     rb_define_const(platform, "LITTLE_ENDIAN", INT2FIX(LITTLE_ENDIAN));
     rb_define_const(platform, "BIG_ENDIAN", INT2FIX(BIG_ENDIAN));
     rb_define_const(platform, "CPU", rb_str_new2(CPU));
+    export_primitive_types(platform);
     modulePlatform = platform;
 }
