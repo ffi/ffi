@@ -80,3 +80,4 @@ struct_make_struct(char b, short s, int i, long long ll, float f, double d)
     t.d = d;
     return &t;
 }
+
