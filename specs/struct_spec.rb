@@ -194,20 +194,20 @@ describe "Struct tests" do
     s[:v] = 0x12345678
     LibTest.struct_align_long(s.pointer).should == 0x12345678
   end
-#  it ":float member aligned correctly" do
-#    class AlignFloat < FFI::Struct
-#      layout :c, :char, :v, :float
-#    end
-#    s = AlignFloat.alloc_in
-#    s[:v] = 1.23456
-#    LibTest.struct_align_f32(s.pointer).should == 1.23456
-#  end
-#  it ":double member aligned correctly" do
-#    class AlignDouble < FFI::Struct
-#      layout :c, :char, :v, :double
-#    end
-#    s = AlignDouble.alloc_in
-#    s[:v] = 1.23456789
-#    LibTest.struct_align_f64(s.pointer).should == 1.23456789
-#  end
+  it ":float member aligned correctly" do
+    class AlignFloat < FFI::Struct
+      layout :c, :char, :v, :float
+    end
+    s = AlignFloat.alloc_in
+    s[:v] = 1.23456
+    (LibTest.struct_align_f32(s.pointer) - 1.23456).abs.should < 0.00001
+  end
+  it ":double member aligned correctly" do
+    class AlignDouble < FFI::Struct
+      layout :c, :char, :v, :double
+    end
+    s = AlignDouble.alloc_in
+    s[:v] = 1.23456789
+    (LibTest.struct_align_f64(s.pointer) - 1.23456789).abs.should < 0.00000001
+  end
 end

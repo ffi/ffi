@@ -110,6 +110,26 @@ module FFI
         ptr.get_uint64(@off)
       end
     end
+    class FloatField < Field
+      def self.size; Platform::FLOAT_SIZE; end
+      def self.align; Platform::FLOAT_ALIGN; end
+      def put(ptr, val)
+        ptr.put_float32(@off, val)
+      end
+      def get(ptr)
+        ptr.get_float32(@off)
+      end
+    end
+    class DoubleField < Field
+      def self.size; Platform::DOUBLE_SIZE; end
+      def self.align; Platform::DOUBLE_ALIGN; end
+      def put(ptr, val)
+        ptr.put_float64(@off, val)
+      end
+      def get(ptr)
+        ptr.get_float64(@off)
+      end
+    end
     class PointerField < Field
       def self.size; Platform::ADDRESS_SIZE; end
       def self.align; ADDRESS_ALIGN; end
@@ -157,6 +177,10 @@ module FFI
         Signed64
       when :ulong_long, NativeType::UINT64
         Unsigned64
+      when :float, NativeType::FLOAT32
+        FloatField
+      when :double, NativeType::FLOAT64
+        DoubleField
       when :pointer, NativeType::POINTER
         PointerField
       when :string, NativeType::STRING
