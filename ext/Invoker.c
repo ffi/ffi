@@ -552,7 +552,7 @@ static void*
 callback_param(VALUE proc, VALUE cbInfo)
 {
     VALUE callback;
-    VALUE cbTable = rb_ivar_get(proc, cbTableID);
+    VALUE cbTable = RTEST(rb_ivar_defined(proc, cbTableID)) ? rb_ivar_get(proc, cbTableID) : Qnil;
     if (!cbTable || cbTable == Qnil) {
         cbTable = rb_hash_new();
         rb_ivar_set(proc, cbTableID, cbTable);
