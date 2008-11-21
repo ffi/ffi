@@ -21,7 +21,7 @@ describe "Callback" do
     p.put_array_of_int32(0, [ 1 , 2 ])
     args = []
     # this is a bit dodgey, as it relies on qsort passing the args in order
-    LibC.qsort(p, 2, 4) do |p1, p2| 
+    LibC.qsort(p, 2, 4) do |p1, p2|
       args.push(p1.get_int(0))
       args.push(p2.get_int(0))
       0
@@ -52,6 +52,9 @@ describe "Callback" do
     attach_function :testCallbackVrS64, :testClosureVrL, [ :cbVrS64 ], :long_long
     attach_function :testCallbackVrU64, :testClosureVrL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbCrV, :char ], :void
+  end
+  it "function with Callback plus another arg should raise error if no arg given" do
+    lambda { LibTest.testCallbackCrV { |*a| }}.should raise_error
   end
   it "Callback returning :char (0)" do
     LibTest.testCallbackVrS8 { 0 }.should == 0
@@ -329,4 +332,4 @@ describe "Callback with primitive argument" do
     v.should == -1
   end
   
-end
+end unless true

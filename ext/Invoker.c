@@ -116,7 +116,7 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
                     invoker->callbackCount + 1);
             invoker->callbackParameters[invoker->callbackCount++] = entry;
             invoker->paramTypes[i] = CALLBACK;
-            invoker->ffiParamTypes[i] = &ffi_type_pointer;            
+            invoker->ffiParamTypes[i] = &ffi_type_pointer;
         } else {
             int paramType = FIX2INT(entry);
             invoker->paramTypes[i] = paramType;
@@ -235,19 +235,20 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
 {
     VALUE callbackProc = Qnil;
     FFIStorage* param = &paramStorage[0];
-    int i, argidx, cbidx, argCount, type;
+    int i, argidx, cbidx, argCount;
 
-    if (invoker->paramCount != -1) {
-        if (argc < invoker->paramCount && invoker->callbackCount == 1 && rb_block_given_p()) {
+    if (invoker->paramCount != -1 && invoker->paramCount != argc) {
+        if (argc == (invoker->paramCount - 1) && invoker->callbackCount == 1 && rb_block_given_p()) {
             callbackProc = rb_block_proc();
-        } else if (argc != invoker->paramCount) {
+        } else {
             rb_raise(rb_eArgError, "wrong number of arguments (%d for %d)", argc, invoker->paramCount);
         }
     }
     argCount = invoker->paramCount != -1 ? invoker->paramCount : argc;
     for (i = 0, argidx = 0, cbidx = 0; i < argCount; ++i) {
+        int type = argidx < argc ? TYPE(argv[argidx]) : T_NONE;
         ffiValues[i] = param;
-        type = TYPE(argv[argidx]);
+        
         switch (paramTypes[i]) {
             case INT8:
                 param->i = getSignedInt(argv[argidx++], type, -128, 127, "char");
