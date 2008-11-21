@@ -62,8 +62,9 @@ module FFI
 
     TypeDefs[add] = code
   end
-  def self.find_type(name)
-    code = TypeDefs[name]
+  def self.find_type(name, type_map = nil)
+    type_map = TypeDefs if type_map.nil?
+    code = type_map[name]
     code = name if !code && name.kind_of?(Integer)
     code = name if !code && name.kind_of?(FFI::CallbackInfo)
     raise TypeError, "Unable to resolve type '#{name}'" unless code
@@ -188,14 +189,18 @@ module FFI
     end
     raise ArgumentError, "Unknown native type"
   end
-  def self.create_invoker(lib, name, args, ret, convention = :default)    
+  def self.map_library_name(lib)
     # Mangle the library name to reflect the native library naming conventions
-    lib = Platform::LIBC if Platform::IS_LINUX &&  lib == 'c'
+    lib = Platform::LIBC if Platform::IS_LINUX && lib == 'c'
     if lib && File.basename(lib) == lib
       ext = ".#{Platform::LIBSUFFIX}"
       lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
       lib += ext unless lib =~ /#{ext}/
     end
+    lib
+  end
+  def self.create_invoker(lib, name, args, ret, options = { :convention => :default })
+    lib = FFI.map_library_name(lib)
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
     library = NativeLibrary.open(lib, 0)
@@ -203,9 +208,9 @@ module FFI
     raise NotFoundError.new(name, lib) unless function
     args = args.map {|e| find_type(e) }
     if args.length > 0 && args[args.length - 1] == FFI::NativeType::VARARGS
-      invoker = FFI::VariadicInvoker.new(library, function, args, find_type(ret), convention.to_s)
+      invoker = FFI::VariadicInvoker.new(library, function, args, find_type(ret), options)
     else
-      invoker = FFI::Invoker.new(library, function, args, find_type(ret), convention.to_s)
+      invoker = FFI::Invoker.new(library, function, args, find_type(ret), options[:convention].to_s)
     end
     raise NotFoundError.new(name, lib) unless invoker
     return invoker
@@ -239,7 +244,7 @@ module FFI::Library
     callback_count = 0
     arg_types.map! { |e|
       begin
-        FFI.find_type(e)
+        find_type(e)
       rescue FFI::TypeError => ex
         if defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(e)
           callback_count += 1
@@ -251,11 +256,14 @@ module FFI::Library
         end
       end
     }
+    options = Hash.new
+    options[:convention] = convention
+    options[:type_map] = @ffi_typedefs if defined?(@ffi_typedefs)
     # Try to locate the function in any of the libraries
     invoker = libraries.collect do |lib|
       begin
-        FFI.create_invoker lib, cname.to_s, arg_types, ret_type, convention
-      rescue LoadError => ex
+        FFI.create_invoker lib, cname.to_s, arg_types, find_type(ret_type), options
+      rescue FFI::NotFoundError => ex
         nil
       end
     end.compact.shift
@@ -287,7 +295,28 @@ module FFI::Library
   end
   def callback(name, args, ret)
     @ffi_callbacks = Hash.new unless defined?(@ffi_callbacks)
-    @ffi_callbacks[name] = FFI::CallbackInfo.new(FFI.find_type(ret), args.map { |e| FFI.find_type(e) })
+    @ffi_callbacks[name] = FFI::CallbackInfo.new(find_type(ret), args.map { |e| find_type(e) })
+  end
+  def typedef(current, add)
+    @ffi_typedefs = Hash.new unless defined?(@ffi_typedefs)
+    if current.kind_of? Integer
+      code = current
+    else
+      code = @ffi_typedefs[current] || FFI.find_type(current)
+    end
+
+    @ffi_typedefs[add] = code
+  end
+  def find_type(name)
+    code = if defined?(@ffi_typedefs)
+      @ffi_typedefs[name]
+    end
+    code = name if !code && name.kind_of?(FFI::CallbackInfo)
+    if code.nil? || code.kind_of?(Symbol)
+      FFI.find_type(name)
+    else
+      code
+    end
   end
 end
 
