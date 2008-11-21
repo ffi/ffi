@@ -17,11 +17,6 @@ f = 1.0
 puts "Benchmark Invoker.call [ :float  ], :void performance, #{ITER}x calls"
 
 invoker = FFI.create_invoker(LIBTEST_PATH, 'bench_f32_v', [ :float ], :void)
-unless invoker.respond_to?("call1")
-  class FFI::Invoker
-    alias :call1 :call
-  end
-end
 10.times {
   puts Benchmark.measure {
     ITER.times { invoker.call1(f) }
