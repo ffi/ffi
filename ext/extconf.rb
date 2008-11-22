@@ -9,7 +9,7 @@ if IS_MAC
 end
 have_closure_alloc = have_library("ffi", "ffi_closure_alloc", [ "ffi.h" ])
 $defs.push("-DHAVE_FFI_CLOSURE_ALLOC") if have_closure_alloc
-libffi_ok = have_closure_alloc || (IS_MAC && have_library("ffi", "ffi_prep_closure", [ "ffi.h" ]))
+libffi_ok = have_closure_alloc
 $defs << "-DHAVE_LIBFFI" if libffi_ok
 $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 
