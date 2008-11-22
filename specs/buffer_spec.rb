@@ -128,6 +128,67 @@ describe "Buffer#put_ulong_long" do
     end
   end
 end
+describe "Reading/Writing binary strings" do
+  it "Buffer#put_bytes" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    buf.put_bytes(0, str);
+    s2 = buf.get_bytes(0, 11);
+    s2.should == str
+  end
+  it "Buffer#put_bytes with index and length" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    buf.put_bytes(0, str, 5, 6);
+    s2 = buf.get_bytes(0, 6);
+    s2.should == str[5..-1]
+  end
+  it "Buffer#put_bytes with only index" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    buf.put_bytes(0, str, 5);
+    s2 = buf.get_bytes(0, 6);
+    s2.should == str[5..-1]
+  end
+  it "Buffer#put_bytes with index > str.length" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    lambda { buf.put_bytes(0, str, 12); }.should raise_error
+  end
+  it "Buffer#put_bytes with length > str.length" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    lambda { buf.put_bytes(0, str, 0, 12); }.should raise_error
+  end
+   it "Buffer#put_bytes with negative index" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    lambda { buf.put_bytes(0, str, -1, 12); }.should raise_error
+  end
+end
+describe "Reading/Writing ascii strings" do
+  it "Buffer#put_string with string containing zero byte" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    buf.put_string(0, str);
+    s2 = buf.get_bytes(0, 11);
+    s2.should == str
+  end
+  it "Buffer#get_string with string containing zero byte" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    buf.put_bytes(0, str);
+    s2 = buf.get_string(0, 11);
+    s2.should == "hello"
+  end
+  it "Buffer#put_string without length should NUL terminate" do
+    str = "hello"
+    buf = FFI::Buffer.new 1024
+    buf.put_string(0, str);
+    s2 = buf.get_bytes(0, 6);
+    s2.should == "hello\0"
+  end
+end
 describe "Buffer#put_pointer" do
   it "put_pointer(0, p).get_pointer(0) == p" do
     p = MemoryPointer.new :ulong_long

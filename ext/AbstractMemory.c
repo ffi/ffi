@@ -160,47 +160,75 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
     VALUE length = Qnil, offset = Qnil;
     AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
     long off, len;
+    caddr_t end;
     int nargs = rb_scan_args(argc, argv, "11", &offset, &length);
 
-    off = NUM2LONG(offset);    
-    if (nargs > 1) {
-        len = NUM2LONG(length);
-    } else {        
-        caddr_t end;
-        checkBounds(ptr, off, 1);
-        end = memchr(ptr->address + off, 0, ptr->size - off);
-        len = ((end != NULL) ? end - ptr->address: ptr->size) - off;
-    }
+    off = NUM2LONG(offset);
+    len = nargs > 1 && length != Qnil ? NUM2LONG(length) : (ptr->size - off);
     checkBounds(ptr, off, len);
-    return rb_tainted_str_new((char *) ptr->address + off, len);
+    end = memchr(ptr->address + off, 0, len);
+    return rb_tainted_str_new((char *) ptr->address + off,
+            (end != NULL ? end - ptr->address - off : len));
 }
 
 static VALUE
 memory_put_string(int argc, VALUE* argv, VALUE self)
 {
     AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
-    VALUE offset = Qnil, str = Qnil, length = Qnil;
+    VALUE offset = Qnil, str = Qnil;
     bool nulTerminate = true;
     long off, len;
-    int nargs = rb_scan_args(argc, argv, "21", &offset, &str, &length);
+    int nargs = rb_scan_args(argc, argv, "2", &offset, &str);
     off = NUM2LONG(offset);
     len = RSTRING_LEN(str);
-    if (nargs > 2 && length != Qnil) {
-        len = MIN(NUM2ULONG(length), len);
-        nulTerminate = false;
-    }
     checkBounds(ptr, off, len);
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
     }
     memcpy(ptr->address + off, RSTRING_PTR(str), len);
-
-    if (nulTerminate) {
-        char nul = '\0';
-        memcpy(ptr->address + off + len, &nul, sizeof(nul));
-    }
+    *((char *) ptr->address + off + len) = '\0';
     return self;
 }
+
+static VALUE
+memory_get_bytes(int argc, VALUE* argv, VALUE self)
+{
+    VALUE length = Qnil, offset = Qnil;
+    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    long off, len;
+    int nargs = rb_scan_args(argc, argv, "20", &offset, &length);
+
+    off = NUM2LONG(offset);
+    len = NUM2LONG(length);
+    checkBounds(ptr, off, len);
+    return rb_tainted_str_new((char *) ptr->address + off, len);
+}
+
+static VALUE
+memory_put_bytes(int argc, VALUE* argv, VALUE self)
+{
+    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    VALUE offset = Qnil, str = Qnil, rbIndex = Qnil, rbLength = Qnil;
+    long off, len, idx;
+    int nargs = rb_scan_args(argc, argv, "22", &offset, &str, &rbIndex, &rbLength);
+
+    off = NUM2LONG(offset);
+    idx = nargs > 2 ? NUM2LONG(rbIndex) : 0;
+    if (idx < 0) {
+        rb_raise(rb_eRangeError, "index canot be less than zero");
+    }
+    len = nargs > 3 ? NUM2LONG(rbLength) : (RSTRING_LEN(str) - idx);
+    if ((idx + len) > RSTRING_LEN(str)) {
+        rb_raise(rb_eRangeError, "index+length is greater than size of string");
+    }
+    checkBounds(ptr, off, len);
+    if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
+        rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
+    }
+    memcpy(ptr->address + off, RSTRING_PTR(str) + idx, len);
+    return self;
+}
+
 static inline caddr_t
 memory_address(VALUE self)
 {
@@ -266,6 +294,9 @@ rb_FFI_AbstractMemory_Init()
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
     rb_define_method(classMemory, "get_string", memory_get_string, -1);
     rb_define_method(classMemory, "put_string", memory_put_string, -1);
+    rb_define_method(classMemory, "get_bytes", memory_get_bytes, -1);
+    rb_define_method(classMemory, "put_bytes", memory_put_bytes, -1);
+
     rb_define_method(classMemory, "clear", memory_clear, 0);
     rb_define_method(classMemory, "total", memory_size, 0);
 
