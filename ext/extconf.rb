@@ -3,10 +3,10 @@ require 'mkmf'
 require 'rbconfig'
 dir_config("ffi_c")
 IS_MAC = Config::CONFIG['host_os'] =~ /^darwin/
-if IS_MAC
-  $CPPFLAGS << " -DMACOSX"
-  find_header("ffi.h", "/usr/include/ffi")
-end
+#if IS_MAC
+#  $CPPFLAGS << " -DMACOSX"
+#  find_header("ffi.h", "/usr/include/ffi")
+#end
 have_closure_alloc = have_library("ffi", "ffi_closure_alloc", [ "ffi.h" ])
 $defs.push("-DHAVE_FFI_CLOSURE_ALLOC") if have_closure_alloc
 libffi_ok = have_closure_alloc
