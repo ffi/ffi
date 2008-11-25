@@ -595,15 +595,21 @@ thread_data_get()
 }
 #endif
 static VALUE
-last_error(VALUE self)
+get_last_error(VALUE self)
 {
     return INT2NUM(threadData->td_errno);
+}
+static VALUE
+set_last_error(VALUE self, VALUE error)
+{
+    return Qnil;
 }
 
 void 
 rb_FFI_Invoker_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
+    VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
     classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_define_singleton_method(classInvoker, "new", invoker_new, 5);
     rb_define_method(classInvoker, "call", invoker_call, -1);
@@ -617,7 +623,9 @@ rb_FFI_Invoker_Init()
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     cbTableID = rb_intern("__ffi_callback_table__");
     to_ptr = rb_intern("to_ptr");
-    rb_define_module_function(moduleFFI, "errno", last_error, 0);
+    
+    rb_define_module_function(moduleError, "error", get_last_error, 0);
+    rb_define_module_function(moduleError, "error=", set_last_error, 1);
 #ifdef HAVE_NATIVETHREAD
     pthread_key_create(&threadDataKey, thread_data_free);
 #endif

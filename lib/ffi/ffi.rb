@@ -42,6 +42,7 @@ module FFI
 end
 
 require 'ffi/platform'
+require 'ffi/errno'
 require 'ffi/memorypointer'
 require 'ffi/buffer'
 require 'ffi/struct'
