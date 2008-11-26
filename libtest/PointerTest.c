@@ -76,3 +76,8 @@ ptr_free(void* ptr)
     free(ptr);
 }
 
+void*
+ptr_from_address(uintptr_t addr)
+{
+    return (void *) addr;
+}
