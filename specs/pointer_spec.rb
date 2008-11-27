@@ -47,10 +47,21 @@ describe "autopointers get cleaned up properly" do
   magic = 0x12345678
 
   class AutoPointerTestHelper
+    @@count = 0
     def self.release
+      @@count += 1 if @@count > 0
     end
-    def self.gc_everything
-      10.times { GC.start }
+    def self.reset
+      @@count = 0
+    end
+    def self.gc_everything(count)
+      loop = 5
+      while @@count < count && loop > 0
+        loop -= 1
+        GC.start
+        sleep 0.05 unless @@count == count
+      end
+      @@count = 0
     end
     def self.finalizer
       self.method(:release).to_proc
@@ -59,13 +70,14 @@ describe "autopointers get cleaned up properly" do
 
   it "when using default release method" do
     FFI::AutoPointer.should_receive(:release).at_least(loop_count-wiggle_room).times
+    AutoPointerTestHelper.reset
     loop_count.times do
       # note that if we called
       # AutoPointerTestHelper.method(:release).to_proc inline, we'd
       # have a reference to the pointer and it would never get GC'd.
       ap = FFI::AutoPointer.new(LibTest.ptr_from_address(magic))
     end
-    AutoPointerTestHelper.gc_everything
+    AutoPointerTestHelper.gc_everything loop_count
   end
 
   it "when passed a proc" do
@@ -78,20 +90,22 @@ describe "autopointers get cleaned up properly" do
     #  we'd have a reference to the pointer and it would
     #  never get GC'd.
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
+    AutoPointerTestHelper.reset
     loop_count.times do
       ap = FFI::AutoPointer.new(LibTest.ptr_from_address(magic),
                                 AutoPointerTestHelper.finalizer)
     end
-    AutoPointerTestHelper.gc_everything
+    AutoPointerTestHelper.gc_everything loop_count
   end
 
   it "when passed a method" do
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
+    AutoPointerTestHelper.reset
     loop_count.times do
       ap = FFI::AutoPointer.new(LibTest.ptr_from_address(magic),
                                 AutoPointerTestHelper.method(:release))
     end
-    AutoPointerTestHelper.gc_everything
+    AutoPointerTestHelper.gc_everything loop_count
   end
 end
 describe "AutoPointer argument checking" do
