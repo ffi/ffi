@@ -42,6 +42,7 @@ typedef signed long sL;
 typedef unsigned long uL;
 typedef float f32;
 typedef double f64;
+typedef unsigned long ulong;
 
 #define ADD(T) T add_##T(T arg1, T arg2) { return arg1 + arg2; }
 #define SUB(T) T sub_##T(T arg1, T arg2) { return arg1 - arg2; }
@@ -61,6 +62,7 @@ TEST(u_int64_t);
 TEST(float);
 TEST(double);
 TEST(long);
+TEST(ulong);
 
 #define ADD2(R, T1, T2) R add_##T1##T2##_##R(T1 arg1, T2 arg2) { return arg1 + arg2; }
 #define SUB2(R, T1, T2) R sub_##T1##T2##_##R(T1 arg1, T2 arg2) { return arg1 - arg2; }

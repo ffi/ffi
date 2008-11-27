@@ -9,6 +9,10 @@ describe "Function with primitive integer arguments" do
     attach_function :ret_u_int16_t, [ :ushort ], :ushort
     attach_function :ret_int32_t, [ :int ], :int
     attach_function :ret_u_int32_t, [ :uint ], :uint
+    attach_function :ret_int64_t, [ :long_long ], :long_long
+    attach_function :ret_u_int64_t, [ :ulong_long ], :ulong_long
+    attach_function :ret_long, [ :long ], :long
+    attach_function :ret_ulong, [ :ulong ], :ulong
   end
   [ 0, 127, -128, -1 ].each do |i|
     it ":char call(:char (#{i}))" do
@@ -38,6 +42,39 @@ describe "Function with primitive integer arguments" do
   [ 0, 0x7fffffff, 0x80000000, 0xffffffff ].each do |i|
     it ":uint call(:uint (#{i}))" do
       LibTest.ret_u_int32_t(i).should == i
+    end
+  end
+  [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ].each do |i|
+    it ":long_long call(:long_long (#{i}))" do
+      LibTest.ret_int64_t(i).should == i
+    end
+  end
+  [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ].each do |i|
+    it ":ulong_long call(:ulong_long (#{i}))" do
+      LibTest.ret_u_int64_t(i).should == i
+    end
+  end
+  if FFI::Platform::LONG_SIZE == 32
+    [ 0, 0x7fffffff, -0x80000000, -1 ].each do |i|
+      it ":long call(:long (#{i}))" do
+        LibTest.ret_long(i).should == i
+      end
+    end
+    [ 0, 0x7fffffff, 0x80000000, 0xffffffff ].each do |i|
+      it ":ulong call(:ulong (#{i}))" do
+        LibTest.ret_ulong(i).should == i
+      end
+    end
+  else
+    [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ].each do |i|
+      it ":long call(:long (#{i}))" do
+        LibTest.ret_long(i).should == i
+      end
+    end
+    [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ].each do |i|
+      it ":ulong call(:ulong (#{i}))" do
+        LibTest.ret_ulong(i).should == i
+      end
     end
   end
 end
