@@ -14,16 +14,17 @@ describe "Struct tests" do
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
+    attach_function :ptr_from_address, [ :ulong ], :pointer
     attach_function :string_equals, [ :string, :string ], :int
     [ 's8', 's16', 's32', 's64', 'f32', 'f64', 'long' ].each do |t|
       attach_function "struct_align_#{t}", [ :pointer ], StructTypes[t]
     end
   end
   class PointerMember < FFI::Struct
-    layout :pointer, :pointer, 0
+    layout :pointer, :pointer
   end
   class StringMember < FFI::Struct
-    layout :string, :string, 0
+    layout :string, :string
   end
   it "Struct#[:pointer]" do
     magic = 0x12345678
@@ -209,5 +210,14 @@ describe "Struct tests" do
     s = AlignDouble.alloc_in
     s[:v] = 1.23456789
     (LibTest.struct_align_f64(s.pointer) - 1.23456789).abs.should < 0.00000001
+  end
+  it ":ulong, :pointer struct" do
+    class ULPStruct < FFI::Struct
+      layout :ul, :ulong, :p, :pointer
+    end
+    s = ULPStruct.alloc_in
+    s[:ul] = 0xdeadbeef
+    s[:p] = LibTest.ptr_from_address(0x12345678)
+    s.pointer.get_ulong(0).should == 0xdeadbeef
   end
 end
