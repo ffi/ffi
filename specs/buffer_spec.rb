@@ -1,14 +1,8 @@
 require "rubygems"
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
-if RUBY_PLATFORM == "java"
-  Buffer = JRuby::FFI::Buffer
-  Platform = JRuby::FFI::Platform
-  LongSize = JRuby::FFI::Platform::LONG_SIZE / 8
-else
-  Buffer = FFI::Buffer
-  Platform = FFI::Platform
-  LongSize = FFI::Platform::LONG_SIZE / 8
-end
+include FFI
+LongSize = FFI::Platform::LONG_SIZE / 8
+
 describe "Buffer#total" do
   [1,2,3].each do |i|
     { :char => 1, :uchar => 1, :short => 2, :ushort => 2, :int => 4, 
