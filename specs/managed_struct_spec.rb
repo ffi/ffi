@@ -14,7 +14,18 @@ describe "Managed Struct" do
 
   it "should release memory properly" do
     class PleaseReleaseMe < FFI::ManagedStruct
-      def self.release ; end
+      @@count = 0
+      def self.release
+        @@count += 1
+      end
+      def self.wait_gc(count)
+        loop = 5
+        while loop > 0 && @@count < count
+          loop -= 1
+          GC.start
+          sleep 0.05 if @@count < count
+        end
+      end
     end
 
     loop_count = 30
@@ -24,6 +35,6 @@ describe "Managed Struct" do
     loop_count.times do
       s = PleaseReleaseMe.new(LibTest.ptr_from_address(0x12345678))
     end
-    10.times { GC.start }
+    PleaseReleaseMe.wait_gc loop_count
   end
 end
