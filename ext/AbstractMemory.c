@@ -172,13 +172,11 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
-memory_put_string(int argc, VALUE* argv, VALUE self)
+memory_put_string(VALUE self, VALUE offset, VALUE str)
 {
     AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
-    VALUE offset = Qnil, str = Qnil;
-    bool nulTerminate = true;
     long off, len;
-    int nargs = rb_scan_args(argc, argv, "2", &offset, &str);
+
     off = NUM2LONG(offset);
     len = RSTRING_LEN(str);
     checkBounds(ptr, off, len);
@@ -191,13 +189,11 @@ memory_put_string(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
-memory_get_bytes(int argc, VALUE* argv, VALUE self)
+memory_get_bytes(VALUE self, VALUE offset, VALUE length)
 {
-    VALUE length = Qnil, offset = Qnil;
     AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
     long off, len;
-    int nargs = rb_scan_args(argc, argv, "20", &offset, &length);
-
+    
     off = NUM2LONG(offset);
     len = NUM2LONG(length);
     checkBounds(ptr, off, len);
@@ -293,8 +289,8 @@ rb_FFI_AbstractMemory_Init()
     rb_define_method(classMemory, "put_pointer", memory_put_pointer, 2);
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
     rb_define_method(classMemory, "get_string", memory_get_string, -1);
-    rb_define_method(classMemory, "put_string", memory_put_string, -1);
-    rb_define_method(classMemory, "get_bytes", memory_get_bytes, -1);
+    rb_define_method(classMemory, "put_string", memory_put_string, 2);
+    rb_define_method(classMemory, "get_bytes", memory_get_bytes, 2);
     rb_define_method(classMemory, "put_bytes", memory_put_bytes, -1);
 
     rb_define_method(classMemory, "clear", memory_clear, 0);

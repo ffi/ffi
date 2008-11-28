@@ -56,7 +56,7 @@ module FFI
       
       code = ""
 
-      typedefs.each do |type|
+      typedefs.each_line do |type|
         # We only care about single line typedef
         next unless type =~ /typedef/
         # Ignore unions or structs
