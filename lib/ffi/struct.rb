@@ -264,21 +264,34 @@ module FFI
     end
   end
   class Struct < BaseStruct
+    private
+    def self.enclosing_module
+      begin
+        Object.const_get(self.name.split("::")[0..-2].join("::"))
+      rescue Exception
+        nil
+      end
+    end
+    def self.find_type(type, mod = nil)
+      return mod ? mod.find_type(type) : FFI.find_type(type)
+    end
     def self.hash_layout(spec)
       raise "Ruby version not supported" if RUBY_VERSION =~ /1.8.*/
       builder = FFI::StructLayoutBuilder.new
+      mod = enclosing_module
       spec[0].each do |name,type|
-        builder.add_field(name, FFI.find_type(type))
+        builder.add_field(name, find_type(type, mod))
       end
       builder.build
     end
     def self.array_layout(spec)
       builder = FFI::StructLayoutBuilder.new
+      mod = enclosing_module
       i = 0
       while i < spec.size
         name, type = spec[i, 2]
         i += 2
-        code = FFI.find_type(type)
+        code = find_type(type, mod)
         # If the next param is a Fixnu, it specifies the offset
         if spec[i].kind_of?(Fixnum)
           offset = spec[i]
@@ -290,8 +303,9 @@ module FFI
       end
       builder.build
     end
+    public
     def self.layout(*spec)
-
+      
       return @layout if spec.size == 0
       cspec = spec[0].kind_of?(Hash) ? hash_layout(spec) : array_layout(spec)
 

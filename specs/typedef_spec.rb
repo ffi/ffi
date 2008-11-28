@@ -32,4 +32,17 @@ describe "Custom type definitions" do
     CallbackCustomTypedef.testCallbackU32rV(0xdeadbeef) { |v| i = v }
     i.should == 0xdeadbeef
   end
+  it "Struct with custom typedef field" do
+    module StructCustomTypedef
+      extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      typedef :uint, :fubar3_t
+      class S < FFI::Struct
+        layout :a, :fubar3_t
+      end
+    end
+    s = StructCustomTypedef::S.new
+    s[:a] = 0x12345678
+    s.pointer.get_uint(0).should == 0x12345678
+  end
 end
