@@ -71,11 +71,11 @@ module FFI
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
 
     # Open the library if needed
-    library = if lib.kind_of?(NativeLibrary)
+    library = if lib.kind_of?(DynamicLibrary)
       lib
     elsif lib.kind_of?(String)
       # Allow FFI.create_invoker to be  called with a library name
-      NativeLibrary.open(FFI.map_library_name(lib), 0)
+      DynamicLibrary.open(FFI.map_library_name(lib), DynamicLibrary::RTLD_LAZY)
     elsif lib.nil?
       FFI::Library::DEFAULT
     else

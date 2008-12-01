@@ -1,5 +1,5 @@
 module FFI::Library
-  DEFAULT = FFI::NativeLibrary.open(nil, 0)
+  DEFAULT = FFI::DynamicLibrary.open(nil, FFI::DynamicLibrary::RTLD_LAZY)
  
   # TODO: Rubinius does *names here and saves the array. Multiple libs?
   def ffi_lib(*names)
@@ -7,7 +7,7 @@ module FFI::Library
     errors = Hash.new
     ffi_libs = mapped_names.map do |name|
       begin
-        FFI::NativeLibrary.open(name, 0)
+        FFI::DynamicLibrary.open(name, FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL)
       rescue LoadError => ex
         errors[name] = ex
         nil

@@ -19,9 +19,13 @@ library_open(VALUE klass, VALUE libname, VALUE libflags)
 {
     VALUE retval;
     Library* library;
- 
+    int flags;
     Check_Type(libflags, T_FIXNUM);
 
+    flags = libflags != Qnil ? NUM2UINT(libflags) : 0;
+    if (flags == 0) {
+        flags = RTLD_LAZY;
+    }
     retval = Data_Make_Struct(klass, Library, NULL, library_free, library);
     library->handle = dlopen(libname != Qnil ? StringValueCStr(libname) : NULL,
         RTLD_LAZY);
@@ -71,10 +75,16 @@ void
 rb_FFI_NativeLibrary_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
-    classLibrary = rb_define_class_under(moduleFFI, "NativeLibrary", rb_cObject);
+    classLibrary = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
+    rb_define_const(moduleFFI, "NativeLibrary", classLibrary); // backwards compat library
     rb_define_singleton_method(classLibrary, "open", library_open, 2);
     rb_define_method(classLibrary, "find_symbol", library_dlsym, 1);
     rb_define_method(classLibrary, "last_error", library_dlerror, 0);
     rb_define_attr(classLibrary, "name", 1, 0);
+#define DEF(x) rb_define_const(classLibrary, "RTLD_" #x, UINT2NUM(RTLD_##x))
+    DEF(LAZY);
+    DEF(NOW);
+    DEF(GLOBAL);
+    DEF(LOCAL);
 }
 
