@@ -11,7 +11,6 @@
 #include "Pointer.h"
 #include "NativeLibrary.h"
 
-static void library_mark(Library* lib);
 static void library_free(Library* lib);
 static VALUE classLibrary;
 
@@ -23,7 +22,7 @@ library_open(VALUE klass, VALUE libname, VALUE libflags)
  
     Check_Type(libflags, T_FIXNUM);
 
-    retval = Data_Make_Struct(klass, Library, library_mark, library_free, library);
+    retval = Data_Make_Struct(klass, Library, NULL, library_free, library);
     library->handle = dlopen(libname != Qnil ? StringValueCStr(libname) : NULL,
         RTLD_LAZY);
     if (library->handle == NULL) {
@@ -31,6 +30,7 @@ library_open(VALUE klass, VALUE libname, VALUE libflags)
                 libname != Qnil ? StringValueCStr(libname) : "[current process]",
                 dlerror());
     }
+    rb_iv_set(retval, "@name", libname != Qnil ? libname : rb_str_new2("[current process]"));
     return retval;
 }
 
@@ -50,11 +50,6 @@ static VALUE
 library_dlerror(VALUE self)
 {
     return rb_tainted_str_new2(dlerror());
-}
-
-static void
-library_mark(Library* library)
-{
 }
 
 static void
@@ -80,5 +75,6 @@ rb_FFI_NativeLibrary_Init()
     rb_define_singleton_method(classLibrary, "open", library_open, 2);
     rb_define_method(classLibrary, "find_symbol", library_dlsym, 1);
     rb_define_method(classLibrary, "last_error", library_dlerror, 0);
+    rb_define_attr(classLibrary, "name", 1, 0);
 }
 
