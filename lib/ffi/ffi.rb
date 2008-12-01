@@ -67,23 +67,30 @@ module FFI
     lib
   end
   def self.create_invoker(lib, name, args, ret, options = { :convention => :default })
-    lib = FFI.map_library_name(lib)
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
-    begin
-      library = NativeLibrary.open(lib, 0)
-      function = library.find_symbol(name)
-    rescue LoadError
-      return nil
+
+    # Open the library if needed
+    library = if lib.kind_of?(NativeLibrary)
+      lib
+    elsif lib.kind_of?(String)
+      # Allow FFI.create_invoker to be  called with a library name
+      NativeLibrary.open(FFI.map_library_name(lib), 0)
+    elsif lib.nil?
+      FFI::Library::DEFAULT
+    else
+      raise LoadError, "Invalid library '#{lib}'"
     end
-    raise NotFoundError.new(name, lib) unless function
+    function = library.find_symbol(name)
+    raise NotFoundError.new(name, library.name) unless function
+
     args = args.map {|e| find_type(e) }
     if args.length > 0 && args[args.length - 1] == FFI::NativeType::VARARGS
       invoker = FFI::VariadicInvoker.new(library, function, args, find_type(ret), options)
     else
       invoker = FFI::Invoker.new(library, function, args, find_type(ret), options[:convention].to_s)
     end
-    raise NotFoundError.new(name, lib) unless invoker
+    raise NotFoundError.new(name, library.name) unless invoker
     return invoker
   end
 end

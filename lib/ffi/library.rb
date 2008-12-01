@@ -1,7 +1,20 @@
 module FFI::Library
+  DEFAULT = FFI::NativeLibrary.open(nil, 0)
+ 
   # TODO: Rubinius does *names here and saves the array. Multiple libs?
   def ffi_lib(*names)
-    @ffi_lib = names
+    mapped_names = names.map { |name| FFI.map_library_name(name) }
+    errors = Hash.new
+    ffi_libs = mapped_names.map do |name|
+      begin
+        FFI::NativeLibrary.open(name, 0)
+      rescue LoadError => ex
+        errors[name] = ex
+        nil
+      end
+    end.compact
+    raise LoadError, "Could not open any of [#{mapped_names.join(", ")}]" if ffi_libs.empty?
+    @ffi_libs = ffi_libs
   end
   def ffi_convention(convention)
     @ffi_convention = convention
@@ -18,7 +31,7 @@ module FFI::Library
 
   def attach_function(mname, a3, a4, a5=nil)
     cname, arg_types, ret_type = a5 ? [ a3, a4, a5 ] : [ mname.to_s, a3, a4 ]
-    libraries = defined?(@ffi_lib) ? @ffi_lib : [ nil ]
+    libraries = defined?(@ffi_libs) ? @ffi_libs : [ DEFAULT ]
     convention = defined?(@ffi_convention) ? @ffi_convention : :default
 
     # Convert :foo to the native type
@@ -41,14 +54,15 @@ module FFI::Library
     options[:convention] = convention
     options[:type_map] = @ffi_typedefs if defined?(@ffi_typedefs)
     # Try to locate the function in any of the libraries
-    invoker = libraries.collect do |lib|
+    invokers = []
+    libraries.each do |lib|
       begin
-        FFI.create_invoker lib, cname.to_s, arg_types, find_type(ret_type), options
-      rescue FFI::NotFoundError => ex
-        nil
-      end
-    end.compact.shift
-    raise FFI::NotFoundError.new(cname.to_s, *libraries) unless invoker
+        invokers << FFI.create_invoker(lib, cname.to_s, arg_types, find_type(ret_type), options)
+      rescue LoadError => ex
+      end if invokers.empty?
+    end
+    invoker = invokers.compact.shift
+    raise FFI::NotFoundError.new(cname.to_s, libraries.map { |lib| lib.name }) unless invoker
 
     # Setup the parameter list for the module function as (a1, a2)
     arity = arg_types.length
