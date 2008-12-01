@@ -37,6 +37,12 @@ describe "Pointer" do
     ptr = PointerDelegate.new(memory)
     LibTest.ptr_ret_int32_t(ptr, 0).should == magic
   end
+  it "Fixnum cannot be used as a Pointer argument" do
+    lambda { LibTest.ptr_ret_int32(0, 0) }.should raise_error
+  end
+  it "Bignum cannot be used as a Pointer argument" do
+    lambda { LibTest.ptr_ret_int32(0xfee1deadbeefcafebabe, 0) }.should raise_error
+  end
 end
 
 describe "AutoPointer" do
