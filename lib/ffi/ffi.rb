@@ -70,8 +70,12 @@ module FFI
     lib = FFI.map_library_name(lib)
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
-    library = NativeLibrary.open(lib, 0)
-    function = library.find_symbol(name)
+    begin
+      library = NativeLibrary.open(lib, 0)
+      function = library.find_symbol(name)
+    rescue LoadError
+      return nil
+    end
     raise NotFoundError.new(name, lib) unless function
     args = args.map {|e| find_type(e) }
     if args.length > 0 && args[args.length - 1] == FFI::NativeType::VARARGS
