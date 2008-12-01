@@ -33,24 +33,25 @@ spec = Gem::Specification.new do |s|
   s.autorequire = GEM
   s.files = %w(LICENSE README Rakefile) + Dir.glob("{ext,lib,nbproject,samples,specs}/**/*")
 end
-
+TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
   desc "Run all specs"
-  task :specs do
+  task :specs => TEST_DEPS do
     sh %{#{Gem.ruby} -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
-  task :rbxspecs do
+  task :rbxspecs => TEST_DEPS do
     sh %{#{Gem.ruby} -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
   end
 else
+  TEST_DEPS.unshift :compile
   desc "Run all specs"
-  task :specs do
+  task :specs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
     sh %{#{Gem.ruby} -Ibuild -Ilib -S spec #{Dir["specs/**/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
-  task :rbxspecs do
+  task :rbxspecs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
     sh %{#{Gem.ruby} -Ibuild -Ilib -S spec #{Dir["specs/rbx/**/*_spec.rb"].join(" ")} -fs --color}
   end
@@ -90,20 +91,23 @@ end
 task "build/libtest.#{LIBEXT}" do
   sh %{#{GMAKE} -f libtest/GNUmakefile}
 end
+
 desc "Test the extension"
-task :test => [ :compile, LIBTEST, :specs ] do
+task :test => [ :specs, :rbxspecs ] do
 
 end
 namespace :bench do
   ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
-  Dir["bench/bench_*.rb"].each do |bench|
-    task File.basename(bench, ".rb")[6..-1] => [ LIBTEST, :compile ] do
-      sh %{#{Gem.ruby} -Ibuild -Ilib #{bench} #{ITER}}
+  bench_libs = "-Ibuild -Ilib" unless RUBY_PLATFORM == "java"
+  bench_files = Dir["bench/bench_*.rb"].reject { |f| f == "bench_helper.rb" }
+  bench_files.each do |bench|
+    task File.basename(bench, ".rb")[6..-1] => TEST_DEPS do
+      sh %{#{Gem.ruby} #{bench_libs} #{bench} #{ITER}}
     end
   end
-  task :all => LIBTEST do
-    Dir["bench/bench_*.rb"].each do |bench|
-      sh %{#{Gem.ruby} -Ibuild -Ilib #{bench}}
+  task :all => TEST_DEPS do
+    bench_files.each do |bench|
+      sh %{#{Gem.ruby} #{bench_libs} #{bench}}
     end
   end
 end
