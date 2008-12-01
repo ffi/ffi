@@ -334,10 +334,6 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                     param->ptr = StringValuePtr(argv[argidx]);
                 } else if (type == T_NIL) {
                     param->ptr = NULL;
-                } else if (type == T_FIXNUM) {
-                    param->ptr = (void *) (uintptr_t) FIX2INT(argv[argidx]);
-                } else if (type == T_BIGNUM) {
-                    param->ptr = (void *) (uintptr_t) NUM2ULL(argv[argidx]);
                 } else if (rb_respond_to(argv[argidx], to_ptr)) {
                     VALUE ptr = rb_funcall2(argv[argidx], to_ptr, 0, NULL);
                     if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
