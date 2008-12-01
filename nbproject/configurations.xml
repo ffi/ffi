@@ -30,6 +30,7 @@
           <itemPath>lib/ffi/callback.rb</itemPath>
           <itemPath>lib/ffi/ffi.rb</itemPath>
           <itemPath>lib/ffi/io.rb</itemPath>
+          <itemPath>lib/ffi/library.rb</itemPath>
           <itemPath>lib/ffi/memorypointer.rb</itemPath>
           <itemPath>lib/ffi/platform.rb</itemPath>
           <itemPath>lib/ffi/pointer.rb</itemPath>
@@ -59,6 +60,7 @@
         </logicalFolder>
         <itemPath>specs/buffer_spec.rb</itemPath>
         <itemPath>specs/callback_spec.rb</itemPath>
+        <itemPath>specs/library_spec.rb</itemPath>
         <itemPath>specs/number_spec.rb</itemPath>
         <itemPath>specs/pointer_spec.rb</itemPath>
         <itemPath>specs/spec_helper.rb</itemPath>
@@ -189,6 +191,9 @@
       <item path="lib/ffi/io.rb">
         <itemTool>3</itemTool>
       </item>
+      <item path="lib/ffi/library.rb">
+        <itemTool>3</itemTool>
+      </item>
       <item path="lib/ffi/memorypointer.rb">
         <itemTool>3</itemTool>
       </item>
@@ -238,6 +243,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="specs/callback_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="specs/library_spec.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="specs/number_spec.rb">
