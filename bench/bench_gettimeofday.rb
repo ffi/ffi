@@ -6,7 +6,7 @@ module Posix
   attach_function :gettimeofday, [ :pointer, :pointer ], :int
 end
 class Timeval < FFI::Struct
-  layout :tv_sec => :ulong, :tv_nsec => :ulong
+  layout :tv_sec, :ulong, :tv_nsec, :ulong
 end
 
 iter = 100_000
