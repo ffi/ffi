@@ -1,13 +1,11 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 require 'delegate'
+module LibTest
+  attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
+  attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], :pointer
+end
 describe "Pointer" do
   include FFI
-  module LibTest
-    extend FFI::Library
-    ffi_lib TestLibrary::PATH
-    attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
-    attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], :pointer
-  end
   class ToPtrTest
     def initialize(ptr)
       @ptr = ptr
@@ -41,7 +39,7 @@ describe "Pointer" do
   end
 end
 
-describe "autopointers get cleaned up properly" do
+describe "AutoPointer" do
   loop_count = 30
   wiggle_room = 2 # GC rarely cleans up all objects. we can get most of them, and that's enough to determine if the basic functionality is working.
   magic = 0x12345678
@@ -68,7 +66,7 @@ describe "autopointers get cleaned up properly" do
     end
   end
 
-  it "when using default release method" do
+  it "cleanup via default release method" do
     FFI::AutoPointer.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
@@ -80,7 +78,7 @@ describe "autopointers get cleaned up properly" do
     AutoPointerTestHelper.gc_everything loop_count
   end
 
-  it "when passed a proc" do
+  it "cleanup when passed a proc" do
     #  NOTE: passing a proc is touchy, because it's so easy to create a memory leak.
     #
     #  specifically, if we made an inline call to
@@ -98,7 +96,7 @@ describe "autopointers get cleaned up properly" do
     AutoPointerTestHelper.gc_everything loop_count
   end
 
-  it "when passed a method" do
+  it "cleanup when passed a method" do
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
@@ -108,14 +106,14 @@ describe "autopointers get cleaned up properly" do
     AutoPointerTestHelper.gc_everything loop_count
   end
 end
-describe "AutoPointer argument checking" do
-  it "Should raise error when passed a MemoryPointer" do
+describe "AutoPointer#new" do
+  it "MemoryPointer argument raises ArgumentError" do
     lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(ArgumentError)
   end
-  it "Should raise error when passed a AutoPointer" do
+  it "AutoPointer argument raises ArgumentError" do
     lambda { FFI::AutoPointer.new(FFI::AutoPointer.new(LibTest.ptr_from_address(0))) }.should raise_error(ArgumentError)
   end
-  it "Should raise error when passed a Buffer" do
+  it "Buffer argument raises ArgumentError" do
     lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(ArgumentError)
   end
 
