@@ -1,0 +1,1 @@
+Autotest.add_hook(:initialize) { ENV['MRI_FFI'] = '1' }
