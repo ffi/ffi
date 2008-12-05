@@ -57,7 +57,9 @@ struct MethodHandle {
     MethodHandle* next;
 };
 struct MethodHandlePool {
+#ifdef HAVE_NATIVETHREAD
     pthread_mutex_t mutex;
+#endif
     MethodHandle* list;
 };
 
@@ -229,7 +231,13 @@ static ffi_type* methodHandleVarargParamTypes[]= {
 
 static MethodHandlePool methodHandlePool[4];
 
-
+#ifdef HAVE_NATIVETHREAD
+#  define pool_lock(p) pthread_mutex_lock(&(p)->mutex)
+#  define pool_unlock(p)  pthread_mutex_unlock(&(p)->mutex)
+#else
+#  define pool_lock(p)
+#  define pool_unlock(p)
+#endif
 static MethodHandle*
 method_handle_alloc(int arity)
 {
@@ -249,11 +257,11 @@ method_handle_alloc(int arity)
     
     
     pool = &methodHandlePool[arity < 3 ? arity : 3];
-    pthread_mutex_lock(&pool->mutex);
+    pool_lock(pool);
     if (pool->list != NULL) {
         method = pool->list;
         pool->list = pool->list->next;
-        pthread_mutex_unlock(&pool->mutex);
+        pool_unlock(pool);
         return method;
     }
     ffiReturnType = (sizeof (VALUE) == sizeof (long))
@@ -262,7 +270,7 @@ method_handle_alloc(int arity)
     nclosures = PageSize / closureSize;
     page = mmap(NULL, PageSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (page == (caddr_t) -1) {
-        pthread_mutex_unlock(&pool->mutex);
+        pool_unlock(pool);
         return NULL;
     }
 
@@ -302,17 +310,17 @@ method_handle_alloc(int arity)
     mprotect(page, PageSize, PROT_READ | PROT_EXEC);
     method = pool->list;
     pool->list = pool->list->next;
-    pthread_mutex_unlock(&pool->mutex);
+    pool_unlock(pool);
     return method;
 }
 static void
 method_handle_free(MethodHandle* method)
 {
     MethodHandlePool* pool = method->pool;
-    pthread_mutex_lock(&pool->mutex);
+    pool_lock(pool);
     method->next = pool->list;
     pool->list = method;
-    pthread_mutex_unlock(&pool->mutex);
+    pool_unlock(pool);
 }
 
 typedef union {
@@ -845,7 +853,9 @@ rb_FFI_Invoker_Init()
         
     }
     methodHandleVarargParamTypes[2] = ffiValueType;
+#ifdef HAVE_NATIVETHREAD
     for (i = 0; i < 4; ++i) {
         pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
     }
+#endif
 }
