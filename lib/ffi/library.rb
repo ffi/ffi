@@ -77,15 +77,19 @@ module FFI::Library
     #
     # Attach the invoker to this module as 'mname'.
     #
-    self.module_eval <<-code
-      @@#{mname} = invoker
-      def self.#{mname}(#{params})
-        @@#{mname}.#{call}(#{params})
-      end
-      def #{mname}(#{params})
-        @@#{mname}.#{call}(#{params})
-      end
-    code
+    if callback_count < 1 && !invoker.kind_of?(FFI::VariadicInvoker)
+      invoker.attach(self, mname.to_s)
+    else
+      self.module_eval <<-code
+        @@#{mname} = invoker
+        def self.#{mname}(#{params})
+          @@#{mname}.#{call}(#{params})
+        end
+        def #{mname}(#{params})
+          @@#{mname}.#{call}(#{params})
+        end
+      code
+    end
     invoker
   end
   def callback(name, args, ret)
