@@ -43,6 +43,7 @@
         <itemPath>libtest/Benchmark.c</itemPath>
         <itemPath>libtest/BufferTest.c</itemPath>
         <itemPath>libtest/ClosureTest.c</itemPath>
+        <itemPath>libtest/GlobalVariable.c</itemPath>
         <itemPath>libtest/LastErrorTest.c</itemPath>
         <itemPath>libtest/NumberTest.c</itemPath>
         <itemPath>libtest/PointerTest.c</itemPath>
@@ -51,22 +52,19 @@
         <itemPath>libtest/StructTest.c</itemPath>
         <itemPath>libtest/VariadicTest.c</itemPath>
       </logicalFolder>
-      <logicalFolder name="specs" displayName="specs" projectFiles="true">
-        <logicalFolder name="rbx" displayName="rbx" projectFiles="true">
-          <itemPath>specs/rbx/attach_function_spec.rb</itemPath>
-          <itemPath>specs/rbx/memory_pointer_spec.rb</itemPath>
-          <itemPath>specs/rbx/spec_helper.rb</itemPath>
-          <itemPath>specs/rbx/struct_spec.rb</itemPath>
-        </logicalFolder>
-        <itemPath>specs/buffer_spec.rb</itemPath>
-        <itemPath>specs/callback_spec.rb</itemPath>
-        <itemPath>specs/library_spec.rb</itemPath>
-        <itemPath>specs/number_spec.rb</itemPath>
-        <itemPath>specs/pointer_spec.rb</itemPath>
-        <itemPath>specs/spec_helper.rb</itemPath>
-        <itemPath>specs/string_spec.rb</itemPath>
-        <itemPath>specs/struct_spec.rb</itemPath>
-        <itemPath>specs/typedef_spec.rb</itemPath>
+      <logicalFolder name="f2" displayName="spec" projectFiles="true">
+        <itemPath>spec/ffi/buffer_spec.rb</itemPath>
+        <itemPath>spec/ffi/callback_spec.rb</itemPath>
+        <itemPath>spec/ffi/errno_spec.rb</itemPath>
+        <itemPath>spec/ffi/library_spec.rb</itemPath>
+        <itemPath>spec/ffi/managed_struct_spec.rb</itemPath>
+        <itemPath>spec/ffi/number_spec.rb</itemPath>
+        <itemPath>spec/ffi/pointer_spec.rb</itemPath>
+        <itemPath>spec/ffi/spec_helper.rb</itemPath>
+        <itemPath>spec/ffi/string_spec.rb</itemPath>
+        <itemPath>spec/ffi/struct_spec.rb</itemPath>
+        <itemPath>spec/ffi/typedef_spec.rb</itemPath>
+        <itemPath>spec/ffi/variadic_spec.rb</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -218,6 +216,9 @@
       <item path="libtest/ClosureTest.c">
         <itemTool>0</itemTool>
       </item>
+      <item path="libtest/GlobalVariable.c">
+        <itemTool>0</itemTool>
+      </item>
       <item path="libtest/LastErrorTest.c">
         <itemTool>0</itemTool>
       </item>
@@ -239,43 +240,40 @@
       <item path="libtest/VariadicTest.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="specs/buffer_spec.rb">
+      <item path="spec/ffi/buffer_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/callback_spec.rb">
+      <item path="spec/ffi/callback_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/library_spec.rb">
+      <item path="spec/ffi/errno_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/number_spec.rb">
+      <item path="spec/ffi/library_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/pointer_spec.rb">
+      <item path="spec/ffi/managed_struct_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/rbx/attach_function_spec.rb">
+      <item path="spec/ffi/number_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/rbx/memory_pointer_spec.rb">
+      <item path="spec/ffi/pointer_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/rbx/spec_helper.rb">
+      <item path="spec/ffi/spec_helper.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/rbx/struct_spec.rb">
+      <item path="spec/ffi/string_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/spec_helper.rb">
+      <item path="spec/ffi/struct_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/string_spec.rb">
+      <item path="spec/ffi/typedef_spec.rb">
         <itemTool>3</itemTool>
       </item>
-      <item path="specs/struct_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="specs/typedef_spec.rb">
+      <item path="spec/ffi/variadic_spec.rb">
         <itemTool>3</itemTool>
       </item>
     </conf>
