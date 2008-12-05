@@ -1,6 +1,9 @@
+#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <ruby.h>
@@ -21,8 +24,10 @@
 #if defined(__i386__)
 #  define USE_RAW
 #endif
+typedef struct MethodHandle MethodHandle;
+typedef struct Invoker Invoker;
 
-typedef struct Invoker {
+struct Invoker {
     VALUE library;
     void* function;
     ffi_cif cif;
@@ -34,16 +39,28 @@ typedef struct Invoker {
     int callbackCount;
     VALUE* callbackParameters;
     ffi_abi abi;
-    /* The following are to attach the method via closures */
+    MethodHandle* methodHandle;
+};
 #ifdef USE_RAW
-    ffi_raw_closure* method_closure;
+#  define METHOD_CLOSURE ffi_raw_closure
 #else
-    ffi_closure* method_closure;
+#  define METHOD_CLOSURE ffi_closure
 #endif
-    void* method_code;
-    ffi_cif method_cif;
-    ffi_type** method_ParamTypes;
-} Invoker;
+typedef struct MethodHandlePool MethodHandlePool;
+struct MethodHandle {
+    Invoker* invoker;
+    METHOD_CLOSURE* closure;
+    void* code;
+    ffi_cif cif;
+    ffi_type** paramTypes;
+    struct MethodHandlePool* pool;
+    MethodHandle* next;
+};
+struct MethodHandlePool {
+    pthread_mutex_t mutex;
+    MethodHandle* list;
+};
+
 typedef struct ThreadData {
     int td_errno;
 } ThreadData;
@@ -62,8 +79,12 @@ static void attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* paramet
 static void attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 static void attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 #endif
+static MethodHandle* method_handle_alloc(int arity);
+static void method_handle_free(MethodHandle *);
 
 static inline ThreadData* thread_data_get(void);
+
+static int PageSize;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID cbTableID, to_ptr;
 
@@ -167,49 +188,8 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
     }
     /* For invokers with few, simple arguments, attach via a FFI closure */
     if (invoker->callbackCount < 1) {
-        ffi_type* valueType = (sizeof(VALUE) == sizeof(long))
-                    ? &ffi_type_ulong : &ffi_type_uint64;
-#ifdef USE_RAW
-        void (*fn)(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data);
-#else
-        void (*fn)(ffi_cif* cif, void* retval, void** parameters, void* user_data);
-#endif
-        invoker->method_closure = ffi_closure_alloc(sizeof (*invoker->method_closure), &invoker->method_code);
-        if (invoker->method_closure == NULL) {
-            rb_raise(rb_eNoMemError, "Failed to allocate FFI method closure");
-        }
-        invoker->method_ParamTypes = ALLOC_N(ffi_type *, invoker->paramCount + 1);
-        for (i = 0; i < invoker->paramCount + 1; ++i) {
-            invoker->method_ParamTypes[i] = valueType;
-        }
-        if (invoker->paramCount > 3) {
-            ffiStatus = ffi_prep_cif(&invoker->method_cif, FFI_DEFAULT_ABI, 3,
-                    valueType, invoker->method_ParamTypes);
-        } else {
-            ffiStatus = ffi_prep_cif(&invoker->method_cif, FFI_DEFAULT_ABI, invoker->paramCount + 1,
-                    valueType, invoker->method_ParamTypes);
-        }
-        switch (ffiStatus) {
-            case FFI_BAD_ABI:
-                rb_raise(rb_eArgError, "Invalid ABI specified");
-            case FFI_BAD_TYPEDEF:
-                rb_raise(rb_eArgError, "Invalid argument type specified");
-            case FFI_OK:
-                break;
-            default:
-                rb_raise(rb_eArgError, "Unknown FFI error");
-        }
-        fn = invoker->paramCount > 3 ? attached_method_vinvoke : attached_method_invoke;
-#ifdef USE_RAW
-        ffiStatus = ffi_prep_raw_closure_loc(invoker->method_closure, &invoker->method_cif,
-                fn, invoker, invoker->method_code);
-#else
-        ffiStatus = ffi_prep_closure_loc(invoker->method_closure, &invoker->method_cif,
-                fn, invoker, invoker->method_code);
-#endif
-        if (ffiStatus != FFI_OK) {
-            rb_raise(rb_eArgError, "ffi_prep_closure_loc failed");
-        }
+        invoker->methodHandle = method_handle_alloc(invoker->paramCount);
+        invoker->methodHandle->invoker = invoker;
     }
     return retval;
 }
@@ -236,6 +216,103 @@ variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE returnTyp
     invoker->returnType = FIX2INT(returnType);
     invoker->paramCount = -1;
     return retval;
+}
+
+static ffi_type* methodHandleParamTypes[3] = {
+    NULL, NULL, NULL
+};
+static ffi_type* methodHandleVarargParamTypes[]= {
+    &ffi_type_sint,
+    &ffi_type_pointer,
+    NULL,
+};
+
+static MethodHandlePool methodHandlePool[4];
+
+
+static MethodHandle*
+method_handle_alloc(int arity)
+{
+    MethodHandle* method;
+    MethodHandlePool* pool;
+    ffi_type** ffiParamTypes;
+    ffi_type* ffiReturnType;
+    caddr_t page;
+    int ffiParamCount, ffiStatus;
+    int nclosures, closureSize;
+    int i;
+#ifdef USE_RAW
+    void (*fn)(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data);
+#else
+    void (*fn)(ffi_cif* cif, void* retval, void** parameters, void* user_data);
+#endif
+    
+    
+    pool = &methodHandlePool[arity < 3 ? arity : 3];
+    pthread_mutex_lock(&pool->mutex);
+    if (pool->list != NULL) {
+        method = pool->list;
+        pool->list = pool->list->next;
+        pthread_mutex_unlock(&pool->mutex);
+        return method;
+    }
+    ffiReturnType = (sizeof (VALUE) == sizeof (long))
+            ? &ffi_type_ulong : &ffi_type_uint64;
+    closureSize = roundup(sizeof(METHOD_CLOSURE), 8);
+    nclosures = PageSize / closureSize;
+    page = mmap(NULL, PageSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (page == (caddr_t) -1) {
+        pthread_mutex_unlock(&pool->mutex);
+        return NULL;
+    }
+
+    /* figure out whichh function to bounce the execution through */
+    if (arity > 3) {
+        ffiParamCount = 3;
+        ffiParamTypes = methodHandleVarargParamTypes;
+        fn = attached_method_vinvoke;
+    } else {
+        ffiParamCount = arity;
+        ffiParamTypes = methodHandleParamTypes;
+        fn = attached_method_invoke;
+    }
+
+    for (i = 0; i < nclosures; ++i) {
+        method = calloc(1, sizeof(MethodHandle));
+        method->code = method->closure = (METHOD_CLOSURE *) (page + (i * closureSize));
+
+        ffiStatus = ffi_prep_cif(&method->cif, FFI_DEFAULT_ABI, ffiParamCount,
+                    ffiReturnType, ffiParamTypes);
+        if (ffiStatus != FFI_OK) {
+            break;
+        }
+
+#ifdef USE_RAW
+        ffiStatus = ffi_prep_raw_closure(method->closure, &method->cif, fn, method);
+#else
+        ffiStatus = ffi_prep_closure(method->closure, &method->cif, fn, method);
+#endif
+        if (ffiStatus != FFI_OK) {
+            break;
+        }
+        method->pool = pool;
+        method->next = pool->list;
+        pool->list = method;
+    }
+    mprotect(page, PageSize, PROT_READ | PROT_EXEC);
+    method = pool->list;
+    pool->list = pool->list->next;
+    pthread_mutex_unlock(&pool->mutex);
+    return method;
+}
+static void
+method_handle_free(MethodHandle* method)
+{
+    MethodHandlePool* pool = method->pool;
+    pthread_mutex_lock(&pool->mutex);
+    method->next = pool->list;
+    pool->list = method;
+    pthread_mutex_unlock(&pool->mutex);
 }
 
 typedef union {
@@ -501,18 +578,23 @@ invoker_call3(VALUE self, VALUE arg1, VALUE arg2, VALUE arg3)
 static void
 attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data)
 {
-    Invoker* invoker = (Invoker *) user_data;
+    MethodHandle* handle =  (MethodHandle *) user_data;
+    Invoker* invoker = handle->invoker;
     void* ffiValues[3];
     FFIStorage params[3];
 
-    ffi_arg_setup(invoker, invoker->paramCount, (VALUE *)&parameters[1], invoker->paramTypes, params, ffiValues);
+    if (invoker->paramCount > 0) {
+        ffi_arg_setup(invoker, invoker->paramCount, (VALUE *)&parameters[1],
+                invoker->paramTypes, params, ffiValues);
+    }
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
 }
 
 static void
 attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data)
 {
-    Invoker* invoker = (Invoker *) user_data;
+    MethodHandle* handle =  (MethodHandle *) user_data;
+    Invoker* invoker = handle->invoker;
     void** ffiValues = ALLOCA_N(void *, invoker->paramCount);
     FFIStorage* params = ALLOCA_N(FFIStorage, invoker->paramCount);
 
@@ -524,7 +606,8 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* u
 static void
 attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
-    Invoker* invoker = (Invoker *) user_data;
+    MethodHandle* handle =  (MethodHandle *) user_data;
+    Invoker* invoker = handle->invoker;
     void* ffiValues[3];
     FFIStorage params[3];
     VALUE argv[3];
@@ -539,7 +622,8 @@ attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
 static void
 attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
-    Invoker* invoker = (Invoker *) user_data;
+    MethodHandle* handle =  (MethodHandle *) user_data;
+    Invoker* invoker = handle->invoker;
     void** ffiValues = ALLOCA_N(void *, invoker->paramCount);
     FFIStorage* params = ALLOCA_N(FFIStorage, invoker->paramCount);
     VALUE* argv = *(VALUE**) parameters[1];
@@ -554,12 +638,11 @@ invoker_attach(VALUE self, VALUE module, VALUE name)
     Invoker* invoker;
     char var[1024];
     Data_Get_Struct(self, Invoker, invoker);
-    if (/*invoker->paramCount > 3 || */invoker->callbackCount > 0) {
+    if (invoker->callbackCount > 0) {
         rb_raise(rb_eArgError, "Cannnot attach if arity > 3 or callbacks are used");
     }
-    rb_define_module_function(module, StringValuePtr(name), invoker->method_code, 
+    rb_define_module_function(module, StringValuePtr(name), invoker->methodHandle->code,
             invoker->paramCount > 3 ? -1 : invoker->paramCount);
-    //rb_ivar_set(module, SYM2ID(name), self);
     snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
     rb_cv_set(module, var, self);
     return self;
@@ -599,11 +682,8 @@ invoker_free(Invoker *invoker)
             xfree(invoker->callbackParameters);
             invoker->callbackParameters = NULL;
         }
-        if (invoker->method_closure != NULL) {
-            ffi_closure_free(invoker->method_closure);
-        }
-        if (invoker->method_ParamTypes != NULL) {
-            xfree(invoker->method_ParamTypes);
+        if (invoker->methodHandle != NULL) {
+            method_handle_free(invoker->methodHandle);
         }
         xfree(invoker);
     }
@@ -739,6 +819,8 @@ set_last_error(VALUE self, VALUE error)
 void 
 rb_FFI_Invoker_Init()
 {
+    ffi_type* ffiValueType;
+    int i;
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
     classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
@@ -761,4 +843,15 @@ rb_FFI_Invoker_Init()
 #ifdef HAVE_NATIVETHREAD
     pthread_key_create(&threadDataKey, thread_data_free);
 #endif
+    ffiValueType = (sizeof (VALUE) == sizeof (long))
+            ? &ffi_type_ulong : &ffi_type_uint64;
+    PageSize = sysconf(_SC_PAGESIZE);
+    for (i = 0; i < 3; ++i) {
+        methodHandleParamTypes[i] = ffiValueType;
+        
+    }
+    methodHandleVarargParamTypes[2] = ffiValueType;
+    for (i = 0; i < 4; ++i) {
+        pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
+    }
 }
