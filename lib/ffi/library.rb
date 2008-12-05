@@ -88,6 +88,58 @@ module FFI::Library
     code
     invoker
   end
+  def attach_variable(mname, a1, a2 = nil)
+    cname, type = a2 ? [ a1, a2 ] : [ mname.to_s, a1 ]
+    libraries = defined?(@ffi_libs) ? @ffi_libs : [ DEFAULT ]
+    address = nil
+    libraries.each do |lib|
+      begin
+        address = lib.find_symbol(cname.to_s)
+        break unless address.nil?
+      rescue LoadError
+      end
+    end
+    raise FFI::NotFoundError.new(cname, libraries) if address.nil?
+    case find_type(type)
+    when :pointer, FFI::NativeType::POINTER
+      op = :pointer
+    when :char, FFI::NativeType::INT8
+      op = :int8
+    when :uchar, FFI::NativeType::UINT8
+      op = :uint8
+    when :short, FFI::NativeType::INT16
+      op = :int16
+    when :ushort, FFI::NativeType::UINT16
+      op = :uint16
+    when :int, FFI::NativeType::INT32
+      op = :int32
+    when :uint, FFI::NativeType::UINT32
+      op = :uint32
+    when :long, FFI::NativeType::LONG
+      op = :long
+    when :ulong, FFI::NativeType::ULONG
+      op = :ulong
+    when :long_long, FFI::NativeType::INT64
+      op = :int64
+    when :ulong_long, FFI::NativeType::UINT64
+      op = :uint64
+    else
+      raise ArgError, "Cannot access library variable of type #{type}"
+    end
+    #
+    # Attach to this module as mname/mname=
+    #
+    self.module_eval <<-code
+      @@ffi_gvar_#{mname} = address
+      def self.#{mname}
+        @@ffi_gvar_#{mname}.get_#{op.to_s}(0)
+      end
+      def self.#{mname}=(value)
+        @@ffi_gvar_#{mname}.put_#{op.to_s}(0, value)
+      end
+    code
+    address
+  end
   def callback(name, args, ret)
     @ffi_callbacks = Hash.new unless defined?(@ffi_callbacks)
     @ffi_callbacks[name] = FFI::CallbackInfo.new(find_type(ret), args.map { |e| find_type(e) })
