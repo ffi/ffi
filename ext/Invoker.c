@@ -525,6 +525,18 @@ invoker_call(int argc, VALUE* argv, VALUE self)
     return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
 }
 
+static inline VALUE
+invoker_callN(VALUE self, int argc, VALUE* argv)
+{
+    Invoker* invoker;
+    FFIStorage params[3];
+    void* ffiValues[3];
+
+    Data_Get_Struct(self, Invoker, invoker);
+    ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
+    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+}
+
 static VALUE
 invoker_call0(VALUE self)
 {
@@ -539,39 +551,21 @@ invoker_call0(VALUE self)
 static VALUE
 invoker_call1(VALUE self, VALUE arg1)
 {
-    Invoker* invoker;
-    void* ffiValues[1];
-    FFIStorage params[1];
-
-    Data_Get_Struct(self, Invoker, invoker);
-    ffi_arg_setup(invoker, 1, &arg1, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    return invoker_callN(self, 1, &arg1);
 }
 
 static VALUE
 invoker_call2(VALUE self, VALUE arg1, VALUE arg2)
 {
-    Invoker* invoker;
-    void* ffiValues[2];
-    FFIStorage params[2];
     VALUE argv[] = { arg1, arg2 };
-
-    Data_Get_Struct(self, Invoker, invoker);
-    ffi_arg_setup(invoker, 2, argv, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    return invoker_callN(self, 2, argv);
 }
 
 static VALUE
 invoker_call3(VALUE self, VALUE arg1, VALUE arg2, VALUE arg3)
 {
-    Invoker* invoker;
-    void* ffiValues[3];
-    FFIStorage params[3];
     VALUE argv[] = { arg1, arg2, arg3 };
-
-    Data_Get_Struct(self, Invoker, invoker);
-    ffi_arg_setup(invoker, 3, argv, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    return invoker_callN(self, 2, argv);
 }
 
 #ifdef USE_RAW
