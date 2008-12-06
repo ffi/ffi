@@ -26,7 +26,7 @@ ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
 
 static VALUE classCallbackInfo = Qnil;
 static VALUE classNativeCallback = Qnil;
-static ID callID = Qnil;
+static ID callID = Qnil, cbTableID = Qnil;
 
 VALUE rb_FFI_CallbackInfo_class = Qnil;
 
@@ -228,6 +228,23 @@ rb_FFI_NativeCallback_new(VALUE rbCallbackInfo, VALUE rbProc)
     return Data_Wrap_Struct(classNativeCallback, native_callback_mark, native_callback_free, closure);
 }
 
+VALUE
+rb_FFI_NativeCallback_for_proc(VALUE proc, VALUE cbInfo)
+{
+    VALUE callback;
+    VALUE cbTable = RTEST(rb_ivar_defined(proc, cbTableID)) ? rb_ivar_get(proc, cbTableID) : Qnil;
+    if (cbTable == Qnil) {
+        cbTable = rb_hash_new();
+        rb_ivar_set(proc, cbTableID, cbTable);
+    }
+    callback = rb_hash_aref(cbTable, cbInfo);
+    if (callback != Qnil) {
+        return callback;
+    }
+    callback = rb_FFI_NativeCallback_new(cbInfo, proc);
+    rb_hash_aset(cbTable, cbInfo, callback);
+    return callback;
+}
 #if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
 /*
  * versions of ffi_closure_alloc, ffi_closure_free and ffi_prep_closure_loc for older
@@ -275,4 +292,5 @@ rb_FFI_Callback_Init()
     rb_define_singleton_method(classCallbackInfo, "new", CallbackInfo_new, 2);
     classNativeCallback = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
     callID = rb_intern("call");
+    cbTableID = rb_intern("@__ffi_callback_table__");
 }

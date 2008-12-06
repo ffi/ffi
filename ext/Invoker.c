@@ -88,7 +88,7 @@ static inline ThreadData* thread_data_get(void);
 
 static int PageSize;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
-static ID cbTableID, to_ptr;
+static ID to_ptr;
 
 #ifdef HAVE_NATIVETHREAD
 static pthread_key_t threadDataKey;
@@ -764,18 +764,7 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 static void* 
 callback_param(VALUE proc, VALUE cbInfo)
 {
-    VALUE callback;
-    VALUE cbTable = RTEST(rb_ivar_defined(proc, cbTableID)) ? rb_ivar_get(proc, cbTableID) : Qnil;
-    if (!cbTable || cbTable == Qnil) {
-        cbTable = rb_hash_new();
-        rb_ivar_set(proc, cbTableID, cbTable);
-    }
-    callback = rb_hash_aref(cbTable, cbInfo);
-    if (callback != Qnil) {
-        return ((NativeCallback *) DATA_PTR(callback))->code;
-    }
-    callback = rb_FFI_NativeCallback_new(cbInfo, proc);
-    rb_hash_aset(cbTable, cbInfo, callback);
+    VALUE callback = rb_FFI_NativeCallback_for_proc(proc, cbInfo);
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
 #ifdef HAVE_NATIVETHREAD
@@ -837,7 +826,6 @@ rb_FFI_Invoker_Init()
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
     rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 4);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
-    cbTableID = rb_intern("__ffi_callback_table__");
     to_ptr = rb_intern("to_ptr");
     
     rb_define_module_function(moduleError, "error", get_last_error, 0);
