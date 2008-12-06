@@ -35,17 +35,6 @@ module FFI
         raise ArgumentError, "Cannot get callback fields"
       end
     end
-    class StringField < Field
-      def self.size; Platform::ADDRESS_SIZE; end
-      def self.align; Platform::ADDRESS_ALIGN; end
-      def put(ptr, val)
-        raise ArgumentError, "Cannot set :string fields"
-      end
-      def get(ptr)
-        strp = ptr.get_pointer(@off)
-        (strp.nil? || strp.null?) ? nil : strp.get_string(0)
-      end
-    end
     def initialize
       @fields = {}
       @size = 0

@@ -122,7 +122,20 @@ pointer_new(caddr_t value)
 {
     return rb_FFI_Pointer_new(value);
 }
-#define NUM_OP(name, type, toNative, fromNative) \
+
+static inline caddr_t
+string_to_native(VALUE value)
+{
+    rb_raise(rb_eArgError, "Cannot set :string fields");
+}
+
+static inline VALUE
+string_from_native(caddr_t value)
+{
+    return value != NULL ? rb_tainted_str_new2(value) : Qnil;
+}
+
+#define FIELD_OP(name, type, toNative, fromNative) \
 static VALUE struct_field_put_##name(VALUE self, VALUE pointer, VALUE value); \
 static inline void ptr_put_##name(AbstractMemory* ptr, StructField* field, VALUE value); \
 static inline VALUE ptr_get_##name(AbstractMemory* ptr, StructField* field); \
@@ -151,17 +164,18 @@ struct_field_get_##name(VALUE self, VALUE pointer) \
 { \
     return ptr_get_##name((AbstractMemory *) DATA_PTR(pointer), (StructField *) DATA_PTR(self)); \
 }
-NUM_OP(int8, int8_t, NUM2INT, INT2NUM);
-NUM_OP(uint8, u_int8_t, NUM2UINT, UINT2NUM);
-NUM_OP(int16, int16_t, NUM2INT, INT2NUM);
-NUM_OP(uint16, u_int16_t, NUM2UINT, UINT2NUM);
-NUM_OP(int32, int32_t, NUM2INT, INT2NUM);
-NUM_OP(uint32, u_int32_t, NUM2UINT, UINT2NUM);
-NUM_OP(int64, int64_t, NUM2LL, LL2NUM);
-NUM_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
-NUM_OP(float32, float, NUM2DBL, rb_float_new);
-NUM_OP(float64, double, NUM2DBL, rb_float_new);
-NUM_OP(pointer, caddr_t, pointer_native, pointer_new);
+FIELD_OP(int8, int8_t, NUM2INT, INT2NUM);
+FIELD_OP(uint8, u_int8_t, NUM2UINT, UINT2NUM);
+FIELD_OP(int16, int16_t, NUM2INT, INT2NUM);
+FIELD_OP(uint16, u_int16_t, NUM2UINT, UINT2NUM);
+FIELD_OP(int32, int32_t, NUM2INT, INT2NUM);
+FIELD_OP(uint32, u_int32_t, NUM2UINT, UINT2NUM);
+FIELD_OP(int64, int64_t, NUM2LL, LL2NUM);
+FIELD_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
+FIELD_OP(float32, float, NUM2DBL, rb_float_new);
+FIELD_OP(float64, double, NUM2DBL, rb_float_new);
+FIELD_OP(pointer, caddr_t, pointer_native, pointer_new);
+FIELD_OP(string, caddr_t, string_to_native, string_from_native);
 
 static VALUE
 struct_new(int argc, VALUE* argv, VALUE klass)
@@ -232,6 +246,8 @@ struct_get_field(VALUE self, VALUE fieldName)
             return ptr_get_float64(s->pointer, f);
         case POINTER:
             return ptr_get_pointer(s->pointer, f);
+        case STRING:
+            return ptr_get_string(s->pointer, f);
         default:
             /* call up to the ruby code to fetch the value */
             return rb_funcall2(rbField, getID, 1, &s->rbPointer);
@@ -279,6 +295,8 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
         case POINTER:
             ptr_put_pointer(s->pointer, f, value);
             break;
+        case STRING:
+            rb_raise(rb_eArgError, "Cannot set :string fields");
         default:
             /* call up to the ruby code to set the value */
             rb_funcall2(rbField, putID, 2, argv);
@@ -392,4 +410,5 @@ rb_FFI_Struct_Init()
     FIELD(FloatField, float32, FLOAT32, float);
     FIELD(DoubleField, float64, FLOAT64, double);
     FIELD(PointerField, pointer, POINTER, caddr_t);
+    FIELD(StringField, string, STRING, caddr_t);
 }
