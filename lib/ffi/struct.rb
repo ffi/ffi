@@ -116,11 +116,11 @@ module FFI
   class BaseStruct
     Buffer = FFI::Buffer
 
-    def initialize(pointer = nil, *spec)
+    def initialize(ptr = nil, *spec)
       self.layout = @cspec = self.class.layout(*spec)
       
-      if pointer then
-        self.pointer = pointer
+      if ptr then
+        self.pointer = ptr
       else
         self.pointer = MemoryPointer.new(@cspec.size)
       end
@@ -142,12 +142,6 @@ module FFI
     end
     def size
       self.class.size
-    end
-    def [](field)
-      @cspec[field].get(@pointer)
-    end
-    def []=(field, val)
-      @cspec[field].put(@pointer, val)
     end
     def members
       @cspec.members

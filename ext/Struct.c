@@ -32,6 +32,7 @@ typedef struct StructLayoutBuilder {
 typedef struct Struct {
     StructLayout* layout;
     AbstractMemory* pointer;
+    VALUE rbPointer;
 } Struct;
 
 static void struct_field_mark(StructField *);
@@ -44,6 +45,7 @@ static void struct_layout_free(StructLayout *);
 static VALUE classBaseStruct = Qnil, classStructLayout = Qnil;
 static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
 static ID initializeID = 0, pointerID = 0, layoutID = 0;
+static ID getID = 0, putID = 0;
 
 static VALUE
 struct_layout_builder_new(VALUE self)
@@ -139,6 +141,7 @@ struct_new(int argc, VALUE* argv, VALUE klass)
     VALUE retval;
 
     retval = Data_Make_Struct(klass, Struct, struct_mark, struct_free, s);
+    s->rbPointer = Qnil;
     s->layout = NULL;
     s->pointer = NULL;
     rb_funcall2(retval, initializeID, argc, argv);
@@ -147,23 +150,45 @@ struct_new(int argc, VALUE* argv, VALUE klass)
 static void
 struct_mark(Struct *s)
 {
+    if (s->rbPointer != Qnil) {
+        rb_gc_mark(s->rbPointer);
+    }
 }
 static void struct_free(Struct *s)
 {
     xfree(s);
 }
 static VALUE
-struct_get_field(VALUE self, VALUE field)
+struct_field(Struct* s, VALUE fieldName)
 {
-    Struct* s = (Struct *) DATA_PTR(self);
-    return Qnil;
+    StructLayout* layout = s->layout;
+    VALUE rbField;
+    if (layout == NULL) {
+        rb_raise(rb_eRuntimeError, "layout not set for Struct");
+    }
+    rbField = rb_hash_aref(layout->rbFields, fieldName);
+    if (rbField == Qnil) {
+        VALUE str = rb_funcall2(fieldName, rb_intern("to_s"), 0, NULL);
+        rb_raise(rb_eArgError, "No such field '%s'", StringValuePtr(str));
+    }
+    return rbField;
 }
 
 static VALUE
-struct_put_field(VALUE self, VALUE field, VALUE value)
+struct_get_field(VALUE self, VALUE fieldName)
 {
     Struct* s = (Struct *) DATA_PTR(self);
-    return Qtrue;
+    VALUE rbField = struct_field(s, fieldName);
+    return rb_funcall2(rbField, getID, 1, &s->rbPointer);
+}
+
+static VALUE
+struct_put_field(VALUE self, VALUE fieldName, VALUE value)
+{
+    Struct* s = (Struct *) DATA_PTR(self);
+    VALUE rbField = struct_field(s, fieldName);
+    VALUE argv[] = { s->rbPointer, value };
+    return rb_funcall2(rbField, putID, 2, argv);
 }
 
 static VALUE
@@ -174,6 +199,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
         rb_raise(rb_eArgError, "Invalid pointer");
     }
     s->pointer = (AbstractMemory *) DATA_PTR(pointer);
+    s->rbPointer = pointer;
     rb_ivar_set(self, pointerID, pointer);
     return self;
 }
@@ -182,8 +208,10 @@ static VALUE
 struct_set_layout(VALUE self, VALUE layout)
 {
     Struct* s = (Struct *) DATA_PTR(self);
+    if (rb_obj_is_kind_of(layout, classStructLayout)) {
+        s->layout = (StructLayout *) DATA_PTR(layout);
+    }
     rb_ivar_set(self, layoutID, layout);
-    //s->layout = (StructLayout *) DATA_PTR(layout);
     return self;
 }
 
@@ -234,6 +262,8 @@ rb_FFI_Struct_Init()
     rb_define_attr(classBaseStruct, "pointer", 1, 0);
     rb_define_private_method(classBaseStruct, "layout=", struct_set_layout, 1);
     rb_define_attr(classBaseStruct, "layout", 1, 0);
+    rb_define_method(classBaseStruct, "[]", struct_get_field, 1);
+    rb_define_method(classBaseStruct, "[]=", struct_put_field, 2);
     rb_define_singleton_method(classStructField, "new", struct_field_new, -1);
     rb_define_method(classStructField, "offset", struct_field_offset, 0);
     rb_define_singleton_method(classStructLayout, "new", struct_layout_new, 2);
@@ -241,6 +271,8 @@ rb_FFI_Struct_Init()
     initializeID = rb_intern("initialize");
     pointerID = rb_intern("@pointer");
     layoutID = rb_intern("@layout");
+    getID = rb_intern("get");
+    putID = rb_intern("put");
 #undef NUM_OP
 #define NUM_OP(name, typeName, T) do { \
     typedef struct { char c; T v; } s; \
