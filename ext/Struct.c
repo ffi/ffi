@@ -8,6 +8,7 @@
 #include "compat.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
+#include "Types.h"
 #include "Struct.h"
 
 typedef struct StructField {
@@ -69,6 +70,15 @@ struct_field_new(int argc, VALUE* argv, VALUE klass)
     nargs = rb_scan_args(argc, argv, "11", &offset, &info);
     retval = Data_Make_Struct(klass, StructField, struct_field_mark, struct_field_free, field);
     field->offset = NUM2UINT(offset);
+    if (rb_const_defined(klass, rb_intern("TYPE"))) {
+        field->type = NUM2UINT(rb_const_get(klass, rb_intern("TYPE")));
+    } else {
+        field->type = ~0;
+    }
+#ifdef notyet
+    field->size = NUM2UINT(rb_const_get(klass, rb_intern("SIZE")));
+    field->align = NUM2UINT(rb_const_get(klass, rb_intern("ALIGN")));
+#endif
     rb_iv_set(retval, "@off", offset);
     rb_iv_set(retval, "@info", info);
     return retval;
@@ -179,7 +189,32 @@ struct_get_field(VALUE self, VALUE fieldName)
 {
     Struct* s = (Struct *) DATA_PTR(self);
     VALUE rbField = struct_field(s, fieldName);
-    return rb_funcall2(rbField, getID, 1, &s->rbPointer);
+    StructField* f = (StructField *) DATA_PTR(rbField);
+    switch (f->type) {
+        case INT8:
+            return ptr_get_int8(s->pointer, f);
+        case UINT8:
+            return ptr_get_uint8(s->pointer, f);
+        case INT16:
+            return ptr_get_int16(s->pointer, f);
+        case UINT16:
+            return ptr_get_uint16(s->pointer, f);
+        case INT32:
+            return ptr_get_int32(s->pointer, f);
+        case UINT32:
+            return ptr_get_uint32(s->pointer, f);
+        case INT64:
+            return ptr_get_int64(s->pointer, f);
+        case UINT64:
+            return ptr_get_uint64(s->pointer, f);
+        case FLOAT32:
+            return ptr_get_float32(s->pointer, f);
+        case FLOAT64:
+            return ptr_get_float64(s->pointer, f);
+        default:
+            /* call up to the ruby code to fetch the value */
+            return rb_funcall2(rbField, getID, 1, &s->rbPointer);
+    }
 }
 
 static VALUE
@@ -187,8 +222,44 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
 {
     Struct* s = (Struct *) DATA_PTR(self);
     VALUE rbField = struct_field(s, fieldName);
+    StructField* f = (StructField *) DATA_PTR(rbField);
     VALUE argv[] = { s->rbPointer, value };
-    return rb_funcall2(rbField, putID, 2, argv);
+    switch (f->type) {
+        case INT8:
+            ptr_put_int8(s->pointer, f, value);
+            break;
+        case UINT8:
+            ptr_put_uint8(s->pointer, f, value);
+            break;
+        case INT16:
+            ptr_put_int16(s->pointer, f, value);
+            break;
+        case UINT16:
+            ptr_put_uint16(s->pointer, f, value);
+            break;
+        case INT32:
+            ptr_put_int32(s->pointer, f, value);
+            break;
+        case UINT32:
+            ptr_put_uint32(s->pointer, f, value);
+            break;
+        case INT64:
+            ptr_put_int64(s->pointer, f, value);
+            break;
+        case UINT64:
+            ptr_put_uint64(s->pointer, f, value);
+            break;
+        case FLOAT32:
+            ptr_put_float32(s->pointer, f, value);
+            break;
+        case FLOAT64:
+            ptr_put_float64(s->pointer, f, value);
+            break;
+        default:
+            /* call up to the ruby code to set the value */
+            rb_funcall2(rbField, putID, 2, argv);
+    }
+    return self;
 }
 
 static VALUE
@@ -274,23 +345,24 @@ rb_FFI_Struct_Init()
     getID = rb_intern("get");
     putID = rb_intern("put");
 #undef NUM_OP
-#define NUM_OP(name, typeName, T) do { \
+#define NUM_OP(name, typeName, nativeType, T) do { \
     typedef struct { char c; T v; } s; \
     klass = rb_define_class_under(classStructLayoutBuilder, #name, classStructField); \
     rb_define_method(klass, "put", struct_field_put_##typeName, 2); \
     rb_define_method(klass, "get", struct_field_get_##typeName, 1); \
     rb_define_const(klass, "ALIGN", INT2NUM((sizeof(s) - sizeof(T)) * 8)); \
     rb_define_const(klass, "SIZE", INT2NUM(sizeof(T)* 8)); \
+    rb_define_const(klass, "TYPE", INT2NUM(nativeType)); \
     } while(0)
     
-    NUM_OP(Signed8, int8, char);
-    NUM_OP(Unsigned8, uint8, unsigned char);
-    NUM_OP(Signed16, int16, short);
-    NUM_OP(Unsigned16, uint16, unsigned short);
-    NUM_OP(Signed32, int32, int);
-    NUM_OP(Unsigned32, uint32, unsigned int);
-    NUM_OP(Signed64, int64, long long);
-    NUM_OP(Unsigned64, uint64, unsigned long long);
-    NUM_OP(FloatField, float32, float);
-    NUM_OP(DoubleField, float64, double);
+    NUM_OP(Signed8, int8, INT8, char);
+    NUM_OP(Unsigned8, uint8, UINT8, unsigned char);
+    NUM_OP(Signed16, int16, INT16, short);
+    NUM_OP(Unsigned16, uint16, UINT16, unsigned short);
+    NUM_OP(Signed32, int32, INT32, int);
+    NUM_OP(Unsigned32, uint32, UINT32, unsigned int);
+    NUM_OP(Signed64, int64, INT64, long long);
+    NUM_OP(Unsigned64, uint64, UINT64, unsigned long long);
+    NUM_OP(FloatField, float32, FLOAT32, float);
+    NUM_OP(DoubleField, float64, FLOAT64, double);
 }
