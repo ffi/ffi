@@ -81,3 +81,21 @@ struct_make_struct(char b, short s, int i, long long ll, float f, double d)
     return &t;
 }
 
+typedef int (*add_cb)(int a1, int a2);
+typedef int (*sub_cb)(int a1, int a2);
+struct test2 {
+    add_cb  add_callback;
+    sub_cb  sub_callback;
+};
+
+int
+struct_call_add_cb(struct test2* t, int a1, int a2)
+{
+    return t->add_callback(a1, a2);
+}
+
+int
+struct_call_sub_cb(struct test2* t, int a1, int a2)
+{
+    return t->sub_callback(a1, a2);
+}

@@ -7,6 +7,7 @@
 #include "compat.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
+#include "Callback.h"
 
 static VALUE memory_put_float32(VALUE self, VALUE offset, VALUE value);
 static VALUE memory_get_float32(VALUE self, VALUE offset);
@@ -138,6 +139,24 @@ memory_get_pointer(VALUE self, VALUE offset)
     checkBounds(memory, off, sizeof(tmp));
     memcpy(&tmp, memory->address + off, sizeof(tmp));
     return rb_FFI_Pointer_new(tmp);
+}
+
+static VALUE
+memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
+{
+    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
+    long off = NUM2LONG(offset);
+    checkBounds(memory, off, sizeof(void *));
+
+    if (rb_obj_is_kind_of(proc, rb_cProc)) {
+        VALUE callback = rb_FFI_NativeCallback_for_proc(proc, cbInfo);
+        void* code = ((NativeCallback *) DATA_PTR(callback))->code;
+        memcpy(memory->address + off, &code, sizeof(code));
+    } else {
+        rb_raise(rb_eArgError, "parameter is not a proc");
+    }
+
+    return self;
 }
 
 static VALUE
@@ -288,6 +307,7 @@ rb_FFI_AbstractMemory_Init()
     rb_define_method(classMemory, "get_array_of_float64", memory_get_array_of_float64, 2);
     rb_define_method(classMemory, "put_pointer", memory_put_pointer, 2);
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
+    rb_define_method(classMemory, "put_callback", memory_put_callback, 3);
     rb_define_method(classMemory, "get_string", memory_get_string, -1);
     rb_define_method(classMemory, "put_string", memory_put_string, 2);
     rb_define_method(classMemory, "get_bytes", memory_get_bytes, 2);

@@ -15,8 +15,9 @@ module FFI
   end
   class StructLayoutBuilder
     class Field
-      def initialize(off)
+      def initialize(off, info=nil)
         @off = off
+        @info = info
       end
       
       def offset
@@ -142,6 +143,16 @@ module FFI
         ptr.get_pointer(@off)
       end
     end
+    class CallbackField < Field
+      def self.size; Platform::ADDRESS_SIZE; end
+      def self.align; Platform::ADDRESS_ALIGN; end
+      def put(ptr, proc)
+        ptr.put_callback(@off, proc, @info)
+      end
+      def get(ptr)
+        raise ArgumentError, "Cannot get callback fields"
+      end
+    end
     class StringField < Field
       def self.size; Platform::ADDRESS_SIZE; end
       def self.align; Platform::ADDRESS_ALIGN; end
@@ -158,6 +169,7 @@ module FFI
       @size = 0
     end
     def add_field(name, type, offset=nil)
+      info = nil
       field_class = case type
       when :char, NativeType::INT8
         Signed8
@@ -185,6 +197,9 @@ module FFI
         DoubleField
       when :pointer, NativeType::POINTER
         PointerField
+      when FFI::CallbackInfo
+        info = type
+        CallbackField
       when :string, NativeType::STRING
         StringField
       else
@@ -193,7 +208,7 @@ module FFI
       
       size = field_class.size / 8
       off = offset ? offset.to_i : align(@size, field_class.align)
-      @fields[name] = field_class.new(off)
+      @fields[name] = field_class.new(off, info)
       @size = off + size
     end
     def build

@@ -35,21 +35,8 @@ module FFI::Library
     convention = defined?(@ffi_convention) ? @ffi_convention : :default
 
     # Convert :foo to the native type
-    callback_count = 0
-    arg_types.map! { |e|
-      begin
-        find_type(e)
-      rescue FFI::TypeError => ex
-        if defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(e)
-          callback_count += 1
-          @ffi_callbacks[e]
-        elsif e.is_a?(Class) && e < FFI::Struct
-          FFI::NativeType::POINTER
-        else
-          raise ex
-        end
-      end
-    }
+    arg_types.map! { |e| find_type(e) }
+    has_callback = arg_types.any? {|t| t.kind_of?(FFI::CallbackInfo)}
     options = Hash.new
     options[:convention] = convention
     options[:type_map] = @ffi_typedefs if defined?(@ffi_typedefs)
@@ -69,15 +56,15 @@ module FFI::Library
     params = (1..arity).map {|i| "a#{i}" }.join(",")
 
     # Always use rest args for functions with callback parameters
-    if callback_count > 0 || invoker.kind_of?(FFI::VariadicInvoker)
+    if has_callback || invoker.kind_of?(FFI::VariadicInvoker)
       params = "*args, &block"
     end
-    call = arity <= 3 && callback_count < 1 && !invoker.kind_of?(FFI::VariadicInvoker)? "call#{arity}" : "call"
+    call = arity <= 3 && !has_callback && !invoker.kind_of?(FFI::VariadicInvoker)? "call#{arity}" : "call"
 
     #
     # Attach the invoker to this module as 'mname'.
     #
-    if callback_count < 1 && !invoker.kind_of?(FFI::VariadicInvoker)
+    if !has_callback && !invoker.kind_of?(FFI::VariadicInvoker)
       invoker.attach(self, mname.to_s)
     else
       self.module_eval <<-code
@@ -159,8 +146,12 @@ module FFI::Library
     @ffi_typedefs[add] = code
   end
   def find_type(name)
-    code = if defined?(@ffi_typedefs)
+    code = if defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(name)
       @ffi_typedefs[name]
+    elsif defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(name)
+      @ffi_callbacks[name]
+    elsif name.is_a?(Class) && name < FFI::Struct
+      FFI::NativeType::POINTER
     end
     code = name if !code && name.kind_of?(FFI::CallbackInfo)
     if code.nil? || code.kind_of?(Symbol)
