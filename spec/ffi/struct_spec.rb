@@ -220,6 +220,39 @@ describe "Struct tests" do
     s[:p] = LibTest.ptr_from_address(0x12345678)
     s.pointer.get_ulong(0).should == 0xdeadbeef
   end
+  def test_num_field(type, v)
+    klass = Class.new(FFI::Struct)
+    klass.layout :v, type, :dummy, :long
+    
+    s = klass.new
+    s[:v] = v
+    s.pointer.send("get_#{type.to_s}", 0).should == v
+    s.pointer.send("put_#{type.to_s}", 0, 0)
+    s[:v].should == 0
+  end
+  def self.int_field_test(type, values)
+    values.each do |v|
+      it "#{type} field r/w (#{v.to_s(16)})" do
+        test_num_field(type, v)
+      end
+    end
+  end
+  int_field_test(:char, [ 0, 127, -128, -1 ])
+  int_field_test(:uchar, [ 0, 0x7f, 0x80, 0xff ])
+  int_field_test(:short, [ 0, 0x7fff, -0x8000, -1 ])
+  int_field_test(:ushort, [ 0, 0x7fff, 0x8000, 0xffff ])
+  int_field_test(:int, [ 0, 0x7fffffff, -0x80000000, -1 ])
+  int_field_test(:uint, [ 0, 0x7fffffff, 0x80000000, 0xffffffff ])
+  int_field_test(:long_long, [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ])
+  int_field_test(:ulong_long, [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ])
+  if FFI::Platform::LONG_SIZE == 32
+    int_field_test(:long, [ 0, 0x7fffffff, -0x80000000, -1 ])
+    int_field_test(:ulong, [ 0, 0x7fffffff, 0x80000000, 0xffffffff ])
+  else
+    int_field_test(:long, [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ])
+    int_field_test(:ulong, [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ])
+  end
+
   it "Can have CallbackInfo struct field" do
     module CallbackMember
       extend FFI::Library
