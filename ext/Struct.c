@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <ruby.h>
-#include <st.h>
 #include "rbffi.h"
 #include "compat.h"
 #include "AbstractMemory.h"
@@ -21,13 +20,10 @@ typedef struct StructField {
 typedef struct StructLayout {
     VALUE rbFields;
     unsigned int fieldCount;
-    st_table* symbolMap;
-    st_table* stringMap;
 } StructLayout;
 
 typedef struct StructLayoutBuilder {
     unsigned int offset;
-    st_table* fieldMap;
 } StructLayoutBuilder;
 
 typedef struct Struct {
@@ -47,18 +43,6 @@ static VALUE classBaseStruct = Qnil, classStructLayout = Qnil;
 static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
 static ID initializeID = 0, pointerID = 0, layoutID = 0;
 static ID getID = 0, putID = 0;
-
-static VALUE
-struct_layout_builder_new(VALUE self)
-{
-
-}
-
-static VALUE
-struct_layout_builder_add(int argc, VALUE* argv, VALUE self)
-{
-
-}
 
 static VALUE
 struct_field_new(int argc, VALUE* argv, VALUE klass)
@@ -146,7 +130,6 @@ NUM_OP(float64, double, NUM2DBL, rb_float_new);
 static VALUE
 struct_new(int argc, VALUE* argv, VALUE klass)
 {
-    VALUE offset = Qnil, info = Qnil;
     Struct* s;
     VALUE retval;
 
@@ -258,6 +241,7 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
         default:
             /* call up to the ruby code to set the value */
             rb_funcall2(rbField, putID, 2, argv);
+            break;
     }
     return self;
 }
