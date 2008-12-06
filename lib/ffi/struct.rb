@@ -5,10 +5,6 @@ module FFI
       @fields = fields
       @size = size
     end
-    
-    def [](name)
-      @fields[name]
-    end
     def size
       @size
     end
@@ -119,15 +115,14 @@ module FFI
   end
   class BaseStruct
     Buffer = FFI::Buffer
-    attr_reader :pointer
 
     def initialize(pointer = nil, *spec)
-      @cspec = self.class.layout(*spec)
-
+      self.layout = @cspec = self.class.layout(*spec)
+      
       if pointer then
-        @pointer = pointer
+        self.pointer = pointer
       else
-        @pointer = MemoryPointer.new size
+        self.pointer = MemoryPointer.new(@cspec.size)
       end
     end
     def self.alloc_inout(clear = true)
@@ -161,11 +156,11 @@ module FFI
       @cspec.members.map { |m| self[m] }
     end
     def clear
-      @pointer.clear
+      pointer.clear
       self
     end
     def to_ptr
-      @pointer
+      pointer
     end
     def self.in
       :buffer_in

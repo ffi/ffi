@@ -18,6 +18,7 @@ typedef struct StructField {
 } StructField;
 
 typedef struct StructLayout {
+    VALUE rbFields;
     unsigned int fieldCount;
     st_table* symbolMap;
     st_table* stringMap;
@@ -30,14 +31,19 @@ typedef struct StructLayoutBuilder {
 
 typedef struct Struct {
     StructLayout* layout;
-    VALUE rbLayout;
+    AbstractMemory* pointer;
 } Struct;
 
 static void struct_field_mark(StructField *);
 static void struct_field_free(StructField *);
+static void struct_mark(Struct *);
+static void struct_free(Struct *);
+static void struct_layout_mark(StructLayout *);
+static void struct_layout_free(StructLayout *);
 
 static VALUE classBaseStruct = Qnil, classStructLayout = Qnil;
 static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
+static ID initializeID = 0, pointerID = 0, layoutID = 0;
 
 static VALUE
 struct_layout_builder_new(VALUE self)
@@ -126,6 +132,27 @@ NUM_OP(float32, float, NUM2DBL, rb_float_new);
 NUM_OP(float64, double, NUM2DBL, rb_float_new);
 
 static VALUE
+struct_new(int argc, VALUE* argv, VALUE klass)
+{
+    VALUE offset = Qnil, info = Qnil;
+    Struct* s;
+    VALUE retval;
+
+    retval = Data_Make_Struct(klass, Struct, struct_mark, struct_free, s);
+    s->layout = NULL;
+    s->pointer = NULL;
+    rb_funcall2(retval, initializeID, argc, argv);
+    return retval;
+}
+static void
+struct_mark(Struct *s)
+{
+}
+static void struct_free(Struct *s)
+{
+    xfree(s);
+}
+static VALUE
 struct_get_field(VALUE self, VALUE field)
 {
     Struct* s = (Struct *) DATA_PTR(self);
@@ -139,6 +166,58 @@ struct_put_field(VALUE self, VALUE field, VALUE value)
     return Qtrue;
 }
 
+static VALUE
+struct_set_pointer(VALUE self, VALUE pointer)
+{
+    Struct* s = (Struct *) DATA_PTR(self);
+    if (!rb_obj_is_kind_of(pointer, rb_FFI_AbstractMemory_class)) {
+        rb_raise(rb_eArgError, "Invalid pointer");
+    }
+    s->pointer = (AbstractMemory *) DATA_PTR(pointer);
+    rb_ivar_set(self, pointerID, pointer);
+    return self;
+}
+
+static VALUE
+struct_set_layout(VALUE self, VALUE layout)
+{
+    Struct* s = (Struct *) DATA_PTR(self);
+    rb_ivar_set(self, layoutID, layout);
+    //s->layout = (StructLayout *) DATA_PTR(layout);
+    return self;
+}
+
+static VALUE
+struct_layout_new(VALUE klass, VALUE fields, VALUE size)
+{
+    StructLayout* layout;
+    VALUE retval;
+    VALUE argv[] = { fields, size };
+    retval = Data_Make_Struct(klass, StructLayout, struct_layout_mark, struct_layout_free, layout);
+    layout->rbFields = fields;
+    rb_funcall2(retval, initializeID, 2, argv);
+    return retval;
+}
+
+static void
+struct_layout_mark(StructLayout *layout)
+{
+    if (layout->rbFields != Qnil) {
+        rb_gc_mark(layout->rbFields);
+    }
+}
+static void
+struct_layout_free(StructLayout *layout)
+{
+    xfree(layout);
+}
+
+static VALUE
+struct_layout_get(VALUE self, VALUE field)
+{
+    StructLayout* layout = (StructLayout *) DATA_PTR(self);
+    return rb_hash_aref(layout->rbFields, field);
+}
 void
 rb_FFI_Struct_Init()
 {
@@ -150,8 +229,18 @@ rb_FFI_Struct_Init()
     classStructField = rb_define_class_under(classStructLayoutBuilder, "Field", rb_cObject);
 
     //rb_define_singleton_method(classStructLayoutBuilder, "new", builder_new, 0);
+    rb_define_singleton_method(classBaseStruct, "new", struct_new, -1);
+    rb_define_private_method(classBaseStruct, "pointer=", struct_set_pointer, 1);
+    rb_define_attr(classBaseStruct, "pointer", 1, 0);
+    rb_define_private_method(classBaseStruct, "layout=", struct_set_layout, 1);
+    rb_define_attr(classBaseStruct, "layout", 1, 0);
     rb_define_singleton_method(classStructField, "new", struct_field_new, -1);
     rb_define_method(classStructField, "offset", struct_field_offset, 0);
+    rb_define_singleton_method(classStructLayout, "new", struct_layout_new, 2);
+    rb_define_method(classStructLayout, "[]", struct_layout_get, 1);
+    initializeID = rb_intern("initialize");
+    pointerID = rb_intern("@pointer");
+    layoutID = rb_intern("@layout");
 #undef NUM_OP
 #define NUM_OP(name, typeName, T) do { \
     typedef struct { char c; T v; } s; \
