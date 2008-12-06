@@ -270,18 +270,19 @@ describe "Struct tests" do
     s[:v] = value
     (s.pointer.get_double(0) - value).abs.should < 0.0001
   end
+  module CallbackMember
+    extend FFI::Library
+    ffi_lib TestLibrary::PATH
+    callback :add, [ :int, :int ], :int
+    callback :sub, [ :int, :int ], :int
+    class TestStruct < FFI::Struct
+      layout :add, :add,
+        :sub, :sub
+    end
+    attach_function :struct_call_add_cb, [TestStruct, :int, :int], :int
+    attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int
+  end
   it "Can have CallbackInfo struct field" do
-    module CallbackMember
-      extend FFI::Library
-      ffi_lib TestLibrary::PATH
-      callback :add, [ :int, :int ], :int
-      callback :sub, [ :int, :int ], :int
-      class TestStruct < FFI::Struct
-        layout :add, :add,
-               :sub, :sub
-      end
-      attach_function :struct_call_add_cb, [TestStruct, :int, :int], :int
-      attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int
       s = CallbackMember::TestStruct.new
       add_proc = lambda { |a, b| a+b }
       sub_proc = lambda { |a, b| a-b }
@@ -289,6 +290,6 @@ describe "Struct tests" do
       s[:sub] = sub_proc
       CallbackMember.struct_call_add_cb(s.pointer, 40, 2).should == 42
       CallbackMember.struct_call_sub_cb(s.pointer, 44, 2).should == 42
-    end
+    
   end
 end
