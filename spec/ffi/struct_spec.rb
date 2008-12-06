@@ -252,7 +252,24 @@ describe "Struct tests" do
     int_field_test(:long, [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ])
     int_field_test(:ulong, [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ])
   end
+  it ":float field r/w" do
+    klass = Class.new(FFI::Struct)
+    klass.layout :v, :float, :dummy, :long
 
+    s = klass.new
+    value = 1.23456
+    s[:v] = value
+    (s.pointer.get_float(0) - value).abs.should < 0.0001
+  end
+  it ":double field r/w" do
+    klass = Class.new(FFI::Struct)
+    klass.layout :v, :double, :dummy, :long
+
+    s = klass.new
+    value = 1.23456
+    s[:v] = value
+    (s.pointer.get_double(0) - value).abs.should < 0.0001
+  end
   it "Can have CallbackInfo struct field" do
     module CallbackMember
       extend FFI::Library
