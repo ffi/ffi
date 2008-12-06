@@ -42,7 +42,7 @@ static void struct_layout_free(StructLayout *);
 static VALUE classBaseStruct = Qnil, classStructLayout = Qnil;
 static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
 static ID initializeID = 0, pointerID = 0, layoutID = 0;
-static ID getID = 0, putID = 0;
+static ID getID = 0, putID = 0, to_ptr = 0;
 
 static VALUE
 struct_field_new(int argc, VALUE* argv, VALUE klass)
@@ -87,6 +87,41 @@ struct_field_free(StructField *f)
     }
 }
 
+static inline caddr_t
+memory_address(VALUE self)
+{
+    return ((AbstractMemory *)DATA_PTR((self)))->address;
+}
+
+static inline caddr_t
+pointer_native(VALUE value)
+{
+    const int type = TYPE(value);
+
+    if (rb_obj_is_kind_of(value, rb_FFI_Pointer_class) && type == T_DATA) {
+        return memory_address(value);
+    } else if (type == T_NIL) {
+        return NULL;
+    } else if (type == T_FIXNUM) {
+        return (caddr_t)(uintptr_t) FIX2INT(value);
+    } else if (type == T_BIGNUM) {
+        return (caddr_t)(uintptr_t) NUM2ULL(value);
+    } else if (rb_respond_to(value, to_ptr)) {
+        VALUE ptr = rb_funcall2(value, to_ptr, 0, NULL);
+        if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
+            return memory_address(ptr);
+        } else {
+            rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
+        }
+    } else {
+        rb_raise(rb_eArgError, "value is not a pointer");
+    }
+}
+static inline VALUE
+pointer_new(caddr_t value)
+{
+    return rb_FFI_Pointer_new(value);
+}
 #define NUM_OP(name, type, toNative, fromNative) \
 static VALUE struct_field_put_##name(VALUE self, VALUE pointer, VALUE value); \
 static inline void ptr_put_##name(AbstractMemory* ptr, StructField* field, VALUE value); \
@@ -126,6 +161,7 @@ NUM_OP(int64, int64_t, NUM2LL, LL2NUM);
 NUM_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
 NUM_OP(float32, float, NUM2DBL, rb_float_new);
 NUM_OP(float64, double, NUM2DBL, rb_float_new);
+NUM_OP(pointer, caddr_t, pointer_native, pointer_new);
 
 static VALUE
 struct_new(int argc, VALUE* argv, VALUE klass)
@@ -194,6 +230,8 @@ struct_get_field(VALUE self, VALUE fieldName)
             return ptr_get_float32(s->pointer, f);
         case FLOAT64:
             return ptr_get_float64(s->pointer, f);
+        case POINTER:
+            return ptr_get_pointer(s->pointer, f);
         default:
             /* call up to the ruby code to fetch the value */
             return rb_funcall2(rbField, getID, 1, &s->rbPointer);
@@ -237,6 +275,9 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
             break;
         case FLOAT64:
             ptr_put_float64(s->pointer, f, value);
+            break;
+        case POINTER:
+            ptr_put_pointer(s->pointer, f, value);
             break;
         default:
             /* call up to the ruby code to set the value */
@@ -328,8 +369,9 @@ rb_FFI_Struct_Init()
     layoutID = rb_intern("@layout");
     getID = rb_intern("get");
     putID = rb_intern("put");
-#undef NUM_OP
-#define NUM_OP(name, typeName, nativeType, T) do { \
+    to_ptr = rb_intern("to_ptr");
+#undef FIELD
+#define FIELD(name, typeName, nativeType, T) do { \
     typedef struct { char c; T v; } s; \
     klass = rb_define_class_under(classStructLayoutBuilder, #name, classStructField); \
     rb_define_method(klass, "put", struct_field_put_##typeName, 2); \
@@ -339,14 +381,15 @@ rb_FFI_Struct_Init()
     rb_define_const(klass, "TYPE", INT2NUM(nativeType)); \
     } while(0)
     
-    NUM_OP(Signed8, int8, INT8, char);
-    NUM_OP(Unsigned8, uint8, UINT8, unsigned char);
-    NUM_OP(Signed16, int16, INT16, short);
-    NUM_OP(Unsigned16, uint16, UINT16, unsigned short);
-    NUM_OP(Signed32, int32, INT32, int);
-    NUM_OP(Unsigned32, uint32, UINT32, unsigned int);
-    NUM_OP(Signed64, int64, INT64, long long);
-    NUM_OP(Unsigned64, uint64, UINT64, unsigned long long);
-    NUM_OP(FloatField, float32, FLOAT32, float);
-    NUM_OP(DoubleField, float64, FLOAT64, double);
+    FIELD(Signed8, int8, INT8, char);
+    FIELD(Unsigned8, uint8, UINT8, unsigned char);
+    FIELD(Signed16, int16, INT16, short);
+    FIELD(Unsigned16, uint16, UINT16, unsigned short);
+    FIELD(Signed32, int32, INT32, int);
+    FIELD(Unsigned32, uint32, UINT32, unsigned int);
+    FIELD(Signed64, int64, INT64, long long);
+    FIELD(Unsigned64, uint64, UINT64, unsigned long long);
+    FIELD(FloatField, float32, FLOAT32, float);
+    FIELD(DoubleField, float64, FLOAT64, double);
+    FIELD(PointerField, pointer, POINTER, caddr_t);
 }

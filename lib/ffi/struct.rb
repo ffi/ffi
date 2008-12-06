@@ -25,16 +25,6 @@ module FFI
         const_get(:ALIGN)
       end
     end
-    class PointerField < Field
-      def self.size; Platform::ADDRESS_SIZE; end
-      def self.align; Platform::ADDRESS_ALIGN; end
-      def put(ptr, val)
-        ptr.put_pointer(@off, val)
-      end
-      def get(ptr)
-        ptr.get_pointer(@off)
-      end
-    end
     class CallbackField < Field
       def self.size; Platform::ADDRESS_SIZE; end
       def self.align; Platform::ADDRESS_ALIGN; end
