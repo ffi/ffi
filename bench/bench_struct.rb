@@ -10,19 +10,32 @@ module StructBench
   ffi_lib LIBTEST_PATH
   attach_function :bench_s32_v, [ :int ], :void
 end
-class IntStruct < FFI::Struct
-  layout :v, :int
+class TestStruct < FFI::Struct
+  layout :i, :int, :p, :pointer
 end
-s = IntStruct.new
+s = TestStruct.new
 puts "Benchmark FFI Struct.get(:int) performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { s[:v] }
+    iter.times { s[:i] }
   }
 }
 puts "Benchmark FFI Struct.put(:int) performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { s[:v] = 0x12345678 }
+    iter.times { s[:i] = 0x12345678 }
+  }
+}
+puts "Benchmark FFI Struct.get(:pointer) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { s[:p] }
+  }
+}
+puts "Benchmark FFI Struct.put(:pointer) performance, #{iter}x"
+10.times {
+  p = MemoryPointer.new :int
+  puts Benchmark.measure {
+    iter.times { s[:p] = p }
   }
 }
