@@ -15,14 +15,6 @@ module FFI
   end
   class StructLayoutBuilder
     class Field
-      def initialize(off, info=nil)
-        @off = off
-        @info = info
-      end
-      
-      def offset
-        @off
-      end
       def size
         self.size
       end
@@ -36,102 +28,42 @@ module FFI
     class Signed8 < Field
       def self.size; 8; end
       def self.align; Platform::INT8_ALIGN; end
-      def put(ptr, val)
-        ptr.put_int8(@off, val)
-      end
-      def get(ptr)
-        ptr.get_int8(@off)
-      end
     end
     class Unsigned8 < Field
       def self.size; 8; end
       def self.align; Platform::INT8_ALIGN; end
-      def put(ptr, val)
-        ptr.put_uint8(@off, val)
-      end
-      def get(ptr)
-        ptr.get_uint8(@off)
-      end
     end
     class Signed16 < Field
       def self.size; 16; end
       def self.align; Platform::INT16_ALIGN; end
-      def put(ptr, val)
-        ptr.put_int16(@off, val)
-      end
-      def get(ptr)
-        ptr.get_int16(@off)
-      end
     end
     class Unsigned16 < Field
       def self.size; 16; end
       def self.align; Platform::INT16_ALIGN; end
-      def put(ptr, val)
-        ptr.put_uint16(@off, val)
-      end
-      def get(ptr)
-        ptr.get_uint16(@off)
-      end
     end
     class Signed32 < Field
       def self.size; 32; end
       def self.align; Platform::INT32_ALIGN; end
-      def put(ptr, val)
-        ptr.put_int32(@off, val)
-      end
-      def get(ptr)
-        ptr.get_int32(@off)
-      end
     end
     class Unsigned32 < Field
       def self.size; 32; end
       def self.align; Platform::INT32_ALIGN; end
-      def put(ptr, val)
-        ptr.put_uint32(@off, val)
-      end
-      def get(ptr)
-        ptr.get_uint32(@off)
-      end
     end
     class Signed64 < Field
       def self.size; 64; end
       def self.align; Platform::INT64_ALIGN; end
-      def put(ptr, val)
-        ptr.put_int64(@off, val)
-      end
-      def get(ptr)
-        ptr.get_int64(@off)
-      end
     end
     class Unsigned64 < Field
       def self.size; 64; end
       def self.align; Platform::INT64_ALIGN; end
-      def put(ptr, val)
-        ptr.put_uint64(@off, val)
-      end
-      def get(ptr)
-        ptr.get_uint64(@off)
-      end
     end
     class FloatField < Field
       def self.size; Platform::FLOAT_SIZE; end
       def self.align; Platform::FLOAT_ALIGN; end
-      def put(ptr, val)
-        ptr.put_float32(@off, val)
-      end
-      def get(ptr)
-        ptr.get_float32(@off)
-      end
     end
     class DoubleField < Field
       def self.size; Platform::DOUBLE_SIZE; end
       def self.align; Platform::DOUBLE_ALIGN; end
-      def put(ptr, val)
-        ptr.put_float64(@off, val)
-      end
-      def get(ptr)
-        ptr.get_float64(@off)
-      end
     end
     class PointerField < Field
       def self.size; Platform::ADDRESS_SIZE; end

@@ -21,6 +21,8 @@
         <itemPath>ext/Pointer.c</itemPath>
         <itemPath>ext/Pointer.h</itemPath>
         <itemPath>ext/rbffi.h</itemPath>
+        <itemPath>ext/Struct.c</itemPath>
+        <itemPath>ext/Struct.h</itemPath>
         <itemPath>ext/Types.c</itemPath>
         <itemPath>ext/Types.h</itemPath>
       </logicalFolder>
@@ -156,6 +158,12 @@
       </item>
       <item path="ext/Pointer.h">
         <itemExcluded>true</itemExcluded>
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/Struct.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="ext/Struct.h">
         <itemTool>3</itemTool>
       </item>
       <item path="ext/Types.c">
