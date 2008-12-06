@@ -73,18 +73,6 @@ struct_field_offset(VALUE self)
     return UINT2NUM(field->offset);
 }
 
-#ifdef notyet
-#define FIELD(name, type, SIZE, ALIGN) \
-static VALUE class##name##Field; \
-static VALUE \
-##name##_field_new(int argc, VALUE* argv, VALUE klass)
-{
-    VALUE rbField = struct_field_new(arg, argv, klass);
-    StructField* field = (StructField *) DATA_PTR(rbField);    
-    return rbField;
-}
-#endif
-
 static void
 struct_field_mark(StructField *f)
 {
@@ -99,24 +87,32 @@ struct_field_free(StructField *f)
 
 #define NUM_OP(name, type, toNative, fromNative) \
 static VALUE struct_field_put_##name(VALUE self, VALUE pointer, VALUE value); \
+static inline void ptr_put_##name(AbstractMemory* ptr, StructField* field, VALUE value); \
+static inline VALUE ptr_get_##name(AbstractMemory* ptr, StructField* field); \
+static inline void \
+ptr_put_##name(AbstractMemory* ptr, StructField* field, VALUE value) \
+{ \
+    type tmp = toNative(value); \
+    memcpy(ptr->address + field->offset, &tmp, sizeof(tmp)); \
+} \
+static inline VALUE \
+ptr_get_##name(AbstractMemory* ptr, StructField* field) \
+{ \
+    type tmp; \
+    memcpy(&tmp, ptr->address + field->offset, sizeof(tmp)); \
+    return fromNative(tmp); \
+} \
 static VALUE \
 struct_field_put_##name(VALUE self, VALUE pointer, VALUE value) \
 { \
-    StructField* field = (StructField *) DATA_PTR(self); \
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(pointer); \
-    type tmp = (type) toNative(value); \
-    memcpy(memory->address + field->offset, &tmp, sizeof(tmp)); \
+    ptr_put_##name((AbstractMemory *) DATA_PTR(pointer), (StructField *) DATA_PTR(self), value); \
     return self; \
 } \
 static VALUE struct_field_get_##name(VALUE self, VALUE pointer); \
 static VALUE \
 struct_field_get_##name(VALUE self, VALUE pointer) \
 { \
-    StructField* field = (StructField *) DATA_PTR(self); \
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(pointer); \
-    type tmp; \
-    memcpy(&tmp, memory->address + field->offset, sizeof(tmp)); \
-    return fromNative(tmp); \
+    return ptr_get_##name((AbstractMemory *) DATA_PTR(pointer), (StructField *) DATA_PTR(self)); \
 }
 NUM_OP(int8, int8_t, NUM2INT, INT2NUM);
 NUM_OP(uint8, u_int8_t, NUM2UINT, UINT2NUM);
