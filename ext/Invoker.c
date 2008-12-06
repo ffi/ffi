@@ -3,6 +3,7 @@
 #include <sys/mman.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -189,11 +190,8 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
         default:
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
-    /* For invokers with few, simple arguments, attach via a FFI closure */
-    if (invoker->callbackCount < 1) {
-        invoker->methodHandle = method_handle_alloc(invoker->paramCount);
-        invoker->methodHandle->invoker = invoker;
-    }
+    invoker->methodHandle = method_handle_alloc(invoker->callbackCount < 1 ? invoker->paramCount : -1);
+    invoker->methodHandle->invoker = invoker;
     return retval;
 }
 
@@ -255,7 +253,7 @@ method_handle_alloc(int arity)
 #endif
     
     
-    pool = (arity <= MAX_FIXED_ARITY) ? &methodHandlePool[arity] : &defaultMethodHandlePool;
+    pool = (arity >= 0 && arity <= MAX_FIXED_ARITY) ? &methodHandlePool[arity] : &defaultMethodHandlePool;
     pool_lock(pool);
     if (pool->list != NULL) {
         method = pool->list;
@@ -274,7 +272,7 @@ method_handle_alloc(int arity)
     }
 
     /* figure out whichh function to bounce the execution through */
-    if (arity <= MAX_FIXED_ARITY) {
+    if (arity >= 0 && arity <= MAX_FIXED_ARITY) {
         ffiParamCount = arity;
         ffiParamTypes = methodHandleParamTypes;
         fn = attached_method_invoke;
@@ -668,14 +666,13 @@ invoker_attach(VALUE self, VALUE module, VALUE name)
 {
     Invoker* invoker;
     MethodHandle* handle;
+    bool fixedArity;
     char var[1024];
     Data_Get_Struct(self, Invoker, invoker);
     handle = invoker->methodHandle;
-    if (invoker->callbackCount > 0) {
-        rb_raise(rb_eArgError, "Cannnot attach if callbacks are used");
-    }
+    fixedArity = (invoker->paramCount <= MAX_FIXED_ARITY) && (invoker->callbackCount < 1);
     rb_define_module_function(module, StringValuePtr(name), handle->code,
-            invoker->paramCount <= MAX_FIXED_ARITY ? invoker->paramCount : -1);
+            fixedArity ? invoker->paramCount : -1);
     snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
     rb_cv_set(module, var, self);
     return self;
