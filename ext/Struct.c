@@ -14,6 +14,7 @@ typedef struct StructField {
     unsigned int type;
     unsigned int offset;
     unsigned int size;
+    unsigned int align;
 } StructField;
 
 typedef struct StructLayout {
@@ -156,19 +157,23 @@ rb_FFI_Struct_Init()
     rb_define_singleton_method(classStructField, "new", struct_field_new, -1);
     rb_define_method(classStructField, "offset", struct_field_offset, 0);
 #undef NUM_OP
-#define NUM_OP(name, type) \
+#define NUM_OP(name, typeName, T) do { \
+    typedef struct { char c; T v; } s; \
     klass = rb_define_class_under(classStructLayoutBuilder, #name, classStructField); \
-    rb_define_method(klass, "put", struct_field_put_##type, 2); \
-    rb_define_method(klass, "get", struct_field_get_##type, 1);
-
-    NUM_OP(Signed8, int8);
-    NUM_OP(Unsigned8, uint8);
-    NUM_OP(Signed16, int16);
-    NUM_OP(Unsigned16, uint16);
-    NUM_OP(Signed32, int32);
-    NUM_OP(Unsigned32, uint32);
-    NUM_OP(Signed64, int64);
-    NUM_OP(Unsigned64, uint64);
-    NUM_OP(FloatField, float32);
-    NUM_OP(DoubleField, float64);
+    rb_define_method(klass, "put", struct_field_put_##typeName, 2); \
+    rb_define_method(klass, "get", struct_field_get_##typeName, 1); \
+    rb_define_const(klass, "ALIGN", INT2NUM((sizeof(s) - sizeof(T)) * 8)); \
+    rb_define_const(klass, "SIZE", INT2NUM(sizeof(T)* 8)); \
+    } while(0)
+    
+    NUM_OP(Signed8, int8, char);
+    NUM_OP(Unsigned8, uint8, unsigned char);
+    NUM_OP(Signed16, int16, short);
+    NUM_OP(Unsigned16, uint16, unsigned short);
+    NUM_OP(Signed32, int32, int);
+    NUM_OP(Unsigned32, uint32, unsigned int);
+    NUM_OP(Signed64, int64, long long);
+    NUM_OP(Unsigned64, uint64, unsigned long long);
+    NUM_OP(FloatField, float32, float);
+    NUM_OP(DoubleField, float64, double);
 }

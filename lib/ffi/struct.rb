@@ -15,55 +15,19 @@ module FFI
   end
   class StructLayoutBuilder
     class Field
+
       def size
-        self.size
+        self.class.size
       end
       def align
-        self.align
+        self.class.align
+      end
+      def self.size
+        const_get(:SIZE)
       end
       def self.align
-        self.size
+        const_get(:ALIGN)
       end
-    end
-    class Signed8 < Field
-      def self.size; 8; end
-      def self.align; Platform::INT8_ALIGN; end
-    end
-    class Unsigned8 < Field
-      def self.size; 8; end
-      def self.align; Platform::INT8_ALIGN; end
-    end
-    class Signed16 < Field
-      def self.size; 16; end
-      def self.align; Platform::INT16_ALIGN; end
-    end
-    class Unsigned16 < Field
-      def self.size; 16; end
-      def self.align; Platform::INT16_ALIGN; end
-    end
-    class Signed32 < Field
-      def self.size; 32; end
-      def self.align; Platform::INT32_ALIGN; end
-    end
-    class Unsigned32 < Field
-      def self.size; 32; end
-      def self.align; Platform::INT32_ALIGN; end
-    end
-    class Signed64 < Field
-      def self.size; 64; end
-      def self.align; Platform::INT64_ALIGN; end
-    end
-    class Unsigned64 < Field
-      def self.size; 64; end
-      def self.align; Platform::INT64_ALIGN; end
-    end
-    class FloatField < Field
-      def self.size; Platform::FLOAT_SIZE; end
-      def self.align; Platform::FLOAT_ALIGN; end
-    end
-    class DoubleField < Field
-      def self.size; Platform::DOUBLE_SIZE; end
-      def self.align; Platform::DOUBLE_ALIGN; end
     end
     class PointerField < Field
       def self.size; Platform::ADDRESS_SIZE; end
