@@ -65,7 +65,7 @@ rb_FFI_NullPointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_NullPointer_class = classNullPointer = rb_define_class_under(moduleFFI, "NullPointer", rb_FFI_Pointer_class);
-    NullPointerError = rb_define_class("NullPointerError", rb_eRuntimeError);
+    NullPointerError = rb_define_class_under(moduleFFI, "NullPointerError", rb_eRuntimeError);
     rb_define_method(classNullPointer, "inspect", ptr_inspect, 0);
     rb_define_method(classNullPointer, "+", ptr_op, -1);
     rb_define_method(classNullPointer, "null?", ptr_null_p, 0);
