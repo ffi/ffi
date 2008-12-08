@@ -21,6 +21,9 @@ rb_FFI_Pointer_new(caddr_t addr)
 {
     Pointer* p;
     VALUE retval;
+    if (addr == NULL) {
+        return rb_FFI_NullPointer_singleton;
+    }
     retval = Data_Make_Struct(classPointer, Pointer, NULL, ptr_free, p);
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
