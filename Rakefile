@@ -27,7 +27,7 @@ spec = Gem::Specification.new do |s|
   s.email = EMAIL
   s.homepage = HOMEPAGE
   s.rubyforge_project = 'ffi' 
-  s.extensions = %w(ext/extconf.rb gen/Rakefile)
+  s.extensions = %w(ext/ffi_c/extconf.rb gen/Rakefile)
   
   s.require_path = 'lib'
   s.autorequire = GEM
@@ -74,7 +74,7 @@ task :make_spec do
 end
 file "build/Makefile" do
   FileUtils.mkdir_p("build") unless File.directory?("build")
-  sh %{cd build && #{Gem.ruby} ../ext/extconf.rb}
+  sh %{cd build && #{Gem.ruby} ../ext/ffi_c//extconf.rb}
 end
 desc "Compile the native module"
 task :compile => "build/Makefile" do
