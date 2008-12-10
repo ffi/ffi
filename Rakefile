@@ -6,7 +6,7 @@ require 'fileutils'
 require 'rbconfig'
 
 GEM = "ffi"
-GEM_VERSION = "0.2.0"
+GEM_VERSION = "0.3.0"
 AUTHOR = "Wayne Meissner"
 EMAIL = "wmeissner@gmail.com"
 HOMEPAGE = "http://kenai.com/projects/ruby-ffi"
