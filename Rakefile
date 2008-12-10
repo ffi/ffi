@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'rake/gempackagetask'
+require 'rake/extensiontask'
 require 'rubygems/specification'
 require 'date'
 require 'fileutils'
@@ -33,6 +34,16 @@ spec = Gem::Specification.new do |s|
   s.autorequire = GEM
   s.files = %w(LICENSE README Rakefile) + Dir.glob("{ext,lib,nbproject,samples,spec}/**/*")
 end
+
+Rake::ExtensionTask.new('ffi_c', spec) do |ext|
+  ext.name = 'ffi_c'                # indicate the name of the extension.
+  ext.ext_dir = 'ext'         # search for 'hello_world' inside it.
+  ext.lib_dir = 'build'       # put binaries into this folder.
+  ext.tmp_dir = 'build'         # temporary folder used during compilation.
+  ext.cross_compile = true                # enable cross compilation (requires cross compile toolchain)
+  ext.cross_platform = 'i386-mswin32'     # forces the Windows platform instead of the default one
+end
+
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
   desc "Run all specs"
@@ -76,17 +87,10 @@ file "build/Makefile" do
   FileUtils.mkdir_p("build") unless File.directory?("build")
   sh %{cd build && #{Gem.ruby} ../ext/ffi_c//extconf.rb}
 end
-desc "Compile the native module"
-task :compile => "build/Makefile" do
-  sh %{cd build; make}
-end
-desc "Clean all built files"
 task :clean do
-  sh %{cd build;make distclean} if File.exists?("build/Makefile")
   FileUtils.rm_rf("build")
   FileUtils.rm_rf("conftest.dSYM")
   FileUtils.rm_f(Dir["pkg/*.gem"])
-  FileUtils.rm_f("Makefile")
 end
 task "build/libtest.#{LIBEXT}" do
   sh %{#{GMAKE} -f libtest/GNUmakefile}
