@@ -83,10 +83,6 @@ task :make_spec do
     file.puts spec.to_ruby
   end
 end
-file "build/Makefile" do
-  FileUtils.mkdir_p("build") unless File.directory?("build")
-  sh %{cd build && #{Gem.ruby} ../ext/ffi_c//extconf.rb}
-end
 task :clean do
   FileUtils.rm_rf("build")
   FileUtils.rm_rf("conftest.dSYM")
