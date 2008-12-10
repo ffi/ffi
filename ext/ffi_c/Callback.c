@@ -1,6 +1,8 @@
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/mman.h>
+#ifndef _WIN32
+# include <sys/mman.h>
+#endif
 #include <ruby.h>
 #include <ffi.h>
 #include "AbstractMemory.h"
@@ -55,7 +57,7 @@ CallbackInfo_new(VALUE klass, VALUE rbReturnType, VALUE rbParamTypes)
     if (cbInfo->ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Unknown return type: %#x", cbInfo->returnType);
     }
-#ifdef _WIN32
+#if defined(_WIN32) && defined(notyet)
     cbInfo->abi = (flags & STDCALL) ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     cbInfo->abi = FFI_DEFAULT_ABI;
@@ -130,25 +132,25 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
                 param = INT2NUM(*(int8_t *) parameters[i]);
                 break;
             case NATIVE_UINT8:
-                param = UINT2NUM(*(u_int8_t *) parameters[i]);
+                param = UINT2NUM(*(uint8_t *) parameters[i]);
                 break;
             case NATIVE_INT16:
                 param = INT2NUM(*(int16_t *) parameters[i]);
                 break;
             case NATIVE_UINT16:
-                param = UINT2NUM(*(u_int16_t *) parameters[i]);
+                param = UINT2NUM(*(uint16_t *) parameters[i]);
                 break;
             case NATIVE_INT32:
                 param = INT2NUM(*(int32_t *) parameters[i]);
                 break;
             case NATIVE_UINT32:
-                param = UINT2NUM(*(u_int32_t *) parameters[i]);
+                param = UINT2NUM(*(uint32_t *) parameters[i]);
                 break;
             case NATIVE_INT64:
                 param = LL2NUM(*(int64_t *) parameters[i]);
                 break;
             case NATIVE_UINT64:
-                param = ULL2NUM(*(u_int64_t *) parameters[i]);
+                param = ULL2NUM(*(uint64_t *) parameters[i]);
                 break;
             case NATIVE_FLOAT32:
                 param = rb_float_new(*(float *) parameters[i]);
@@ -160,7 +162,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
                 param = rb_tainted_str_new2(*(char **) parameters[i]);
                 break;
             case NATIVE_POINTER:
-                param = rb_FFI_Pointer_new(*(caddr_t *) parameters[i]);
+                param = rb_FFI_Pointer_new(*(void **) parameters[i]);
                 break;
             default:
                 param = Qnil;
@@ -186,7 +188,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             *((int64_t *) retval) = NUM2LL(rbReturnValue);
             break;
         case NATIVE_UINT64:
-            *((u_int64_t *) retval) = NUM2ULL(rbReturnValue);
+            *((uint64_t *) retval) = NUM2ULL(rbReturnValue);
             break;
         case NATIVE_FLOAT32:
             *((float *) retval) = (float) NUM2DBL(rbReturnValue);
@@ -195,7 +197,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             *((double *) retval) = NUM2DBL(rbReturnValue);
             break;
         case NATIVE_POINTER:
-            *((caddr_t *) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
+            *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
             break;
         default:
             break;

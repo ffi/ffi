@@ -1,16 +1,17 @@
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/mman.h>
+#ifndef _WIN32
+#  include <sys/mman.h>
+#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <dlfcn.h>
 #include <errno.h>
 #include <ruby.h>
 
 #include <ffi.h>
-#ifdef HAVE_NATIVETHREAD
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
 # include <pthread.h>
 #endif
 #include "rbffi.h"
@@ -22,7 +23,7 @@
 #include "Callback.h"
 #include "Types.h"
 
-#if defined(__i386__)
+#if defined(__i386__) && !defined(_WIN32)
 #  define USE_RAW
 #endif
 #define MAX_FIXED_ARITY (3)
@@ -58,13 +59,14 @@ struct MethodHandle {
     struct MethodHandlePool* pool;
     MethodHandle* next;
 };
+#ifndef _WIN32
 struct MethodHandlePool {
 #ifdef HAVE_NATIVETHREAD
     pthread_mutex_t mutex;
 #endif
     MethodHandle* list;
 };
-
+#endif /* _WIN32 */
 typedef struct ThreadData {
     int td_errno;
 } ThreadData;
@@ -92,7 +94,7 @@ static int PageSize;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID to_ptr;
 
-#ifdef HAVE_NATIVETHREAD
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
 static pthread_key_t threadDataKey;
 #endif
 
@@ -174,7 +176,7 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
         rb_raise(rb_eArgError, "Invalid return type");
     }
 #ifdef _WIN32
-    abi = strcmp(StringValueCPtr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
+    abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     abi = FFI_DEFAULT_ABI;
 #endif
@@ -210,7 +212,7 @@ variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE returnTyp
     invoker->library = library;
     invoker->function = ((AbstractMemory *) DATA_PTR(function))->address;
 #ifdef _WIN32
-    invoker->abi = strcmp(StringValueCPtr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
+    invoker->abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
@@ -226,9 +228,69 @@ static ffi_type* methodHandleVarargParamTypes[]= {
     NULL,
 };
 
+#ifdef _WIN32
+static MethodHandle*
+method_handle_alloc(int arity)
+{
+    char errmsg[1024];
+    ffi_type* ffiReturnType = (sizeof (VALUE) == sizeof (long))
+            ? &ffi_type_ulong : &ffi_type_uint64;
+    int ffiParamCount, ffiStatus;
+    MethodHandle* method = NULL;
+    ffi_type** ffiParamTypes;
+    void (*fn)(ffi_cif* cif, void* retval, void** parameters, void* user_data);
+
+    /* figure out which function to bounce the execution through */
+    if (arity >= 0 && arity <= MAX_FIXED_ARITY) {
+        ffiParamCount = arity;
+        ffiParamTypes = methodHandleParamTypes;
+        fn = attached_method_invoke;
+    } else {
+        ffiParamCount = 3;
+        ffiParamTypes = methodHandleVarargParamTypes;
+        fn = attached_method_vinvoke;
+    }
+
+    method = ALLOC_N(MethodHandle, 1);
+    memset(method, 0, sizeof(*method));
+    ffiStatus = ffi_prep_cif(&method->cif, FFI_DEFAULT_ABI, ffiParamCount,
+            ffiReturnType, ffiParamTypes);
+    if (ffiStatus != FFI_OK) {
+        snprintf(errmsg, sizeof (errmsg), "ffi_prep_cif failed.  status=%#x", ffiStatus);
+        goto error;
+    }
+    method->closure = ffi_closure_alloc(sizeof(*method->closure), &method->code);
+    if (method->closure == NULL) {
+        snprintf(errmsg, sizeof(errmsg), "ffi_closure_alloc failed");
+        goto error;
+    }
+    ffiStatus = ffi_prep_closure_loc(method->closure, &method->cif, fn, method, method->code);
+    if (ffiStatus != FFI_OK) {
+        snprintf(errmsg, sizeof (errmsg), "ffi_prep_closure failed.  status=%#x", ffiStatus);
+        goto error;
+    }
+    return method;
+error:
+    if (method != NULL) {
+        if (method->closure != NULL) {
+            ffi_closure_free(method->closure);
+        }
+        xfree(method);
+    }
+    rb_raise(rb_eRuntimeError, "%s", errmsg);
+}
+static void
+method_handle_free(MethodHandle* method)
+{
+    if (method->closure != NULL) {
+        ffi_closure_free(method->closure);
+    }
+    xfree(method);
+}
+#else
 static MethodHandlePool methodHandlePool[MAX_FIXED_ARITY + 1], defaultMethodHandlePool;
 
-#ifdef HAVE_NATIVETHREAD
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
 #  define pool_lock(p) pthread_mutex_lock(&(p)->mutex)
 #  define pool_unlock(p)  pthread_mutex_unlock(&(p)->mutex)
 #else
@@ -344,6 +406,7 @@ method_handle_free(MethodHandle* method)
     pool->list = method;
     pool_unlock(pool);
 }
+#endif /* _WIN32 */
 
 typedef union {
     signed long i;
@@ -795,7 +858,7 @@ callback_param(VALUE proc, VALUE cbInfo)
     VALUE callback = rb_FFI_NativeCallback_for_proc(proc, cbInfo);
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
-#ifdef HAVE_NATIVETHREAD
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
 static ThreadData*
 thread_data_init()
 {
@@ -858,20 +921,21 @@ rb_FFI_Invoker_Init()
     
     rb_define_module_function(moduleError, "error", get_last_error, 0);
     rb_define_module_function(moduleError, "error=", set_last_error, 1);
-#ifdef HAVE_NATIVETHREAD
-    pthread_key_create(&threadDataKey, thread_data_free);
-#endif
+
     ffiValueType = (sizeof (VALUE) == sizeof (long))
             ? &ffi_type_ulong : &ffi_type_uint64;
-    PageSize = sysconf(_SC_PAGESIZE);
     for (i = 0; i < MAX_FIXED_ARITY + 1; ++i) {
         methodHandleParamTypes[i] = ffiValueType;
     }
     methodHandleVarargParamTypes[2] = ffiValueType;
-#ifdef HAVE_NATIVETHREAD
+#ifndef _WIN32
+    PageSize = sysconf(_SC_PAGESIZE);
+#  ifdef HAVE_NATIVETHREAD
+    pthread_key_create(&threadDataKey, thread_data_free);
     for (i = 0; i < 4; ++i) {
         pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
     }
     pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);
-#endif
+#  endif /* HAVE_NATIVETHREAD */
+#endif /* _WIN32 */
 }
