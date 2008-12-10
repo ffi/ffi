@@ -3,29 +3,31 @@
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="ruby-ffi" displayName="ruby-ffi" projectFiles="true">
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
-        <itemPath>ext/AbstractMemory.c</itemPath>
-        <itemPath>ext/AbstractMemory.h</itemPath>
-        <itemPath>ext/AutoPointer.c</itemPath>
-        <itemPath>ext/AutoPointer.h</itemPath>
-        <itemPath>ext/Buffer.c</itemPath>
-        <itemPath>ext/Callback.c</itemPath>
-        <itemPath>ext/Callback.h</itemPath>
-        <itemPath>ext/ffi.c</itemPath>
-        <itemPath>ext/Invoker.c</itemPath>
-        <itemPath>ext/MemoryPointer.c</itemPath>
-        <itemPath>ext/MemoryPointer.h</itemPath>
-        <itemPath>ext/NativeLibrary.c</itemPath>
-        <itemPath>ext/NativeLibrary.h</itemPath>
-        <itemPath>ext/NullPointer.c</itemPath>
-        <itemPath>ext/Platform.c</itemPath>
-        <itemPath>ext/Platform.h</itemPath>
-        <itemPath>ext/Pointer.c</itemPath>
-        <itemPath>ext/Pointer.h</itemPath>
-        <itemPath>ext/rbffi.h</itemPath>
-        <itemPath>ext/Struct.c</itemPath>
-        <itemPath>ext/Struct.h</itemPath>
-        <itemPath>ext/Types.c</itemPath>
-        <itemPath>ext/Types.h</itemPath>
+        <itemPath>ext/ffi_c/AbstractMemory.c</itemPath>
+        <itemPath>ext/ffi_c/AbstractMemory.h</itemPath>
+        <itemPath>ext/ffi_c/AutoPointer.c</itemPath>
+        <itemPath>ext/ffi_c/AutoPointer.h</itemPath>
+        <itemPath>ext/ffi_c/Buffer.c</itemPath>
+        <itemPath>ext/ffi_c/Callback.c</itemPath>
+        <itemPath>ext/ffi_c/Callback.h</itemPath>
+        <itemPath>ext/ffi_c/compat.h</itemPath>
+        <itemPath>ext/ffi_c/extconf.rb</itemPath>
+        <itemPath>ext/ffi_c/ffi.c</itemPath>
+        <itemPath>ext/ffi_c/Invoker.c</itemPath>
+        <itemPath>ext/ffi_c/MemoryPointer.c</itemPath>
+        <itemPath>ext/ffi_c/MemoryPointer.h</itemPath>
+        <itemPath>ext/ffi_c/NativeLibrary.c</itemPath>
+        <itemPath>ext/ffi_c/NativeLibrary.h</itemPath>
+        <itemPath>ext/ffi_c/NullPointer.c</itemPath>
+        <itemPath>ext/ffi_c/Platform.c</itemPath>
+        <itemPath>ext/ffi_c/Platform.h</itemPath>
+        <itemPath>ext/ffi_c/Pointer.c</itemPath>
+        <itemPath>ext/ffi_c/Pointer.h</itemPath>
+        <itemPath>ext/ffi_c/rbffi.h</itemPath>
+        <itemPath>ext/ffi_c/Struct.c</itemPath>
+        <itemPath>ext/ffi_c/Struct.h</itemPath>
+        <itemPath>ext/ffi_c/Types.c</itemPath>
+        <itemPath>ext/ffi_c/Types.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <logicalFolder name="ffi" displayName="ffi" projectFiles="true">
@@ -101,90 +103,79 @@
         <requiredProjects>
         </requiredProjects>
       </makefileType>
-      <item path="ext/AbstractMemory.c">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/AbstractMemory.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/AbstractMemory.h">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/AbstractMemory.h">
         <itemTool>3</itemTool>
       </item>
-      <item path="ext/AutoPointer.c">
+      <item path="ext/ffi_c/AutoPointer.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/AutoPointer.h">
+      <item path="ext/ffi_c/AutoPointer.h">
         <itemTool>3</itemTool>
       </item>
-      <item path="ext/Buffer.c">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/Buffer.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/Callback.c">
-        <itemExcluded>true</itemExcluded>
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/Callback.h">
-        <itemExcluded>true</itemExcluded>
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/Invoker.c">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/Callback.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/MemoryPointer.c">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/Callback.h">
         <itemTool>3</itemTool>
       </item>
-      <item path="ext/MemoryPointer.h">
-        <itemExcluded>true</itemExcluded>
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/NativeLibrary.c">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/Invoker.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/NativeLibrary.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/NullPointer.c">
+      <item path="ext/ffi_c/MemoryPointer.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/Platform.c">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/MemoryPointer.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/ffi_c/NativeLibrary.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/Platform.h">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/NativeLibrary.h">
         <itemTool>3</itemTool>
       </item>
-      <item path="ext/Pointer.c">
-        <itemExcluded>true</itemExcluded>
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/Pointer.h">
-        <itemExcluded>true</itemExcluded>
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/Struct.c">
+      <item path="ext/ffi_c/NullPointer.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/Struct.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/Types.c">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/Platform.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/Types.h">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/Platform.h">
         <itemTool>3</itemTool>
       </item>
-      <item path="ext/ffi.c">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/Pointer.c">
         <itemTool>0</itemTool>
       </item>
-      <item path="ext/rbffi.h">
-        <itemExcluded>true</itemExcluded>
+      <item path="ext/ffi_c/Pointer.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/ffi_c/Struct.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="ext/ffi_c/Struct.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/ffi_c/Types.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="ext/ffi_c/Types.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/ffi_c/compat.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/ffi_c/extconf.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="ext/ffi_c/ffi.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="ext/ffi_c/rbffi.h">
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi.rb">
