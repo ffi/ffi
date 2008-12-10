@@ -17,6 +17,7 @@ create_makefile("ffi_c")
 create_header("extconf.h")
 File.open("Makefile", "a") do |mf|
   mf.puts "include $(srcdir)/ffi.mk"
+  mf.puts "LIBFFI_HOST=--host=#{Config::CONFIG['host_alias']}" if Config::CONFIG.has_key?("host_alias")
   if Config::CONFIG['host_os'] =~ /darwin/
     mf.puts "include $(srcdir)/libffi.darwin.mk"
   else
