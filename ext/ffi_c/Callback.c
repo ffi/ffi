@@ -126,40 +126,40 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     for (i = 0; i < cbInfo->parameterCount; ++i) {
         VALUE param;
         switch (cbInfo->parameterTypes[i]) {
-            case INT8:
+            case NATIVE_INT8:
                 param = INT2NUM(*(int8_t *) parameters[i]);
                 break;
-            case UINT8:
+            case NATIVE_UINT8:
                 param = UINT2NUM(*(u_int8_t *) parameters[i]);
                 break;
-            case INT16:
+            case NATIVE_INT16:
                 param = INT2NUM(*(int16_t *) parameters[i]);
                 break;
-            case UINT16:
+            case NATIVE_UINT16:
                 param = UINT2NUM(*(u_int16_t *) parameters[i]);
                 break;
-            case INT32:
+            case NATIVE_INT32:
                 param = INT2NUM(*(int32_t *) parameters[i]);
                 break;
-            case UINT32:
+            case NATIVE_UINT32:
                 param = UINT2NUM(*(u_int32_t *) parameters[i]);
                 break;
-            case INT64:
+            case NATIVE_INT64:
                 param = LL2NUM(*(int64_t *) parameters[i]);
                 break;
-            case UINT64:
+            case NATIVE_UINT64:
                 param = ULL2NUM(*(u_int64_t *) parameters[i]);
                 break;
-            case FLOAT32:
+            case NATIVE_FLOAT32:
                 param = rb_float_new(*(float *) parameters[i]);
                 break;
-            case FLOAT64:
+            case NATIVE_FLOAT64:
                 param = rb_float_new(*(double *) parameters[i]);
                 break;
-            case STRING:
+            case NATIVE_STRING:
                 param = rb_tainted_str_new2(*(char **) parameters[i]);
                 break;
-            case POINTER:
+            case NATIVE_POINTER:
                 param = rb_FFI_Pointer_new(*(caddr_t *) parameters[i]);
                 break;
             default:
@@ -172,29 +172,29 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     if (rbReturnValue == Qnil || TYPE(rbReturnValue) == T_NIL) {
         memset(retval, 0, cbInfo->ffiReturnType->size);
     } else switch (cbInfo->returnType) {
-        case INT8:
-        case INT16:
-        case INT32:
+        case NATIVE_INT8:
+        case NATIVE_INT16:
+        case NATIVE_INT32:
             *((long *) retval) = NUM2INT(rbReturnValue);
             break;
-        case UINT8:
-        case UINT16:
-        case UINT32:
+        case NATIVE_UINT8:
+        case NATIVE_UINT16:
+        case NATIVE_UINT32:
             *((unsigned long *) retval) = NUM2UINT(rbReturnValue);
             break;
-        case INT64:
+        case NATIVE_INT64:
             *((int64_t *) retval) = NUM2LL(rbReturnValue);
             break;
-        case UINT64:
+        case NATIVE_UINT64:
             *((u_int64_t *) retval) = NUM2ULL(rbReturnValue);
             break;
-        case FLOAT32:
+        case NATIVE_FLOAT32:
             *((float *) retval) = (float) NUM2DBL(rbReturnValue);
             break;
-        case FLOAT64:
+        case NATIVE_FLOAT64:
             *((double *) retval) = NUM2DBL(rbReturnValue);
             break;
-        case POINTER:
+        case NATIVE_POINTER:
             *((caddr_t *) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
             break;
         default:

@@ -8,14 +8,16 @@
 #ifndef _ABSTRACTMEMORY_H
 #define	_ABSTRACTMEMORY_H
 
+#include <sys/param.h>
 #include <sys/types.h>
+#include <stdint.h>
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 typedef struct {
-    caddr_t address;
+    char* address; // Use char* instead of void* to ensure adding to it works correctly
     long size;
 } AbstractMemory;
 

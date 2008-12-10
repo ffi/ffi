@@ -17,7 +17,7 @@ static void ptr_mark(Pointer* ptr);
 static void ptr_free(Pointer* ptr);
 
 VALUE
-rb_FFI_Pointer_new(caddr_t addr)
+rb_FFI_Pointer_new(void* addr)
 {
     Pointer* p;
     VALUE retval;

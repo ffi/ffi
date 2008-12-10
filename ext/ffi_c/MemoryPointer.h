@@ -15,7 +15,6 @@ extern "C" {
 #endif
 
     extern void rb_FFI_MemoryPointer_Init();
-    extern VALUE rb_FFI_MemoryPointer_new(caddr_t addr);
     extern VALUE rb_FFI_MemoryPointer_class;
 #ifdef	__cplusplus
 }

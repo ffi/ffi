@@ -16,7 +16,7 @@ static VALUE memory_get_float64(VALUE self, VALUE offset);
 static VALUE memory_put_pointer(VALUE self, VALUE offset, VALUE value);
 static VALUE memory_get_pointer(VALUE self, VALUE offset);
 
-static inline caddr_t memory_address(VALUE self);
+static inline char* memory_address(VALUE self);
 VALUE rb_FFI_AbstractMemory_class = Qnil;
 static VALUE classMemory = Qnil;
 static ID to_ptr = 0;
@@ -56,12 +56,11 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     long count = RARRAY_LEN(ary); \
     long off = NUM2LONG(offset); \
     AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
-    caddr_t address = memory->address; \
     long i; \
     checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
         type tmp = (type) toNative(rb_ary_entry(ary, i)); \
-        memcpy(address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
+        memcpy(memory->address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
     } \
     return self; \
 } \
@@ -72,27 +71,26 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     long count = NUM2LONG(length); \
     long off = NUM2LONG(offset); \
     AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
-    caddr_t address = memory->address; \
     long last = off + count; \
     long i; \
     checkBounds(memory, off, count * sizeof(type)); \
     VALUE retVal = rb_ary_new2(count); \
     for (i = off; i < last; ++i) { \
         type tmp; \
-        memcpy(&tmp, address + (i * sizeof(type)), sizeof(tmp)); \
+        memcpy(&tmp, memory->address + (i * sizeof(type)), sizeof(tmp)); \
         rb_ary_push(retVal, fromNative(tmp)); \
     } \
     return retVal; \
 }
 
 NUM_OP(int8, int8_t, NUM2INT, INT2NUM);
-NUM_OP(uint8, u_int8_t, NUM2UINT, UINT2NUM);
+NUM_OP(uint8, uint8_t, NUM2UINT, UINT2NUM);
 NUM_OP(int16, int16_t, NUM2INT, INT2NUM);
-NUM_OP(uint16, u_int16_t, NUM2UINT, UINT2NUM);
+NUM_OP(uint16, uint16_t, NUM2UINT, UINT2NUM);
 NUM_OP(int32, int32_t, NUM2INT, INT2NUM);
-NUM_OP(uint32, u_int32_t, NUM2UINT, UINT2NUM);
+NUM_OP(uint32, uint32_t, NUM2UINT, UINT2NUM);
 NUM_OP(int64, int64_t, NUM2LL, LL2NUM);
-NUM_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
+NUM_OP(uint64, uint64_t, NUM2ULL, ULL2NUM);
 NUM_OP(float32, float, NUM2DBL, rb_float_new);
 NUM_OP(float64, double, NUM2DBL, rb_float_new);
 
@@ -135,7 +133,7 @@ memory_get_pointer(VALUE self, VALUE offset)
 {
     AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
     long off = NUM2LONG(offset);
-    caddr_t tmp;
+    void* tmp;
     checkBounds(memory, off, sizeof(tmp));
     memcpy(&tmp, memory->address + off, sizeof(tmp));
     return rb_FFI_Pointer_new(tmp);
@@ -179,7 +177,7 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
     VALUE length = Qnil, offset = Qnil;
     AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
     long off, len;
-    caddr_t end;
+    char* end;
     int nargs = rb_scan_args(argc, argv, "11", &offset, &length);
 
     off = NUM2LONG(offset);
@@ -244,7 +242,7 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
-static inline caddr_t
+static inline char*
 memory_address(VALUE self)
 {
     return ((AbstractMemory *)DATA_PTR((self)))->address;

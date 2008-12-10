@@ -7,7 +7,7 @@
 
 typedef struct Buffer {
     AbstractMemory memory;
-    caddr_t address; /* The C heap address */
+    void* address; /* The C heap address */
     VALUE parent;
 } Buffer;
 
@@ -23,7 +23,7 @@ buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     Buffer* p;
     VALUE retval;
     unsigned long msize = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
-    caddr_t memory;
+    void* memory;
 
     memory = malloc(msize + 7);
     if (memory == NULL) {
@@ -33,7 +33,7 @@ buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     p->address = memory;
     p->memory.size = msize;
     /* ensure the memory is aligned on at least a 8 byte boundary */
-    p->memory.address = (caddr_t) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);;
+    p->memory.address = (void *) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);
     p->parent = Qnil;
     if (TYPE(clear) == T_TRUE && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);

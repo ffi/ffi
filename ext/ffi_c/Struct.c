@@ -87,13 +87,13 @@ struct_field_free(StructField *f)
     }
 }
 
-static inline caddr_t
+static inline char*
 memory_address(VALUE self)
 {
     return ((AbstractMemory *)DATA_PTR((self)))->address;
 }
 
-static inline caddr_t
+static inline char*
 pointer_native(VALUE value)
 {
     const int type = TYPE(value);
@@ -103,9 +103,9 @@ pointer_native(VALUE value)
     } else if (type == T_NIL) {
         return NULL;
     } else if (type == T_FIXNUM) {
-        return (caddr_t)(uintptr_t) FIX2INT(value);
+        return (char *)(uintptr_t) FIX2INT(value);
     } else if (type == T_BIGNUM) {
-        return (caddr_t)(uintptr_t) NUM2ULL(value);
+        return (char *)(uintptr_t) NUM2ULL(value);
     } else if (rb_respond_to(value, to_ptr)) {
         VALUE ptr = rb_funcall2(value, to_ptr, 0, NULL);
         if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
@@ -118,19 +118,19 @@ pointer_native(VALUE value)
     }
 }
 static inline VALUE
-pointer_new(caddr_t value)
+pointer_new(char* value)
 {
     return rb_FFI_Pointer_new(value);
 }
 
-static inline caddr_t
+static inline char*
 string_to_native(VALUE value)
 {
     rb_raise(rb_eArgError, "Cannot set :string fields");
 }
 
 static inline VALUE
-string_from_native(caddr_t value)
+string_from_native(char* value)
 {
     return value != NULL ? rb_tainted_str_new2(value) : Qnil;
 }
@@ -165,17 +165,17 @@ struct_field_get_##name(VALUE self, VALUE pointer) \
     return ptr_get_##name((AbstractMemory *) DATA_PTR(pointer), (StructField *) DATA_PTR(self)); \
 }
 FIELD_OP(int8, int8_t, NUM2INT, INT2NUM);
-FIELD_OP(uint8, u_int8_t, NUM2UINT, UINT2NUM);
+FIELD_OP(uint8, uint8_t, NUM2UINT, UINT2NUM);
 FIELD_OP(int16, int16_t, NUM2INT, INT2NUM);
-FIELD_OP(uint16, u_int16_t, NUM2UINT, UINT2NUM);
+FIELD_OP(uint16, uint16_t, NUM2UINT, UINT2NUM);
 FIELD_OP(int32, int32_t, NUM2INT, INT2NUM);
-FIELD_OP(uint32, u_int32_t, NUM2UINT, UINT2NUM);
+FIELD_OP(uint32, uint32_t, NUM2UINT, UINT2NUM);
 FIELD_OP(int64, int64_t, NUM2LL, LL2NUM);
-FIELD_OP(uint64, u_int64_t, NUM2ULL, ULL2NUM);
+FIELD_OP(uint64, uint64_t, NUM2ULL, ULL2NUM);
 FIELD_OP(float32, float, NUM2DBL, rb_float_new);
 FIELD_OP(float64, double, NUM2DBL, rb_float_new);
-FIELD_OP(pointer, caddr_t, pointer_native, pointer_new);
-FIELD_OP(string, caddr_t, string_to_native, string_from_native);
+FIELD_OP(pointer, char*, pointer_native, pointer_new);
+FIELD_OP(string, char*, string_to_native, string_from_native);
 
 static VALUE
 struct_new(int argc, VALUE* argv, VALUE klass)
@@ -224,29 +224,29 @@ struct_get_field(VALUE self, VALUE fieldName)
     VALUE rbField = struct_field(s, fieldName);
     StructField* f = (StructField *) DATA_PTR(rbField);
     switch (f->type) {
-        case INT8:
+        case NATIVE_INT8:
             return ptr_get_int8(s->pointer, f);
-        case UINT8:
+        case NATIVE_UINT8:
             return ptr_get_uint8(s->pointer, f);
-        case INT16:
+        case NATIVE_INT16:
             return ptr_get_int16(s->pointer, f);
-        case UINT16:
+        case NATIVE_UINT16:
             return ptr_get_uint16(s->pointer, f);
-        case INT32:
+        case NATIVE_INT32:
             return ptr_get_int32(s->pointer, f);
-        case UINT32:
+        case NATIVE_UINT32:
             return ptr_get_uint32(s->pointer, f);
-        case INT64:
+        case NATIVE_INT64:
             return ptr_get_int64(s->pointer, f);
-        case UINT64:
+        case NATIVE_UINT64:
             return ptr_get_uint64(s->pointer, f);
-        case FLOAT32:
+        case NATIVE_FLOAT32:
             return ptr_get_float32(s->pointer, f);
-        case FLOAT64:
+        case NATIVE_FLOAT64:
             return ptr_get_float64(s->pointer, f);
-        case POINTER:
+        case NATIVE_POINTER:
             return ptr_get_pointer(s->pointer, f);
-        case STRING:
+        case NATIVE_STRING:
             return ptr_get_string(s->pointer, f);
         default:
             /* call up to the ruby code to fetch the value */
@@ -262,40 +262,40 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
     StructField* f = (StructField *) DATA_PTR(rbField);
     VALUE argv[] = { s->rbPointer, value };
     switch (f->type) {
-        case INT8:
+        case NATIVE_INT8:
             ptr_put_int8(s->pointer, f, value);
             break;
-        case UINT8:
+        case NATIVE_UINT8:
             ptr_put_uint8(s->pointer, f, value);
             break;
-        case INT16:
+        case NATIVE_INT16:
             ptr_put_int16(s->pointer, f, value);
             break;
-        case UINT16:
+        case NATIVE_UINT16:
             ptr_put_uint16(s->pointer, f, value);
             break;
-        case INT32:
+        case NATIVE_INT32:
             ptr_put_int32(s->pointer, f, value);
             break;
-        case UINT32:
+        case NATIVE_UINT32:
             ptr_put_uint32(s->pointer, f, value);
             break;
-        case INT64:
+        case NATIVE_INT64:
             ptr_put_int64(s->pointer, f, value);
             break;
-        case UINT64:
+        case NATIVE_UINT64:
             ptr_put_uint64(s->pointer, f, value);
             break;
-        case FLOAT32:
+        case NATIVE_FLOAT32:
             ptr_put_float32(s->pointer, f, value);
             break;
-        case FLOAT64:
+        case NATIVE_FLOAT64:
             ptr_put_float64(s->pointer, f, value);
             break;
-        case POINTER:
+        case NATIVE_POINTER:
             ptr_put_pointer(s->pointer, f, value);
             break;
-        case STRING:
+        case NATIVE_STRING:
             rb_raise(rb_eArgError, "Cannot set :string fields");
         default:
             /* call up to the ruby code to set the value */
@@ -399,16 +399,16 @@ rb_FFI_Struct_Init()
     rb_define_const(klass, "TYPE", INT2NUM(nativeType)); \
     } while(0)
     
-    FIELD(Signed8, int8, INT8, char);
-    FIELD(Unsigned8, uint8, UINT8, unsigned char);
-    FIELD(Signed16, int16, INT16, short);
-    FIELD(Unsigned16, uint16, UINT16, unsigned short);
-    FIELD(Signed32, int32, INT32, int);
-    FIELD(Unsigned32, uint32, UINT32, unsigned int);
-    FIELD(Signed64, int64, INT64, long long);
-    FIELD(Unsigned64, uint64, UINT64, unsigned long long);
-    FIELD(FloatField, float32, FLOAT32, float);
-    FIELD(DoubleField, float64, FLOAT64, double);
-    FIELD(PointerField, pointer, POINTER, caddr_t);
-    FIELD(StringField, string, STRING, caddr_t);
+    FIELD(Signed8, int8, NATIVE_INT8, char);
+    FIELD(Unsigned8, uint8, NATIVE_UINT8, unsigned char);
+    FIELD(Signed16, int16, NATIVE_INT16, short);
+    FIELD(Unsigned16, uint16, NATIVE_UINT16, unsigned short);
+    FIELD(Signed32, int32, NATIVE_INT32, int);
+    FIELD(Unsigned32, uint32, NATIVE_UINT32, unsigned int);
+    FIELD(Signed64, int64, NATIVE_INT64, long long);
+    FIELD(Unsigned64, uint64, NATIVE_UINT64, unsigned long long);
+    FIELD(FloatField, float32, NATIVE_FLOAT32, float);
+    FIELD(DoubleField, float64, NATIVE_FLOAT64, double);
+    FIELD(PointerField, pointer, NATIVE_POINTER, char *);
+    FIELD(StringField, string, NATIVE_STRING, char *);
 }

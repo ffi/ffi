@@ -11,34 +11,36 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-    
+#ifdef VOID
+#  undef VOID
+#endif
 typedef enum {
-    VOID,
-    INT8,
-    UINT8,
-    INT16,
-    UINT16,
-    INT32,
-    UINT32,
-    INT64,
-    UINT64,
-    FLOAT32,
-    FLOAT64,
-    POINTER,
-    CALLBACK,
-    BUFFER_IN,
-    BUFFER_OUT,
-    BUFFER_INOUT,
-    CHAR_ARRAY,
+    NATIVE_VOID,
+    NATIVE_INT8,
+    NATIVE_UINT8,
+    NATIVE_INT16,
+    NATIVE_UINT16,
+    NATIVE_INT32,
+    NATIVE_UINT32,
+    NATIVE_INT64,
+    NATIVE_UINT64,
+    NATIVE_FLOAT32,
+    NATIVE_FLOAT64,
+    NATIVE_POINTER,
+    NATIVE_CALLBACK,
+    NATIVE_BUFFER_IN,
+    NATIVE_BUFFER_OUT,
+    NATIVE_BUFFER_INOUT,
+    NATIVE_CHAR_ARRAY,
     
     /**
      * An immutable string.  Nul terminated, but only copies in to the native function
      */
-    STRING,
+    NATIVE_STRING,
     /** A Rubinus :string arg - copies data both ways, and nul terminates */
-    RBXSTRING,
+    NATIVE_RBXSTRING,
     /** The function takes a variable number of arguments */
-    VARARGS,
+    NATIVE_VARARGS,
 } NativeType;
 
 #include <ffi.h>

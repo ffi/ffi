@@ -9,7 +9,7 @@
 
 typedef struct MemoryPointer {
     AbstractMemory memory;
-    caddr_t address;
+    void* address;
     bool autorelease;
     bool allocated;
 } MemoryPointer;
@@ -25,7 +25,7 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
 {
     MemoryPointer* p;
     VALUE retval;
-    caddr_t memory;
+    void* memory;
     unsigned long msize = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
     memory = malloc(msize + 7);
     if (memory == NULL) {
@@ -36,7 +36,7 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     p->autorelease = true;
     p->memory.size = msize;
     /* ensure the memory is aligned on at least a 8 byte boundary */
-    p->memory.address = (caddr_t) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);;
+    p->memory.address = (char *) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);;
     p->allocated = true;
     if (TYPE(clear) == T_TRUE && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);

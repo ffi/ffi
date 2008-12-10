@@ -121,7 +121,7 @@ static pthread_key_t threadDataKey;
 #endif /* USE_RAW */
 
 #ifdef USE_RAW
-#  define ADJ(p, a) ((p) = (FFIStorage*) (((caddr_t) p) + a##_ADJ))
+#  define ADJ(p, a) ((p) = (FFIStorage*) (((char *) p) + a##_ADJ))
 #else
 #  define ADJ(p, a) (++(p))
 #endif
@@ -157,7 +157,7 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
             invoker->callbackParameters = REALLOC_N(invoker->callbackParameters, VALUE,
                     invoker->callbackCount + 1);
             invoker->callbackParameters[invoker->callbackCount++] = entry;
-            invoker->paramTypes[i] = CALLBACK;
+            invoker->paramTypes[i] = NATIVE_CALLBACK;
             invoker->ffiParamTypes[i] = &ffi_type_pointer;
         } else {
             int paramType = FIX2INT(entry);
@@ -419,32 +419,32 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
         ffiValues[i] = param;
         
         switch (paramTypes[i]) {
-            case INT8:
+            case NATIVE_INT8:
                 param->i = getSignedInt(argv[argidx++], type, -128, 127, "char");
                 ADJ(param, INT8);
                 break;
-            case INT16:
+            case NATIVE_INT16:
                 param->i = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short");
                 ADJ(param, INT16);
                 break;
-            case INT32:
+            case NATIVE_INT32:
                 param->i = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int");
                 ADJ(param, INT32);
                 break;
-            case UINT8:
+            case NATIVE_UINT8:
                 param->u = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
                 ADJ(param, INT8);
                 break;
-            case UINT16:
+            case NATIVE_UINT16:
                 param->u = getUnsignedInt(argv[argidx++], type, 0xffff, "unsigned short");
                 ADJ(param, INT16);
                 break;
-            case UINT32:
+            case NATIVE_UINT32:
                 /* Special handling/checking for unsigned 32 bit integers */
                 param->u = getUnsignedInt32(argv[argidx++], type);
                 ADJ(param, INT32);
                 break;
-            case INT64:
+            case NATIVE_INT64:
                 if (type != T_FIXNUM && type != T_BIGNUM) {
                     rb_raise(rb_eTypeError, "Expected an Integer parameter");
                 }
@@ -452,7 +452,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 ADJ(param, INT64);
                 ++argidx;
                 break;
-            case UINT64:
+            case NATIVE_UINT64:
                 if (type != T_FIXNUM && type != T_BIGNUM) {
                     rb_raise(rb_eTypeError, "Expected an Integer parameter");
                 }
@@ -460,7 +460,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 ADJ(param, INT64);
                 ++argidx;
                 break;
-            case FLOAT32:
+            case NATIVE_FLOAT32:
                 if (type != T_FLOAT && type != T_FIXNUM) {
                     rb_raise(rb_eTypeError, "Expected a Float parameter");
                 }
@@ -468,7 +468,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 ADJ(param, FLOAT32);
                 ++argidx;
                 break;
-            case FLOAT64:
+            case NATIVE_FLOAT64:
                 if (type != T_FLOAT && type != T_FIXNUM) {
                     rb_raise(rb_eTypeError, "Expected a Float parameter");
                 }
@@ -476,7 +476,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 ADJ(param, FLOAT64);
                 ++argidx;
                 break;
-            case STRING:
+            case NATIVE_STRING:
                 if (type == T_STRING) {
                     if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
                         rb_raise(rb_eSecurityError, "Unsafe string parameter");
@@ -490,10 +490,10 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 ADJ(param, ADDRESS);
                 ++argidx;
                 break;
-            case POINTER:
-            case BUFFER_IN:
-            case BUFFER_OUT:
-            case BUFFER_INOUT:
+            case NATIVE_POINTER:
+            case NATIVE_BUFFER_IN:
+            case NATIVE_BUFFER_OUT:
+            case NATIVE_BUFFER_INOUT:
                 if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class) && type == T_DATA) {
                     param->ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
                 } else if (type == T_STRING) {
@@ -517,7 +517,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 ADJ(param, ADDRESS);
                 ++argidx;
                 break;
-            case CALLBACK:
+            case NATIVE_CALLBACK:
                 if (callbackProc != Qnil) {
                     param->ptr = callback_param(callbackProc, invoker->callbackParameters[cbidx++]);
                 } else {
@@ -748,18 +748,18 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
         VALUE entry = rb_ary_entry(parameterTypes, i);
         int paramType = FIX2INT(entry);
         switch (paramType) {
-            case INT8:
-            case INT16:
-            case INT32:
-                paramType = INT32;
+            case NATIVE_INT8:
+            case NATIVE_INT16:
+            case NATIVE_INT32:
+                paramType = NATIVE_INT32;
                 break;
-            case UINT8:
-            case UINT16:
-            case UINT32:
-                paramType = UINT32;
+            case NATIVE_UINT8:
+            case NATIVE_UINT16:
+            case NATIVE_UINT32:
+                paramType = NATIVE_UINT32;
                 break;
-            case FLOAT32:
-                paramType = FLOAT64;
+            case NATIVE_FLOAT32:
+                paramType = NATIVE_FLOAT64;
                 break;
         }
         paramTypes[i] = paramType;

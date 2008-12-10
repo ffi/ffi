@@ -6,34 +6,34 @@ ffi_type*
 rb_FFI_NativeTypeToFFI(NativeType type)
 {
     switch (type) {
-        case VOID:
+        case NATIVE_VOID:
             return &ffi_type_void;
-        case INT8:
+        case NATIVE_INT8:
             return &ffi_type_sint8;
-        case UINT8:
+        case NATIVE_UINT8:
             return &ffi_type_uint8;
-        case INT16:
+        case NATIVE_INT16:
             return &ffi_type_sint16;
-        case UINT16:
+        case NATIVE_UINT16:
             return &ffi_type_uint16;
-        case INT32:
+        case NATIVE_INT32:
             return &ffi_type_sint32;
-        case UINT32:
+        case NATIVE_UINT32:
             return &ffi_type_uint32;
-        case INT64:
+        case NATIVE_INT64:
             return &ffi_type_sint64;
-        case UINT64:
+        case NATIVE_UINT64:
             return &ffi_type_uint64;
-        case FLOAT32:
+        case NATIVE_FLOAT32:
             return &ffi_type_float;
-        case FLOAT64:
+        case NATIVE_FLOAT64:
             return &ffi_type_double;
-        case STRING:
-        case RBXSTRING:
-        case POINTER:
-        case BUFFER_IN:
-        case BUFFER_OUT:
-        case BUFFER_INOUT:
+        case NATIVE_STRING:
+        case NATIVE_RBXSTRING:
+        case NATIVE_POINTER:
+        case NATIVE_BUFFER_IN:
+        case NATIVE_BUFFER_OUT:
+        case NATIVE_BUFFER_INOUT:
             return &ffi_type_pointer;
         default:
             return NULL;
@@ -44,31 +44,31 @@ VALUE
 rb_FFI_NativeValueToRuby(NativeType type, const void* ptr)
 {
     switch (type) {
-        case VOID:
+        case NATIVE_VOID:
             return Qnil;        
-        case INT8:
+        case NATIVE_INT8:
             return INT2NUM(*(char *) ptr);
-        case INT16:
+        case NATIVE_INT16:
             return INT2NUM(*(short *) ptr);
-        case INT32:
+        case NATIVE_INT32:
             return INT2NUM(*(int *) ptr);
-        case UINT8:
+        case NATIVE_UINT8:
             return UINT2NUM(*(unsigned char *) ptr);
-        case UINT16:
+        case NATIVE_UINT16:
             return UINT2NUM(*(unsigned short *) ptr);
-        case UINT32:
+        case NATIVE_UINT32:
             return UINT2NUM(*(unsigned int *) ptr);
-        case INT64:
+        case NATIVE_INT64:
             return LL2NUM(*(signed long long *) ptr);
-        case UINT64:
+        case NATIVE_UINT64:
             return ULL2NUM(*(unsigned long long *) ptr);
-        case FLOAT32:
+        case NATIVE_FLOAT32:
             return rb_float_new(*(float *) ptr);
-        case FLOAT64:
+        case NATIVE_FLOAT64:
             return rb_float_new(*(double *) ptr);
-        case STRING:
+        case NATIVE_STRING:
             return rb_tainted_str_new2(*(char **) ptr);
-        case POINTER:
+        case NATIVE_POINTER:
             return rb_FFI_Pointer_new(*(void **) ptr);
         default:
             rb_raise(rb_eRuntimeError, "Unknown type: %d", type);
