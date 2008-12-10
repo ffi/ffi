@@ -74,6 +74,7 @@
                    displayName="Important Files"
                    projectFiles="false">
       <itemPath>Makefile</itemPath>
+      <itemPath>Rakefile</itemPath>
       <itemPath>ruby-ffi-Makefile.mk</itemPath>
     </logicalFolder>
   </logicalFolder>
