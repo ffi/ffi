@@ -53,6 +53,11 @@ endif
 ifeq ($(OS), linux)
   SOFLAGS += -Wl,-soname,$(LIBNAME)
 endif
+ifneq ($(findstring cygwin, $(OS)),)
+  LIBEXT = dll
+#  PREFIX =
+  PICFLAGS=
+endif
 
 ifeq ($(CPU), sparcv9)
   MODEL = 64
