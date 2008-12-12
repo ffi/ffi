@@ -11,7 +11,7 @@
 #include <ruby.h>
 
 #include <ffi.h>
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
 # include <pthread.h>
 #endif
 #include "rbffi.h"
@@ -53,13 +53,14 @@ struct Invoker {
 typedef struct MethodHandlePool MethodHandlePool;
 struct MethodHandle {
     Invoker* invoker;
+    int arity;
     METHOD_CLOSURE* closure;
     void* code;
     ffi_cif cif;
     struct MethodHandlePool* pool;
     MethodHandle* next;
 };
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__WIN32__)
 struct MethodHandlePool {
 #ifdef HAVE_NATIVETHREAD
     pthread_mutex_t mutex;
@@ -94,7 +95,7 @@ static int PageSize;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID to_ptr;
 
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
 static pthread_key_t threadDataKey;
 #endif
 
@@ -175,7 +176,7 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
     }
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__WIN32__)
     abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     abi = FFI_DEFAULT_ABI;
@@ -211,7 +212,7 @@ variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE returnTyp
     retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
     invoker->library = library;
     invoker->function = ((AbstractMemory *) DATA_PTR(function))->address;
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__WIN32__)
     invoker->abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     invoker->abi = FFI_DEFAULT_ABI;
@@ -240,19 +241,12 @@ method_handle_alloc(int arity)
     ffi_type** ffiParamTypes;
     void (*fn)(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 
-    /* figure out which function to bounce the execution through */
-    if (arity >= 0 && arity <= MAX_FIXED_ARITY) {
-        ffiParamCount = arity;
-        ffiParamTypes = methodHandleParamTypes;
-        fn = attached_method_invoke;
-    } else {
-        ffiParamCount = 3;
-        ffiParamTypes = methodHandleVarargParamTypes;
-        fn = attached_method_vinvoke;
-    }
-
+    ffiParamCount = 3;
+    ffiParamTypes = methodHandleVarargParamTypes;
+    fn = attached_method_vinvoke;
     method = ALLOC_N(MethodHandle, 1);
     memset(method, 0, sizeof(*method));
+    method->arity = -1;
     ffiStatus = ffi_prep_cif(&method->cif, FFI_DEFAULT_ABI, ffiParamCount,
             ffiReturnType, ffiParamTypes);
     if (ffiStatus != FFI_OK) {
@@ -372,6 +366,7 @@ method_handle_alloc(int arity)
             snprintf(errmsg, sizeof(errmsg), "ffi_prep_closure failed.  status=%#x", ffiStatus);
             goto error;
         }
+        method->arity = ffiParamCount;
         continue;
 error:
         while (list != NULL) {
@@ -603,7 +598,11 @@ ffi_invoke(ffi_cif* cif, void* function, NativeType returnType, void** ffiValues
 #else
     ffi_call(cif, FFI_FN(function), &retval, ffiValues);
 #endif
+#if defined(_WIN32) || defined(__WIN32__)
+    threadData->td_errno = GetLastError();
+#else
     threadData->td_errno = errno;
+#endif
     return rb_FFI_NativeValueToRuby(returnType, &retval);
 }
 static VALUE
@@ -733,9 +732,8 @@ invoker_attach(VALUE self, VALUE module, VALUE name)
     char var[1024];
     Data_Get_Struct(self, Invoker, invoker);
     handle = invoker->methodHandle;
-    fixedArity = (invoker->paramCount <= MAX_FIXED_ARITY) && (invoker->callbackCount < 1);
-    rb_define_module_function(module, StringValuePtr(name), handle->code,
-            fixedArity ? invoker->paramCount : -1);
+    rb_define_module_function(module, StringValuePtr(name), 
+            handle->code, handle->arity);
     snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
     rb_cv_set(module, var, self);
     return self;

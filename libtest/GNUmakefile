@@ -59,7 +59,10 @@ ifneq ($(findstring cygwin, $(OS)),)
 #  PREFIX =
   PICFLAGS=
 endif
-
+ifneq ($(findstring mingw, $(OS)),)
+  LIBEXT = dll
+  PICFLAGS=
+endif
 ifeq ($(CPU), sparcv9)
   MODEL = 64
 endif

@@ -14,10 +14,10 @@ module FFI
       "openbsd"
     when /sunos|solaris/
       "solaris"
-    when /win/
+    when /win|mingw/
       "windows"
     else
-      raise FFI::PlatformError, "Unknown operating system: #{OS_}"
+      raise FFI::PlatformError, "Unknown operating system: #{Config::CONFIG['host_os']}"
     end
     ARCH = case CPU.downcase
     when /amd64|x86_64/
