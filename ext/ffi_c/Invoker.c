@@ -23,7 +23,7 @@
 #include "Callback.h"
 #include "Types.h"
 
-#if defined(__i386__) && !defined(_WIN32)
+#if defined(__i386__) && !defined(_WIN32) && !defined(__WIN32__)
 #  define USE_RAW
 #endif
 #define MAX_FIXED_ARITY (3)
@@ -228,7 +228,7 @@ static ffi_type* methodHandleVarargParamTypes[]= {
     NULL,
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__WIN32__)
 static MethodHandle*
 method_handle_alloc(int arity)
 {
@@ -705,7 +705,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     for (i = 0; i < invoker->paramCount; ++i) {
         memcpy(&argv[i], parameters[i + 1], sizeof(argv[i]));
     }
-    if  (invoker->paramCount > 0) {
+    if (invoker->paramCount > 0) {
         ffi_arg_setup(invoker, invoker->paramCount, argv, invoker->paramTypes, params, ffiValues);
     }
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
