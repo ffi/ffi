@@ -222,7 +222,7 @@ variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE returnTyp
     return retval;
 }
 
-static ffi_type* methodHandleParamTypes[MAX_FIXED_ARITY + 1];
+static ffi_type* methodHandleParamTypes[MAX_FIXED_ARITY + 2];
 static ffi_type* methodHandleVarargParamTypes[]= {
     &ffi_type_sint,
     &ffi_type_pointer,
@@ -329,7 +329,7 @@ method_handle_alloc(int arity)
 
     /* figure out whichh function to bounce the execution through */
     if (arity >= 0 && arity <= MAX_FIXED_ARITY) {
-        ffiParamCount = arity;
+        ffiParamCount = arity + 1;
         ffiParamTypes = methodHandleParamTypes;
         fn = attached_method_invoke;
         methodArity = arity;
@@ -924,7 +924,7 @@ rb_FFI_Invoker_Init()
 
     ffiValueType = (sizeof (VALUE) == sizeof (long))
             ? &ffi_type_ulong : &ffi_type_uint64;
-    for (i = 0; i < MAX_FIXED_ARITY + 1; ++i) {
+    for (i = 0; i <= MAX_FIXED_ARITY + 1; ++i) {
         methodHandleParamTypes[i] = ffiValueType;
     }
     methodHandleVarargParamTypes[2] = ffiValueType;
