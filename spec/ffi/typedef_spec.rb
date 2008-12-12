@@ -5,9 +5,9 @@ describe "Custom type definitions" do
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       typedef :uint, :fubar_t
-      attach_function :ret_u_int32_t, [ :fubar_t ], :fubar_t
+      attach_function :ret_u32, [ :fubar_t ], :fubar_t
     end
-    CustomTypedef.ret_u_int32_t(0x12345678).should == 0x12345678
+    CustomTypedef.ret_u32(0x12345678).should == 0x12345678
   end
   it "variadic invoker with custom typedef" do
     module VariadicCustomTypedef

@@ -24,10 +24,18 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <errno.h>
+#if defined(_WIN32) || defined(__WIN32__)
+# include <windows.h>
+#else
+# include <errno.h>
+#endif
 
 int setLastError(int error) {
+#if defined(_WIN32) || defined(__WIN32__)
+    SetLastError(error);
+#else
     errno = error;
+#endif
     return -1;
 }
 

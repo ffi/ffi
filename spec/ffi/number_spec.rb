@@ -3,55 +3,55 @@ describe "Function with primitive integer arguments" do
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
-    attach_function :ret_int8_t, [ :char ], :char
-    attach_function :ret_u_int8_t, [ :uchar ], :uchar
-    attach_function :ret_int16_t, [ :short ], :short
-    attach_function :ret_u_int16_t, [ :ushort ], :ushort
-    attach_function :ret_int32_t, [ :int ], :int
-    attach_function :ret_u_int32_t, [ :uint ], :uint
-    attach_function :ret_int64_t, [ :long_long ], :long_long
-    attach_function :ret_u_int64_t, [ :ulong_long ], :ulong_long
+    attach_function :ret_s8, [ :char ], :char
+    attach_function :ret_u8, [ :uchar ], :uchar
+    attach_function :ret_s16, [ :short ], :short
+    attach_function :ret_u16, [ :ushort ], :ushort
+    attach_function :ret_s32, [ :int ], :int
+    attach_function :ret_u32, [ :uint ], :uint
+    attach_function :ret_s64, [ :long_long ], :long_long
+    attach_function :ret_u64, [ :ulong_long ], :ulong_long
     attach_function :ret_long, [ :long ], :long
     attach_function :ret_ulong, [ :ulong ], :ulong
   end
   [ 0, 127, -128, -1 ].each do |i|
     it ":char call(:char (#{i}))" do
-      LibTest.ret_int8_t(i).should == i
+      LibTest.ret_s8(i).should == i
     end
   end
   [ 0, 0x7f, 0x80, 0xff ].each do |i|
     it ":uchar call(:uchar (#{i}))" do
-      LibTest.ret_u_int8_t(i).should == i
+      LibTest.ret_u8(i).should == i
     end
   end
   [ 0, 0x7fff, -0x8000, -1 ].each do |i|
     it ":short call(:short (#{i}))" do
-      LibTest.ret_int16_t(i).should == i
+      LibTest.ret_s16(i).should == i
     end
   end
   [ 0, 0x7fff, 0x8000, 0xffff ].each do |i|
     it ":ushort call(:ushort (#{i}))" do
-      LibTest.ret_u_int16_t(i).should == i
+      LibTest.ret_u16(i).should == i
     end
   end
   [ 0, 0x7fffffff, -0x80000000, -1 ].each do |i|
     it ":int call(:int (#{i}))" do
-      LibTest.ret_int32_t(i).should == i
+      LibTest.ret_s32(i).should == i
     end
   end
   [ 0, 0x7fffffff, 0x80000000, 0xffffffff ].each do |i|
     it ":uint call(:uint (#{i}))" do
-      LibTest.ret_u_int32_t(i).should == i
+      LibTest.ret_u32(i).should == i
     end
   end
   [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ].each do |i|
     it ":long_long call(:long_long (#{i}))" do
-      LibTest.ret_int64_t(i).should == i
+      LibTest.ret_s64(i).should == i
     end
   end
   [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ].each do |i|
     it ":ulong_long call(:ulong_long (#{i}))" do
-      LibTest.ret_u_int64_t(i).should == i
+      LibTest.ret_u64(i).should == i
     end
   end
   if FFI::Platform::LONG_SIZE == 32

@@ -5,7 +5,7 @@ $:.unshift File.join(File.dirname(__FILE__), "../..", "lib"), File.join(File.dir
 require "ffi"
 
 module TestLibrary
-  PATH = "#{Dir.getwd}/build/libtest.#{FFI::Platform::LIBSUFFIX}"
+  PATH = "build/libtest.#{FFI::Platform::LIBSUFFIX}"
 end
 module LibTest
   extend FFI::Library

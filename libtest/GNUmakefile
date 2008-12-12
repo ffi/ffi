@@ -54,6 +54,7 @@ ifeq ($(OS), linux)
   SOFLAGS += -Wl,-soname,$(LIBNAME)
 endif
 ifneq ($(findstring cygwin, $(OS)),)
+  CFLAGS += -mno-cygwin -mwin32
   LIBEXT = dll
 #  PREFIX =
   PICFLAGS=

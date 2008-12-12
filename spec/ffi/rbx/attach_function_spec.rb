@@ -24,3 +24,4 @@ describe FFI::Library, "#attach_function" do
     t[:tv_usec].should be_kind_of(Numeric)
   end
 end
+

@@ -31,13 +31,13 @@
 #include <stdint.h>
 
 typedef int8_t s8;
-typedef u_int8_t u8;
+typedef uint8_t u8;
 typedef int16_t s16;
-typedef u_int16_t u16;
+typedef uint16_t u16;
 typedef int32_t s32;
-typedef u_int32_t u32;
+typedef uint32_t u32;
 typedef int64_t s64;
-typedef u_int64_t u64;
+typedef uint64_t u64;
 typedef signed long sL;
 typedef unsigned long uL;
 typedef float f32;
@@ -51,14 +51,14 @@ typedef unsigned long ulong;
 #define RET(T) T ret_##T(T arg1) { return arg1; }
 typedef char* ptr;
 #define TEST(T) ADD(T) SUB(T) MUL(T) DIV(T) RET(T)
-TEST(int8_t);
-TEST(u_int8_t);
-TEST(int16_t);
-TEST(u_int16_t);
-TEST(int32_t);
-TEST(u_int32_t);
-TEST(int64_t);
-TEST(u_int64_t);
+TEST(s8);
+TEST(u8);
+TEST(s16);
+TEST(u16);
+TEST(s32);
+TEST(u32);
+TEST(s64);
+TEST(u64);
 TEST(float);
 TEST(double);
 TEST(long);
