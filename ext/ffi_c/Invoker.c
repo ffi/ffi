@@ -300,7 +300,7 @@ method_handle_alloc(int arity)
     ffi_type* ffiReturnType;
     caddr_t page;
     int ffiParamCount, ffiStatus;
-    int nclosures, closureSize;
+    int nclosures, closureSize, methodArity;
     int i;
 #ifdef USE_RAW
     void (*fn)(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data);
@@ -332,10 +332,12 @@ method_handle_alloc(int arity)
         ffiParamCount = arity;
         ffiParamTypes = methodHandleParamTypes;
         fn = attached_method_invoke;
+        methodArity = arity;
     } else {
         ffiParamCount = 3;
         ffiParamTypes = methodHandleVarargParamTypes;
         fn = attached_method_vinvoke;
+        methodArity = -1;
     }
 
     for (i = 0; i < nclosures; ++i) {
@@ -366,7 +368,7 @@ method_handle_alloc(int arity)
             snprintf(errmsg, sizeof(errmsg), "ffi_prep_closure failed.  status=%#x", ffiStatus);
             goto error;
         }
-        method->arity = ffiParamCount;
+        method->arity = methodArity;
         continue;
 error:
         while (list != NULL) {
