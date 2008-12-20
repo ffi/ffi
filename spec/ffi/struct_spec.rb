@@ -290,6 +290,22 @@ describe "Struct tests" do
       s[:sub] = sub_proc
       CallbackMember.struct_call_add_cb(s.pointer, 40, 2).should == 42
       CallbackMember.struct_call_sub_cb(s.pointer, 44, 2).should == 42
-    
+  end
+  it "Can return its members as a list" do
+    class TestStruct < FFI::Struct
+      layout :a, :int, :b, :int, :c, :int
+    end
+    TestStruct.members.should include(:a, :b, :c)
+  end
+  it "Can return its instance members and values as lists" do
+    class TestStruct < FFI::Struct
+      layout :a, :int, :b, :int, :c, :int
+    end
+    s = TestStruct.new
+    s.members.should include(:a, :b, :c)
+    s[:a] = 1
+    s[:b] = 2
+    s[:c] = 3
+    s.values.should include(1, 2, 3)
   end
 end
