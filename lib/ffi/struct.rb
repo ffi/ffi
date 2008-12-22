@@ -8,6 +8,9 @@ module FFI
     def size
       @size
     end
+    def members
+      @fields.keys
+    end
   end
   class StructLayoutBuilder
     class Field
