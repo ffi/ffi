@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'rake/gempackagetask'
 USE_RAKE_COMPILER = RUBY_VERSION =~ /1\.9/ ? false : true
-puts "USE_RAKE_COMPILER=#{USE_RAKE_COMPILER}"
 require 'rake/extensiontask' if USE_RAKE_COMPILER
 require 'rubygems/specification'
 require 'date'
