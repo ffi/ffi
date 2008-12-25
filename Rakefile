@@ -1,6 +1,8 @@
 require 'rubygems'
 require 'rake/gempackagetask'
-require 'rake/extensiontask'
+USE_RAKE_COMPILER = RUBY_VERSION =~ /1\.9/ ? false : true
+puts "USE_RAKE_COMPILER=#{USE_RAKE_COMPILER}"
+require 'rake/extensiontask' if USE_RAKE_COMPILER
 require 'rubygems/specification'
 require 'date'
 require 'fileutils'
@@ -42,7 +44,7 @@ Rake::ExtensionTask.new('ffi_c', spec) do |ext|
   ext.tmp_dir = 'build'         # temporary folder used during compilation.
   ext.cross_compile = true                # enable cross compilation (requires cross compile toolchain)
   ext.cross_platform = 'i386-mswin32'     # forces the Windows platform instead of the default one
-end
+end if USE_RAKE_COMPILER
 
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
@@ -83,6 +85,17 @@ task :make_spec do
     file.puts spec.to_ruby
   end
 end
+unless USE_RAKE_COMPILER
+  file "build/Makefile" do
+    FileUtils.mkdir_p("build") unless File.directory?("build")
+    sh %{cd build && #{Gem.ruby} ../ext/ffi_c/extconf.rb}
+  end
+  desc "Compile the native module"
+  task :compile => "build/Makefile" do
+    sh %{cd build; make}
+  end
+end
+desc "Clean all built files"
 task :clean do
   FileUtils.rm_rf("build")
   FileUtils.rm_rf("conftest.dSYM")
