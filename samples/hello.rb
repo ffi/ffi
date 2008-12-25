@@ -1,5 +1,4 @@
-require 'rubygems'
-require 'ffi'
+require File.expand_path(File.join(File.dirname(__FILE__), "sample_helper"))
 module Foo
   extend FFI::Library
   attach_function("cputs", "puts", [ :string ], :int)

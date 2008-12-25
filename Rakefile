@@ -16,7 +16,7 @@ SUMMARY = "A Ruby foreign function interface (compatible with Rubinius and JRuby
 LIBEXT = Config::CONFIG['host_os'].downcase =~ /darwin/ ? "dylib" : "so"
 GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd/ ? "gmake" : "make"
 LIBTEST = "build/libtest.#{LIBEXT}"
-
+BUILD_DIR = "build/#{RUBY_VERSION}"
 spec = Gem::Specification.new do |s|
   s.name = GEM
   s.version = GEM_VERSION
@@ -38,9 +38,9 @@ end
 
 Rake::ExtensionTask.new('ffi_c', spec) do |ext|
   ext.name = 'ffi_c'                # indicate the name of the extension.
-  ext.ext_dir = 'ext'         # search for 'hello_world' inside it.
-  ext.lib_dir = 'build'       # put binaries into this folder.
-  ext.tmp_dir = 'build'         # temporary folder used during compilation.
+  ext.ext_dir = 'ext'               # search for 'hello_world' inside it.
+  ext.lib_dir = BUILD_DIR           # put binaries into this folder.
+  ext.tmp_dir = BUILD_DIR           # temporary folder used during compilation.
   ext.cross_compile = true                # enable cross compilation (requires cross compile toolchain)
   ext.cross_platform = 'i386-mswin32'     # forces the Windows platform instead of the default one
 end if USE_RAKE_COMPILER
@@ -60,12 +60,12 @@ else
   desc "Run all specs"
   task :specs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -Ibuild -Ilib -S spec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -Ilib -I#{BUILD_DIR} -S spec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -Ibuild -Ilib -S spec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -Ilib -I#{BUILD_DIR} -S spec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
   end
 end
 
@@ -85,13 +85,13 @@ task :make_spec do
   end
 end
 unless USE_RAKE_COMPILER
-  file "build/Makefile" do
-    FileUtils.mkdir_p("build") unless File.directory?("build")
-    sh %{cd build && #{Gem.ruby} ../ext/ffi_c/extconf.rb}
+  file "#{BUILD_DIR}/Makefile" do
+    FileUtils.mkdir_p(BUILD_DIR) unless File.directory?(BUILD_DIR)
+    sh %{cd #{BUILD_DIR} && #{Gem.ruby} #{Dir.pwd}/ext/ffi_c/extconf.rb}
   end
   desc "Compile the native module"
-  task :compile => "build/Makefile" do
-    sh %{cd build; make}
+  task :compile => "#{BUILD_DIR}/Makefile" do
+    sh %{cd #{BUILD_DIR}; make}
   end
 end
 desc "Clean all built files"
@@ -103,14 +103,15 @@ end
 task "build/libtest.#{LIBEXT}" do
   sh %{#{GMAKE} -f libtest/GNUmakefile}
 end
-
+desc "Build test helper lib"
+task :libtest => "build/libtest.#{LIBEXT}"
 desc "Test the extension"
 task :test => [ :specs, :rbxspecs ] do
 
 end
 namespace :bench do
   ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
-  bench_libs = "-Ibuild -Ilib" unless RUBY_PLATFORM == "java"
+  bench_libs = "-Ilib -I#{BUILD_DIR}" unless RUBY_PLATFORM == "java"
   bench_files = Dir["bench/bench_*.rb"].reject { |f| f == "bench_helper.rb" }
   bench_files.each do |bench|
     task File.basename(bench, ".rb")[6..-1] => TEST_DEPS do
