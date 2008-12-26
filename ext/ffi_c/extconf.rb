@@ -16,12 +16,15 @@ $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 create_makefile("ffi_c")
 create_header("extconf.h")
 File.open("Makefile", "a") do |mf|
-  mf.puts "include $(srcdir)/ffi.mk"
-  mf.puts "LIBFFI_HOST=--host=#{Config::CONFIG['host_alias']}" if Config::CONFIG.has_key?("host_alias")
-  mf.puts "FFI_MMAP_EXEC=-DFFI_MMAP_EXEC_WRIT=#{Config::CONFIG['host_os'] =~ /win/ ? 0 : 1}"
-  if Config::CONFIG['host_os'] =~ /darwin/
-    mf.puts "include $(srcdir)/libffi.darwin.mk"
-  else
-    mf.puts "include $(srcdir)/libffi.mk"
+  mf.puts "CPPFLAGS += -Werror -Wunused -Wformat"
+  unless libffi_ok 
+    mf.puts "include $(srcdir)/ffi.mk"
+    mf.puts "LIBFFI_HOST=--host=#{Config::CONFIG['host_alias']}" if Config::CONFIG.has_key?("host_alias")
+    mf.puts "FFI_MMAP_EXEC=-DFFI_MMAP_EXEC_WRIT=#{Config::CONFIG['host_os'] =~ /win/ ? 0 : 1}"
+    if Config::CONFIG['host_os'] =~ /darwin/
+      mf.puts "include $(srcdir)/libffi.darwin.mk"
+    else
+      mf.puts "include $(srcdir)/libffi.mk"
+    end
   end
-end unless libffi_ok
+end
