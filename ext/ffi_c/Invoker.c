@@ -730,7 +730,6 @@ invoker_attach(VALUE self, VALUE module, VALUE name)
 {
     Invoker* invoker;
     MethodHandle* handle;
-    bool fixedArity;
     char var[1024];
     Data_Get_Struct(self, Invoker, invoker);
     handle = invoker->methodHandle;
