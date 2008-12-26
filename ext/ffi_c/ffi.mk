@@ -1,6 +1,6 @@
 # -*- makefile -*-
 
-CFLAGS += -Werror -Wformat
+# CFLAGS += -Werror -Wformat
 INCFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
 CPPFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
 # CPPFLAGS += -mwin32
