@@ -1,7 +1,10 @@
 require 'rubygems'
 require 'rake/gempackagetask'
-USE_RAKE_COMPILER = RUBY_VERSION =~ /1\.9/ ? false : true
-require 'rake/extensiontask' if USE_RAKE_COMPILER
+USE_RAKE_COMPILER = (RUBY_VERSION =~ /1\.9.*/ || RUBY_PLATFORM =~ /java/) ? false : true
+if USE_RAKE_COMPILER
+  gem 'rake-compiler', '>=0.3.0'
+  require 'rake/extensiontask'
+end
 require 'rubygems/specification'
 require 'date'
 require 'fileutils'
