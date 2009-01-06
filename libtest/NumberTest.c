@@ -49,8 +49,10 @@ typedef unsigned long ulong;
 #define MUL(T) T mul_##T(T arg1, T arg2) { return arg1 * arg2; }
 #define DIV(T) T div_##T(T arg1, T arg2) { return arg1 / arg2; }
 #define RET(T) T ret_##T(T arg1) { return arg1; }
+#define SET(T) static T T##_;void set_##T(T arg1) { T##_ = arg1; }
+#define GET(T) T get_##T() { return T##_; }
 typedef char* ptr;
-#define TEST(T) ADD(T) SUB(T) MUL(T) DIV(T) RET(T)
+#define TEST(T) ADD(T) SUB(T) MUL(T) DIV(T) RET(T) SET(T) GET(T)
 TEST(s8);
 TEST(u8);
 TEST(s16);
