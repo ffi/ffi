@@ -34,7 +34,7 @@ SOFLAGS = -shared -mimpure-text -Wl,-O1
 LDFLAGS += $(SOFLAGS)
 
 IFLAGS = -I"$(BUILD_DIR)"
-CFLAGS = $(OFLAGS) $(WFLAGS) $(IFLAGS) $(PICFLAGS)
+CFLAGS = $(OFLAGS) $(WFLAGS) $(IFLAGS) $(PICFLAGS) -D_REENTRANT
 
 ifeq ($(OS), win32)
 	CC += -mno-cygwin
