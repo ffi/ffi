@@ -15,6 +15,7 @@ puts "Benchmark [ :int, :int, :int, :int, :int, :int ], :void performance, #{ITE
   }
 }
 
+unless RUBY_PLATFORM =~ /java/
 puts "Benchmark Invoker.call [ :int, :int, :int, :int, :int, :int ], :void performance, #{ITER}x calls"
 
 invoker = FFI.create_invoker(LIBTEST_PATH, METHOD.to_s, [ :int, :int, :int, :int, :int, :int ], :void)
@@ -22,5 +23,5 @@ invoker = FFI.create_invoker(LIBTEST_PATH, METHOD.to_s, [ :int, :int, :int, :int
   puts Benchmark.measure {
     ITER.times { invoker.call(1, 2, 3, 4, 5, 6) }
   }
-}
-
+} 
+end
