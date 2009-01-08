@@ -13,6 +13,12 @@ describe "Function with primitive integer arguments" do
     attach_function :ret_u64, [ :ulong_long ], :ulong_long
     attach_function :ret_long, [ :long ], :long
     attach_function :ret_ulong, [ :ulong ], :ulong
+    attach_function :set_s8, [ :char ], :void
+    attach_function :get_s8, [ ], :char
+    attach_function :set_float, [ :float ], :void
+    attach_function :get_float, [ ], :float
+    attach_function :set_double, [ :double ], :void
+    attach_function :get_double, [ ], :double
   end
   [ 0, 127, -128, -1 ].each do |i|
     it ":char call(:char (#{i}))" do
@@ -74,6 +80,18 @@ describe "Function with primitive integer arguments" do
     [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ].each do |i|
       it ":ulong call(:ulong (#{i}))" do
         LibTest.ret_ulong(i).should == i
+      end
+    end
+    [ 0.0, 0.1, 1.1, 1.23 ].each do |f|
+      it ":float call(:double (#{f}))" do
+        LibTest.set_float(f)
+        LibTest.get_float.should == f
+      end
+    end
+    [ 0.0, 0.1, 1.1, 1.23 ].each do |f|
+      it ":double call(:double (#{f}))" do
+        LibTest.set_double(f)
+        LibTest.get_double.should == f
       end
     end
   end
