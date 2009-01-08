@@ -6,6 +6,7 @@ module FFIMath
   extend FFI::Library
   ffi_lib 'm'
   attach_function :cos, [ :double ], :double
+  attach_function :cosf, [ :float ], :float
 end
 if FFIMath.cos(0) != 1
   raise ArgumentError, "FFI.cos returned incorrect value"
@@ -14,6 +15,12 @@ puts "Benchmark FFI cos(0) performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
     iter.times { FFIMath.cos(0) }
+  }
+}
+puts "Benchmark FFI cosf(0) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { FFIMath.cosf(0) }
   }
 }
 
