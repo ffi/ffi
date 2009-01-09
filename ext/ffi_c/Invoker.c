@@ -565,7 +565,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                     param->ptr = NULL;
                 } else if (rb_respond_to(argv[argidx], to_ptr)) {
                     VALUE ptr = rb_funcall2(argv[argidx], to_ptr, 0, NULL);
-                    if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
+                    if (rb_obj_is_kind_of(ptr, rb_FFI_AbstractMemory_class) && TYPE(ptr) == T_DATA) {
                         param->ptr = ((AbstractMemory *) DATA_PTR(ptr))->address;
                     } else {
                         rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
