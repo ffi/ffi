@@ -85,13 +85,13 @@ describe "Function with primitive integer arguments" do
     [ 0.0, 0.1, 1.1, 1.23 ].each do |f|
       it ":float call(:double (#{f}))" do
         LibTest.set_float(f)
-        LibTest.get_float.should == f
+        (LibTest.get_float - f).abs.should < 0.001
       end
     end
     [ 0.0, 0.1, 1.1, 1.23 ].each do |f|
       it ":double call(:double (#{f}))" do
         LibTest.set_double(f)
-        LibTest.get_double.should == f
+        (LibTest.get_double - f).abs.should < 0.001
       end
     end
   end
