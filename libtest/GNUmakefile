@@ -1,8 +1,11 @@
 # -*- makefile -*-
-OS = $(shell uname -s | tr '[A-Z]' '[a-z]')
+OS = $(shell uname -s | tr '[:upper:]' '[:lower:]')
 CPU = $(shell uname -m | sed -e 's/i[345678]86/i386/')
 MODEL = 32 # Default to 32bit compiles
 PLATFORM = $(CPU)-$(OS)
+ifeq ($(OS), sunos)
+  OS = solaris
+endif
 
 JNI_DIR = $(shell pwd)
 SRC_DIR = libtest
@@ -16,7 +19,7 @@ LIBNAME = $(PREFIX)test.$(LIBEXT)
 
 export MACOSX_DEPLOYMENT_TARGET=10.4
 
-ifneq ($(OS),openbsd)
+ifeq ($(OS),linux)
 CCACHE := $(shell /usr/bin/which ccache)
 endif
 
@@ -52,6 +55,11 @@ endif
 
 ifeq ($(OS), linux)
   SOFLAGS += -Wl,-soname,$(LIBNAME)
+endif
+ifeq ($(OS), solaris)
+  CC = /usr/sfw/bin/gcc -std=c99
+  LD = /usr/ccs/bin/ld
+  SOFLAGS = -shared -static-libgcc 
 endif
 ifneq ($(findstring cygwin, $(OS)),)
   CFLAGS += -mno-cygwin -mwin32
