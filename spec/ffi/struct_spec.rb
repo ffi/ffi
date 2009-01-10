@@ -78,13 +78,14 @@ describe "Struct tests" do
     class PairLayout < FFI::Struct
       layout :a, :int, :b, :long_long
     end
-    PairLayout.size.should == (FFI::Platform::ADDRESS_SIZE == 32 ? 12 : 16)
+    ll_off = (FFI::Platform::ADDRESS_SIZE == 32 ? 4 : 8)
+    PairLayout.size.should == (ll_off + 8)
     mp = MemoryPointer.new(PairLayout.size)
     s = PairLayout.new mp
     s[:a] = 0x12345678
     mp.get_int(0).should == 0x12345678
     s[:b] = 0xfee1deadbeef
-    mp.get_int64(4).should == 0xfee1deadbeef
+    mp.get_int64(ll_off).should == 0xfee1deadbeef
   end
   it "Struct#layout works with :name, :type, offset tuples" do
     class PairLayout < FFI::Struct
@@ -116,13 +117,14 @@ describe "Struct tests" do
       class HashLayout < FFI::Struct
         layout :a => :int, :b => :long_long
       end
-      HashLayout.size.should == (FFI::Platform::ADDRESS_SIZE == 32 ? 12 : 16)
+      ll_off = (FFI::Platform::ADDRESS_SIZE == 32 ? 4 : 8)
+      HashLayout.size.should == (ll_off + 8)
       mp = MemoryPointer.new(HashLayout.size)
       s = HashLayout.new mp
       s[:a] = 0x12345678
       mp.get_int(0).should == 0x12345678
       s[:b] = 0xfee1deadbeef
-      mp.get_int64(4).should == 0xfee1deadbeef
+      mp.get_int64(ll_off).should == 0xfee1deadbeef
       end
   end
   it "Can use Struct subclass as parameter type" do
