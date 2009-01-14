@@ -310,4 +310,44 @@ describe "Struct tests" do
     s[:c] = 3
     s.values.should include(1, 2, 3)
   end
+  module NestedStructTest
+    extend FFI::Library
+    ffi_lib TestLibrary::PATH
+    class Point < FFI::Struct
+      layout :id, :char, :x, :uint, :y, :uint
+    end
+    class Rectangle < FFI::Struct
+      layout :a, Point, :b, Point
+    end
+    attach_function :struct_make_rectangle, [:char, :int, :int, :char, :int, :int], :pointer
+    attach_function :get_point_a, [:pointer], :pointer
+    attach_function :get_point_b, [:pointer], :pointer
+  end
+  it 'Can read from a nested struct field' do
+    @rectangle = NestedStructTest::Rectangle.new(NestedStructTest.struct_make_rectangle(1, 1, 2, 2, 3, 4))
+    @rectangle[:a][:id].should == 1
+    @rectangle[:a][:x].should == 1
+    @rectangle[:a][:y].should == 2
+    @rectangle[:b][:id].should == 2
+    @rectangle[:b][:x].should == 3
+    @rectangle[:b][:y].should == 4
+  end
+  it 'Can write on a nested struct field' do
+    @rectangle = NestedStructTest::Rectangle.new(NestedStructTest.struct_make_rectangle(1, 1, 2, 2, 3, 4))
+    @rectangle[:a][:id] = 3
+    @rectangle[:a][:x] = 6
+    @rectangle[:a][:y] = 8
+    @rectangle[:b][:id] = 4
+    @rectangle[:b][:x] = 16
+    @rectangle[:b][:y] = 13
+    @a = NestedStructTest::Point.new(NestedStructTest.get_point_a(@rectangle.to_ptr))
+    @b = NestedStructTest::Point.new(NestedStructTest.get_point_b(@rectangle.to_ptr))
+    @a[:id].should == 3
+    @a[:x].should == 6
+    @a[:y].should == 8
+    @b[:id].should == 4
+    @b[:x].should == 16
+    @b[:y].should == 13
+  end
 end
+

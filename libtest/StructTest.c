@@ -48,6 +48,17 @@ struct test1 {
     char string[32];
 };
 
+struct point {
+    char id;
+    int x;
+    int y;
+};
+
+struct rectangle {
+    struct point a;
+    struct point b;
+};
+
 #define T(x, type) \
     type struct_field_##type(struct test1* t) { return t->x; } \
     struct type##_align { char first; type value; }; \
@@ -98,4 +109,42 @@ int
 struct_call_sub_cb(struct test2* t, int a1, int a2)
 {
     return t->sub_callback(a1, a2);
+}
+
+
+struct point*
+struct_make_point(char id, unsigned int x, unsigned int y)
+{
+    struct point* p = malloc(sizeof (p));
+    p->id = id;
+    p->x = x;
+    p->y = y;
+    return p;
+};
+
+struct rectangle*
+struct_make_rectangle(char a_id, int a_x, int a_y, char b_id, int b_x, int b_y)
+{
+    static struct rectangle r;
+    memset(&r, 0, sizeof (r));
+    r.a.id = a_id;
+    r.a.x = a_x;
+    r.a.y = a_y;
+    r.b.id = b_id;
+    r.b.x = b_x;
+    r.b.y = b_y;
+
+    return &r;
+};
+
+struct point* 
+get_point_a(struct rectangle* r)
+{
+    return &r->a;
+}
+
+struct point* 
+get_point_b(struct rectangle* r)
+{
+    return &r->b;
 }

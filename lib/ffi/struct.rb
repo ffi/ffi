@@ -13,8 +13,24 @@ module FFI
     end
   end
   class StructLayoutBuilder
+    def self.field_class_from(type)
+      code = <<-code
+      class #{type}Field < Field
+        def self.size
+          #{type.size} * 8
+        end
+        def self.align
+          Platform::ADDRESS_SIZE
+        end
+        def get(ptr)
+          @info.new(ptr + @off)
+        end
+      end
+      #{type}Field
+      code
+      self.module_eval(code)
+    end
     class Field
-
       def size
         self.class.size
       end
@@ -77,9 +93,14 @@ module FFI
       when :string, NativeType::STRING
         StringField
       else
-        raise ArgumentError, "Unknown type: #{type}"
+        if type < Struct
+          info = type
+          StructLayoutBuilder.field_class_from(type)
+        else
+          raise ArgumentError, "Unknown type: #{type}"
+        end
       end
-      
+
       size = field_class.size / 8
       off = offset ? offset.to_i : align(@size, field_class.align)
       @fields[name] = field_class.new(off, info)
@@ -155,8 +176,12 @@ module FFI
         nil
       end
     end
+    def self.is_a_struct?(type)
+      type.is_a?(Class) and type < Struct
+    end
     def self.find_type(type, mod = nil)
-      return mod ? mod.find_type(type) : FFI.find_type(type)
+      return type if is_a_struct?(type)
+      mod ? mod.find_type(type) : FFI.find_type(type)
     end
     def self.hash_layout(spec)
       raise "Ruby version not supported" if RUBY_VERSION =~ /1.8.*/
@@ -174,8 +199,8 @@ module FFI
       while i < spec.size
         name, type = spec[i, 2]
         i += 2
-        code = find_type(type, mod)
-        # If the next param is a Fixnu, it specifies the offset
+        code = find_type(type, mod) 
+        # If the next param is a Fixnum, it specifies the offset
         if spec[i].kind_of?(Fixnum)
           offset = spec[i]
           i += 1
