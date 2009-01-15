@@ -13,10 +13,25 @@ module BufferBench
   attach_function :bench_buffer_out, :ptr_ret_int32_t, [ :buffer_out, :int ], :void
   attach_function :bench_buffer_inout, :ptr_ret_int32_t, [ :buffer_inout, :int ], :void
 end
-puts "Benchmark FFI call(MemoryPointer.new) performance, #{iter}x"
+class IntStruct < FFI::Struct
+  layout :i, :int
+end
+puts "Benchmark FFI call(MemoryPointer.new(:int, 1, true)) performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
     iter.times { BufferBench.bench_buffer_inout(FFI::MemoryPointer.new(:int, 1, true), 0) }
+  }
+}
+puts "Benchmark FFI call(MemoryPointer.new(4, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { BufferBench.bench_buffer_inout(FFI::MemoryPointer.new(4, 1, true), 0) }
+  }
+}
+puts "Benchmark FFI call(MemoryPointer.new(IntStruct, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { BufferBench.bench_buffer_inout(FFI::MemoryPointer.new(IntStruct, 1, true), 0) }
   }
 }
 puts "Benchmark FFI call(0.chr * 4) performance, #{iter}x"
@@ -25,21 +40,58 @@ puts "Benchmark FFI call(0.chr * 4) performance, #{iter}x"
     iter.times { BufferBench.bench_buffer_inout(0.chr * 4, 0) }
   }
 }
-puts "Benchmark FFI call(Buffer.alloc_inout) performance, #{iter}x"
+puts "Benchmark FFI call(Buffer.alloc_inout(:int, 1, true)) performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
     iter.times { BufferBench.bench_buffer_inout(FFI::Buffer.alloc_inout(:int, 1, true), 0) }
   }
 }
-puts "Benchmark FFI call(Buffer.alloc_in) performance, #{iter}x"
+puts "Benchmark FFI call(Buffer.alloc_inout(IntStruct, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { BufferBench.bench_buffer_inout(FFI::Buffer.alloc_inout(IntStruct, 1, true), 0) }
+  }
+}
+puts "Benchmark FFI call(Buffer.alloc_inout(4, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { BufferBench.bench_buffer_inout(FFI::Buffer.alloc_inout(4, 1, true), 0) }
+  }
+}
+puts "Benchmark FFI call(Buffer.alloc_in(:int, 1, true)) performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
     iter.times { BufferBench.bench_buffer_in(FFI::Buffer.alloc_in(:int, 1, true), 0) }
   }
 }
-puts "Benchmark FFI call(Buffer.alloc_out) performance, #{iter}x"
+puts "Benchmark FFI call(Buffer.alloc_in(4, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { BufferBench.bench_buffer_in(FFI::Buffer.alloc_in(4, 1, true), 0) }
+  }
+}
+puts "Benchmark FFI call(Buffer.alloc_in(IntStruct, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { BufferBench.bench_buffer_in(FFI::Buffer.alloc_in(IntStruct, 1, true), 0) }
+  }
+}
+puts "Benchmark FFI call(Buffer.alloc_out(:int, 1, true)) performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
     iter.times { BufferBench.bench_buffer_out(FFI::Buffer.alloc_out(:int, 1, true), 0) }
   }
 }
+puts "Benchmark FFI call(Buffer.alloc_out(IntStruct, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { BufferBench.bench_buffer_out(FFI::Buffer.alloc_out(IntStruct, 1, true), 0) }
+  }
+}
+puts "Benchmark FFI call(Buffer.alloc_out(4, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { BufferBench.bench_buffer_out(FFI::Buffer.alloc_out(4, 1, true), 0) }
+  }
+}
+
