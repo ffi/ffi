@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef char s8;
 typedef short s16;
