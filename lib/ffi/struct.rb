@@ -119,17 +119,7 @@ module FFI
     end
   end
   class BaseStruct
-    Buffer = FFI::Buffer
     
-    def self.alloc_inout(clear = true)
-      self.new(Buffer.alloc_inout(@size, 1, clear))
-    end
-    def self.alloc_in(clear = true)
-      self.new(Buffer.alloc_in(@size, 1, clear))
-    end
-    def self.alloc_out(clear = true)
-      self.new(Buffer.alloc_out(@size, 1, clear))
-    end
     def self.size
       @size
     end

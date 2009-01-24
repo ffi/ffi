@@ -214,6 +214,34 @@ struct_new(int argc, VALUE* argv, VALUE klass)
 }
 
 static VALUE
+struct_alloc(int argc, VALUE* argv, VALUE klass)
+{
+    Struct* s;
+    VALUE retval, rbPointer = Qnil, rbLayout = Qnil, rbClear = Qnil;
+
+    retval = Data_Make_Struct(klass, Struct, struct_mark, struct_free, s);
+    s->rbPointer = Qnil;
+    s->pointer = NULL;
+    
+    if (rb_cvar_defined(klass, layoutID)) {
+        rbLayout = rb_cvar_get(klass, layoutID);
+    }
+    if (rbLayout == Qnil || !rb_obj_is_kind_of(rbLayout, classStructLayout)) {
+        rb_raise(rb_eRuntimeError, "Invalid Struct layout");
+    }
+    s->rbLayout = rbLayout;
+    s->layout = (StructLayout *) DATA_PTR(rbLayout);
+    rb_scan_args(argc, argv, "01", &rbClear);
+    rbPointer = rb_FFI_MemoryPointer_new(s->layout->size, 1, rbClear == Qtrue);
+
+    rb_funcall2(retval, initializeID, 1, &rbPointer);
+    if (s->pointer == NULL) {
+        rb_raise(rb_eRuntimeError, "Struct memory not set (NULL)");
+    }
+    return retval;
+}
+
+static VALUE
 struct_initialize(VALUE self, VALUE rbPointer)
 {
     Struct* s = (Struct *) DATA_PTR(self);
@@ -427,6 +455,13 @@ rb_FFI_Struct_Init()
 
     //rb_define_singleton_method(classStructLayoutBuilder, "new", builder_new, 0);
     rb_define_singleton_method(classBaseStruct, "new", struct_new, -1);
+    rb_define_singleton_method(classBaseStruct, "__alloc", struct_alloc, -1);
+    rb_define_alias(rb_singleton_class(classBaseStruct), "alloc_in", "__alloc");
+    rb_define_alias(rb_singleton_class(classBaseStruct), "alloc_out", "__alloc");
+    rb_define_alias(rb_singleton_class(classBaseStruct), "alloc_inout", "__alloc");
+    rb_define_alias(rb_singleton_class(classBaseStruct), "new_in", "__alloc");
+    rb_define_alias(rb_singleton_class(classBaseStruct), "new_out", "__alloc");
+    rb_define_alias(rb_singleton_class(classBaseStruct), "new_inout", "__alloc");
     rb_define_method(classBaseStruct, "pointer", struct_get_pointer, 0);
     rb_define_private_method(classBaseStruct, "pointer=", struct_set_pointer, 1);
     rb_define_method(classBaseStruct, "layout", struct_get_layout, 0);
