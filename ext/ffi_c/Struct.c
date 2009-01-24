@@ -28,13 +28,6 @@ typedef struct StructLayoutBuilder {
     unsigned int offset;
 } StructLayoutBuilder;
 
-typedef struct Struct {
-    StructLayout* layout;
-    AbstractMemory* pointer;
-    VALUE rbLayout;
-    VALUE rbPointer;
-} Struct;
-
 static void struct_field_mark(StructField *);
 static void struct_field_free(StructField *);
 static void struct_mark(Struct *);
@@ -42,6 +35,7 @@ static void struct_free(Struct *);
 static void struct_layout_mark(StructLayout *);
 static void struct_layout_free(StructLayout *);
 
+VALUE rb_FFI_Struct_class = Qnil;
 static VALUE classStruct = Qnil, classStructLayout = Qnil;
 static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
 static ID initializeID = 0, pointerID = 0, layoutID = 0, SIZE_ID, ALIGN_ID;
@@ -448,7 +442,7 @@ rb_FFI_Struct_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE klass;
-    classStruct = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
+    rb_FFI_Struct_class = classStruct = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
     classStructLayout = rb_define_class_under(moduleFFI, "StructLayout", rb_cObject);
     classStructLayoutBuilder = rb_define_class_under(moduleFFI, "StructLayoutBuilder", rb_cObject);
     classStructField = rb_define_class_under(classStructLayoutBuilder, "Field", rb_cObject);

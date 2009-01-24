@@ -157,6 +157,14 @@ describe "Struct tests" do
       attach_function :struct_field_s8, [ TestStruct.out ], :char
     end
   end
+  it "Struct can be passed directly as a :pointer parameter" do
+    class TestStruct < FFI::Struct
+      layout :c, :char, :v, :char
+    end
+    s = TestStruct.new
+    s[:v] = 0x12
+    LibTest.struct_align_s8(s).should == 0x12
+  end
   it ":char member aligned correctly" do
     class AlignChar < FFI::Struct
       layout :c, :char, :v, :char

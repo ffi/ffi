@@ -19,6 +19,7 @@
 
 #include "AbstractMemory.h"
 #include "Pointer.h"
+#include "Struct.h"
 #include "Platform.h"
 #include "Callback.h"
 #include "Types.h"
@@ -554,8 +555,11 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
             case NATIVE_BUFFER_IN:
             case NATIVE_BUFFER_OUT:
             case NATIVE_BUFFER_INOUT:
-                if (rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class) && type == T_DATA) {
+                if (type == T_DATA && rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class)) {
                     param->ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
+                } else if (type == T_DATA && rb_obj_is_kind_of(argv[argidx], rb_FFI_Struct_class)) {
+                    AbstractMemory* memory = ((Struct *) DATA_PTR(argv[argidx]))->pointer;
+                    param->ptr = memory != NULL ? memory->address : NULL;
                 } else if (type == T_STRING) {
                     if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
                         rb_raise(rb_eSecurityError, "Unsafe string parameter");
