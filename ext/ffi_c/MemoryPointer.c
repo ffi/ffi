@@ -21,7 +21,7 @@ VALUE rb_FFI_MemoryPointer_class;
 static VALUE classMemoryPointer = Qnil;
 
 VALUE
-rb_FFI_memptr_new(long size, long count, bool clear)
+rb_FFI_MemoryPointer_new(long size, long count, bool clear)
 {
     return memptr_create(classMemoryPointer, size, count, clear);
 }

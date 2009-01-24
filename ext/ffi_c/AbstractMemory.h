@@ -30,6 +30,7 @@ checkBounds(AbstractMemory* mem, long off, long len)
     }
 }
 
+extern VALUE rb_FFI_AbstractMemory_class;
 #ifdef	__cplusplus
 }
 #endif

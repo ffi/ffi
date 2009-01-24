@@ -8,12 +8,13 @@ describe "Managed Struct" do
     attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], :pointer
   end
   it "should raise an error if release() is not defined" do
-    class NoRelease < FFI::ManagedStruct ; end
+    class NoRelease < FFI::ManagedStruct ; layout :i, :int; end
     lambda { NoRelease.new(LibTest.ptr_from_address(0x12345678)) }.should raise_error(NoMethodError)
   end
 
   it "should release memory properly" do
     class PleaseReleaseMe < FFI::ManagedStruct
+      layout :i, :int
       @@count = 0
       def self.release
         @@count += 1

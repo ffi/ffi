@@ -120,16 +120,7 @@ module FFI
   end
   class BaseStruct
     Buffer = FFI::Buffer
-
-    def initialize(ptr = nil, *spec)
-      self.layout = @cspec = self.class.layout(*spec)
-      
-      if ptr then
-        self.pointer = ptr
-      else
-        self.pointer = MemoryPointer.new(@cspec.size)
-      end
-    end
+    
     def self.alloc_inout(clear = true)
       self.new(Buffer.alloc_inout(@size, 1, clear))
     end
@@ -155,10 +146,10 @@ module FFI
       self.class.align
     end
     def members
-      @cspec.members
+      layout.members
     end
     def values
-      @cspec.members.map { |m| self[m] }
+      layout.members.map { |m| self[m] }
     end
     def clear
       pointer.clear
