@@ -16,32 +16,45 @@ typedef struct MemoryPointer {
 
 static VALUE memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear);
 static void memptr_release(MemoryPointer* ptr);
-
+static VALUE memptr_create(VALUE klass, long size, long count, bool clear);
 VALUE rb_FFI_MemoryPointer_class;
 static VALUE classMemoryPointer = Qnil;
 
+VALUE
+rb_FFI_memptr_new(long size, long count, bool clear)
+{
+    return memptr_create(classMemoryPointer, size, count, clear);
+}
+
 static VALUE
-memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
+memptr_create(VALUE klass, long size, long count, bool clear)
 {
     MemoryPointer* p;
     VALUE retval;
     void* memory;
-    unsigned long msize = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
+    unsigned long msize = size * count;
+
     memory = malloc(msize + 7);
     if (memory == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", msize);
     }
-    retval = Data_Make_Struct(classMemoryPointer, MemoryPointer, NULL, memptr_release, p);
+    retval = Data_Make_Struct(klass, MemoryPointer, NULL, memptr_release, p);
     p->address = memory;
     p->autorelease = true;
     p->memory.size = msize;
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (char *) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);;
     p->allocated = true;
-    if (TYPE(clear) == T_TRUE && p->memory.size > 0) {
+    if (clear && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
     return retval;
+}
+static VALUE
+memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
+{
+    return memptr_create(self, NUM2LONG(size), count != Qnil ? NUM2LONG(count) : 1,
+            clear != Qnil ? TYPE(clear) == T_TRUE : true);
 }
 
 
@@ -84,7 +97,6 @@ memptr_release(MemoryPointer* ptr)
         ptr->address = NULL;
     }
     xfree(ptr);
-
 }
 
 void
