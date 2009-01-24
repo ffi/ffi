@@ -118,7 +118,7 @@ module FFI
       ((off & mask) != 0) ? (off & ~mask) + bytes : off
     end
   end
-  class BaseStruct
+  class Struct
     
     def self.size
       @size
@@ -154,8 +154,7 @@ module FFI
     def self.out
       :buffer_out
     end
-  end
-  class Struct < BaseStruct
+  
     private
     def self.enclosing_module
       begin
