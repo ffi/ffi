@@ -20,6 +20,8 @@ typedef struct StructField {
 typedef struct StructLayout {
     VALUE rbFields;
     unsigned int fieldCount;
+    int size;
+    int align;
 } StructLayout;
 
 typedef struct StructLayoutBuilder {
@@ -41,7 +43,7 @@ static void struct_layout_free(StructLayout *);
 
 static VALUE classBaseStruct = Qnil, classStructLayout = Qnil;
 static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
-static ID initializeID = 0, pointerID = 0, layoutID = 0;
+static ID initializeID = 0, pointerID = 0, layoutID = 0, SIZE_ID, ALIGN_ID;
 static ID getID = 0, putID = 0, to_ptr = 0;
 
 static VALUE
@@ -330,14 +332,16 @@ struct_set_layout(VALUE self, VALUE layout)
 }
 
 static VALUE
-struct_layout_new(VALUE klass, VALUE fields, VALUE size)
+struct_layout_new(VALUE klass, VALUE fields, VALUE size, VALUE align)
 {
     StructLayout* layout;
     VALUE retval;
-    VALUE argv[] = { fields, size };
+    VALUE argv[] = { fields, size, align };
     retval = Data_Make_Struct(klass, StructLayout, struct_layout_mark, struct_layout_free, layout);
     layout->rbFields = fields;
-    rb_funcall2(retval, initializeID, 2, argv);
+    layout->size = NUM2INT(size);
+    layout->align = NUM2INT(align);
+    rb_funcall2(retval, initializeID, 3, argv);
     return retval;
 }
 
@@ -380,7 +384,7 @@ rb_FFI_Struct_Init()
     rb_define_method(classBaseStruct, "[]=", struct_put_field, 2);
     rb_define_singleton_method(classStructField, "new", struct_field_new, -1);
     rb_define_method(classStructField, "offset", struct_field_offset, 0);
-    rb_define_singleton_method(classStructLayout, "new", struct_layout_new, 2);
+    rb_define_singleton_method(classStructLayout, "new", struct_layout_new, 3);
     rb_define_method(classStructLayout, "[]", struct_layout_get, 1);
     initializeID = rb_intern("initialize");
     pointerID = rb_intern("@pointer");
@@ -388,6 +392,8 @@ rb_FFI_Struct_Init()
     getID = rb_intern("get");
     putID = rb_intern("put");
     to_ptr = rb_intern("to_ptr");
+    SIZE_ID = rb_intern("SIZE");
+    ALIGN_ID = rb_intern("ALIGN");
 #undef FIELD
 #define FIELD(name, typeName, nativeType, T) do { \
     typedef struct { char c; T v; } s; \

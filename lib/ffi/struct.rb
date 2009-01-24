@@ -1,12 +1,11 @@
 require 'ffi/platform'
 module FFI
   class StructLayout
-    def initialize(fields, size)
+    attr_reader :size, :align
+    def initialize(fields, size, min_align = 1)
       @fields = fields
       @size = size
-    end
-    def size
-      @size
+      @align = min_align
     end
     def members
       @fields.keys
@@ -20,7 +19,7 @@ module FFI
           #{type.size} * 8
         end
         def self.align
-          Platform::ADDRESS_SIZE
+          #{type.align}
         end
         def get(ptr)
           @info.new(ptr + @off)
@@ -57,6 +56,7 @@ module FFI
     def initialize
       @fields = {}
       @size = 0
+      @min_align = 1
     end
     def add_field(name, type, offset=nil)
       info = nil
@@ -105,9 +105,11 @@ module FFI
       off = offset ? offset.to_i : align(@size, field_class.align)
       @fields[name] = field_class.new(off, info)
       @size = off + size
+      
+      @min_align = field_class.align if field_class.align > @min_align
     end
     def build
-      StructLayout.new @fields, @size
+      StructLayout.new @fields, @size, @min_align
     end
     def align(offset, bits)
       bytes = bits / 8
@@ -143,8 +145,14 @@ module FFI
     def self.members
       @layout.members
     end
+    def self.align
+      @layout.align
+    end
     def size
       self.class.size
+    end
+    def align
+      self.class.align
     end
     def members
       @cspec.members
