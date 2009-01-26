@@ -13,7 +13,7 @@ libffi_ok = have_closure_alloc
 $defs << "-DHAVE_LIBFFI" if libffi_ok
 $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 
-create_makefile("ffi_c", Dir.pwd)
+create_makefile("ffi_c")
 create_header("extconf.h")
 File.open("Makefile", "a") do |mf|
   mf.puts "CPPFLAGS += -Werror -Wunused -Wformat"
