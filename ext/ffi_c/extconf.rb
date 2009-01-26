@@ -2,7 +2,7 @@
 require 'mkmf'
 require 'rbconfig'
 dir_config("ffi_c")
-IS_MAC = Config::CONFIG['host_os'] =~ /^darwin/
+#IS_MAC = Config::CONFIG['host_os'] =~ /^darwin/
 #if IS_MAC
 #  $CPPFLAGS << " -DMACOSX"
 #  find_header("ffi.h", "/usr/include/ffi")
