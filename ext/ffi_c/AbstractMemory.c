@@ -301,12 +301,16 @@ rb_FFI_AbstractMemory_Init()
     rb_define_alias(classMemory, "get_float", "get_float32");
     rb_define_method(classMemory, "put_array_of_float32", memory_put_array_of_float32, 2);
     rb_define_method(classMemory, "get_array_of_float32", memory_get_array_of_float32, 2);
+    rb_define_alias(classMemory, "put_array_of_float", "put_array_of_float32");
+    rb_define_alias(classMemory, "get_array_of_float", "get_array_of_float32");
     rb_define_method(classMemory, "put_float64", memory_put_float64, 2);
     rb_define_method(classMemory, "get_float64", memory_get_float64, 1);
     rb_define_alias(classMemory, "put_double", "put_float64");
     rb_define_alias(classMemory, "get_double", "get_float64");
     rb_define_method(classMemory, "put_array_of_float64", memory_put_array_of_float64, 2);
     rb_define_method(classMemory, "get_array_of_float64", memory_get_array_of_float64, 2);
+    rb_define_alias(classMemory, "put_array_of_double", "put_array_of_float64");
+    rb_define_alias(classMemory, "get_array_of_double", "get_array_of_float64");
     rb_define_method(classMemory, "put_pointer", memory_put_pointer, 2);
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
     rb_define_method(classMemory, "put_callback", memory_put_callback, 3);
