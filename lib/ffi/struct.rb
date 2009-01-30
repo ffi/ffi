@@ -13,25 +13,8 @@ module FFI
     end
   end
   class StructLayoutBuilder
-    def self.field_class_from(type)
-      code = <<-code
-      class #{type}Field < Field
-        def self.size
-          #{type.size} * 8
-        end
-        def self.align
-          Platform::ADDRESS_SIZE
-        end
-        def get(ptr)
-          @info.new(ptr + @off)
-        end
-      end
-      #{type}Field
-      code
-      self.module_eval(code)
-    end
     class Field
-      def size
+      def size(info = nil)
         self.class.size
       end
       def align
@@ -44,9 +27,52 @@ module FFI
         const_get(:ALIGN)
       end
     end
+    def self.struct_field_class_from(type)
+      klass_name = type.name.split('::').last
+      code = <<-code
+      class StructField_#{klass_name} < Field
+        @@info = #{type}
+        def self.size
+          #{type.size} * 8
+        end
+        def self.align
+          Platform::ADDRESS_SIZE
+        end
+        def get(ptr)
+          @@info.new(ptr + @off)
+        end
+      end
+      StructField_#{klass_name}
+      code
+      self.module_eval(code)
+    end
+    def self.array_field_class_from(type, num)
+      klass_name = type.name.split('::').last
+      code = <<-code
+      class ArrayField_#{klass_name}_#{num} < Field
+        @@info = #{type}
+        @@num = #{num}
+        def self.size
+          #{type.size} * #{num}
+        end
+        def self.align
+          #{type.align}
+        end
+        def get(ptr)
+          @array ? @array : get_array_data(ptr)
+        end
+        private
+        def get_array_data(ptr)
+          @array = FFI::Struct::Array.new(ptr + @off, @@info, @@num)
+        end
+      end
+      ArrayField_#{klass_name}_#{num}
+      code
+      self.module_eval(code)
+    end
     class CallbackField < Field
-      def self.size; Platform::ADDRESS_SIZE; end
-      def self.align; Platform::ADDRESS_ALIGN; end
+      def self.size(info = nil); Platform::ADDRESS_SIZE; end
+      def self.align(info = nil); Platform::ADDRESS_ALIGN; end
       def put(ptr, proc)
         ptr.put_callback(@off, proc, @info)
       end
@@ -58,9 +84,8 @@ module FFI
       @fields = {}
       @size = 0
     end
-    def add_field(name, type, offset=nil)
-      info = nil
-      field_class = case type
+    def native_field_class_from(type)
+      case type
       when :char, NativeType::INT8
         Signed8
       when :uchar, NativeType::UINT8
@@ -87,20 +112,28 @@ module FFI
         DoubleField
       when :pointer, NativeType::POINTER
         PointerField
-      when FFI::CallbackInfo
-        info = type
-        CallbackField
       when :string, NativeType::STRING
         StringField
-      else
-        if type < Struct
-          info = type
-          StructLayoutBuilder.field_class_from(type)
-        else
-          raise ArgumentError, "Unknown type: #{type}"
-        end
       end
-
+    end
+    def callback_field_class_from(type)
+      return CallbackField, type if type.is_a?(FFI::CallbackInfo)
+    end
+    def struct_field_class_from(type)
+      self.class.struct_field_class_from(type) if type.is_a?(Class) and type < FFI::Struct
+    end
+    def array_field_class_from(type)
+      self.class.array_field_class_from(field_class_from(type[0]), type[1]) if type.is_a?(Array)
+    end
+    def field_class_from(type)
+      field_class = native_field_class_from(type) ||
+        callback_field_class_from(type) ||
+        array_field_class_from(type) ||
+        struct_field_class_from(type)
+      field_class or raise ArgumentError, "Unknown type: #{type}"
+    end
+    def add_field(name, type, offset=nil)
+      field_class, info = field_class_from(type)
       size = field_class.size / 8
       off = offset ? offset.to_i : align(@size, field_class.align)
       @fields[name] = field_class.new(off, info)
@@ -118,10 +151,8 @@ module FFI
   end
   class BaseStruct
     Buffer = FFI::Buffer
-
     def initialize(ptr = nil, *spec)
       self.layout = @cspec = self.class.layout(*spec)
-      
       if ptr then
         self.pointer = ptr
       else
@@ -167,6 +198,26 @@ module FFI
     end
   end
   class Struct < BaseStruct
+    class Array
+      def initialize(ptr, type, num)
+        @pointer, @type, @num = ptr, type, num
+      end
+      def to_ptr 
+        @pointer 
+      end
+      def to_a
+        get_array_data(@pointer)
+      end
+      def size
+        @num * @type.size / 8
+      end
+      private
+      def get_array_data(ptr)
+        (0..@num - 1).inject([]) do |array, index| 
+          array << @type.new(0).get(ptr + index * @type.size / 8)
+        end
+      end
+    end
     private
     def self.enclosing_module
       begin
@@ -180,7 +231,7 @@ module FFI
       type.is_a?(Class) and type < Struct
     end
     def self.find_type(type, mod = nil)
-      return type if is_a_struct?(type)
+      return type if is_a_struct?(type) or type.is_a?(::Array)
       mod ? mod.find_type(type) : FFI.find_type(type)
     end
     def self.hash_layout(spec)
@@ -212,11 +263,9 @@ module FFI
       builder.build
     end
     public
-    def self.layout(*spec)
-      
+    def self.layout(*spec)      
       return @layout if spec.size == 0
       cspec = spec[0].kind_of?(Hash) ? hash_layout(spec) : array_layout(spec)
-
       @layout = cspec unless self == FFI::Struct
       @size = cspec.size
       return cspec

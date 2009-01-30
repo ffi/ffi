@@ -310,44 +310,91 @@ describe "Struct tests" do
     s[:c] = 3
     s.values.should include(1, 2, 3)
   end
-  module NestedStructTest
+end
+
+describe FFI::Struct, ' with a nested struct field'  do
+  module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
-    class Point < FFI::Struct
-      layout :id, :char, :x, :uint, :y, :uint
+    class NestedStruct < FFI::Struct
+      layout :i, :int
     end
-    class Rectangle < FFI::Struct
-      layout :a, Point, :b, Point
+    class ContainerStruct < FFI::Struct
+      layout :first, :char, :ns, NestedStruct
     end
-    attach_function :struct_make_rectangle, [:char, :int, :int, :char, :int, :int], :pointer
-    attach_function :get_point_a, [:pointer], :pointer
-    attach_function :get_point_b, [:pointer], :pointer
+    attach_function :struct_align_nested_struct, [ :pointer ], :int
+    attach_function :struct_make_container_struct, [ :int ], :pointer
   end
-  it 'Can read from a nested struct field' do
-    @rectangle = NestedStructTest::Rectangle.new(NestedStructTest.struct_make_rectangle(1, 1, 2, 2, 3, 4))
-    @rectangle[:a][:id].should == 1
-    @rectangle[:a][:x].should == 1
-    @rectangle[:a][:y].should == 2
-    @rectangle[:b][:id].should == 2
-    @rectangle[:b][:x].should == 3
-    @rectangle[:b][:y].should == 4
+  before do
+    @cs = LibTest::ContainerStruct.new
   end
-  it 'Can write on a nested struct field' do
-    @rectangle = NestedStructTest::Rectangle.new(NestedStructTest.struct_make_rectangle(1, 1, 2, 2, 3, 4))
-    @rectangle[:a][:id] = 3
-    @rectangle[:a][:x] = 6
-    @rectangle[:a][:y] = 8
-    @rectangle[:b][:id] = 4
-    @rectangle[:b][:x] = 16
-    @rectangle[:b][:y] = 13
-    @a = NestedStructTest::Point.new(NestedStructTest.get_point_a(@rectangle.to_ptr))
-    @b = NestedStructTest::Point.new(NestedStructTest.get_point_b(@rectangle.to_ptr))
-    @a[:id].should == 3
-    @a[:x].should == 6
-    @a[:y].should == 8
-    @b[:id].should == 4
-    @b[:x].should == 16
-    @b[:y].should == 13
+  it 'should align correctly nested struct field' do
+    @cs[:ns][:i] = 123
+    LibTest.struct_align_nested_struct(@cs.to_ptr).should == 123
+  end
+  it 'should correctly calculate Container size (in bytes)' do
+    LibTest::ContainerStruct.size.should == 8
+  end
+  it 'should return a Struct object when the field is accessed' do
+    @cs[:ns].is_a?(FFI::Struct).should be_true 
+  end
+  it 'should read a value from memory' do
+    @cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
+    @cs[:ns][:i].should == 123
+  end
+  it 'should write a value to memory' do
+    @cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
+    @cs[:ns][:i] = 456
+    LibTest.struct_align_nested_struct(@cs.to_ptr).should == 456
   end
 end
 
+describe FFI::Struct, ' with an array field'  do
+  module LibTest
+    extend FFI::Library
+    ffi_lib TestLibrary::PATH
+    class StructWithArray < FFI::Struct
+      layout :first, :char, :a, [:int, 5]
+    end
+    attach_function :struct_make_struct_with_array, [:int, :int, :int, :int, :int], :pointer
+  end
+  before do
+    @s = LibTest::StructWithArray.new
+  end
+  it 'should align correctly array field'
+  it 'should correctly calculate StructWithArray size (in bytes)' do
+    LibTest::StructWithArray.size.should == 24
+  end
+  it 'should return a Struct::Array object when the field is accessed' do
+    @s[:a].is_a?(FFI::Struct::Array).should be_true
+  end
+  it 'should cache Struct::Array object for successive calls' do
+    @s[:a].object_id.should == @s[:a].object_id
+  end
+end
+
+describe 'Struct::Array' do
+  module ArrayTest
+    extend FFI::Library
+    ffi_lib TestLibrary::PATH
+    class StructWithArray < FFI::Struct
+      layout( :c, :char, 
+              :a, [:int, 5] )
+    end
+    attach_function :struct_make_struct_with_array, [:int, :int, :int, :int, :int], :pointer
+    attach_function :struct_field_array, [:pointer], :pointer
+  end
+  before do
+    @struct = ArrayTest::StructWithArray.new(ArrayTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
+    @array = FFI::Struct::Array.new(ArrayTest.struct_field_array(@struct.to_ptr), FFI::StructLayoutBuilder::Signed32, 5)
+  end
+  it 'should return a ruby array' do
+    @array.to_a.should == [0, 1, 2, 3, 4]
+  end
+  it 'should return a pointer' do
+    @array.to_ptr.is_a?(FFI::Pointer)
+  end
+  it 'should return its size in byte' do
+    @array.size.should == 20
+  end
+end

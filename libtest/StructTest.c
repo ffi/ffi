@@ -48,21 +48,37 @@ struct test1 {
     char string[32];
 };
 
-struct point {
-    char id;
-    int x;
-    int y;
+struct struct_with_array {
+  char c;
+  int a[5];
 };
 
-struct rectangle {
-    struct point a;
-    struct point b;
+struct nested {
+  int i;
 };
+
+struct container { 
+  char first;
+  struct nested s;
+};
+
+int struct_align_nested_struct(struct container* a) { return a->s.i; }
+
+void* struct_field_array(struct struct_with_array* s) { return &s->a; }
 
 #define T(x, type) \
     type struct_field_##type(struct test1* t) { return t->x; } \
     struct type##_align { char first; type value; }; \
     type struct_align_##type(struct type##_align* a) { return a->value; }
+
+struct container* struct_make_container_struct(int i) 
+{ 
+  static struct container cs;
+  memset(&cs, 0, sizeof(cs));
+  cs.first = 1;
+  cs.s.i = i;
+  return &cs;
+}
 
 T(b, s8);
 T(s, s16);
@@ -112,39 +128,19 @@ struct_call_sub_cb(struct test2* t, int a1, int a2)
 }
 
 
-struct point*
-struct_make_point(char id, unsigned int x, unsigned int y)
+struct struct_with_array* 
+struct_make_struct_with_array(int a_0, int a_1, int a_2, int a_3, int a_4)
 {
-    struct point* p = malloc(sizeof (p));
-    p->id = id;
-    p->x = x;
-    p->y = y;
-    return p;
-};
+  static struct struct_with_array s;
 
-struct rectangle*
-struct_make_rectangle(char a_id, int a_x, int a_y, char b_id, int b_x, int b_y)
-{
-    static struct rectangle r;
-    memset(&r, 0, sizeof (r));
-    r.a.id = a_id;
-    r.a.x = a_x;
-    r.a.y = a_y;
-    r.b.id = b_id;
-    r.b.x = b_x;
-    r.b.y = b_y;
+  memset(&s, 0, sizeof(s));
 
-    return &r;
-};
+  s.a[0] = a_0;
+  s.a[1] = a_1;
+  s.a[2] = a_2;
+  s.a[3] = a_3;
+  s.a[4] = a_4;
 
-struct point* 
-get_point_a(struct rectangle* r)
-{
-    return &r->a;
-}
-
-struct point* 
-get_point_b(struct rectangle* r)
-{
-    return &r->b;
+  return &s;
+ 
 }
