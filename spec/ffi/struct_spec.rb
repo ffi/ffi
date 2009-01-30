@@ -399,6 +399,9 @@ describe 'Struct::Array' do
   it 'should return a ruby array' do
     @array.to_a.should == [0, 1, 2, 3, 4]
   end
+  it 'should cache array object for successive calls' do
+    @array.to_a.object_id.should == @array.to_a.object_id
+  end
   it 'should return a pointer' do
     @array.to_ptr.is_a?(FFI::Pointer)
   end

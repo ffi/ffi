@@ -159,7 +159,7 @@ module FFI
         @pointer 
       end
       def to_a
-        get_array_data(@pointer)
+        @array ||= get_array_data(@pointer)
       end
       def size
         @num * @type.size / 8
