@@ -20,17 +20,13 @@ typedef struct StructField {
 typedef struct StructLayout {
     VALUE rbFields;
     unsigned int fieldCount;
+    int size;
+    int align;
 } StructLayout;
 
 typedef struct StructLayoutBuilder {
     unsigned int offset;
 } StructLayoutBuilder;
-
-typedef struct Struct {
-    StructLayout* layout;
-    AbstractMemory* pointer;
-    VALUE rbPointer;
-} Struct;
 
 static void struct_field_mark(StructField *);
 static void struct_field_free(StructField *);
@@ -39,9 +35,10 @@ static void struct_free(Struct *);
 static void struct_layout_mark(StructLayout *);
 static void struct_layout_free(StructLayout *);
 
-static VALUE classBaseStruct = Qnil, classStructLayout = Qnil;
+VALUE rb_FFI_Struct_class = Qnil;
+static VALUE classStruct = Qnil, classStructLayout = Qnil;
 static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
-static ID initializeID = 0, pointerID = 0, layoutID = 0;
+static ID initializeID = 0, pointerID = 0, layoutID = 0, SIZE_ID, ALIGN_ID;
 static ID getID = 0, putID = 0, to_ptr = 0;
 
 static VALUE
@@ -181,20 +178,86 @@ static VALUE
 struct_new(int argc, VALUE* argv, VALUE klass)
 {
     Struct* s;
-    VALUE retval;
+    VALUE retval, rbPointer = Qnil, rest = Qnil, rbLayout = Qnil;
+    int nargs;
+    retval = Data_Make_Struct(klass, Struct, struct_mark, struct_free, s);
+    s->rbPointer = Qnil;
+    s->pointer = NULL;
+
+    nargs = rb_scan_args(argc, argv, "01*", &rbPointer, &rest);
+    /* Call up into ruby code to adjust the layout */
+    if (nargs > 1) {
+        rbLayout = rb_funcall2(klass, rb_intern("layout"), RARRAY_LEN(rest), RARRAY_PTR(rest));
+    } else if (rb_cvar_defined(klass, layoutID)) {
+        rbLayout = rb_cvar_get(klass, layoutID);
+    }
+    if (rbLayout == Qnil || !rb_obj_is_kind_of(rbLayout, classStructLayout)) {
+        rb_raise(rb_eRuntimeError, "Invalid Struct layout");
+    }
+    s->rbLayout = rbLayout;
+    s->layout = (StructLayout *) DATA_PTR(rbLayout);
+    if (rbPointer == Qnil) {
+        rbPointer = rb_FFI_MemoryPointer_new(s->layout->size, 1, true);
+    }
+    
+    rb_funcall2(retval, initializeID, 1, &rbPointer);
+    if (s->pointer == NULL) {
+        rb_raise(rb_eRuntimeError, "Struct memory not set (NULL)");
+    }
+    return retval;
+}
+
+static VALUE
+struct_alloc(int argc, VALUE* argv, VALUE klass)
+{
+    Struct* s;
+    VALUE retval, rbPointer = Qnil, rbLayout = Qnil, rbClear = Qnil;
 
     retval = Data_Make_Struct(klass, Struct, struct_mark, struct_free, s);
     s->rbPointer = Qnil;
-    s->layout = NULL;
     s->pointer = NULL;
-    rb_funcall2(retval, initializeID, argc, argv);
+    
+    if (rb_cvar_defined(klass, layoutID)) {
+        rbLayout = rb_cvar_get(klass, layoutID);
+    }
+    if (rbLayout == Qnil || !rb_obj_is_kind_of(rbLayout, classStructLayout)) {
+        rb_raise(rb_eRuntimeError, "Invalid Struct layout");
+    }
+    s->rbLayout = rbLayout;
+    s->layout = (StructLayout *) DATA_PTR(rbLayout);
+    rb_scan_args(argc, argv, "01", &rbClear);
+    rbPointer = rb_FFI_MemoryPointer_new(s->layout->size, 1, rbClear == Qtrue);
+
+    rb_funcall2(retval, initializeID, 1, &rbPointer);
+    if (s->pointer == NULL) {
+        rb_raise(rb_eRuntimeError, "Struct memory not set (NULL)");
+    }
     return retval;
 }
+
+static VALUE
+struct_initialize(VALUE self, VALUE rbPointer)
+{
+    Struct* s = (Struct *) DATA_PTR(self);
+    if (rbPointer == Qnil) {
+        rb_raise(rb_eArgError, "Struct memory cannot be NULL");
+    }
+    if (!rb_obj_is_kind_of(rbPointer, rb_FFI_AbstractMemory_class)) {
+        rb_raise(rb_eArgError, "Invalid Struct memory");
+    }
+    s->rbPointer = rbPointer;
+    s->pointer = (AbstractMemory *) DATA_PTR(rbPointer);
+    return self;
+}
+
 static void
 struct_mark(Struct *s)
 {
     if (s->rbPointer != Qnil) {
         rb_gc_mark(s->rbPointer);
+    }
+    if (s->rbLayout != Qnil) {
+        rb_gc_mark(s->rbLayout);
     }
 }
 static void struct_free(Struct *s)
@@ -319,6 +382,12 @@ struct_set_pointer(VALUE self, VALUE pointer)
 }
 
 static VALUE
+struct_get_pointer(VALUE self)
+{
+    return ((Struct *) DATA_PTR(self))->rbPointer;
+}
+
+static VALUE
 struct_set_layout(VALUE self, VALUE layout)
 {
     Struct* s = (Struct *) DATA_PTR(self);
@@ -328,16 +397,24 @@ struct_set_layout(VALUE self, VALUE layout)
     rb_ivar_set(self, layoutID, layout);
     return self;
 }
+static VALUE
+struct_get_layout(VALUE self)
+{
+    Struct* s = (Struct *) DATA_PTR(self);
+    return s->rbLayout;
+}
 
 static VALUE
-struct_layout_new(VALUE klass, VALUE fields, VALUE size)
+struct_layout_new(VALUE klass, VALUE fields, VALUE size, VALUE align)
 {
     StructLayout* layout;
     VALUE retval;
-    VALUE argv[] = { fields, size };
+    VALUE argv[] = { fields, size, align };
     retval = Data_Make_Struct(klass, StructLayout, struct_layout_mark, struct_layout_free, layout);
     layout->rbFields = fields;
-    rb_funcall2(retval, initializeID, 2, argv);
+    layout->size = NUM2INT(size);
+    layout->align = NUM2INT(align);
+    rb_funcall2(retval, initializeID, 3, argv);
     return retval;
 }
 
@@ -365,22 +442,30 @@ rb_FFI_Struct_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE klass;
-    classBaseStruct = rb_define_class_under(moduleFFI, "BaseStruct", rb_cObject);
+    rb_FFI_Struct_class = classStruct = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
     classStructLayout = rb_define_class_under(moduleFFI, "StructLayout", rb_cObject);
     classStructLayoutBuilder = rb_define_class_under(moduleFFI, "StructLayoutBuilder", rb_cObject);
     classStructField = rb_define_class_under(classStructLayoutBuilder, "Field", rb_cObject);
 
     //rb_define_singleton_method(classStructLayoutBuilder, "new", builder_new, 0);
-    rb_define_singleton_method(classBaseStruct, "new", struct_new, -1);
-    rb_define_private_method(classBaseStruct, "pointer=", struct_set_pointer, 1);
-    rb_define_attr(classBaseStruct, "pointer", 1, 0);
-    rb_define_private_method(classBaseStruct, "layout=", struct_set_layout, 1);
-    rb_define_attr(classBaseStruct, "layout", 1, 0);
-    rb_define_method(classBaseStruct, "[]", struct_get_field, 1);
-    rb_define_method(classBaseStruct, "[]=", struct_put_field, 2);
+    rb_define_singleton_method(classStruct, "new", struct_new, -1);
+    rb_define_singleton_method(classStruct, "__alloc", struct_alloc, -1);
+    rb_define_alias(rb_singleton_class(classStruct), "alloc_in", "__alloc");
+    rb_define_alias(rb_singleton_class(classStruct), "alloc_out", "__alloc");
+    rb_define_alias(rb_singleton_class(classStruct), "alloc_inout", "__alloc");
+    rb_define_alias(rb_singleton_class(classStruct), "new_in", "__alloc");
+    rb_define_alias(rb_singleton_class(classStruct), "new_out", "__alloc");
+    rb_define_alias(rb_singleton_class(classStruct), "new_inout", "__alloc");
+    rb_define_method(classStruct, "pointer", struct_get_pointer, 0);
+    rb_define_private_method(classStruct, "pointer=", struct_set_pointer, 1);
+    rb_define_method(classStruct, "layout", struct_get_layout, 0);
+    rb_define_private_method(classStruct, "layout=", struct_set_layout, 1);
+    rb_define_private_method(classStruct, "initialize", struct_initialize, 1);
+    rb_define_method(classStruct, "[]", struct_get_field, 1);
+    rb_define_method(classStruct, "[]=", struct_put_field, 2);
     rb_define_singleton_method(classStructField, "new", struct_field_new, -1);
     rb_define_method(classStructField, "offset", struct_field_offset, 0);
-    rb_define_singleton_method(classStructLayout, "new", struct_layout_new, 2);
+    rb_define_singleton_method(classStructLayout, "new", struct_layout_new, 3);
     rb_define_method(classStructLayout, "[]", struct_layout_get, 1);
     initializeID = rb_intern("initialize");
     pointerID = rb_intern("@pointer");
@@ -388,6 +473,8 @@ rb_FFI_Struct_Init()
     getID = rb_intern("get");
     putID = rb_intern("put");
     to_ptr = rb_intern("to_ptr");
+    SIZE_ID = rb_intern("SIZE");
+    ALIGN_ID = rb_intern("ALIGN");
 #undef FIELD
 #define FIELD(name, typeName, nativeType, T) do { \
     typedef struct { char c; T v; } s; \

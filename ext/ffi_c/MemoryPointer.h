@@ -1,13 +1,8 @@
-/* 
- * File:   MemoryPointer.h
- * Author: wayne
- *
- * Created on August 28, 2008, 5:24 PM
- */
 
 #ifndef _MEMORYPOINTER_H
 #define	_MEMORYPOINTER_H
 
+#include <stdbool.h>
 #include <ruby.h>
 
 #ifdef	__cplusplus
@@ -16,6 +11,7 @@ extern "C" {
 
     extern void rb_FFI_MemoryPointer_Init();
     extern VALUE rb_FFI_MemoryPointer_class;
+    extern VALUE rb_FFI_MemoryPointer_new(long size, long count, bool clear);
 #ifdef	__cplusplus
 }
 #endif

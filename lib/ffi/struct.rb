@@ -1,12 +1,11 @@
 require 'ffi/platform'
 module FFI
   class StructLayout
-    def initialize(fields, size)
+    attr_reader :size, :align
+    def initialize(fields, size, min_align = 1)
       @fields = fields
       @size = size
-    end
-    def size
-      @size
+      @align = min_align
     end
     def members
       @fields.keys
@@ -14,7 +13,7 @@ module FFI
   end
   class StructLayoutBuilder
     class Field
-      def size(info = nil)
+      def size
         self.class.size
       end
       def align
@@ -36,7 +35,7 @@ module FFI
           #{type.size} * 8
         end
         def self.align
-          Platform::ADDRESS_SIZE
+          #{type.align}
         end
         def get(ptr)
           @@info.new(ptr + @off)
@@ -71,8 +70,8 @@ module FFI
       self.module_eval(code)
     end
     class CallbackField < Field
-      def self.size(info = nil); Platform::ADDRESS_SIZE; end
-      def self.align(info = nil); Platform::ADDRESS_ALIGN; end
+      def self.size; Platform::ADDRESS_SIZE; end
+      def self.align; Platform::ADDRESS_ALIGN; end
       def put(ptr, proc)
         ptr.put_callback(@off, proc, @info)
       end
@@ -83,6 +82,7 @@ module FFI
     def initialize
       @fields = {}
       @size = 0
+      @min_align = 1
     end
     def native_field_class_from(type)
       case type
@@ -138,9 +138,10 @@ module FFI
       off = offset ? offset.to_i : align(@size, field_class.align)
       @fields[name] = field_class.new(off, info)
       @size = off + size
+      @min_align = field_class.align if field_class.align > @min_align
     end
     def build
-      StructLayout.new @fields, @size
+      StructLayout.new @fields, @size, @min_align
     end
     def align(offset, bits)
       bytes = bits / 8
@@ -149,55 +150,7 @@ module FFI
       ((off & mask) != 0) ? (off & ~mask) + bytes : off
     end
   end
-  class BaseStruct
-    Buffer = FFI::Buffer
-    def initialize(ptr = nil, *spec)
-      self.layout = @cspec = self.class.layout(*spec)
-      if ptr then
-        self.pointer = ptr
-      else
-        self.pointer = MemoryPointer.new(@cspec.size)
-      end
-    end
-    def self.alloc_inout(clear = true)
-      self.new(Buffer.alloc_inout(@size, 1, clear))
-    end
-    def self.alloc_in(clear = true)
-      self.new(Buffer.alloc_in(@size, 1, clear))
-    end
-    def self.alloc_out(clear = true)
-      self.new(Buffer.alloc_out(@size, 1, clear))
-    end
-    def self.size
-      @size
-    end
-    def self.members
-      @layout.members
-    end
-    def size
-      self.class.size
-    end
-    def members
-      @cspec.members
-    end
-    def values
-      @cspec.members.map { |m| self[m] }
-    end
-    def clear
-      pointer.clear
-      self
-    end
-    def to_ptr
-      pointer
-    end
-    def self.in
-      :buffer_in
-    end
-    def self.out
-      :buffer_out
-    end
-  end
-  class Struct < BaseStruct
+  class Struct
     class Array
       def initialize(ptr, type, num)
         @pointer, @type, @num = ptr, type, num
@@ -217,6 +170,40 @@ module FFI
           array << @type.new(0).get(ptr + index * @type.size / 8)
         end
       end
+    end
+    def self.size
+      @size
+    end
+    def self.members
+      @layout.members
+    end
+    def self.align
+      @layout.align
+    end
+    def size
+      self.class.size
+    end
+    def align
+      self.class.align
+    end
+    def members
+      layout.members
+    end
+    def values
+      layout.members.map { |m| self[m] }
+    end
+    def clear
+      pointer.clear
+      self
+    end
+    def to_ptr
+      pointer
+    end
+    def self.in
+      :buffer_in
+    end
+    def self.out
+      :buffer_out
     end
     private
     def self.enclosing_module
@@ -263,9 +250,11 @@ module FFI
       builder.build
     end
     public
-    def self.layout(*spec)      
+    def self.layout(*spec)
+      
       return @layout if spec.size == 0
       cspec = spec[0].kind_of?(Hash) ? hash_layout(spec) : array_layout(spec)
+
       @layout = cspec unless self == FFI::Struct
       @size = cspec.size
       return cspec
