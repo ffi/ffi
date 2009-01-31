@@ -50,17 +50,17 @@ struct test1 {
 };
 
 struct struct_with_array {
-  char c;
-  int a[5];
+    char c;
+    int a[5];
 };
 
 struct nested {
-  int i;
+    int i;
 };
 
 struct container { 
-  char first;
-  struct nested s;
+    char first;
+    struct nested s;
 };
 
 int struct_align_nested_struct(struct container* a) { return a->s.i; }
@@ -74,11 +74,11 @@ void* struct_field_array(struct struct_with_array* s) { return &s->a; }
 
 struct container* struct_make_container_struct(int i) 
 { 
-  static struct container cs;
-  memset(&cs, 0, sizeof(cs));
-  cs.first = 1;
-  cs.s.i = i;
-  return &cs;
+    static struct container cs;
+    memset(&cs, 0, sizeof(cs));
+    cs.first = 1;
+    cs.s.i = i;
+    return &cs;
 }
 
 T(b, s8);
@@ -132,16 +132,16 @@ struct_call_sub_cb(struct test2* t, int a1, int a2)
 struct struct_with_array* 
 struct_make_struct_with_array(int a_0, int a_1, int a_2, int a_3, int a_4)
 {
-  static struct struct_with_array s;
+    static struct struct_with_array s;
 
-  memset(&s, 0, sizeof(s));
+    memset(&s, 0, sizeof(s));
 
-  s.a[0] = a_0;
-  s.a[1] = a_1;
-  s.a[2] = a_2;
-  s.a[3] = a_3;
-  s.a[4] = a_4;
+    s.a[0] = a_0;
+    s.a[1] = a_1;
+    s.a[2] = a_2;
+    s.a[3] = a_3;
+    s.a[4] = a_4;
 
-  return &s;
+    return &s;
  
 }
