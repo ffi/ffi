@@ -10,6 +10,9 @@ module FFI
     def members
       @fields.keys
     end
+    def offsets
+      @fields.map { |name, field| [name, field.offset] }
+    end
   end
   class StructLayoutBuilder
     class Field
@@ -191,6 +194,9 @@ module FFI
     end
     def values
       layout.members.map { |m| self[m] }
+    end
+    def offsets
+      layout.offsets
     end
     def clear
       pointer.clear
