@@ -407,13 +407,13 @@ describe 'Struct::Array' do
   it 'should return a ruby array' do
     @array.to_a.should == [0, 1, 2, 3, 4]
   end
-  it 'should cache array object for successive calls' do
-    @array.to_a.object_id.should == @array.to_a.object_id
-  end
   it 'should return a pointer' do
     @array.to_ptr.is_a?(FFI::Pointer)
   end
   it 'should return its size in byte' do
     @array.size.should == 20
+  end
+  it 'should allow iteration through its elements'do
+    @array.each_with_index { |elem, i| elem.should == i }  
   end
 end

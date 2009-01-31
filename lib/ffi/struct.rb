@@ -155,6 +155,7 @@ module FFI
   end
   class Struct
     class Array
+      include Enumerable
       def initialize(ptr, type, num)
         @pointer, @type, @num = ptr, type, num
       end
@@ -162,10 +163,13 @@ module FFI
         @pointer 
       end
       def to_a
-        @array ||= get_array_data(@pointer)
+        get_array_data(@pointer)
       end
       def size
         @num * @type.size / 8
+      end
+      def each(&blk)
+        to_a.each(&blk)
       end
       private
       def get_array_data(ptr)
