@@ -183,6 +183,9 @@ module FFI
     def self.align
       @layout.align
     end
+    def self.offsets
+      @layout.offsets
+    end
     def size
       self.class.size
     end

@@ -38,6 +38,18 @@ typedef long long s64;
 typedef float f32;
 typedef double f64;
 
+typedef struct bugged_struct {
+  unsigned char visible;
+  unsigned int x;
+  unsigned int y;
+  short rx;
+  short ry;
+  unsigned char order;
+  unsigned char size;
+} bugged_struct_t;
+
+unsigned int bugged_struct_size() { return sizeof(bugged_struct_t); };
+
 struct test1 {
     char b;
     short s;

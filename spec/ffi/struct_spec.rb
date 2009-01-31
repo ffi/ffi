@@ -409,3 +409,28 @@ describe 'Struct::Array' do
     @array.size.should == 20
   end
 end
+
+describe 'BuggedStruct' do
+  module LibTest
+    extend FFI::Library
+    ffi_lib TestLibrary::PATH
+    class BuggedStruct < FFI::Struct
+      layout( :visible, :uchar,
+              :x, :uint,
+              :y, :uint,
+              :rx, :short,
+              :ry, :short,
+              :order, :uchar,
+              :size, :uchar )
+    end
+    attach_function :bugged_struct_size, [], :uint
+  end
+  it 'should return its correct size' do
+    LibTest::BuggedStruct.size.should == LibTest.bugged_struct_size
+  end
+  it 'should return correct field/offset pairs' do
+    LibTest::BuggedStruct.offsets.sort do |a, b|
+      a[1] <=> b[1] 
+    end.should == [[:visible, 0], [:x, 4], [:y, 8], [:rx, 12], [:ry, 14], [:order, 16], [:size, 17]]
+  end
+end
