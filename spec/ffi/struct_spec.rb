@@ -318,6 +318,14 @@ describe "Struct tests" do
     s[:c] = 3
     s.values.should include(1, 2, 3)
   end
+  it 'should return an ordered field/offset pairs array' do
+    class TestStruct < FFI::Struct
+      layout :a, :int, :b, :int, :c, :int
+    end
+    s = TestStruct.new
+    s.offsets.should == [[:a, 0], [:b, 4], [:c, 8]]
+    TestStruct.offsets.should == [[:a, 0], [:b, 4], [:c, 8]]
+  end
 end
 
 describe FFI::Struct, ' with a nested struct field'  do

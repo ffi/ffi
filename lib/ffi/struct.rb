@@ -11,7 +11,7 @@ module FFI
       @fields.keys
     end
     def offsets
-      @fields.map { |name, field| [name, field.offset] }
+      @fields.map { |name, field| [name, field.offset] }.sort { |a, b| a[1] <=> b[1] }
     end
   end
   class StructLayoutBuilder
@@ -183,6 +183,9 @@ module FFI
     def self.align
       @layout.align
     end
+    def self.offsets
+      @layout.offsets
+    end
     def size
       self.class.size
     end
@@ -196,7 +199,7 @@ module FFI
       layout.members.map { |m| self[m] }
     end
     def offsets
-      layout.offsets
+      self.class.offsets
     end
     def clear
       pointer.clear
