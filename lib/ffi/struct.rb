@@ -144,7 +144,8 @@ module FFI
       @min_align = field_class.align if field_class.align > @min_align
     end
     def build
-      StructLayout.new @fields, @size, @min_align
+      align = @min_align / 8
+      StructLayout.new @fields, align + ((@size - 1) & ~(align - 1)), @min_align
     end
     def align(offset, bits)
       bytes = bits / 8
