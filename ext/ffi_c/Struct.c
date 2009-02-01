@@ -7,6 +7,7 @@
 #include "compat.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
+#include "MemoryPointer.h"
 #include "Types.h"
 #include "Struct.h"
 
