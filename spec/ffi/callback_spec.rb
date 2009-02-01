@@ -52,6 +52,9 @@ describe "Callback" do
     attach_function :testCallbackVrS64, :testClosureVrL, [ :cbVrS64 ], :long_long
     attach_function :testCallbackVrU64, :testClosureVrL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbCrV, :char ], :void
+    attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
+    attach_variable :pVrS8, :gvar_pointer, :pointer
+    attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
   end
   it "function with Callback plus another arg should raise error if no arg given" do
     lambda { LibTest.testCallbackCrV { |*a| }}.should raise_error
@@ -161,7 +164,11 @@ describe "Callback" do
     LibTest.testCallbackVrS64 { -1 }.should == -1
   end
 
-  
+  it "Callback global variable" do
+    proc = Proc.new { 0x1e }
+    LibTest.cbVrS8 = proc
+    LibTest.testGVarCallbackVrS8(LibTest.pVrS8).should == 0x1e
+  end
 end
 describe "Callback with primitive argument" do
   #
