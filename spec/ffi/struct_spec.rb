@@ -373,6 +373,7 @@ describe FFI::Struct, ' with an array field'  do
       layout :first, :char, :a, [:int, 5]
     end
     attach_function :struct_make_struct_with_array, [:int, :int, :int, :int, :int], :pointer
+    attach_function :struct_field_array, [:pointer], :pointer
   end
   before do
     @s = LibTest::StructWithArray.new
@@ -381,40 +382,24 @@ describe FFI::Struct, ' with an array field'  do
   it 'should correctly calculate StructWithArray size (in bytes)' do
     LibTest::StructWithArray.size.should == 24
   end
-  it 'should return a Struct::Array object when the field is accessed' do
-    @s[:a].is_a?(FFI::Struct::Array).should be_true
+  it 'should read values from memory' do
+    @s = LibTest::StructWithArray.new(LibTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
+    @s[:a].to_a.should == [0, 1, 2, 3, 4]
   end
-  it 'should cache Struct::Array object for successive calls' do
+  it 'should cache array object for successive calls' do
     @s[:a].object_id.should == @s[:a].object_id
   end
-end
-
-describe 'Struct::Array' do
-  module ArrayTest
-    extend FFI::Library
-    ffi_lib TestLibrary::PATH
-    class StructWithArray < FFI::Struct
-      layout( :c, :char, 
-              :a, [:int, 5] )
-    end
-    attach_function :struct_make_struct_with_array, [:int, :int, :int, :int, :int], :pointer
-    attach_function :struct_field_array, [:pointer], :pointer
+  it 'should return the size of the array field in bytes' do
+    @s = LibTest::StructWithArray.new(LibTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
+    @s[:a].size.should == 20
   end
-  before do
-    @struct = ArrayTest::StructWithArray.new(ArrayTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
-    @array = FFI::Struct::Array.new(ArrayTest.struct_field_array(@struct.to_ptr), FFI::StructLayoutBuilder::Signed32, 5)
+  it 'should allow iteration through the array elements' do
+    @s = LibTest::StructWithArray.new(LibTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
+    @s[:a].each_with_index { |elem, i| elem.should == i }  
   end
-  it 'should return a ruby array' do
-    @array.to_a.should == [0, 1, 2, 3, 4]
-  end
-  it 'should return a pointer' do
-    @array.to_ptr.is_a?(FFI::Pointer)
-  end
-  it 'should return its size in byte' do
-    @array.size.should == 20
-  end
-  it 'should allow iteration through its elements'do
-    @array.each_with_index { |elem, i| elem.should == i }  
+  it 'should return the pointer to the array' do
+    @s = LibTest::StructWithArray.new(LibTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
+    @s[:a].to_ptr.should == LibTest::struct_field_array(@s.to_ptr)
   end
 end
 
