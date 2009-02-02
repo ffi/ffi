@@ -135,7 +135,7 @@ module FFI
         struct_field_class_from(type)
       field_class or raise ArgumentError, "Unknown type: #{type}"
     end
-    def add_field(name, type, offset=nil)
+    def add_field(name, type, offset = nil)
       field_class, info = field_class_from(type)
       size = field_class.size / 8
       off = offset ? offset.to_i : align(@size, field_class.align)
@@ -220,6 +220,9 @@ module FFI
       :buffer_out
     end
     private
+    def self.builder
+      StructLayoutBuilder.new
+    end
     def self.enclosing_module
       begin
         mod = self.name.split("::")[0..-2].inject(Object) { |obj, c| obj.const_get(c) }
@@ -237,7 +240,7 @@ module FFI
     end
     def self.hash_layout(spec)
       raise "Ruby version not supported" if RUBY_VERSION =~ /1.8.*/
-      builder = FFI::StructLayoutBuilder.new
+      builder = self.builder #FFI::StructLayoutBuilder.new
       mod = enclosing_module
       spec[0].each do |name,type|
         builder.add_field(name, find_type(type, mod))
@@ -245,7 +248,7 @@ module FFI
       builder.build
     end
     def self.array_layout(spec)
-      builder = FFI::StructLayoutBuilder.new
+      builder = self.builder #FFI::StructLayoutBuilder.new
       mod = enclosing_module
       i = 0
       while i < spec.size
@@ -265,10 +268,8 @@ module FFI
     end
     public
     def self.layout(*spec)
-      
       return @layout if spec.size == 0
       cspec = spec[0].kind_of?(Hash) ? hash_layout(spec) : array_layout(spec)
-
       @layout = cspec unless self == FFI::Struct
       @size = cspec.size
       return cspec
