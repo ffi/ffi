@@ -33,15 +33,18 @@ module FFI
       klass_name = type.name.split('::').last
       code = <<-code
       class StructField_#{klass_name} < Field
-        @@info = #{type}
-        def self.size
-          #{type.size} * 8
-        end
-        def self.align
-          #{type.align}
-        end
+        @info = #{type}
+          class << self
+            attr_reader :info
+            def size
+              #{type.size} * 8
+            end
+            def align
+              #{type.align}
+            end
+          end
         def get(ptr)
-          @@info.new(ptr + @off)
+          self.class.info.new(ptr + @off)
         end
       end
       StructField_#{klass_name}
@@ -52,20 +55,23 @@ module FFI
       klass_name = type.name.split('::').last
       code = <<-code
       class ArrayField_#{klass_name}_#{num} < Field
-        @@info = #{type}
-        @@num = #{num}
-        def self.size
-          #{type.size} * #{num}
-        end
-        def self.align
-          #{type.align}
-        end
+        @info = #{type}
+        @num = #{num}
+          class << self
+            attr_reader :info, :num
+            def size
+              #{type.size} * #{num}
+            end
+            def align
+              #{type.align}
+            end
+          end
         def get(ptr)
           @array ? @array : get_array_data(ptr)
         end
         private
         def get_array_data(ptr)
-          @array = FFI::Struct::Array.new(ptr + @off, @@info, @@num)
+          @array = FFI::Struct::Array.new(ptr + @off, self.class.info, self.class.num)
         end
       end
       ArrayField_#{klass_name}_#{num}
@@ -137,10 +143,9 @@ module FFI
     end
     def add_field(name, type, offset = nil)
       field_class, info = field_class_from(type)
-      size = field_class.size / 8
-      off = offset ? offset.to_i : align(@size, field_class.align)
+      off = calc_alignment_of(field_class, offset)
+      calc_current_size(off, field_class.size / 8)
       @fields[name] = field_class.new(off, info)
-      @size = off + size
       @min_align = field_class.align if field_class.align > @min_align
     end
     def build
@@ -152,6 +157,13 @@ module FFI
       mask = bytes - 1;
       off = offset;
       ((off & mask) != 0) ? (off & ~mask) + bytes : off
+    end
+    private
+    def calc_alignment_of(field_class, offset)
+      offset ? offset.to_i : align(@size, field_class.align)
+    end
+    def calc_current_size(offset, size)
+      @size = offset + size
     end
   end
   class Struct
@@ -240,7 +252,7 @@ module FFI
     end
     def self.hash_layout(spec)
       raise "Ruby version not supported" if RUBY_VERSION =~ /1.8.*/
-      builder = self.builder #FFI::StructLayoutBuilder.new
+      builder = self.builder
       mod = enclosing_module
       spec[0].each do |name,type|
         builder.add_field(name, find_type(type, mod))
@@ -248,7 +260,7 @@ module FFI
       builder.build
     end
     def self.array_layout(spec)
-      builder = self.builder #FFI::StructLayoutBuilder.new
+      builder = self.builder
       mod = enclosing_module
       i = 0
       while i < spec.size

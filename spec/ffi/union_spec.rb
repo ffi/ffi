@@ -35,7 +35,7 @@ describe 'Union' do
     LibTest::TestUnion.offsets.all? { |pair| pair[1] == 0 }.should be_true
   end
   LibTest::Types.each do |k, type|
-    it "should correctly align/write a #{type[0]} field" do
+    it "should correctly align/write a #{type[0]} value" do
       @u[type[1]] = type[2]
       if k == 'f32' or k == 'f64'
         (@u[type[1]] - LibTest.send("union_align_#{k}", @u.to_ptr)).abs.should < 0.00001
