@@ -22,6 +22,10 @@ describe "String tests" do
     str.should == "test"
     str.tainted?.should == true
   end
+  it "Poison null byte raises error" do
+    s = "123\0abc"
+    lambda { LibTest.string_equals(s, s) }.should raise_error
+  end
   it "Tainted String parameter should throw a SecurityError" do
     $SAFE = 1
     str = "test"
