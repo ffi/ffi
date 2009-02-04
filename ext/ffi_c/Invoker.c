@@ -542,7 +542,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                     if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
                         rb_raise(rb_eSecurityError, "Unsafe string parameter");
                     }
-                    param->ptr = StringValuePtr(argv[argidx]);
+                    param->ptr = StringValueCStr(argv[argidx]);
                 } else if (type == T_NIL) {
                     param->ptr = NULL;
                 } else {
