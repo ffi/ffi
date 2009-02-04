@@ -197,7 +197,12 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             *((double *) retval) = NUM2DBL(rbReturnValue);
             break;
         case NATIVE_POINTER:
-            *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
+            if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rb_FFI_Pointer_class)) {
+                *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
+            } else {
+                // Default to returning NULL if not a value pointer object.  handles nil case as well
+                *((void **) retval) = NULL;
+            }
             break;
         default:
             break;

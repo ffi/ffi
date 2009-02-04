@@ -53,6 +53,10 @@ double testClosureVrD(double (*closure)(void))
 {
     return (*closure)();
 }
+void* testClosureVrP(void* (*closure)(void))
+{
+    return (*closure)();
+}
 void testClosureBrV(void (*closure)(char), char a1)
 {
     (*closure)(a1);

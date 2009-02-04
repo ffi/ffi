@@ -39,6 +39,7 @@ describe "Callback" do
     callback :cbVrU32, [ ], :uint
     callback :cbVrS64, [ ], :long_long
     callback :cbVrU64, [ ], :ulong_long
+    callback :cbVrP, [], :pointer
     callback :cbCrV, [ :char ], :void
     callback :cbSrV, [ :short ], :void
     callback :cbIrV, [ :int ], :void
@@ -51,10 +52,12 @@ describe "Callback" do
     attach_function :testCallbackVrU32, :testClosureVrI, [ :cbVrU32 ], :uint
     attach_function :testCallbackVrS64, :testClosureVrL, [ :cbVrS64 ], :long_long
     attach_function :testCallbackVrU64, :testClosureVrL, [ :cbVrU64 ], :ulong_long
+    attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbCrV, :char ], :void
     attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
     attach_variable :pVrS8, :gvar_pointer, :pointer
     attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
+
   end
   it "function with Callback plus another arg should raise error if no arg given" do
     lambda { LibTest.testCallbackCrV { |*a| }}.should raise_error
@@ -162,6 +165,13 @@ describe "Callback" do
   end
   it "Callback returning :long_long (-1)" do
     LibTest.testCallbackVrS64 { -1 }.should == -1
+  end
+  it "Callback returning :pointer (nil)" do
+    LibTest.testCallbackVrP { nil }.null?.should be_true
+  end
+  it "Callback returning :pointer (MemoryPointer)" do
+    p = MemoryPointer.new :long
+    LibTest.testCallbackVrP { p }.should == p
   end
 
   it "Callback global variable" do
