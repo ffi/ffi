@@ -43,4 +43,7 @@ string_concat(char* dst, const char* src)
 {
     strcat(dst, src);
 }
-
+void
+string_dummy(char* dummy)
+{
+}

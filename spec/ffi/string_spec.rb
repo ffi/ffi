@@ -6,6 +6,7 @@ describe "String tests" do
     ffi_lib TestLibrary::PATH
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
     attach_function :string_equals, [ :string, :string ], :int
+    attach_function :string_dummy, [ :string ], :void
   end
   it "MemoryPointer#get_string returns a tainted string" do
     mp = MemoryPointer.new 1024
@@ -35,4 +36,7 @@ describe "String tests" do
     rescue SecurityError => e
     end
   end if false
+  it "casts nil as NULL pointer" do
+    LibTest.string_dummy(nil)
+  end
 end
