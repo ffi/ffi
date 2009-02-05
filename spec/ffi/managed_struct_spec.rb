@@ -12,6 +12,16 @@ describe "Managed Struct" do
     lambda { NoRelease.new(LibTest.ptr_from_address(0x12345678)) }.should raise_error(NoMethodError)
   end
 
+  it "should be the right class" do
+    class WhatClassAmI < FFI::ManagedStruct
+      layout :i, :int
+      def self.release
+      end
+    end    
+
+    WhatClassAmI.new(LibTest.ptr_from_address(0x12345678)).class.to_s.should == "WhatClassAmI"
+  end
+
   it "should release memory properly" do
     class PleaseReleaseMe < FFI::ManagedStruct
       layout :i, :int
