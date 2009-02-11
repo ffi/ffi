@@ -9,7 +9,7 @@ LOCAL_LIBS += $(LIBFFI)
 
 FFI_CFLAGS = $(FFI_MMAP_EXEC)
 BUILD_DIR = $(shell pwd)
-LIBFFI_SRC_DIR = $(srcdir)/libffi
+LIBFFI_SRC_DIR = $(abspath $(srcdir))/libffi
 LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi
 LIBFFI = $(LIBFFI_BUILD_DIR)/.libs/libffi_convenience.a
 FFI_CONFIGURE = $(LIBFFI_SRC_DIR)/configure --disable-static \
