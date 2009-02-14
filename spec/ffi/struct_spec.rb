@@ -332,6 +332,14 @@ describe "Struct tests" do
     s.offsets.should == [[:a, 0], [:b, 4], [:c, 8]]
     TestStruct.offsets.should == [[:a, 0], [:b, 4], [:c, 8]]
   end
+  it "Struct#offset_of returns offset of field within struct" do
+    class TestStruct < FFI::Struct
+      layout :a, :int, :b, :int, :c, :int
+    end
+    TestStruct.offset_of(:a).should == 0
+    TestStruct.offset_of(:b).should == 4
+    TestStruct.offset_of(:c).should == 8
+  end
 end
 
 describe FFI::Struct, ' with a nested struct field'  do
@@ -414,18 +422,27 @@ describe 'BuggedStruct' do
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     class BuggedStruct < FFI::Struct
-      layout( :visible, :uchar,
+      layout :visible, :uchar,
               :x, :uint,
               :y, :uint,
               :rx, :short,
               :ry, :short,
               :order, :uchar,
-              :size, :uchar )
+              :size, :uchar
     end
     attach_function :bugged_struct_size, [], :uint
   end
   it 'should return its correct size' do
     LibTest::BuggedStruct.size.should == LibTest.bugged_struct_size
+  end
+  it "offsets within struct should be correct" do
+    LibTest::BuggedStruct.offset_of(:visible).should == 0
+    LibTest::BuggedStruct.offset_of(:x).should == 4
+    LibTest::BuggedStruct.offset_of(:y).should == 8
+    LibTest::BuggedStruct.offset_of(:rx).should == 12
+    LibTest::BuggedStruct.offset_of(:ry).should == 14
+    LibTest::BuggedStruct.offset_of(:order).should == 16
+    LibTest::BuggedStruct.offset_of(:size).should == 17
   end
   it 'should return correct field/offset pairs' do
     LibTest::BuggedStruct.offsets.sort do |a, b|

@@ -13,6 +13,9 @@ module FFI
     def offsets
       @fields.map { |name, field| [name, field.offset] }.sort { |a, b| a[1] <=> b[1] }
     end
+    def offset_of(field_name)
+      @fields[field_name].offset
+    end
   end
   class StructLayoutBuilder
     class Field
@@ -21,6 +24,9 @@ module FFI
       end
       def align
         self.class.align
+      end
+      def offset
+        @off
       end
       def self.size
         const_get(:SIZE)
@@ -203,6 +209,9 @@ module FFI
     def self.offsets
       @layout.offsets
     end
+    def self.offset_of(field_name)
+      @layout.offset_of(field_name)
+    end
     def size
       self.class.size
     end
@@ -217,6 +226,9 @@ module FFI
     end
     def offsets
       self.class.offsets
+    end
+    def offset_of(field_name)
+      self.class.offset_of(field_name)
     end
     def clear
       pointer.clear

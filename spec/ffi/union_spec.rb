@@ -32,7 +32,7 @@ describe 'Union' do
     @u = LibTest::TestUnion.new
   end
   it 'should place all the fields at offset 0' do
-    LibTest::TestUnion.offsets.all? { |pair| pair[1] == 0 }.should be_true
+    LibTest::TestUnion.members.all? { |m| LibTest::TestUnion.offset_of(m) == 0 }.should be_true
   end
   LibTest::Types.each do |k, type|
     it "should correctly align/write a #{type[0]} value" do
