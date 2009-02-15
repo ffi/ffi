@@ -2,13 +2,14 @@ require 'ffi/platform'
 module FFI
   class StructLayout
     attr_reader :size, :align
-    def initialize(fields, size, min_align = 1)
+    def initialize(field_names, fields, size, min_align = 1)
+      @field_names = field_names
       @fields = fields
       @size = size
       @align = min_align
     end
     def members
-      @fields.keys
+      @field_names
     end
     def offsets
       @fields.map { |name, field| [name, field.offset] }.sort { |a, b| a[1] <=> b[1] }
@@ -95,6 +96,7 @@ module FFI
       end
     end
     def initialize
+      @field_names = []
       @fields = {}
       @size = 0
       @min_align = 1
@@ -151,12 +153,13 @@ module FFI
       field_class, info = field_class_from(type)
       off = calc_alignment_of(field_class, offset)
       calc_current_size(off, field_class.size / 8)
+      @field_names << name
       @fields[name] = field_class.new(off, info)
       @min_align = field_class.align if field_class.align > @min_align
     end
     def build
       align = @min_align / 8
-      StructLayout.new @fields, align + ((@size - 1) & ~(align - 1)), @min_align
+      StructLayout.new @field_names, @fields, align + ((@size - 1) & ~(align - 1)), @min_align
     end
     def align(offset, bits)
       bytes = bits / 8

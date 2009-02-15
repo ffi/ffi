@@ -406,16 +406,16 @@ struct_get_layout(VALUE self)
 }
 
 static VALUE
-struct_layout_new(VALUE klass, VALUE fields, VALUE size, VALUE align)
+struct_layout_new(VALUE klass, VALUE field_names, VALUE fields, VALUE size, VALUE align)
 {
     StructLayout* layout;
     VALUE retval;
-    VALUE argv[] = { fields, size, align };
+    VALUE argv[] = { field_names, fields, size, align };
     retval = Data_Make_Struct(klass, StructLayout, struct_layout_mark, struct_layout_free, layout);
     layout->rbFields = fields;
     layout->size = NUM2INT(size);
     layout->align = NUM2INT(align);
-    rb_funcall2(retval, initializeID, 3, argv);
+    rb_funcall2(retval, initializeID, sizeof(argv) / sizeof(argv[0]), argv);
     return retval;
 }
 
@@ -466,7 +466,7 @@ rb_FFI_Struct_Init()
     rb_define_method(classStruct, "[]=", struct_put_field, 2);
     rb_define_singleton_method(classStructField, "new", struct_field_new, -1);
     rb_define_method(classStructField, "offset", struct_field_offset, 0);
-    rb_define_singleton_method(classStructLayout, "new", struct_layout_new, 3);
+    rb_define_singleton_method(classStructLayout, "new", struct_layout_new, 4);
     rb_define_method(classStructLayout, "[]", struct_layout_get, 1);
     initializeID = rb_intern("initialize");
     pointerID = rb_intern("@pointer");
