@@ -69,6 +69,7 @@
         <itemPath>spec/ffi/string_spec.rb</itemPath>
         <itemPath>spec/ffi/struct_spec.rb</itemPath>
         <itemPath>spec/ffi/typedef_spec.rb</itemPath>
+        <itemPath>spec/ffi/union_spec.rb</itemPath>
         <itemPath>spec/ffi/variadic_spec.rb</itemPath>
       </logicalFolder>
     </logicalFolder>
@@ -275,6 +276,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="spec/ffi/typedef_spec.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="spec/ffi/union_spec.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="spec/ffi/variadic_spec.rb">
