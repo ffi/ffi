@@ -57,6 +57,7 @@ describe "Callback" do
     attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
     attach_variable :pVrS8, :gvar_pointer, :pointer
     attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
+    attach_function :testOptionalCallbackCrV, :testOptionalClosureBrV, [ :cbCrV, :char ], :void
 
   end
   it "function with Callback plus another arg should raise error if no arg given" do
@@ -179,6 +180,13 @@ describe "Callback" do
     LibTest.cbVrS8 = proc
     LibTest.testGVarCallbackVrS8(LibTest.pVrS8).should == 0x1e
   end
+
+  describe "When the callback is considered optional by the underlying library" do
+    it "should handle receiving 'nil' in place of the closure" do
+      LibTest.testOptionalCallbackCrV(nil, 13)
+    end
+  end
+
 end
 describe "Callback with primitive argument" do
   #

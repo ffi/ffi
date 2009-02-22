@@ -81,6 +81,12 @@ void testClosureDrV(void (*closure)(double), double a1)
 {
     (*closure)(a1);
 }
+void testOptionalClosureBrV(void (*closure)(char), char a1)
+{
+    if (closure) {
+        (*closure)(a1);
+    }
+}
 //
 // These macros produce functions of the form:
 // testClosureBIrV(void (*closure)(char, int), char a1, int a2) {}
