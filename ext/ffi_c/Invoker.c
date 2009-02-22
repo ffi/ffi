@@ -858,7 +858,11 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 static void* 
 callback_param(VALUE proc, VALUE cbInfo)
 {
-    VALUE callback = rb_FFI_NativeCallback_for_proc(proc, cbInfo);
+    VALUE callback ;
+    if (proc == Qnil) {
+        return NULL ;
+    }
+    callback = rb_FFI_NativeCallback_for_proc(proc, cbInfo);
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
