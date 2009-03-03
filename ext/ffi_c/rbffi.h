@@ -1,10 +1,3 @@
-/* 
- * File:   rbffi.h
- * Author: wayne
- *
- * Created on August 27, 2008, 5:40 PM
- */
-
 #ifndef _RBFFI_H
 #define	_RBFFI_H
 
