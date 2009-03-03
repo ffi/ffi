@@ -1,10 +1,3 @@
-/* 
- * File:   Types.h
- * Author: wayne
- *
- * Created on September 9, 2008, 9:47 PM
- */
-
 #ifndef _TYPES_H
 #define	_TYPES_H
 

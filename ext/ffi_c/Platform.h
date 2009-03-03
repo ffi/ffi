@@ -1,10 +1,3 @@
-/* 
- * File:   Platform.h
- * Author: wayne
- *
- * Created on August 29, 2008, 2:09 PM
- */
-
 #ifndef _PLATFORM_H
 #define	_PLATFORM_H
 

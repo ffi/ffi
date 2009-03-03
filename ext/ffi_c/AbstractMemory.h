@@ -1,10 +1,3 @@
-/* 
- * File:   AbstractMemory.h
- * Author: wayne
- *
- * Created on August 28, 2008, 5:52 PM
- */
-
 #ifndef _ABSTRACTMEMORY_H
 #define	_ABSTRACTMEMORY_H
 

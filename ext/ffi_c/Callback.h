@@ -1,10 +1,3 @@
-/* 
- * File:   Callback.h
- * Author: wayne
- *
- * Created on September 11, 2008, 10:01 AM
- */
-
 #ifndef _CALLBACK_H
 #define	_CALLBACK_H
 
