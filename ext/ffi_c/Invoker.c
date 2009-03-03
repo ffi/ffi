@@ -84,7 +84,9 @@ static void* callback_param(VALUE proc, VALUE cbinfo);
 static void attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data);
 static void attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data);
 #else
+#ifndef _WIN32
 static void attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
+#endif /* _WIN32 */
 static void attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 #endif
 static MethodHandle* method_handle_alloc(int arity);
@@ -92,7 +94,9 @@ static void method_handle_free(MethodHandle *);
 
 static inline ThreadData* thread_data_get(void);
 
+#ifndef _WIN32
 static int PageSize;
+#endif
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID to_ptr;
 
@@ -697,6 +701,7 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* u
 }
 
 #else
+#ifndef _WIN32
 static void
 attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
@@ -715,6 +720,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     }
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
 }
+#endif /* _WIN32 */
 static void
 attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
