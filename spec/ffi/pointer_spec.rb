@@ -3,6 +3,8 @@ require 'delegate'
 module LibTest
   attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
   attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], :pointer
+  attach_function :ptr_set_pointer, [ :pointer, :int, :pointer ], :void
+  attach_function :ptr_ret_pointer, [ :pointer, :int ], :pointer
 end
 describe "Pointer" do
   include FFI
@@ -43,6 +45,48 @@ describe "Pointer" do
   it "Bignum cannot be used as a Pointer argument" do
     lambda { LibTest.ptr_ret_int32(0xfee1deadbeefcafebabe, 0) }.should raise_error
   end
+
+  describe "pointer type methods" do
+
+    describe "#read_pointer" do
+      memory = MemoryPointer.new :pointer
+      LibTest.ptr_set_pointer(memory, 0, LibTest.ptr_from_address(0xdeadbeef))
+      memory.read_pointer.address.should == 0xdeadbeef
+    end
+
+    describe "#write_pointer" do
+      memory = MemoryPointer.new :pointer
+      memory.write_pointer(LibTest.ptr_from_address(0xdeadbeef))
+      LibTest.ptr_ret_pointer(memory, 0).address.should == 0xdeadbeef
+    end
+
+    describe "#read_array_of_pointer" do
+      values = [0x12345678, 0xfeedf00d, 0xdeadbeef]
+      memory = MemoryPointer.new :pointer, values.size
+      values.each_with_index do |address, j|
+        LibTest.ptr_set_pointer(memory, j * FFI.type_size(:pointer), LibTest.ptr_from_address(address))
+      end
+      array = memory.read_array_of_pointer(values.size)
+      values.each_with_index do |address, j|
+        array[j].address.should == address
+      end
+    end
+
+    describe "#write_array_of_pointer" do
+      values = [0x12345678, 0xfeedf00d, 0xdeadbeef]
+      memory = MemoryPointer.new :pointer, values.size
+      memory.write_array_of_pointer(values.map { |address| LibTest.ptr_from_address(address) })
+      array = []
+      values.each_with_index do |address, j|
+        array << LibTest.ptr_ret_pointer(memory, j * FFI.type_size(:pointer))
+      end
+      values.each_with_index do |address, j|
+        array[j].address.should == address
+      end
+    end
+
+  end
+
 end
 
 describe "AutoPointer" do
