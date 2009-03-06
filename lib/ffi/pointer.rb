@@ -35,9 +35,14 @@ module FFI
     def read_long_long
       get_int64(0)
     end
+
     def read_pointer
       get_pointer(0)
     end
+    def write_pointer(ptr)
+      put_pointer(0, ptr)
+    end
+
     def read_float
       get_float32(0)
     end
@@ -70,9 +75,9 @@ module FFI
       ary = []
       size = FFI.type_size(type)
       tmp = self
-      length.times {
+      length.times { |j|
         ary << tmp.send(reader)
-        tmp += size
+        tmp += size unless j == length-1 # avoid OOB
       }
       ary
     end
@@ -80,9 +85,9 @@ module FFI
     def write_array_of_type(type, writer, ary)
       size = FFI.type_size(type)
       tmp = self
-      ary.each {|i|
+      ary.each_with_index {|i, j|
         tmp.send(writer, i)
-        tmp += size
+        tmp += size unless j == ary.length-1 # avoid OOB
       }
       self
     end
@@ -101,5 +106,14 @@ module FFI
     def write_array_of_long(ary)
       put_array_of_long(0, ary)
     end
+
+    def read_array_of_pointer(length)
+      read_array_of_type(:pointer, :read_pointer, length)
+    end
+
+    def write_array_of_pointer(ary)
+      write_array_of_type(:pointer, :write_pointer, ary)
+    end
+
   end
 end
