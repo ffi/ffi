@@ -90,11 +90,11 @@ end
 unless USE_RAKE_COMPILER
   file "#{BUILD_DIR}/Makefile" do
     FileUtils.mkdir_p(BUILD_DIR) unless File.directory?(BUILD_DIR)
-    sh %{cd #{BUILD_DIR} && #{Gem.ruby} #{Dir.pwd}/ext/ffi_c/extconf.rb}
+    sh %{cd "#{BUILD_DIR}" && #{Gem.ruby} #{Dir.pwd}/ext/ffi_c/extconf.rb}
   end
   desc "Compile the native module"
   task :compile => "#{BUILD_DIR}/Makefile" do
-    sh %{cd #{BUILD_DIR}; make}
+    sh %{cd "#{BUILD_DIR}"; make}
   end
 end
 desc "Clean all built files"
