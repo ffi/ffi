@@ -411,8 +411,17 @@ method_handle_free(MethodHandle* method)
 #endif /* _WIN32 */
 
 typedef union {
-    signed long i;
-    unsigned long u;
+#ifdef USE_RAW
+    signed int s8, s16, s32;
+    unsigned int u8, u16, u32;
+#else
+    signed char s8;
+    unsigned char u8;
+    signed short s16;
+    unsigned short u16;
+    signed int s32;
+    unsigned int u32;
+#endif
     signed long long i64;
     unsigned long long u64;
     void* ptr;
@@ -485,28 +494,28 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
         
         switch (paramTypes[i]) {
             case NATIVE_INT8:
-                param->i = getSignedInt(argv[argidx++], type, -128, 127, "char");
+                param->s8 = getSignedInt(argv[argidx++], type, -128, 127, "char");
                 ADJ(param, INT8);
                 break;
             case NATIVE_INT16:
-                param->i = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short");
+                param->s16 = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short");
                 ADJ(param, INT16);
                 break;
             case NATIVE_INT32:
-                param->i = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int");
+                param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int");
                 ADJ(param, INT32);
                 break;
             case NATIVE_UINT8:
-                param->u = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
+                param->u8 = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
                 ADJ(param, INT8);
                 break;
             case NATIVE_UINT16:
-                param->u = getUnsignedInt(argv[argidx++], type, 0xffff, "unsigned short");
+                param->u16 = getUnsignedInt(argv[argidx++], type, 0xffff, "unsigned short");
                 ADJ(param, INT16);
                 break;
             case NATIVE_UINT32:
                 /* Special handling/checking for unsigned 32 bit integers */
-                param->u = getUnsignedInt32(argv[argidx++], type);
+                param->u32 = getUnsignedInt32(argv[argidx++], type);
                 ADJ(param, INT32);
                 break;
             case NATIVE_INT64:
@@ -521,7 +530,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 if (type != T_FIXNUM && type != T_BIGNUM) {
                     rb_raise(rb_eTypeError, "Expected an Integer parameter");
                 }
-                param->i64 = NUM2ULL(argv[argidx]);
+                param->u64 = NUM2ULL(argv[argidx]);
                 ADJ(param, INT64);
                 ++argidx;
                 break;
