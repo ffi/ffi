@@ -63,119 +63,119 @@ describe "Callback" do
   it "function with Callback plus another arg should raise error if no arg given" do
     lambda { LibTest.testCallbackCrV { |*a| }}.should raise_error
   end
-  it "Callback returning :char (0)" do
+  it "returning :char (0)" do
     LibTest.testCallbackVrS8 { 0 }.should == 0
   end
-  it "Callback returning :char (127)" do
+  it "returning :char (127)" do
     LibTest.testCallbackVrS8 { 127 }.should == 127
   end
-  it "Callback returning :char (-128)" do
+  it "returning :char (-128)" do
     LibTest.testCallbackVrS8 { -128 }.should == -128
   end
   # test wrap around
-  it "Callback returning :char (128)" do
+  it "returning :char (128)" do
     LibTest.testCallbackVrS8 { 128 }.should == -128
   end
-  it "Callback returning :char (255)" do
+  it "returning :char (255)" do
     LibTest.testCallbackVrS8 { 0xff }.should == -1
   end
-  it "Callback returning :uchar (0)" do
+  it "returning :uchar (0)" do
     LibTest.testCallbackVrU8 { 0 }.should == 0
   end
-  it "Callback returning :uchar (0xff)" do
+  it "returning :uchar (0xff)" do
     LibTest.testCallbackVrU8 { 0xff }.should == 0xff
   end
-  it "Callback returning :uchar (-1)" do
+  it "returning :uchar (-1)" do
     LibTest.testCallbackVrU8 { -1 }.should == 0xff
   end
-  it "Callback returning :uchar (128)" do
+  it "returning :uchar (128)" do
     LibTest.testCallbackVrU8 { 128 }.should == 128
   end
-  it "Callback returning :uchar (-128)" do
+  it "returning :uchar (-128)" do
     LibTest.testCallbackVrU8 { -128 }.should == 128
   end
-  it "Callback returning :short (0)" do
+  it "returning :short (0)" do
     LibTest.testCallbackVrS16 { 0 }.should == 0
   end
-  it "Callback returning :short (0x7fff)" do
+  it "returning :short (0x7fff)" do
     LibTest.testCallbackVrS16 { 0x7fff }.should == 0x7fff
   end
   # test wrap around
-  it "Callback returning :short (0x8000)" do
+  it "returning :short (0x8000)" do
     LibTest.testCallbackVrS16 { 0x8000 }.should == -0x8000
   end
-  it "Callback returning :short (0xffff)" do
+  it "returning :short (0xffff)" do
     LibTest.testCallbackVrS16 { 0xffff }.should == -1
   end
-  it "Callback returning :ushort (0)" do
+  it "returning :ushort (0)" do
     LibTest.testCallbackVrU16 { 0 }.should == 0
   end
-  it "Callback returning :ushort (0x7fff)" do
+  it "returning :ushort (0x7fff)" do
     LibTest.testCallbackVrU16 { 0x7fff }.should == 0x7fff
   end
-  it "Callback returning :ushort (0x8000)" do
+  it "returning :ushort (0x8000)" do
     LibTest.testCallbackVrU16 { 0x8000 }.should == 0x8000
   end
-  it "Callback returning :ushort (0xffff)" do
+  it "returning :ushort (0xffff)" do
     LibTest.testCallbackVrU16 { 0xffff }.should == 0xffff
   end
-  it "Callback returning :ushort (-1)" do
+  it "returning :ushort (-1)" do
     LibTest.testCallbackVrU16 { -1 }.should == 0xffff
   end
 
-  it "Callback returning :int (0)" do
+  it "returning :int (0)" do
     LibTest.testCallbackVrS32 { 0 }.should == 0
   end
-  it "Callback returning :int (0x7fffffff)" do
+  it "returning :int (0x7fffffff)" do
     LibTest.testCallbackVrS32 { 0x7fffffff }.should == 0x7fffffff
   end
   # test wrap around
-  it "Callback returning :int (-0x80000000)" do
+  it "returning :int (-0x80000000)" do
     LibTest.testCallbackVrS32 { -0x80000000 }.should == -0x80000000
   end
-  it "Callback returning :int (-1)" do
+  it "returning :int (-1)" do
     LibTest.testCallbackVrS32 { -1 }.should == -1
   end
 
-  it "Callback returning :uint (0)" do
+  it "returning :uint (0)" do
     LibTest.testCallbackVrU32 { 0 }.should == 0
   end
-  it "Callback returning :uint (0x7fffffff)" do
+  it "returning :uint (0x7fffffff)" do
     LibTest.testCallbackVrU32 { 0x7fffffff }.should == 0x7fffffff
   end
   # test wrap around
-  it "Callback returning :uint (0x80000000)" do
+  it "returning :uint (0x80000000)" do
     LibTest.testCallbackVrU32 { 0x80000000 }.should == 0x80000000
   end
-  it "Callback returning :uint (0xffffffff)" do
+  it "returning :uint (0xffffffff)" do
     LibTest.testCallbackVrU32 { 0xffffffff }.should == 0xffffffff
   end
   it "Callback returning :uint (-1)" do
     LibTest.testCallbackVrU32 { -1 }.should == 0xffffffff
   end
 
-  it "Callback returning :long_long (0)" do
+  it "returning :long_long (0)" do
     LibTest.testCallbackVrS64 { 0 }.should == 0
   end
-  it "Callback returning :long_long (0x7fffffffffffffff)" do
+  it "returning :long_long (0x7fffffffffffffff)" do
     LibTest.testCallbackVrS64 { 0x7fffffffffffffff }.should == 0x7fffffffffffffff
   end
   # test wrap around
-  it "Callback returning :long_long (-0x8000000000000000)" do
+  it "returning :long_long (-0x8000000000000000)" do
     LibTest.testCallbackVrS64 { -0x8000000000000000 }.should == -0x8000000000000000
   end
-  it "Callback returning :long_long (-1)" do
+  it "returning :long_long (-1)" do
     LibTest.testCallbackVrS64 { -1 }.should == -1
   end
-  it "Callback returning :pointer (nil)" do
+  it "returning :pointer (nil)" do
     LibTest.testCallbackVrP { nil }.null?.should be_true
   end
-  it "Callback returning :pointer (MemoryPointer)" do
+  it "returning :pointer (MemoryPointer)" do
     p = MemoryPointer.new :long
     LibTest.testCallbackVrP { p }.should == p
   end
 
-  it "Callback global variable" do
+  it "global variable" do
     proc = Proc.new { 0x1e }
     LibTest.cbVrS8 = proc
     LibTest.testGVarCallbackVrS8(LibTest.pVrS8).should == 0x1e
@@ -188,7 +188,7 @@ describe "Callback" do
   end
 
 end
-describe "Callback with primitive argument" do
+describe "primitive argument" do
   #
   # Test callbacks that take an argument, returning void
   #
@@ -210,148 +210,148 @@ describe "Callback with primitive argument" do
     attach_function :testCallbackU32rV, :testClosureIrV, [ :cbU32rV, :uint ], :void
     attach_function :testCallbackLrV, :testClosureLrV, [ :cbS64rV, :long_long ], :void
   end
-  it "Callback with :char (0) argument" do
+  it ":char (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackCrV(0) { |i| v = i }
     v.should == 0
   end
-  it "Callback with :char (127) argument" do
+  it ":char (127) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackCrV(127) { |i| v = i }
     v.should == 127
   end
-  it "Callback with :char (-128) argument" do
+  it ":char (-128) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackCrV(-128) { |i| v = i }
     v.should == -128
   end
-  it "Callback with :char (-1) argument" do
+  it ":char (-1) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackCrV(-1) { |i| v = i }
     v.should == -1
   end
 
-  it "Callback with :uchar (0) argument" do
+  it ":uchar (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU8rV(0) { |i| v = i }
     v.should == 0
   end
-  it "Callback with :uchar (127) argument" do
+  it ":uchar (127) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU8rV(127) { |i| v = i }
     v.should == 127
   end
-  it "Callback with :uchar (128) argument" do
+  it ":uchar (128) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU8rV(128) { |i| v = i }
     v.should == 128
   end
-  it "Callback with :uchar (255) argument" do
+  it ":uchar (255) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU8rV(255) { |i| v = i }
     v.should == 255
   end
 
-  it "Callback with :short (0) argument" do
+  it ":short (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackSrV(0) { |i| v = i }
     v.should == 0
   end
-  it "Callback with :short (0x7fff) argument" do
+  it ":short (0x7fff) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackSrV(0x7fff) { |i| v = i }
     v.should == 0x7fff
   end
-  it "Callback with :short (-0x8000) argument" do
+  it ":short (-0x8000) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackSrV(-0x8000) { |i| v = i }
     v.should == -0x8000
   end
-  it "Callback with :short (-1) argument" do
+  it ":short (-1) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackSrV(-1) { |i| v = i }
     v.should == -1
   end
 
-  it "Callback with :ushort (0) argument" do
+  it ":ushort (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU16rV(0) { |i| v = i }
     v.should == 0
   end
-  it "Callback with :ushort (0x7fff) argument" do
+  it ":ushort (0x7fff) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU16rV(0x7fff) { |i| v = i }
     v.should == 0x7fff
   end
-  it "Callback with :ushort (0x8000) argument" do
+  it ":ushort (0x8000) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU16rV(0x8000) { |i| v = i }
     v.should == 0x8000
   end
-  it "Callback with :ushort (0xffff) argument" do
+  it ":ushort (0xffff) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU16rV(0xffff) { |i| v = i }
     v.should == 0xffff
   end
 
-  it "Callback with :int (0) argument" do
+  it ":int (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackIrV(0) { |i| v = i }
     v.should == 0
   end
-  it "Callback with :int (0x7fffffff) argument" do
+  it ":int (0x7fffffff) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackIrV(0x7fffffff) { |i| v = i }
     v.should == 0x7fffffff
   end
-  it "Callback with :int (-0x80000000) argument" do
+  it ":int (-0x80000000) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackIrV(-0x80000000) { |i| v = i }
     v.should == -0x80000000
   end
-  it "Callback with :int (-1) argument" do
+  it ":int (-1) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackIrV(-1) { |i| v = i }
     v.should == -1
   end
 
-  it "Callback with :uint (0) argument" do
+  it ":uint (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU32rV(0) { |i| v = i }
     v.should == 0
   end
-  it "Callback with :uint (0x7fffffff) argument" do
+  it ":uint (0x7fffffff) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU32rV(0x7fffffff) { |i| v = i }
     v.should == 0x7fffffff
   end
-  it "Callback with :uint (0x80000000) argument" do
+  it ":uint (0x80000000) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU32rV(0x80000000) { |i| v = i }
     v.should == 0x80000000
   end
-  it "Callback with :uint (0xffffffff) argument" do
+  it ":uint (0xffffffff) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU32rV(0xffffffff) { |i| v = i }
     v.should == 0xffffffff
   end
 
-  it "Callback with :long_long (0) argument" do
+  it ":long_long (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackLrV(0) { |i| v = i }
     v.should == 0
   end
-  it "Callback with :long_long (0x7fffffffffffffff) argument" do
+  it ":long_long (0x7fffffffffffffff) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackLrV(0x7fffffffffffffff) { |i| v = i }
     v.should == 0x7fffffffffffffff
   end
-  it "Callback with :long_long (-0x8000000000000000) argument" do
+  it ":long_long (-0x8000000000000000) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackLrV(-0x8000000000000000) { |i| v = i }
     v.should == -0x8000000000000000
   end
-  it "Callback with :long_long (-1) argument" do
+  it ":long_long (-1) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackLrV(-1) { |i| v = i }
     v.should == -1
