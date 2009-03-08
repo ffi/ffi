@@ -45,7 +45,7 @@ ifeq ($(OS), win32)
 endif
 ifeq ($(OS), darwin)
   ARCHFLAGS = -arch ppc
-  ifeq ($(shell uname -m),i386)
+  ifeq ($(CPU),i386)
     ARCHFLAGS += -arch i386 -arch x86_64
   endif
   CFLAGS += $(ARCHFLAGS) -isysroot /Developer/SDKs/MacOSX10.4u.sdk -DTARGET_RT_MAC_CFM=0
