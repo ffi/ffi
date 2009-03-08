@@ -49,6 +49,7 @@ ifeq ($(OS), darwin)
     ARCHFLAGS += -arch x86_64
   endif
   CFLAGS += $(ARCHFLAGS) -isysroot /Developer/SDKs/MacOSX10.4u.sdk -DTARGET_RT_MAC_CFM=0
+  CFLAGS += -fno-common
   LDFLAGS = $(ARCHFLAGS) -dynamiclib -Wl,-syslibroot,$(SDKROOT) -mmacosx-version-min=10.4
   LIBEXT = dylib
   FFI_CFLAGS += -isysroot /Developer/SDKs/MacOSX10.4u.sdk
