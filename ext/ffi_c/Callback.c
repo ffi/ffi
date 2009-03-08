@@ -177,12 +177,12 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
         case NATIVE_INT8:
         case NATIVE_INT16:
         case NATIVE_INT32:
-            *((long *) retval) = NUM2INT(rbReturnValue);
+            *((ffi_sarg *) retval) = NUM2INT(rbReturnValue);
             break;
         case NATIVE_UINT8:
         case NATIVE_UINT16:
         case NATIVE_UINT32:
-            *((unsigned long *) retval) = NUM2UINT(rbReturnValue);
+            *((ffi_arg *) retval) = NUM2UINT(rbReturnValue);
             break;
         case NATIVE_INT64:
             *((int64_t *) retval) = NUM2LL(rbReturnValue);
