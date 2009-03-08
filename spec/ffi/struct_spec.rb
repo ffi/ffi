@@ -14,6 +14,7 @@ describe "Struct tests" do
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
+    attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
     attach_function :ptr_from_address, [ :ulong ], :pointer
     attach_function :string_equals, [ :string, :string ], :int
     [ 's8', 's16', 's32', 's64', 'f32', 'f64', 'long' ].each do |t|
@@ -163,13 +164,13 @@ describe "Struct tests" do
       attach_function :struct_field_s8, [ TestStruct.out ], :char
     end
   end
-  it "Struct can be passed directly as a :pointer parameter" do
+  it "can be passed directly as a :pointer parameter" do
     class TestStruct < FFI::Struct
-      layout :c, :char, :v, :char
+      layout :i, :int
     end
     s = TestStruct.new
-    s[:v] = 0x12
-    LibTest.struct_align_s8(s).should == 0x12
+    s[:i] = 0x12
+    LibTest.ptr_ret_int32_t(s, 0).should == 0x12
   end
   it ":char member aligned correctly" do
     class AlignChar < FFI::Struct
