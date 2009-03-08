@@ -44,9 +44,12 @@ ifeq ($(OS), win32)
 	LDFLAGS += -mno-cygwin -Wl,--add-stdcall-alias
 endif
 ifeq ($(OS), darwin)
-  CFLAGS += -arch i386 -arch ppc -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -DTARGET_RT_MAC_CFM=0
-  LDFLAGS = -arch i386 -arch ppc -arch x86_64 -dynamiclib \
-	-Wl,-syslibroot,$(SDKROOT) -mmacosx-version-min=10.4
+  ARCHFLAGS = -arch i386 -arch ppc
+  ifeq ($(shell uname -m),i386)
+    ARCHFLAGS += -arch x86_64
+  endif
+  CFLAGS += $(ARCHFLAGS) -isysroot /Developer/SDKs/MacOSX10.4u.sdk -DTARGET_RT_MAC_CFM=0
+  LDFLAGS = $(ARCHFLAGS) -dynamiclib -Wl,-syslibroot,$(SDKROOT) -mmacosx-version-min=10.4
   LIBEXT = dylib
   FFI_CFLAGS += -isysroot /Developer/SDKs/MacOSX10.4u.sdk
   PICFLAGS =
