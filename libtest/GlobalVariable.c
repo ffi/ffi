@@ -17,7 +17,8 @@ typedef unsigned long ulong;
 typedef void* pointer;
 
 #define GVAR(T) \
-    T gvar_##T; \
+    extern T gvar_##T; \
+    T gvar_##T = (T) -1; \
     T gvar_##T##_get() { return gvar_##T; }; \
     void gvar_##T##_set(T v) { gvar_##T = v; }
 
