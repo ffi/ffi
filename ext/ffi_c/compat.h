@@ -6,8 +6,8 @@
 #ifndef RARRAY_LEN
 #  define RARRAY_LEN(ary) RARRAY(ary)->len
 #endif
-#ifndef RSTRING_LEN
-#  define RSTRING_LEN(s) RSTRING(s)->len
+#ifndef RARRAY_PTR
+#  define RARRAY_PTR(ary) RARRAY(ary)->ptr
 #endif
 #ifndef RSTRING_LEN
 #  define RSTRING_LEN(s) RSTRING(s)->len
