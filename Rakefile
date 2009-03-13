@@ -35,7 +35,6 @@ spec = Gem::Specification.new do |s|
   s.extensions = %w(ext/ffi_c/extconf.rb gen/Rakefile)
   
   s.require_path = 'lib'
-  s.autorequire = GEM
   s.files = %w(LICENSE README Rakefile) + Dir.glob("{ext,lib,nbproject,samples,spec}/**/*")
 end
 
