@@ -15,6 +15,7 @@
 #include "Pointer.h"
 #include "NativeLibrary.h"
 
+static VALUE library_initialize(VALUE self, VALUE libname, VALUE libflags);
 static void library_free(Library* lib);
 static VALUE classLibrary;
 
@@ -35,15 +36,27 @@ enum { RTLD_LAZY=1, RTLD_NOW, RTLD_GLOBAL, RTLD_LOCAL };
 #endif
 
 static VALUE
+library_allocate(VALUE klass)
+{
+    Library* library;
+    return Data_Make_Struct(klass, Library, NULL, library_free, library);
+}
+
+static VALUE
 library_open(VALUE klass, VALUE libname, VALUE libflags)
 {
-    VALUE retval;
+    return library_initialize(library_allocate(klass), libname, libflags);
+}
+
+static VALUE
+library_initialize(VALUE self, VALUE libname, VALUE libflags)
+{
     Library* library;
     int flags;
 
     Check_Type(libflags, T_FIXNUM);
 
-    retval = Data_Make_Struct(klass, Library, NULL, library_free, library);
+    Data_Get_Struct(self, Library, library);
     flags = libflags != Qnil ? NUM2UINT(libflags) : 0;
     
     library->handle = dl_open(libname != Qnil ? StringValueCStr(libname) : NULL, flags);
@@ -54,8 +67,8 @@ library_open(VALUE klass, VALUE libname, VALUE libflags)
                 libname != Qnil ? StringValueCStr(libname) : "[current process]",
                 errmsg);
     }
-    rb_iv_set(retval, "@name", libname != Qnil ? libname : rb_str_new2("[current process]"));
-    return retval;
+    rb_iv_set(self, "@name", libname != Qnil ? libname : rb_str_new2("[current process]"));
+    return self;
 }
 
 static VALUE
@@ -118,7 +131,10 @@ rb_FFI_NativeLibrary_Init()
     VALUE moduleFFI = rb_define_module("FFI");
     classLibrary = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
     rb_define_const(moduleFFI, "NativeLibrary", classLibrary); // backwards compat library
+    rb_define_alloc_func(classLibrary, library_allocate);
     rb_define_singleton_method(classLibrary, "open", library_open, 2);
+    rb_define_singleton_method(classLibrary, "last_error", library_dlerror, 0);
+    rb_define_method(classLibrary, "initialize", library_initialize, 2);
     rb_define_method(classLibrary, "find_symbol", library_dlsym, 1);
     rb_define_method(classLibrary, "last_error", library_dlerror, 0);
     rb_define_attr(classLibrary, "name", 1, 0);
