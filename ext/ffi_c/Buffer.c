@@ -11,7 +11,8 @@ typedef struct Buffer {
     VALUE parent;
 } Buffer;
 
-static VALUE buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear);
+static VALUE buffer_allocate(VALUE klass);
+static VALUE buffer_initialize(VALUE self, VALUE size, VALUE count, VALUE clear);
 static void buffer_release(Buffer* ptr);
 static void buffer_mark(Buffer* ptr);
 
@@ -19,10 +20,16 @@ static VALUE classBuffer = Qnil;
 #define BUFFER(obj)  ((Buffer *) rb_FFI_AbstractMemory_cast((obj), classBuffer))
 
 static VALUE
-buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
+buffer_allocate(VALUE klass)
+{
+    Buffer* buffer;
+    return Data_Make_Struct(klass, Buffer, buffer_mark, buffer_release, buffer);
+}
+
+static VALUE
+buffer_initialize(VALUE self, VALUE size, VALUE count, VALUE clear)
 {
     Buffer* p;
-    VALUE retval;
     unsigned long msize = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
     void* memory;
 
@@ -30,16 +37,22 @@ buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
     if (memory == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", msize);
     }
-    retval = Data_Make_Struct(classBuffer, Buffer, buffer_mark, buffer_release, p);
+    Data_Get_Struct(self, Buffer, p);
     p->address = memory;
     p->memory.size = msize;
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (void *) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);
     p->parent = Qnil;
-    if (TYPE(clear) == T_TRUE && p->memory.size > 0) {
+    if (RTEST(clear) && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
-    return retval;
+    return self;
+}
+
+static VALUE
+buffer_alloc_inout(VALUE klass, VALUE size, VALUE count, VALUE clear)
+{
+    return rb_funcall(buffer_allocate(klass), rb_intern("initialize"), 3, size, count, clear);
 }
 
 static VALUE
@@ -89,9 +102,13 @@ rb_FFI_Buffer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     classBuffer = rb_define_class_under(moduleFFI, "Buffer", rb_FFI_AbstractMemory_class);
-    rb_define_singleton_method(classBuffer, "__alloc_inout", buffer_allocate, 3);
-    rb_define_singleton_method(classBuffer, "__alloc_out", buffer_allocate, 3);
-    rb_define_singleton_method(classBuffer, "__alloc_in", buffer_allocate, 3);
+    rb_define_alloc_func(classBuffer, buffer_allocate);
+
+    rb_define_singleton_method(classBuffer, "__alloc_inout", buffer_alloc_inout, 3);
+    rb_define_singleton_method(classBuffer, "__alloc_out", buffer_alloc_inout, 3);
+    rb_define_singleton_method(classBuffer, "__alloc_in", buffer_alloc_inout, 3);
+    
+    rb_define_method(classBuffer, "initialize", buffer_initialize, 3);
     rb_define_method(classBuffer, "inspect", buffer_inspect, 0);
     rb_define_method(classBuffer, "+", buffer_plus, 1);
 }
