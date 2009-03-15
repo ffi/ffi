@@ -9,14 +9,17 @@
 
 typedef struct MemoryPointer {
     AbstractMemory memory;
-    void* address;
+    char* storage; /* start of malloc area */
+    int type_size;
     bool autorelease;
     bool allocated;
 } MemoryPointer;
 
-static VALUE memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear);
+static VALUE memptr_allocate(VALUE klass);
 static void memptr_release(MemoryPointer* ptr);
-static VALUE memptr_create(VALUE klass, long size, long count, bool clear);
+static VALUE memptr_malloc(VALUE self, long size, long count, bool clear);
+static VALUE memptr_free(VALUE self);
+
 VALUE rb_FFI_MemoryPointer_class;
 static VALUE classMemoryPointer = Qnil;
 #define MEMPTR(obj) ((MemoryPointer *) rb_FFI_AbstractMemory_cast(obj, rb_FFI_MemoryPointer_class))
@@ -24,40 +27,55 @@ static VALUE classMemoryPointer = Qnil;
 VALUE
 rb_FFI_MemoryPointer_new(long size, long count, bool clear)
 {
-    return memptr_create(classMemoryPointer, size, count, clear);
+    return memptr_malloc(memptr_allocate(classMemoryPointer), size, count, clear);
 }
 
 static VALUE
-memptr_create(VALUE klass, long size, long count, bool clear)
+memptr_allocate(VALUE klass)
 {
     MemoryPointer* p;
-    VALUE retval;
-    void* memory;
-    unsigned long msize = size * count;
+    return Data_Make_Struct(klass, MemoryPointer, NULL, memptr_release, p);
+}
 
-    memory = malloc(msize + 7);
-    if (memory == NULL) {
+static VALUE
+memptr_initialize(int argc, VALUE* argv, VALUE self)
+{
+    VALUE size = Qnil, count = Qnil, clear = Qnil;
+    int nargs = rb_scan_args(argc, argv, "12", &size, &count, &clear);
+    memptr_malloc(self, rb_FFI_type_size(size), nargs > 1 ? NUM2LONG(count) : 1,
+        nargs > 2 && RTEST(clear));
+    
+    if (rb_block_given_p()) {
+        return rb_rescue(rb_yield, self, memptr_free, self);
+    }
+    return self;
+}
+
+static VALUE
+memptr_malloc(VALUE self, long size, long count, bool clear)
+{
+    MemoryPointer* p;
+    unsigned long msize;
+
+    Data_Get_Struct(self, MemoryPointer, p);
+    p->type_size = size;
+
+    msize = size * count;
+
+    p->storage = malloc(msize + 7);
+    if (p->storage == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", msize);
     }
-    retval = Data_Make_Struct(klass, MemoryPointer, NULL, memptr_release, p);
-    p->address = memory;
     p->autorelease = true;
     p->memory.size = msize;
     /* ensure the memory is aligned on at least a 8 byte boundary */
-    p->memory.address = (char *) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);;
+    p->memory.address = (char *) (((uintptr_t) p->storage + 0x7) & (uintptr_t) ~0x7UL);;
     p->allocated = true;
     if (clear && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
-    return retval;
+    return self;
 }
-static VALUE
-memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
-{
-    return memptr_create(self, NUM2LONG(size), count != Qnil ? NUM2LONG(count) : 1,
-            clear != Qnil ? TYPE(clear) == T_TRUE : true);
-}
-
 
 static VALUE
 memptr_inspect(VALUE self)
@@ -69,13 +87,27 @@ memptr_inspect(VALUE self)
 }
 
 static VALUE
+memptr_type_size(VALUE self)
+{
+    return INT2FIX(MEMPTR(self)->type_size);
+}
+
+static VALUE
+memptr_aref(VALUE self, VALUE which)
+{
+    MemoryPointer* ptr = MEMPTR(self);
+    VALUE offset = INT2NUM(ptr->type_size * NUM2INT(which));
+    rb_funcall2(self, rb_intern("+"), 1, &offset);
+}
+
+static VALUE
 memptr_free(VALUE self)
 {
     MemoryPointer* ptr = MEMPTR(self);
     if (ptr->allocated) {
-        if (ptr->address != NULL) {
-            free(ptr->address);
-            ptr->address = NULL;
+        if (ptr->storage != NULL) {
+            free(ptr->storage);
+            ptr->storage = NULL;
         }
         ptr->allocated = false;
     }
@@ -92,9 +124,9 @@ memptr_autorelease(VALUE self, VALUE autorelease)
 static void
 memptr_release(MemoryPointer* ptr)
 {
-    if (ptr->autorelease && ptr->allocated && ptr->address != NULL) {
-        free(ptr->address);
-        ptr->address = NULL;
+    if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
+        free(ptr->storage);
+        ptr->storage = NULL;
     }
     xfree(ptr);
 }
@@ -104,8 +136,11 @@ rb_FFI_MemoryPointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_MemoryPointer_class = classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_Pointer_class);
-    rb_define_singleton_method(classMemoryPointer, "__allocate", memptr_allocate, 3);
+    rb_define_alloc_func(classMemoryPointer, memptr_allocate);
+    rb_define_method(classMemoryPointer, "initialize", memptr_initialize, -1);
     rb_define_method(classMemoryPointer, "inspect", memptr_inspect, 0);
     rb_define_method(classMemoryPointer, "autorelease=", memptr_autorelease, 1);
     rb_define_method(classMemoryPointer, "free", memptr_free, 0);
+    rb_define_method(classMemoryPointer, "type_size", memptr_type_size, 0);
+    rb_define_method(classMemoryPointer, "[]", memptr_aref, 1);
 }

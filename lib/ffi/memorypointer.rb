@@ -23,34 +23,34 @@ module FFI
       # with a block yields the MemoryPointer instance and frees the memory
       # when the block returns. The value returned is the value of the block.
 
-      def self.new(type, count=nil, clear=true)
-        size = if type.kind_of? Fixnum
-          type
-        elsif type.kind_of? Symbol
-          FFI.type_size(type)
-        else
-          type.size
-        end
-        ptr = self.__allocate(size, count, clear)
-        ptr.type_size = size
-        if block_given?
-          begin
-            value = yield ptr
-          ensure
-            ptr.free
-          end
-          value
-        else
-          ptr
-        end
-      end
+#      def self.new(type, count=nil, clear=true)
+#        size = if type.kind_of? Fixnum
+#          type
+#        elsif type.kind_of? Symbol
+#          FFI.type_size(type)
+#        else
+#          type.size
+#        end
+#        ptr = self.__allocate(size, count, clear)
+#        ptr.type_size = size
+#        if block_given?
+#          begin
+#            value = yield ptr
+#          ensure
+#            ptr.free
+#          end
+#          value
+#        else
+#          ptr
+#        end
+#      end
       def self.from_string(s)
         ptr = self.new(s.length + 1, 1, false)
         ptr.put_string(0, s)
         ptr
       end
       # Indicates how many bytes the type that the pointer is cast as uses.
-      attr_accessor :type_size
+      # attr_accessor :type_size
 
       # Access the MemoryPointer like a C array, accessing the +which+ number
       # element in memory. The position of the element is calculate from
@@ -66,10 +66,9 @@ module FFI
       #   int *new_ptr;
       #   new_ptr = &ptr[9];
       #
-      def [](which)
-        raise ArgumentError, "unknown type size" unless @type_size
-        self + (which * @type_size)
-      end
+#      def [](which)
+#        self + (which * type_size)
+#      end
   end
 end
 
