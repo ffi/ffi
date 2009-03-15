@@ -7,7 +7,8 @@
 
 typedef struct Buffer {
     AbstractMemory memory;
-    void* address; /* The C heap address */
+    char* storage; /* start of malloc area */
+    int type_size;
     VALUE parent;
 } Buffer;
 
@@ -15,6 +16,7 @@ static VALUE buffer_allocate(VALUE klass);
 static VALUE buffer_initialize(int argc, VALUE* argv, VALUE self);
 static void buffer_release(Buffer* ptr);
 static void buffer_mark(Buffer* ptr);
+static VALUE buffer_free(VALUE self);
 
 static VALUE classBuffer = Qnil;
 #define BUFFER(obj)  ((Buffer *) rb_FFI_AbstractMemory_cast((obj), classBuffer))
@@ -42,13 +44,16 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", msize);
     }
     Data_Get_Struct(self, Buffer, p);
-    p->address = memory;
+    p->storage = memory;
     p->memory.size = msize;
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (void *) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);
     p->parent = Qnil;
     if (nargs > 2 && RTEST(clear) && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
+    }
+    if (rb_block_given_p()) {
+        return rb_rescue(rb_yield, self, buffer_free, self);
     }
     return self;
 }
@@ -83,16 +88,28 @@ buffer_inspect(VALUE self)
     return rb_str_new2(tmp);
 }
 
+/* Only used to free the buffer if the yield in the initializer throws an exception */
+static VALUE
+buffer_free(VALUE self)
+{
+    Buffer* ptr = BUFFER(self);
+    if (ptr->parent == Qnil && ptr->storage != NULL) {
+        free(ptr->storage);
+        ptr->storage = NULL;
+    }
+}
+
 static void
 buffer_release(Buffer* ptr)
 {
-    if (ptr->parent == Qnil && ptr->address != NULL) {
-        free(ptr->address);
-        ptr->address = NULL;
+    if (ptr->parent == Qnil && ptr->storage != NULL) {
+        free(ptr->storage);
+        ptr->storage = NULL;
     }
     xfree(ptr);
 
 }
+
 static void
 buffer_mark(Buffer* ptr)
 {
