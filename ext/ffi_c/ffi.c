@@ -15,15 +15,48 @@
 #include "Types.h"
 
 
-void Init_ffi();
+void Init_ffi_c();
 
 static VALUE moduleFFI = Qnil;
 static VALUE moduleNativeType = Qnil;
+static VALUE typeMap = Qnil, sizeMap = Qnil;
+static ID type_size_id = 0, size_id;
+
+int
+rb_FFI_type_size(VALUE type)
+{
+    int t = TYPE(type);
+    if (t == T_FIXNUM || t == T_BIGNUM) {
+        return NUM2INT(type);
+    } else if (t == T_SYMBOL) {
+        /*
+         * Try looking up directly in the type and size maps
+         */
+        VALUE nType;
+        if ((nType = rb_hash_aref(typeMap, type)) != Qnil) {
+            VALUE nSize = rb_hash_aref(sizeMap, nType);
+            if (TYPE(nSize) == T_FIXNUM) {
+                return FIX2INT(nSize);
+            }
+        }
+        // Not found - call up to the ruby version to resolve
+        return rb_funcall(moduleFFI, rb_intern("type_size"), 1, &type);
+    } else {
+        return rb_funcall(type, size_id, 0, NULL);
+    }
+}
 
 void
 Init_ffi_c() {
     moduleFFI = rb_define_module("FFI");
+    rb_global_variable(&moduleFFI);
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
+    rb_define_const(moduleFFI, "TypeDefs", typeMap = rb_hash_new());
+    rb_define_const(moduleFFI, "SizeTypes", sizeMap = rb_hash_new());
+    rb_global_variable(&typeMap);
+    rb_global_variable(&sizeMap);
+    type_size_id = rb_intern("type_size");
+    size_id = rb_intern("size");
     
     rb_define_const(moduleNativeType, "VOID", INT2FIX(NATIVE_VOID));
     rb_define_const(moduleNativeType, "INT8", INT2FIX(NATIVE_INT8));

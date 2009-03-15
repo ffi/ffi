@@ -30,7 +30,7 @@ static VALUE
 buffer_initialize(VALUE self, VALUE size, VALUE count, VALUE clear)
 {
     Buffer* p;
-    unsigned long msize = NUM2LONG(size) * (count == Qnil ? 1 : NUM2LONG(count));
+    unsigned long msize = rb_FFI_type_size(size) * (count == Qnil ? 1 : NUM2LONG(count));
     void* memory;
 
     memory = malloc(msize + 7);

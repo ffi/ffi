@@ -1,5 +1,5 @@
 module FFI
-  TypeDefs = Hash.new
+#  TypeDefs = Hash.new
   def self.add_typedef(current, add)
     if current.kind_of? Integer
       code = current
@@ -103,7 +103,7 @@ module FFI
     4 => :int,
     8 => :long_long,
   }
-  SizeTypes = {
+  SizeTypes.merge!({
     NativeType::INT8 => 1,
     NativeType::UINT8 => 1,
     NativeType::INT16 => 2,
@@ -117,7 +117,7 @@ module FFI
     NativeType::LONG => FFI::Platform::LONG_SIZE / 8,
     NativeType::ULONG => FFI::Platform::LONG_SIZE / 8,
     NativeType::POINTER => FFI::Platform::ADDRESS_SIZE / 8,
-  }
+  })
 
   def self.size_to_type(size)
     if sz = TypeSizes[size]

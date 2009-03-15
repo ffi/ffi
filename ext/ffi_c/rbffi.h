@@ -15,7 +15,7 @@ extern void rb_FFI_Buffer_Init();
 extern void rb_FFI_Callback_Init();
 extern void rb_FFI_Invoker_Init();
 extern VALUE rb_FFI_AbstractMemory_class;
-
+extern int rb_FFI_type_size(VALUE type);
 
 #ifdef	__cplusplus
 }
