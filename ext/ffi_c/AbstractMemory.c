@@ -22,9 +22,6 @@ static VALUE classMemory = Qnil;
 static ID to_ptr = 0;
 
 #define ADDRESS(self, offset) (memory_address((self)) + NUM2ULONG(offset))
-#ifndef RARRAY_LEN
-#  define RARRAY_LEN(ary) RARRAY(ary)->len
-#endif
 
 #define NUM_OP(name, type, toNative, fromNative) \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
@@ -59,7 +56,7 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     long i; \
     checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
-        type tmp = (type) toNative(rb_ary_entry(ary, i)); \
+        type tmp = (type) toNative(RARRAY_PTR(ary)[i]); \
         memcpy(memory->address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
     } \
     return self; \
@@ -71,13 +68,12 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     long count = NUM2LONG(length); \
     long off = NUM2LONG(offset); \
     AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
-    long last = off + count; \
     long i; \
     checkBounds(memory, off, count * sizeof(type)); \
     VALUE retVal = rb_ary_new2(count); \
-    for (i = off; i < last; ++i) { \
+    for (i = 0; i < count; ++i) { \
         type tmp; \
-        memcpy(&tmp, memory->address + (i * sizeof(type)), sizeof(tmp)); \
+        memcpy(&tmp, memory->address + off + (i * sizeof(type)), sizeof(tmp)); \
         rb_ary_push(retVal, fromNative(tmp)); \
     } \
     return retVal; \
