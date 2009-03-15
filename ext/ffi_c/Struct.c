@@ -49,17 +49,26 @@ static ID getID = 0, putID = 0, to_ptr = 0;
     ? DATA_PTR(obj) : (rb_raise(rb_eArgError, "StructLayout expected"), NULL)))
 
 static VALUE
-struct_field_new(int argc, VALUE* argv, VALUE klass)
+struct_field_allocate(VALUE klass)
+{
+    StructField* field;
+    return Data_Make_Struct(klass, StructField, struct_field_mark, struct_field_free, field);
+}
+
+static VALUE
+struct_field_initialize(int argc, VALUE* argv, VALUE self)
 {
     VALUE offset = Qnil, info = Qnil;
     StructField* field;
-    VALUE retval;
     int nargs;
+
+    Data_Get_Struct(self, StructField, field);
+
     nargs = rb_scan_args(argc, argv, "11", &offset, &info);
-    retval = Data_Make_Struct(klass, StructField, struct_field_mark, struct_field_free, field);
+    
     field->offset = NUM2UINT(offset);
-    if (rb_const_defined(klass, rb_intern("TYPE"))) {
-        field->type = NUM2UINT(rb_const_get(klass, rb_intern("TYPE")));
+    if (rb_const_defined(CLASS_OF(self), rb_intern("TYPE"))) {
+        field->type = NUM2UINT(rb_const_get(CLASS_OF(self), rb_intern("TYPE")));
     } else {
         field->type = ~0;
     }
@@ -67,9 +76,9 @@ struct_field_new(int argc, VALUE* argv, VALUE klass)
     field->size = NUM2UINT(rb_const_get(klass, rb_intern("SIZE")));
     field->align = NUM2UINT(rb_const_get(klass, rb_intern("ALIGN")));
 #endif
-    rb_iv_set(retval, "@off", offset);
-    rb_iv_set(retval, "@info", info);
-    return retval;
+    rb_iv_set(self, "@off", offset);
+    rb_iv_set(self, "@info", info);
+    return self;
 }
 
 static VALUE
@@ -122,6 +131,7 @@ pointer_native(VALUE value)
         rb_raise(rb_eArgError, "value is not a pointer");
     }
 }
+
 static inline VALUE
 pointer_new(char* value)
 {
@@ -471,6 +481,16 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
     return self;
 }
 
+static VALUE
+struct_layout_aref(VALUE self, VALUE field)
+{
+    StructLayout* layout;
+
+    Data_Get_Struct(self, StructLayout, layout);
+    return rb_hash_aref(layout->rbFields, field);
+}
+
+
 static void
 struct_layout_mark(StructLayout *layout)
 {
@@ -483,15 +503,6 @@ static void
 struct_layout_free(StructLayout *layout)
 {
     xfree(layout);
-}
-
-static VALUE
-struct_layout_get(VALUE self, VALUE field)
-{
-    StructLayout* layout;
-
-    Data_Get_Struct(self, StructLayout, layout);
-    return rb_hash_aref(layout->rbFields, field);
 }
 
 void
@@ -521,12 +532,13 @@ rb_FFI_Struct_Init()
     rb_define_method(classStruct, "[]", struct_get_field, 1);
     rb_define_method(classStruct, "[]=", struct_put_field, 2);
     
-    rb_define_singleton_method(classStructField, "new", struct_field_new, -1);
+    rb_define_alloc_func(classStructField, struct_field_allocate);
+    rb_define_method(classStructField, "initialize", struct_field_initialize, -1);
     rb_define_method(classStructField, "offset", struct_field_offset, 0);
     
     rb_define_alloc_func(classStructLayout, struct_layout_allocate);
     rb_define_method(classStructLayout, "initialize", struct_layout_initialize, 4);
-    rb_define_method(classStructLayout, "[]", struct_layout_get, 1);
+    rb_define_method(classStructLayout, "[]", struct_layout_aref, 1);
     initializeID = rb_intern("initialize");
     pointerID = rb_intern("@pointer");
     layoutID = rb_intern("@layout");
