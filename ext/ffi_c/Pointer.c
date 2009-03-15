@@ -34,45 +34,68 @@ rb_FFI_Pointer_new(void* addr)
 }
 
 static VALUE
+ptr_allocate(VALUE klass)
+{
+    Pointer* p;
+    return Data_Make_Struct(classPointer, Pointer, NULL, ptr_free, p);
+}
+
+static VALUE
 ptr_plus(VALUE self, VALUE offset)
 {
-    AbstractMemory* ptr = POINTER(self);
+    AbstractMemory* ptr;
     Pointer* p;
     VALUE retval;
     long off = NUM2LONG(offset);
 
+    Data_Get_Struct(self, AbstractMemory, ptr);
     checkBounds(ptr, off, 1);
+
     retval = Data_Make_Struct(classPointer, Pointer, ptr_mark, ptr_free, p);
+
     p->memory.address = ptr->address + off;
     p->memory.size = ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off;
     p->parent = self;
+
     return retval;
 }
 
 static VALUE
 ptr_inspect(VALUE self)
 {
+    Pointer* ptr;
     char tmp[100];
-    snprintf(tmp, sizeof(tmp), "#<Native Pointer address=%p>", POINTER(self)->address);
+
+    Data_Get_Struct(self, Pointer, ptr);
+    snprintf(tmp, sizeof(tmp), "#<Native Pointer address=%p>", ptr->memory.address);
+
     return rb_str_new2(tmp);
 }
 
 static VALUE
 ptr_null_p(VALUE self)
 {
-    return POINTER(self)->address == NULL ? Qtrue : Qfalse;
+    Pointer* ptr;
+    Data_Get_Struct(self, Pointer, ptr);
+    return ptr->memory.address == NULL ? Qtrue : Qfalse;
 }
 
 static VALUE
 ptr_equals(VALUE self, VALUE other)
 {
-    return POINTER(self)->address == POINTER(other)->address ? Qtrue : Qfalse;
+    Pointer* ptr;
+    Data_Get_Struct(self, Pointer, ptr);
+
+    return ptr->memory.address == POINTER(other)->address ? Qtrue : Qfalse;
 }
 
 static VALUE
 ptr_address(VALUE self)
 {
-    return ULL2NUM((uintptr_t) POINTER(self)->address);
+    Pointer* ptr;
+    Data_Get_Struct(self, Pointer, ptr);
+
+    return ULL2NUM((uintptr_t) ptr->memory.address);
 }
 
 static void
@@ -94,6 +117,8 @@ rb_FFI_Pointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_Pointer_class = classPointer = rb_define_class_under(moduleFFI, "Pointer", rb_FFI_AbstractMemory_class);
+
+    rb_define_alloc_func(classPointer, ptr_allocate);
     rb_define_method(classPointer, "inspect", ptr_inspect, 0);
     rb_define_method(classPointer, "+", ptr_plus, 1);
     rb_define_method(classPointer, "null?", ptr_null_p, 0);
