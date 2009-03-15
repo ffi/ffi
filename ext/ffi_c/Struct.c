@@ -42,6 +42,12 @@ static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
 static ID initializeID = 0, pointerID = 0, layoutID = 0, SIZE_ID, ALIGN_ID;
 static ID getID = 0, putID = 0, to_ptr = 0;
 
+#define FIELD_CAST(obj) ((StructField *)((TYPE(obj) == T_DATA && rb_obj_is_kind_of(obj, classStructField)) \
+    ? DATA_PTR(obj) : (rb_raise(rb_eArgError, "StructField expected"), NULL)))
+
+#define LAYOUT_CAST(obj) ((StructLayout *)((TYPE(obj) == T_DATA && rb_obj_is_kind_of(obj, classStructLayout)) \
+    ? DATA_PTR(obj) : (rb_raise(rb_eArgError, "StructLayout expected"), NULL)))
+
 static VALUE
 struct_field_new(int argc, VALUE* argv, VALUE klass)
 {
@@ -69,7 +75,8 @@ struct_field_new(int argc, VALUE* argv, VALUE klass)
 static VALUE
 struct_field_offset(VALUE self)
 {
-    StructField* field = (StructField *) DATA_PTR(self);
+    StructField* field;
+    Data_Get_Struct(self, StructField, field);
     return UINT2NUM(field->offset);
 }
 
@@ -153,15 +160,18 @@ ptr_get_##name(AbstractMemory* ptr, StructField* field) \
 static VALUE \
 struct_field_put_##name(VALUE self, VALUE pointer, VALUE value) \
 { \
-    ptr_put_##name(MEMORY(pointer), (StructField *) DATA_PTR(self), value); \
+    StructField* f;  Data_Get_Struct(self, StructField, f); \
+    ptr_put_##name(MEMORY(pointer), f, value); \
     return self; \
 } \
 static VALUE struct_field_get_##name(VALUE self, VALUE pointer); \
 static VALUE \
 struct_field_get_##name(VALUE self, VALUE pointer) \
 { \
-    return ptr_get_##name(MEMORY(pointer), (StructField *) DATA_PTR(self)); \
+    StructField* f;  Data_Get_Struct(self, StructField, f); \
+    return ptr_get_##name(MEMORY(pointer), f); \
 }
+
 FIELD_OP(int8, int8_t, NUM2INT, INT2NUM);
 FIELD_OP(uint8, uint8_t, NUM2UINT, UINT2NUM);
 FIELD_OP(int16, int16_t, NUM2INT, INT2NUM);
@@ -195,8 +205,9 @@ struct_new(int argc, VALUE* argv, VALUE klass)
     if (rbLayout == Qnil || !rb_obj_is_kind_of(rbLayout, classStructLayout)) {
         rb_raise(rb_eRuntimeError, "Invalid Struct layout");
     }
+    Data_Get_Struct(rbLayout, StructLayout, s->layout);
     s->rbLayout = rbLayout;
-    s->layout = (StructLayout *) DATA_PTR(rbLayout);
+
     if (rbPointer == Qnil) {
         rbPointer = rb_FFI_MemoryPointer_new(s->layout->size, 1, true);
     }
@@ -224,8 +235,8 @@ struct_alloc(int argc, VALUE* argv, VALUE klass)
     if (rbLayout == Qnil || !rb_obj_is_kind_of(rbLayout, classStructLayout)) {
         rb_raise(rb_eRuntimeError, "Invalid Struct layout");
     }
+    Data_Get_Struct(rbLayout, StructLayout, s->layout);
     s->rbLayout = rbLayout;
-    s->layout = (StructLayout *) DATA_PTR(rbLayout);
     rb_scan_args(argc, argv, "01", &rbClear);
     rbPointer = rb_FFI_MemoryPointer_new(s->layout->size, 1, rbClear == Qtrue);
 
@@ -239,13 +250,18 @@ struct_alloc(int argc, VALUE* argv, VALUE klass)
 static VALUE
 struct_initialize(VALUE self, VALUE rbPointer)
 {
-    Struct* s = (Struct *) DATA_PTR(self);
+    Struct* s;
+
+    Data_Get_Struct(self, Struct, s);
+
     if (rbPointer == Qnil) {
         rb_raise(rb_eArgError, "Struct memory cannot be NULL");
     }
+
     if (!rb_obj_is_kind_of(rbPointer, rb_FFI_AbstractMemory_class)) {
         rb_raise(rb_eArgError, "Invalid Struct memory");
     }
+
     s->rbPointer = rbPointer;
     s->pointer = MEMORY(rbPointer);
     return self;
@@ -261,10 +277,12 @@ struct_mark(Struct *s)
         rb_gc_mark(s->rbLayout);
     }
 }
+
 static void struct_free(Struct *s)
 {
     xfree(s);
 }
+
 static VALUE
 struct_field(Struct* s, VALUE fieldName)
 {
@@ -284,9 +302,14 @@ struct_field(Struct* s, VALUE fieldName)
 static VALUE
 struct_get_field(VALUE self, VALUE fieldName)
 {
-    Struct* s = (Struct *) DATA_PTR(self);
-    VALUE rbField = struct_field(s, fieldName);
-    StructField* f = (StructField *) DATA_PTR(rbField);
+    Struct* s;
+    VALUE rbField;
+    StructField* f;
+
+    Data_Get_Struct(self, Struct, s);
+    rbField = struct_field(s, fieldName);
+    f = FIELD_CAST(rbField);
+
     switch (f->type) {
         case NATIVE_INT8:
             return ptr_get_int8(s->pointer, f);
@@ -321,10 +344,15 @@ struct_get_field(VALUE self, VALUE fieldName)
 static VALUE
 struct_put_field(VALUE self, VALUE fieldName, VALUE value)
 {
-    Struct* s = (Struct *) DATA_PTR(self);
-    VALUE rbField = struct_field(s, fieldName);
-    StructField* f = (StructField *) DATA_PTR(rbField);
-    VALUE argv[] = { s->rbPointer, value };
+    Struct* s;
+    VALUE rbField;
+    StructField* f;
+    VALUE argv[2];
+
+    Data_Get_Struct(self, Struct, s);
+    rbField = struct_field(s, fieldName);
+    f = FIELD_CAST(rbField);
+
     switch (f->type) {
         case NATIVE_INT8:
             ptr_put_int8(s->pointer, f, value);
@@ -363,6 +391,8 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
             rb_raise(rb_eArgError, "Cannot set :string fields");
         default:
             /* call up to the ruby code to set the value */
+            argv[0] = s->rbPointer;
+            argv[1] = value;
             rb_funcall2(rbField, putID, 2, argv);
             break;
     }
@@ -372,10 +402,13 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
 static VALUE
 struct_set_pointer(VALUE self, VALUE pointer)
 {
-    Struct* s = (Struct *) DATA_PTR(self);
+    Struct* s;
+
     if (!rb_obj_is_kind_of(pointer, rb_FFI_AbstractMemory_class)) {
         rb_raise(rb_eArgError, "Invalid pointer");
     }
+
+    Data_Get_Struct(self, Struct, s);
     s->pointer = MEMORY(pointer);
     s->rbPointer = pointer;
     rb_ivar_set(self, pointerID, pointer);
@@ -385,23 +418,31 @@ struct_set_pointer(VALUE self, VALUE pointer)
 static VALUE
 struct_get_pointer(VALUE self)
 {
-    return ((Struct *) DATA_PTR(self))->rbPointer;
+    Struct* s;
+    Data_Get_Struct(self, Struct, s);
+    return s->rbPointer;
 }
 
 static VALUE
 struct_set_layout(VALUE self, VALUE layout)
 {
-    Struct* s = (Struct *) DATA_PTR(self);
-    if (rb_obj_is_kind_of(layout, classStructLayout)) {
-        s->layout = (StructLayout *) DATA_PTR(layout);
+    Struct* s;
+    Data_Get_Struct(self, Struct, s);
+
+    if (!rb_obj_is_kind_of(layout, classStructLayout)) {
+        rb_raise(rb_eArgError, "Invalid Struct layout");
     }
+    Data_Get_Struct(layout, StructLayout, s->layout);
     rb_ivar_set(self, layoutID, layout);
     return self;
 }
+
 static VALUE
 struct_get_layout(VALUE self)
 {
-    Struct* s = (Struct *) DATA_PTR(self);
+    Struct* s;
+    Data_Get_Struct(self, Struct, s);
+
     return s->rbLayout;
 }
 
@@ -426,6 +467,7 @@ struct_layout_mark(StructLayout *layout)
         rb_gc_mark(layout->rbFields);
     }
 }
+
 static void
 struct_layout_free(StructLayout *layout)
 {
@@ -435,9 +477,12 @@ struct_layout_free(StructLayout *layout)
 static VALUE
 struct_layout_get(VALUE self, VALUE field)
 {
-    StructLayout* layout = (StructLayout *) DATA_PTR(self);
+    StructLayout* layout;
+
+    Data_Get_Struct(self, StructLayout, layout);
     return rb_hash_aref(layout->rbFields, field);
 }
+
 void
 rb_FFI_Struct_Init()
 {
