@@ -17,7 +17,7 @@ describe "Pointer" do
     end
   end
   it "Any object implementing #to_ptr can be passed as a :pointer parameter" do
-    memory = MemoryPointer.new :long_long
+    memory = FFI::MemoryPointer.new :long_long
     magic = 0x12345678
     memory.put_int32(0, magic)
     tp = ToPtrTest.new(memory)
@@ -33,7 +33,7 @@ describe "Pointer" do
     end
   end
   it "A DelegateClass(Pointer) can be passed as a :pointer parameter" do
-    memory = MemoryPointer.new :long_long
+    memory = FFI::MemoryPointer.new :long_long
     magic = 0x12345678
     memory.put_int32(0, magic)
     ptr = PointerDelegate.new(memory)
@@ -49,20 +49,20 @@ describe "Pointer" do
   describe "pointer type methods" do
 
     describe "#read_pointer" do
-      memory = MemoryPointer.new :pointer
+      memory = FFI::MemoryPointer.new :pointer
       LibTest.ptr_set_pointer(memory, 0, LibTest.ptr_from_address(0xdeadbeef))
       memory.read_pointer.address.should == 0xdeadbeef
     end
 
     describe "#write_pointer" do
-      memory = MemoryPointer.new :pointer
+      memory = FFI::MemoryPointer.new :pointer
       memory.write_pointer(LibTest.ptr_from_address(0xdeadbeef))
       LibTest.ptr_ret_pointer(memory, 0).address.should == 0xdeadbeef
     end
 
     describe "#read_array_of_pointer" do
       values = [0x12345678, 0xfeedf00d, 0xdeadbeef]
-      memory = MemoryPointer.new :pointer, values.size
+      memory = FFI::MemoryPointer.new :pointer, values.size
       values.each_with_index do |address, j|
         LibTest.ptr_set_pointer(memory, j * FFI.type_size(:pointer), LibTest.ptr_from_address(address))
       end
@@ -74,7 +74,7 @@ describe "Pointer" do
 
     describe "#write_array_of_pointer" do
       values = [0x12345678, 0xfeedf00d, 0xdeadbeef]
-      memory = MemoryPointer.new :pointer, values.size
+      memory = FFI::MemoryPointer.new :pointer, values.size
       memory.write_array_of_pointer(values.map { |address| LibTest.ptr_from_address(address) })
       array = []
       values.each_with_index do |address, j|
