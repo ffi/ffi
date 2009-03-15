@@ -71,5 +71,3 @@ module FFI
 #      end
   end
 end
-
-MemoryPointer = FFI::MemoryPointer
