@@ -72,7 +72,8 @@ struct MethodHandlePool {
 typedef struct ThreadData {
     int td_errno;
 } ThreadData;
-static VALUE invoker_new(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
+static VALUE invoker_allocate(VALUE klass);
+static VALUE invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
         VALUE returnType, VALUE convention);
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
@@ -134,16 +135,21 @@ static pthread_key_t threadDataKey;
 #  define ADJ(p, a) (++(p))
 #endif
 
+static VALUE
+invoker_allocate(VALUE klass)
+{
+    Invoker *invoker;
+    return Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
+}
 
 static VALUE
-invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
+invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
         VALUE returnType, VALUE convention)
 {
     Invoker* invoker = NULL;
     ffi_type* ffiReturnType;
     ffi_abi abi;
     ffi_status ffiStatus;
-    VALUE retval = Qnil;
     int i;
 
     Check_Type(parameterTypes, T_ARRAY);
@@ -151,8 +157,8 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
     Check_Type(convention, T_STRING);
     Check_Type(library, T_DATA);
     Check_Type(function, T_DATA);
-    
-    retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
+
+    Data_Get_Struct(self, Invoker, invoker);
     invoker->library = library;
     invoker->function = ((AbstractMemory *) DATA_PTR(function))->address;
     invoker->paramCount = RARRAY_LEN(parameterTypes);
@@ -200,7 +206,7 @@ invoker_new(VALUE klass, VALUE library, VALUE function, VALUE parameterTypes,
     }
     invoker->methodHandle = method_handle_alloc(invoker->callbackCount < 1 ? invoker->paramCount : -1);
     invoker->methodHandle->invoker = invoker;
-    return retval;
+    return self;
 }
 
 static VALUE
@@ -928,7 +934,8 @@ rb_FFI_Invoker_Init()
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
     classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
-    rb_define_singleton_method(classInvoker, "new", invoker_new, 5);
+    rb_define_alloc_func(classInvoker, invoker_allocate);
+    rb_define_method(classInvoker, "initialize", invoker_initialize, 5);
     rb_define_method(classInvoker, "call", invoker_call, -1);
     rb_define_method(classInvoker, "call0", invoker_call0, 0);
     rb_define_method(classInvoker, "call1", invoker_call1, 1);
