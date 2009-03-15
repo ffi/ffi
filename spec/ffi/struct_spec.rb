@@ -98,7 +98,7 @@ describe "Struct tests" do
     class PairLayout < FFI::Struct
       layout :a, :int, 0, :b, :long_long, 4
     end
-    PairLayout.size.should == 12
+    PairLayout.size.should == (FFI::Platform::ADDRESS_SIZE == 32 ? 12 : 16)
     mp = MemoryPointer.new(PairLayout.size)
     s = PairLayout.new mp
     s[:a] = 0x12345678
@@ -110,7 +110,7 @@ describe "Struct tests" do
     class MixedLayout < FFI::Struct
       layout :a, :int, :b, :long_long, 4
     end
-    MixedLayout.size.should == 12
+    PairLayout.size.should == (FFI::Platform::ADDRESS_SIZE == 32 ? 12 : 16)
     mp = MemoryPointer.new(MixedLayout.size)
     s = MixedLayout.new mp
     s[:a] = 0x12345678
