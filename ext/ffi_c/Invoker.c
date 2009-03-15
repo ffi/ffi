@@ -160,7 +160,7 @@ invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTyp
 
     Data_Get_Struct(self, Invoker, invoker);
     invoker->library = library;
-    invoker->function = ((AbstractMemory *) DATA_PTR(function))->address;
+    invoker->function = rb_FFI_AbstractMemory_cast(function, rb_FFI_Pointer_class)->address;
     invoker->paramCount = RARRAY_LEN(parameterTypes);
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
     invoker->ffiParamTypes = ALLOC_N(ffi_type *, invoker->paramCount);
@@ -222,7 +222,7 @@ variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE returnTyp
 
     retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
     invoker->library = library;
-    invoker->function = ((AbstractMemory *) DATA_PTR(function))->address;
+    invoker->function = rb_FFI_AbstractMemory_cast(function, rb_FFI_Pointer_class)->address;
 #if defined(_WIN32) || defined(__WIN32__)
     invoker->abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else

@@ -49,7 +49,7 @@ ptr_equals(VALUE self, VALUE other)
     if (!rb_obj_is_kind_of(other, rb_FFI_Pointer_class)) {
         rb_raise(rb_eArgError, "Comparing Pointer with non Pointer");
     }
-    p2 = (AbstractMemory *) DATA_PTR(other);
+    Data_Get_Struct(other, AbstractMemory, p2);
     return p2->address == 0 ? Qtrue : Qfalse;
 }
 

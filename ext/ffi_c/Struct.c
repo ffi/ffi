@@ -153,14 +153,14 @@ ptr_get_##name(AbstractMemory* ptr, StructField* field) \
 static VALUE \
 struct_field_put_##name(VALUE self, VALUE pointer, VALUE value) \
 { \
-    ptr_put_##name((AbstractMemory *) DATA_PTR(pointer), (StructField *) DATA_PTR(self), value); \
+    ptr_put_##name(MEMORY(pointer), (StructField *) DATA_PTR(self), value); \
     return self; \
 } \
 static VALUE struct_field_get_##name(VALUE self, VALUE pointer); \
 static VALUE \
 struct_field_get_##name(VALUE self, VALUE pointer) \
 { \
-    return ptr_get_##name((AbstractMemory *) DATA_PTR(pointer), (StructField *) DATA_PTR(self)); \
+    return ptr_get_##name(MEMORY(pointer), (StructField *) DATA_PTR(self)); \
 }
 FIELD_OP(int8, int8_t, NUM2INT, INT2NUM);
 FIELD_OP(uint8, uint8_t, NUM2UINT, UINT2NUM);
@@ -247,7 +247,7 @@ struct_initialize(VALUE self, VALUE rbPointer)
         rb_raise(rb_eArgError, "Invalid Struct memory");
     }
     s->rbPointer = rbPointer;
-    s->pointer = (AbstractMemory *) DATA_PTR(rbPointer);
+    s->pointer = MEMORY(rbPointer);
     return self;
 }
 
@@ -376,7 +376,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
     if (!rb_obj_is_kind_of(pointer, rb_FFI_AbstractMemory_class)) {
         rb_raise(rb_eArgError, "Invalid pointer");
     }
-    s->pointer = (AbstractMemory *) DATA_PTR(pointer);
+    s->pointer = MEMORY(pointer);
     s->rbPointer = pointer;
     rb_ivar_set(self, pointerID, pointer);
     return self;

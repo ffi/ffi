@@ -22,11 +22,10 @@ static VALUE
 autoptr_new(VALUE klass, VALUE other)
 {
     AutoPointer* p;
-    AbstractMemory* ptr;
+    AbstractMemory* ptr = rb_FFI_AbstractMemory_cast(other, rb_FFI_Pointer_class);
     VALUE retval;
 
     retval = Data_Make_Struct(klass, AutoPointer, autoptr_mark, autoptr_free, p);
-    ptr = (AbstractMemory *) DATA_PTR(other);
     p->memory = *ptr;
     p->parent = other;
     return retval;

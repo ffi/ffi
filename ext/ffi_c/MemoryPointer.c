@@ -19,6 +19,7 @@ static void memptr_release(MemoryPointer* ptr);
 static VALUE memptr_create(VALUE klass, long size, long count, bool clear);
 VALUE rb_FFI_MemoryPointer_class;
 static VALUE classMemoryPointer = Qnil;
+#define MEMPTR(obj) ((MemoryPointer *) rb_FFI_AbstractMemory_cast(obj, rb_FFI_MemoryPointer_class))
 
 VALUE
 rb_FFI_MemoryPointer_new(long size, long count, bool clear)
@@ -61,7 +62,7 @@ memptr_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
 static VALUE
 memptr_inspect(VALUE self)
 {
-    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
+    MemoryPointer* ptr = MEMPTR(self);
     char tmp[100];
     snprintf(tmp, sizeof(tmp), "#<MemoryPointer address=%p size=%lu>", ptr->memory.address, ptr->memory.size);
     return rb_str_new2(tmp);
@@ -70,7 +71,7 @@ memptr_inspect(VALUE self)
 static VALUE
 memptr_free(VALUE self)
 {
-    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
+    MemoryPointer* ptr = MEMPTR(self);
     if (ptr->allocated) {
         if (ptr->address != NULL) {
             free(ptr->address);
@@ -84,8 +85,7 @@ memptr_free(VALUE self)
 static VALUE
 memptr_autorelease(VALUE self, VALUE autorelease)
 {
-    MemoryPointer* ptr = (MemoryPointer *) DATA_PTR(self);
-    ptr->autorelease = autorelease == Qtrue;
+    MEMPTR(self)->autorelease = autorelease == Qtrue;
     return self;
 }
 

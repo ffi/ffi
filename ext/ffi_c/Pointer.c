@@ -11,6 +11,8 @@ typedef struct Pointer {
     VALUE parent;
 } Pointer;
 
+#define POINTER(obj) rb_FFI_AbstractMemory_cast((obj), rb_FFI_Pointer_class)
+
 VALUE rb_FFI_Pointer_class;
 static VALUE classPointer = Qnil;
 static void ptr_mark(Pointer* ptr);
@@ -34,7 +36,7 @@ rb_FFI_Pointer_new(void* addr)
 static VALUE
 ptr_plus(VALUE self, VALUE offset)
 {
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* ptr = POINTER(self);
     Pointer* p;
     VALUE retval;
     long off = NUM2LONG(offset);
@@ -50,37 +52,27 @@ ptr_plus(VALUE self, VALUE offset)
 static VALUE
 ptr_inspect(VALUE self)
 {
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
     char tmp[100];
-    snprintf(tmp, sizeof(tmp), "#<Native Pointer address=%p>", ptr->address);
+    snprintf(tmp, sizeof(tmp), "#<Native Pointer address=%p>", POINTER(self)->address);
     return rb_str_new2(tmp);
 }
 
 static VALUE
 ptr_null_p(VALUE self)
 {
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
-    return ptr->address == NULL ? Qtrue : Qfalse;
+    return POINTER(self)->address == NULL ? Qtrue : Qfalse;
 }
 
 static VALUE
 ptr_equals(VALUE self, VALUE other)
 {
-    AbstractMemory* p1 = (AbstractMemory *) DATA_PTR(self);
-    AbstractMemory* p2;
-
-    if (!rb_obj_is_kind_of(other, classPointer)) {
-        rb_raise(rb_eArgError, "Comparing Pointer with non Pointer");
-    }
-    p2 = (AbstractMemory *) DATA_PTR(other);
-    return p1->address == p2->address ? Qtrue : Qfalse;
+    return POINTER(self)->address == POINTER(other)->address ? Qtrue : Qfalse;
 }
 
 static VALUE
 ptr_address(VALUE self)
 {
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
-    return ULL2NUM((uintptr_t) ptr->address);
+    return ULL2NUM((uintptr_t) POINTER(self)->address);
 }
 
 static void

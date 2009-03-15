@@ -21,15 +21,13 @@ VALUE rb_FFI_AbstractMemory_class = Qnil;
 static VALUE classMemory = Qnil;
 static ID to_ptr = 0;
 
-#define ADDRESS(self, offset) (memory_address((self)) + NUM2ULONG(offset))
-
 #define NUM_OP(name, type, toNative, fromNative) \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
 static VALUE \
 memory_put_##name(VALUE self, VALUE offset, VALUE value) \
 { \
     long off = NUM2LONG(offset); \
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
+    AbstractMemory* memory = MEMORY(self); \
     type tmp = (type) toNative(value); \
     checkBounds(memory, off, sizeof(type)); \
     memcpy(memory->address + off, &tmp, sizeof(tmp)); \
@@ -40,7 +38,7 @@ static VALUE \
 memory_get_##name(VALUE self, VALUE offset) \
 { \
     long off = NUM2LONG(offset); \
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
+    AbstractMemory* memory = MEMORY(self); \
     type tmp; \
     checkBounds(memory, off, sizeof(type)); \
     memcpy(&tmp, memory->address + off, sizeof(tmp)); \
@@ -52,7 +50,7 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
 { \
     long count = RARRAY_LEN(ary); \
     long off = NUM2LONG(offset); \
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
+    AbstractMemory* memory = MEMORY(self); \
     long i; \
     checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
@@ -67,7 +65,7 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
 { \
     long count = NUM2LONG(length); \
     long off = NUM2LONG(offset); \
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self); \
+    AbstractMemory* memory = MEMORY(self); \
     long i; \
     checkBounds(memory, off, count * sizeof(type)); \
     VALUE retVal = rb_ary_new2(count); \
@@ -93,7 +91,7 @@ NUM_OP(float64, double, NUM2DBL, rb_float_new);
 static VALUE
 memory_put_pointer(VALUE self, VALUE offset, VALUE value)
 { 
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* memory = MEMORY(self);
     long off = NUM2LONG(offset);
     const int type = TYPE(value);
     checkBounds(memory, off, sizeof(void *));
@@ -112,12 +110,8 @@ memory_put_pointer(VALUE self, VALUE offset, VALUE value)
         memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else if (rb_respond_to(value, to_ptr)) {
         VALUE ptr = rb_funcall2(value, to_ptr, 0, NULL);
-        if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
-            void* tmp = memory_address(ptr);
-            memcpy(memory->address + off, &tmp, sizeof(tmp));
-        } else {
-            rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
-        }
+        void* tmp = MEMORY_PTR(ptr);
+        memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else {
         rb_raise(rb_eArgError, "value is not a pointer");
     }
@@ -127,7 +121,7 @@ memory_put_pointer(VALUE self, VALUE offset, VALUE value)
 static VALUE
 memory_get_pointer(VALUE self, VALUE offset)
 {
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* memory = MEMORY(self);
     long off = NUM2LONG(offset);
     void* tmp;
     checkBounds(memory, off, sizeof(tmp));
@@ -138,7 +132,7 @@ memory_get_pointer(VALUE self, VALUE offset)
 static VALUE
 memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
 {
-    AbstractMemory* memory = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* memory = MEMORY(self);
     long off = NUM2LONG(offset);
     checkBounds(memory, off, sizeof(void *));
 
@@ -156,7 +150,7 @@ memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
 static VALUE
 memory_clear(VALUE self)
 {
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* ptr = MEMORY(self);
     memset(ptr->address, 0, ptr->size);
     return self;
 }
@@ -164,14 +158,14 @@ memory_clear(VALUE self)
 static VALUE
 memory_size(VALUE self) 
 {
-    return LONG2FIX(((AbstractMemory *) DATA_PTR(self))->size);
+    return LONG2FIX((MEMORY(self))->size);
 }
 
 static VALUE
 memory_get_string(int argc, VALUE* argv, VALUE self)
 {
     VALUE length = Qnil, offset = Qnil;
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* ptr = MEMORY(self);
     long off, len;
     char* end;
     int nargs = rb_scan_args(argc, argv, "11", &offset, &length);
@@ -187,7 +181,7 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
 static VALUE
 memory_put_string(VALUE self, VALUE offset, VALUE str)
 {
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* ptr = MEMORY(self);
     long off, len;
 
     off = NUM2LONG(offset);
@@ -204,7 +198,7 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
 static VALUE
 memory_get_bytes(VALUE self, VALUE offset, VALUE length)
 {
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* ptr = MEMORY(self);
     long off, len;
     
     off = NUM2LONG(offset);
@@ -216,7 +210,7 @@ memory_get_bytes(VALUE self, VALUE offset, VALUE length)
 static VALUE
 memory_put_bytes(int argc, VALUE* argv, VALUE self)
 {
-    AbstractMemory* ptr = (AbstractMemory *) DATA_PTR(self);
+    AbstractMemory* ptr = MEMORY(self);
     VALUE offset = Qnil, str = Qnil, rbIndex = Qnil, rbLength = Qnil;
     long off, len, idx;
     int nargs = rb_scan_args(argc, argv, "22", &offset, &str, &rbIndex, &rbLength);
@@ -239,9 +233,20 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
 }
 
 static inline char*
-memory_address(VALUE self)
+memory_address(VALUE obj)
 {
-    return ((AbstractMemory *)DATA_PTR((self)))->address;
+    return ((AbstractMemory *) DATA_PTR(obj))->address;
+}
+
+AbstractMemory*
+rb_FFI_AbstractMemory_cast(VALUE obj, VALUE klass)
+{
+    if (rb_obj_is_kind_of(obj, klass)) {
+        AbstractMemory* memory;
+        Data_Get_Struct(obj, AbstractMemory, memory);
+        return memory;
+    }
+    rb_raise(rb_eArgError, "Invalid Memory object");
 }
 
 void

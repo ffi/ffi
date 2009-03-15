@@ -16,6 +16,7 @@ static void buffer_release(Buffer* ptr);
 static void buffer_mark(Buffer* ptr);
 
 static VALUE classBuffer = Qnil;
+#define BUFFER(obj)  ((Buffer *) rb_FFI_AbstractMemory_cast((obj), classBuffer))
 
 static VALUE
 buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
@@ -44,7 +45,7 @@ buffer_allocate(VALUE self, VALUE size, VALUE count, VALUE clear)
 static VALUE
 buffer_plus(VALUE self, VALUE offset)
 {
-    Buffer* ptr = (Buffer *) DATA_PTR(self);
+    Buffer* ptr = BUFFER(self);
     Buffer* p;
     VALUE retval;
     long off = NUM2LONG(offset);
@@ -60,9 +61,8 @@ buffer_plus(VALUE self, VALUE offset)
 static VALUE
 buffer_inspect(VALUE self)
 {
-    Buffer* ptr = (Buffer *) DATA_PTR(self);
     char tmp[100];
-    snprintf(tmp, sizeof(tmp), "#<Buffer size=%ld>", ptr->memory.size);
+    snprintf(tmp, sizeof(tmp), "#<Buffer size=%ld>", BUFFER(self)->memory.size);
     return rb_str_new2(tmp);
 }
 
