@@ -2,12 +2,7 @@ require 'ffi/platform'
 module FFI
   class StructLayout
     attr_reader :size, :align
-    def initialize(field_names, fields, size, min_align = 1)
-      @field_names = field_names
-      @fields = fields
-      @size = size
-      @align = min_align
-    end
+
     def members
       @field_names
     end
