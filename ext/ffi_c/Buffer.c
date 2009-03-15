@@ -12,7 +12,7 @@ typedef struct Buffer {
 } Buffer;
 
 static VALUE buffer_allocate(VALUE klass);
-static VALUE buffer_initialize(VALUE self, VALUE size, VALUE count, VALUE clear);
+static VALUE buffer_initialize(int argc, VALUE* argv, VALUE self);
 static void buffer_release(Buffer* ptr);
 static void buffer_mark(Buffer* ptr);
 
@@ -27,12 +27,16 @@ buffer_allocate(VALUE klass)
 }
 
 static VALUE
-buffer_initialize(VALUE self, VALUE size, VALUE count, VALUE clear)
+buffer_initialize(int argc, VALUE* argv, VALUE self)
 {
+    VALUE size = Qnil, count = Qnil, clear = Qnil;
     Buffer* p;
-    unsigned long msize = rb_FFI_type_size(size) * (count == Qnil ? 1 : NUM2LONG(count));
+    unsigned long msize;
     void* memory;
+    int nargs;
 
+    nargs = rb_scan_args(argc, argv, "12", &size, &count, &clear);
+    msize = rb_FFI_type_size(size) * (nargs > 1 ? NUM2LONG(count) : 1);
     memory = malloc(msize + 7);
     if (memory == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", msize);
@@ -43,16 +47,16 @@ buffer_initialize(VALUE self, VALUE size, VALUE count, VALUE clear)
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (void *) (((uintptr_t) memory + 0x7) & (uintptr_t) ~0x7UL);
     p->parent = Qnil;
-    if (RTEST(clear) && p->memory.size > 0) {
+    if (nargs > 2 && RTEST(clear) && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
     return self;
 }
 
 static VALUE
-buffer_alloc_inout(VALUE klass, VALUE size, VALUE count, VALUE clear)
+buffer_alloc_inout(int argc, VALUE* argv, VALUE klass)
 {
-    return rb_funcall(buffer_allocate(klass), rb_intern("initialize"), 3, size, count, clear);
+    return buffer_initialize(argc, argv, buffer_allocate(klass));
 }
 
 static VALUE
@@ -104,11 +108,11 @@ rb_FFI_Buffer_Init()
     classBuffer = rb_define_class_under(moduleFFI, "Buffer", rb_FFI_AbstractMemory_class);
     rb_define_alloc_func(classBuffer, buffer_allocate);
 
-    rb_define_singleton_method(classBuffer, "__alloc_inout", buffer_alloc_inout, 3);
-    rb_define_singleton_method(classBuffer, "__alloc_out", buffer_alloc_inout, 3);
-    rb_define_singleton_method(classBuffer, "__alloc_in", buffer_alloc_inout, 3);
+    rb_define_singleton_method(classBuffer, "alloc_inout", buffer_alloc_inout, -1);
+    rb_define_singleton_method(classBuffer, "alloc_out", buffer_alloc_inout, -1);
+    rb_define_singleton_method(classBuffer, "alloc_in", buffer_alloc_inout, -1);
     
-    rb_define_method(classBuffer, "initialize", buffer_initialize, 3);
+    rb_define_method(classBuffer, "initialize", buffer_initialize, -1);
     rb_define_method(classBuffer, "inspect", buffer_inspect, 0);
     rb_define_method(classBuffer, "+", buffer_plus, 1);
 }
