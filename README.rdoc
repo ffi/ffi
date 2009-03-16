@@ -1,0 +1,20 @@
+ruby-ffi
+    by Wayne Meissner
+    http://kenai.com/projects/ruby-ffi
+
+== DESCRIPTION:
+
+A Ruby foreign function interface (compatible with Rubinius and JRuby
+FFI)
+
+== FEATURES/PROBLEMS:
+
+== SYNOPSIS:
+
+== REQUIREMENTS:
+
+== DOWNLOAD/INSTALL:
+
+== LICENSE:
+
+See LICENSE file.

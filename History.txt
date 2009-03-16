@@ -1,0 +1,6 @@
+== 0.3.0 / yyyy-mm-dd
+
+* N major enhancement
+  * enhancement 1
+  * enhancement 2
+ 
