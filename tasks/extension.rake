@@ -19,7 +19,7 @@ spec = Gem::Specification.new do |s|
   s.require_path = 'lib'
   s.files = PROJ.gem.files
 end
- 
+
 Rake::ExtensionTask.new('ffi_c', spec) do |ext|
   ext.name = 'ffi_c'                # indicate the name of the extension.
   ext.lib_dir = BUILD_DIR           # put binaries into this folder.

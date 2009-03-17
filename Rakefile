@@ -49,7 +49,8 @@ PROJ.gem.platform = Gem::Platform::RUBY
 PROJ.gem.extensions = %w(ext/ffi_c/extconf.rb gen/Rakefile)
 
 # RDoc
-PROJ.rdoc.exclude << '^ext/'
+PROJ.rdoc.exclude << '^ext\/'
+PROJ.rdoc.opts << '-x' << 'ext'
 
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
