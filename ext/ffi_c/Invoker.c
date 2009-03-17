@@ -417,7 +417,7 @@ method_handle_free(MethodHandle* method)
 #endif /* _WIN32 */
 
 typedef union {
-#ifdef USE_RAW
+#if BYTE_ORDER == LITTLE_ENDIAN
     signed int s8, s16, s32;
     unsigned int u8, u16, u32;
 #else

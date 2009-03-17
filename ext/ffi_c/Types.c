@@ -47,13 +47,17 @@ rb_FFI_NativeValueToRuby(NativeType type, const void* ptr)
         case NATIVE_VOID:
             return Qnil;
         case NATIVE_INT8:
+          return INT2NUM((signed char) *(ffi_sarg *) ptr);
         case NATIVE_INT16:
+          return INT2NUM((signed short) *(ffi_sarg *) ptr);
         case NATIVE_INT32:
-          return INT2NUM((*(ffi_sarg *) ptr) & 0xffffffffL);
+          return INT2NUM((signed int) *(ffi_sarg *) ptr);
         case NATIVE_UINT8:
+          return UINT2NUM((unsigned char) *(ffi_arg *) ptr);
         case NATIVE_UINT16:
+          return UINT2NUM((unsigned short) *(ffi_arg *) ptr);
         case NATIVE_UINT32:
-          return UINT2NUM((*(ffi_arg *) ptr) & 0xffffffffL);
+          return UINT2NUM((unsigned int) *(ffi_arg *) ptr);
         case NATIVE_INT64:
             return LL2NUM(*(signed long long *) ptr);
         case NATIVE_UINT64:
