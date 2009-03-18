@@ -97,7 +97,7 @@ memptr_aref(VALUE self, VALUE which)
 {
     MemoryPointer* ptr = MEMPTR(self);
     VALUE offset = INT2NUM(ptr->type_size * NUM2INT(which));
-    rb_funcall2(self, rb_intern("+"), 1, &offset);
+    return rb_funcall2(self, rb_intern("+"), 1, &offset);
 }
 
 static VALUE

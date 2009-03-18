@@ -97,6 +97,7 @@ buffer_free(VALUE self)
         free(ptr->storage);
         ptr->storage = NULL;
     }
+    return self;
 }
 
 static void
@@ -107,7 +108,6 @@ buffer_release(Buffer* ptr)
         ptr->storage = NULL;
     }
     xfree(ptr);
-
 }
 
 static void
