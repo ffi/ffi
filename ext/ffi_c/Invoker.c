@@ -27,6 +27,9 @@
 #if defined(__i386__) && !defined(_WIN32) && !defined(__WIN32__)
 #  define USE_RAW
 #endif
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
+#  define USE_PTHREAD_LOCAL
+#endif
 #define MAX_FIXED_ARITY (3)
 
 typedef struct MethodHandle MethodHandle;
@@ -101,7 +104,7 @@ static int PageSize;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID to_ptr;
 
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
+#if defined(USE_PTHREAD_LOCAL)
 static pthread_key_t threadDataKey;
 #endif
 
@@ -886,7 +889,8 @@ callback_param(VALUE proc, VALUE cbInfo)
     callback = rb_FFI_NativeCallback_for_proc(proc, cbInfo);
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+
+#if defined(USE_PTHREAD_LOCAL)
 static ThreadData*
 thread_data_init()
 {
@@ -895,6 +899,7 @@ thread_data_init()
     pthread_setspecific(threadDataKey, td);
     return td;
 }
+
 static inline ThreadData*
 thread_data_get()
 {
@@ -907,13 +912,31 @@ thread_data_free(void *ptr)
 {
     xfree(ptr);
 }
-#else /* !HAVE_NATIVETHREAD */
-static ThreadData td0;
+
+#else
+static ID thread_data_id;
+
+static ThreadData*
+thread_data_init()
+{
+    ThreadData* td;
+    VALUE obj;
+    obj = Data_Make_Struct(rb_cObject, ThreadData, NULL, -1, td);
+    rb_thread_local_aset(rb_thread_current(), thread_data_id, obj);
+    return td;
+}
+
 static inline ThreadData*
 thread_data_get()
 {
-    return &td0;
+    VALUE obj = rb_thread_local_aref(rb_thread_current(), thread_data_id);
+
+    if (obj != Qnil && TYPE(obj) == T_DATA) {
+        return (ThreadData *) DATA_PTR(obj);
+    }
+    return thread_data_init();
 }
+
 #endif
 static VALUE
 get_last_error(VALUE self)
@@ -957,14 +980,19 @@ rb_FFI_Invoker_Init()
         methodHandleParamTypes[i] = ffiValueType;
     }
     methodHandleVarargParamTypes[2] = ffiValueType;
+
 #ifndef _WIN32
     PageSize = sysconf(_SC_PAGESIZE);
-#  ifdef HAVE_NATIVETHREAD
+#endif /* _WIN32 */
+
+#if defined(USE_PTHREAD_LOCAL)
     pthread_key_create(&threadDataKey, thread_data_free);
     for (i = 0; i < 4; ++i) {
         pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
     }
     pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);
-#  endif /* HAVE_NATIVETHREAD */
-#endif /* _WIN32 */
+#else
+    thread_data_id = rb_intern("ffi_thread_local_data");
+#endif /* USE_PTHREAD_LOCAL */
+
 }
