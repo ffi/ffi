@@ -124,6 +124,7 @@ memory_get_pointer(VALUE self, VALUE offset)
     AbstractMemory* memory = MEMORY(self);
     long off = NUM2LONG(offset);
     void* tmp;
+
     checkBounds(memory, off, sizeof(tmp));
     memcpy(&tmp, memory->address + off, sizeof(tmp));
     return rb_FFI_Pointer_new(tmp);
@@ -184,8 +185,10 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
     AbstractMemory* ptr = MEMORY(self);
     long off, len;
 
+    Check_Type(str, T_STRING);
     off = NUM2LONG(offset);
     len = RSTRING_LEN(str);
+
     checkBounds(ptr, off, len);
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
@@ -214,6 +217,8 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     VALUE offset = Qnil, str = Qnil, rbIndex = Qnil, rbLength = Qnil;
     long off, len, idx;
     int nargs = rb_scan_args(argc, argv, "22", &offset, &str, &rbIndex, &rbLength);
+
+    Check_Type(str, T_STRING);
 
     off = NUM2LONG(offset);
     idx = nargs > 2 ? NUM2LONG(rbIndex) : 0;
