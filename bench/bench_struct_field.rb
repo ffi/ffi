@@ -19,7 +19,7 @@ puts "Benchmark FFI Struct.get(:int) performance, #{iter}x"
 puts "Benchmark FFI Struct.get(:int) using string name performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { s['i'] }
+    iter.times { s[:i] }
   }
 }
 puts "Benchmark FFI Struct.put(:int) performance, #{iter}x"
@@ -36,7 +36,7 @@ puts "Benchmark FFI Struct.get(:pointer) performance, #{iter}x"
 }
 puts "Benchmark FFI Struct.put(:pointer) performance, #{iter}x"
 10.times {
-  p = MemoryPointer.new :int
+  p = FFI::MemoryPointer.new :int
   puts Benchmark.measure {
     iter.times { s[:p] = p }
   }
@@ -46,7 +46,7 @@ class StringStruct < FFI::Struct
   layout :s, :string
 end
 10.times {
-  mp = MemoryPointer.new 1024
+  mp = FFI::MemoryPointer.new 1024
   mp.put_string(0, "Hello, World")
   s = StringStruct.new
   s.pointer.put_pointer(0, mp)
