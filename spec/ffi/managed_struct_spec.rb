@@ -19,7 +19,7 @@ describe "Managed Struct" do
       end
     end    
 
-    WhatClassAmI.new(LibTest.ptr_from_address(0x12345678)).class.to_s.should == "WhatClassAmI"
+    WhatClassAmI.new(LibTest.ptr_from_address(0x12345678)).class.should == WhatClassAmI
   end
 
   it "should release memory properly" do
