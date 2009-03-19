@@ -1,6 +1,3 @@
-== 0.3.0 / yyyy-mm-dd
+== 0.3.0 / 2009-03-19
 
-* N major enhancement
-  * enhancement 1
-  * enhancement 2
  

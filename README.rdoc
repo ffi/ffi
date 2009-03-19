@@ -4,8 +4,7 @@ ruby-ffi
 
 == DESCRIPTION:
 
-A Ruby foreign function interface (compatible with Rubinius and JRuby
-FFI)
+A Ruby foreign function interface
 
 == FEATURES/PROBLEMS:
 
