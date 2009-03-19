@@ -27,19 +27,19 @@ module FFI
     # going to be useful if you subclass AutoPointer, and override
     # release(), which by default does nothing.
     #
-    def self.new(ptr, proc=nil, &block)
+    def initialize(ptr, proc=nil, &block)
       raise ArgumentError, "Invalid pointer" if ptr.nil? || !ptr.kind_of?(Pointer) \
         || ptr.kind_of?(MemoryPointer) || ptr.kind_of?(AutoPointer)
       free_lambda = if proc and proc.is_a? Method
-                      finalize(ptr, self.method_to_proc(proc))
+                      AutoPointer.finalize(ptr, AutoPointer.method_to_proc(proc))
                     elsif proc and proc.is_a? Proc
-                      finalize(ptr, proc)
+                      AutoPointer.finalize(ptr, proc)
                     else
-                      finalize(ptr, self.method_to_proc(self.method(:release)))
+                      AutoPointer.finalize(ptr, AutoPointer.method_to_proc(self.class.method(:release)))
                     end
-      ap = self.__alloc(ptr)
-      ObjectSpace.define_finalizer(ap, free_lambda)
-      ap
+      self.parent = ptr
+      ObjectSpace.define_finalizer(self, free_lambda)
+      self
     end
     def self.release(ptr)
     end
