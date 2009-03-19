@@ -21,6 +21,13 @@ VALUE rb_FFI_AbstractMemory_class = Qnil;
 static VALUE classMemory = Qnil;
 static ID to_ptr = 0;
 
+static VALUE
+memory_allocate(VALUE klass)
+{
+    AbstractMemory* memory;
+    return Data_Make_Struct(klass, AbstractMemory, NULL, -1, memory);
+}
+
 #define NUM_OP(name, type, toNative, fromNative) \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
 static VALUE \
@@ -259,6 +266,8 @@ rb_FFI_AbstractMemory_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_AbstractMemory_class = classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
+
+    rb_define_alloc_func(classMemory, memory_allocate);
 #undef INT
 #define INT(type) \
     rb_define_method(classMemory, "put_" #type, memory_put_##type, 2); \
