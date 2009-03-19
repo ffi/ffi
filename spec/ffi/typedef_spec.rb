@@ -18,7 +18,7 @@ describe "Custom type definitions" do
     end
     buf = FFI::Buffer.new :uint, 10
     VariadicCustomTypedef.pack_varargs(buf, "i", :fubar_t, 0x12345678)
-    buf.get_uint(0).should == 0x12345678
+    buf.get_int64(0).should == 0x12345678
   end
   it "Callback with custom typedef parameter" do
     module CallbackCustomTypedef
