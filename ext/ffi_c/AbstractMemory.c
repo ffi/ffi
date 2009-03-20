@@ -9,12 +9,6 @@
 #include "Pointer.h"
 #include "Callback.h"
 
-static VALUE memory_put_float32(VALUE self, VALUE offset, VALUE value);
-static VALUE memory_get_float32(VALUE self, VALUE offset);
-static VALUE memory_put_float64(VALUE self, VALUE offset, VALUE value);
-static VALUE memory_get_float64(VALUE self, VALUE offset);
-static VALUE memory_put_pointer(VALUE self, VALUE offset, VALUE value);
-static VALUE memory_get_pointer(VALUE self, VALUE offset);
 
 static inline char* memory_address(VALUE self);
 VALUE rb_FFI_AbstractMemory_class = Qnil;
