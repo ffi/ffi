@@ -29,12 +29,8 @@ typedef struct StructLayoutBuilder {
     unsigned int offset;
 } StructLayoutBuilder;
 
-static void struct_field_mark(StructField *);
-static void struct_field_free(StructField *);
 static void struct_mark(Struct *);
-static void struct_free(Struct *);
 static void struct_layout_mark(StructLayout *);
-static void struct_layout_free(StructLayout *);
 
 VALUE rb_FFI_Struct_class = Qnil;
 static VALUE classStruct = Qnil, classStructLayout = Qnil;
@@ -52,7 +48,7 @@ static VALUE
 struct_field_allocate(VALUE klass)
 {
     StructField* field;
-    return Data_Make_Struct(klass, StructField, struct_field_mark, struct_field_free, field);
+    return Data_Make_Struct(klass, StructField, NULL, -1, field);
 }
 
 static VALUE
@@ -72,12 +68,14 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     } else {
         field->type = ~0;
     }
+
 #ifdef notyet
     field->size = NUM2UINT(rb_const_get(klass, rb_intern("SIZE")));
     field->align = NUM2UINT(rb_const_get(klass, rb_intern("ALIGN")));
 #endif
     rb_iv_set(self, "@off", offset);
     rb_iv_set(self, "@info", info);
+
     return self;
 }
 
@@ -87,18 +85,6 @@ struct_field_offset(VALUE self)
     StructField* field;
     Data_Get_Struct(self, StructField, field);
     return UINT2NUM(field->offset);
-}
-
-static void
-struct_field_mark(StructField *f)
-{
-}
-static void
-struct_field_free(StructField *f)
-{
-    if (f != NULL) {
-        xfree(f);
-    }
 }
 
 static inline char*
@@ -199,25 +185,19 @@ static VALUE
 struct_allocate(VALUE klass)
 {
     Struct* s;
-    VALUE retval = Data_Make_Struct(klass, Struct, struct_mark, struct_free, s);
+    VALUE obj = Data_Make_Struct(klass, Struct, struct_mark, -1, s);
     
     s->rbPointer = Qnil;
-    s->pointer = NULL;
     s->rbLayout = Qnil;
-    s->layout = NULL;
 
-    if (rb_cvar_defined(klass, layoutID)) {
-        s->rbLayout = rb_cvar_get(klass, layoutID);
-        Data_Get_Struct(s->rbLayout, StructLayout, s->layout);
-    }
-    return retval;
+    return obj;
 }
 
 static VALUE
 struct_initialize(int argc, VALUE* argv, VALUE self)
 {
     Struct* s;
-    VALUE rbPointer = Qnil, rest = Qnil;
+    VALUE rbPointer = Qnil, rest = Qnil, klass = CLASS_OF(self);
     int nargs;
 
     Data_Get_Struct(self, Struct, s);
@@ -227,19 +207,25 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
     /* Call up into ruby code to adjust the layout */
     if (nargs > 1) {
         s->rbLayout = rb_funcall2(CLASS_OF(self), rb_intern("layout"), RARRAY_LEN(rest), RARRAY_PTR(rest));
-        if (!rb_obj_is_kind_of(s->rbLayout, classStructLayout)) {
-            rb_raise(rb_eRuntimeError, "Invalid Struct layout");
-        }
+    } else if (rb_cvar_defined(klass, layoutID)) {
+        s->rbLayout = rb_cvar_get(klass, layoutID);
+    } else {
+        rb_raise(rb_eRuntimeError, "No Struct layout configured");
+    }
 
-        Data_Get_Struct(s->rbLayout, StructLayout, s->layout);
+    if (!rb_obj_is_kind_of(s->rbLayout, classStructLayout)) {
+        rb_raise(rb_eRuntimeError, "Invalid Struct layout");
     }
+
+    Data_Get_Struct(s->rbLayout, StructLayout, s->layout);
     
-    if (rbPointer == Qnil) {
-        rbPointer = rb_FFI_MemoryPointer_new(s->layout->size, 1, true);
+    if (rbPointer != Qnil) {
+        s->pointer = MEMORY(rbPointer);
+        s->rbPointer = rbPointer;
+    } else {
+        s->rbPointer = rb_FFI_MemoryPointer_new(s->layout->size, 1, true);
+        s->pointer = (AbstractMemory *) DATA_PTR(s->rbPointer);
     }
-    
-    s->rbPointer = rbPointer;
-    s->pointer = MEMORY(rbPointer);
     
     return self;
 }
@@ -247,17 +233,8 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 static void
 struct_mark(Struct *s)
 {
-    if (s->rbPointer != Qnil) {
-        rb_gc_mark(s->rbPointer);
-    }
-    if (s->rbLayout != Qnil) {
-        rb_gc_mark(s->rbLayout);
-    }
-}
-
-static void struct_free(Struct *s)
-{
-    xfree(s);
+    rb_gc_mark(s->rbPointer);
+    rb_gc_mark(s->rbLayout);
 }
 
 static VALUE
@@ -268,11 +245,13 @@ struct_field(Struct* s, VALUE fieldName)
     if (layout == NULL) {
         rb_raise(rb_eRuntimeError, "layout not set for Struct");
     }
+
     rbField = rb_hash_aref(layout->rbFields, fieldName);
     if (rbField == Qnil) {
         VALUE str = rb_funcall2(fieldName, rb_intern("to_s"), 0, NULL);
         rb_raise(rb_eArgError, "No such field '%s'", StringValuePtr(str));
     }
+
     return rbField;
 }
 
@@ -389,6 +368,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
     s->pointer = MEMORY(pointer);
     s->rbPointer = pointer;
     rb_ivar_set(self, pointerID, pointer);
+
     return self;
 }
 
@@ -396,7 +376,9 @@ static VALUE
 struct_get_pointer(VALUE self)
 {
     Struct* s;
+
     Data_Get_Struct(self, Struct, s);
+
     return s->rbPointer;
 }
 
@@ -409,8 +391,10 @@ struct_set_layout(VALUE self, VALUE layout)
     if (!rb_obj_is_kind_of(layout, classStructLayout)) {
         rb_raise(rb_eArgError, "Invalid Struct layout");
     }
+
     Data_Get_Struct(layout, StructLayout, s->layout);
     rb_ivar_set(self, layoutID, layout);
+
     return self;
 }
 
@@ -418,6 +402,7 @@ static VALUE
 struct_get_layout(VALUE self)
 {
     Struct* s;
+
     Data_Get_Struct(self, Struct, s);
 
     return s->rbLayout;
@@ -427,7 +412,12 @@ static VALUE
 struct_layout_allocate(VALUE klass)
 {
     StructLayout* layout;
-    return Data_Make_Struct(klass, StructLayout, struct_layout_mark, struct_layout_free, layout);
+    VALUE obj;
+    
+    obj = Data_Make_Struct(klass, StructLayout, struct_layout_mark, -1, layout);
+    layout->rbFields = Qnil;
+
+    return obj;
 }
 
 static VALUE
@@ -454,6 +444,7 @@ struct_layout_aref(VALUE self, VALUE field)
     StructLayout* layout;
 
     Data_Get_Struct(self, StructLayout, layout);
+
     return rb_hash_aref(layout->rbFields, field);
 }
 
@@ -461,15 +452,7 @@ struct_layout_aref(VALUE self, VALUE field)
 static void
 struct_layout_mark(StructLayout *layout)
 {
-    if (layout->rbFields != Qnil) {
-        rb_gc_mark(layout->rbFields);
-    }
-}
-
-static void
-struct_layout_free(StructLayout *layout)
-{
-    xfree(layout);
+    rb_gc_mark(layout->rbFields);
 }
 
 void
