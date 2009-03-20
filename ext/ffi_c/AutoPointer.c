@@ -13,17 +13,19 @@ typedef struct AutoPointer {
     VALUE parent;
 } AutoPointer;
 
-VALUE rb_FFI_AutoPointer_class;
-static VALUE classAutoPointer = Qnil;
 static void autoptr_mark(AutoPointer* ptr);
-static void autoptr_free(AutoPointer* ptr);
+static VALUE autoptr_allocate(VALUE klass);
+static VALUE autoptr_set_parent(VALUE self, VALUE parent);
+
+VALUE rb_FFI_AutoPointer_class = Qnil;
 
 static VALUE
 autoptr_allocate(VALUE klass)
 {
     AutoPointer* p;
-    VALUE obj = Data_Make_Struct(klass, AutoPointer, autoptr_mark, autoptr_free, p);
+    VALUE obj = Data_Make_Struct(klass, AutoPointer, autoptr_mark, -1, p);
     p->parent = Qnil;
+
     return obj;
 }
 
@@ -43,21 +45,16 @@ autoptr_set_parent(VALUE self, VALUE parent)
 static void
 autoptr_mark(AutoPointer* ptr)
 {
-    if (ptr->parent != Qnil) {
-        rb_gc_mark(ptr->parent);
-    }
-}
-static void
-autoptr_free(AutoPointer* ptr)
-{
-    xfree(ptr);
+    rb_gc_mark(ptr->parent);
 }
 
 void
 rb_FFI_AutoPointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
-    rb_FFI_AutoPointer_class = classAutoPointer = rb_define_class_under(moduleFFI, "AutoPointer", rb_FFI_Pointer_class);
-    rb_define_alloc_func(classAutoPointer, autoptr_allocate);
-    rb_define_protected_method(classAutoPointer, "parent=", autoptr_set_parent, 1);
+    rb_FFI_AutoPointer_class = rb_define_class_under(moduleFFI, "AutoPointer", rb_FFI_Pointer_class);
+    rb_global_variable(&rb_FFI_AutoPointer_class);
+    
+    rb_define_alloc_func(rb_FFI_AutoPointer_class, autoptr_allocate);
+    rb_define_protected_method(rb_FFI_AutoPointer_class, "parent=", autoptr_set_parent, 1);
 }
