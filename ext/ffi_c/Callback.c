@@ -15,7 +15,6 @@
 #include "extconf.h"
 
 
-static void CallbackInfo_mark(CallbackInfo *);
 static void CallbackInfo_free(CallbackInfo *);
 
 #if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
@@ -33,15 +32,24 @@ static ID callID = Qnil, cbTableID = Qnil;
 VALUE rb_FFI_CallbackInfo_class = Qnil;
 
 static VALUE
-CallbackInfo_new(VALUE klass, VALUE rbReturnType, VALUE rbParamTypes)
+CallbackInfo_allocate(VALUE klass)
+{
+    CallbackInfo* cbInfo;
+    return Data_Make_Struct(klass, CallbackInfo, NULL, CallbackInfo_free, cbInfo);
+}
+
+static VALUE
+CallbackInfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
 {
     CallbackInfo *cbInfo;
-    VALUE retval;
-    int paramCount = RARRAY_LEN(rbParamTypes);
+    int paramCount;
     ffi_status status;
     int i;
 
-    retval = Data_Make_Struct(klass, CallbackInfo, CallbackInfo_mark, CallbackInfo_free, cbInfo);
+    Check_Type(rbParamTypes, T_ARRAY);
+    paramCount = RARRAY_LEN(rbParamTypes);
+
+    Data_Get_Struct(self, CallbackInfo, cbInfo);
     cbInfo->parameterCount = paramCount;
     cbInfo->parameterTypes = xcalloc(paramCount, sizeof(NativeType));
     cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
@@ -74,12 +82,7 @@ CallbackInfo_new(VALUE klass, VALUE rbReturnType, VALUE rbParamTypes)
         default:
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
-    return retval;
-}
-
-static void
-CallbackInfo_mark(CallbackInfo* cbinfo)
-{
+    return self;
 }
 
 static void
@@ -105,6 +108,7 @@ native_callback_free(NativeCallback* cb)
         if (cb->ffi_closure != NULL) {
             ffi_closure_free(cb->ffi_closure);
         }
+        xfree(cb);
     }
 }
 
@@ -209,30 +213,45 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     }
 }
 
+static VALUE
+native_callback_allocate(VALUE klass)
+{
+    NativeCallback* closure;
+    VALUE obj;
+
+    obj = Data_Make_Struct(klass, NativeCallback, native_callback_mark, native_callback_free, closure);
+    closure->rbCallbackInfo = Qnil;
+    closure->rbProc = Qnil;
+    
+    return obj;
+}
+
 VALUE
 rb_FFI_NativeCallback_new(VALUE rbCallbackInfo, VALUE rbProc)
 {
     NativeCallback* closure = NULL;
-    CallbackInfo* cbInfo = (CallbackInfo *) DATA_PTR(rbCallbackInfo);
+    CallbackInfo* cbInfo;
+    VALUE obj;
     ffi_status status;
-    
-    closure = ALLOC(NativeCallback);
-    closure->ffi_closure = ffi_closure_alloc(sizeof(*closure->ffi_closure), &closure->code);
-    if (closure->ffi_closure == NULL) {
-        xfree(closure);
-        rb_raise(rb_eNoMemError, "Failed to allocate FFI native closure");
-    }
+
+    Data_Get_Struct(rbCallbackInfo, CallbackInfo, cbInfo);
+    obj = Data_Make_Struct(classNativeCallback, NativeCallback, native_callback_mark, native_callback_free, closure);
     closure->cbInfo = cbInfo;
     closure->rbProc = rbProc;
     closure->rbCallbackInfo = rbCallbackInfo;
+
+    closure->ffi_closure = ffi_closure_alloc(sizeof(*closure->ffi_closure), &closure->code);
+    if (closure->ffi_closure == NULL) {
+        rb_raise(rb_eNoMemError, "Failed to allocate FFI native closure");
+    }
+
     status = ffi_prep_closure_loc(closure->ffi_closure, &cbInfo->ffi_cif,
             native_callback_invoke, closure, closure->code);
     if (status != FFI_OK) {
-        ffi_closure_free(closure->ffi_closure);
-        xfree(closure);
         rb_raise(rb_eArgError, "ffi_prep_closure_loc failed");
     }
-    return Data_Wrap_Struct(classNativeCallback, native_callback_mark, native_callback_free, closure);
+
+    return obj;
 }
 
 VALUE
@@ -296,8 +315,10 @@ rb_FFI_Callback_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_CallbackInfo_class = classCallbackInfo = rb_define_class_under(moduleFFI, "CallbackInfo", rb_cObject);
-    rb_define_singleton_method(classCallbackInfo, "new", CallbackInfo_new, 2);
+    rb_define_alloc_func(classCallbackInfo, CallbackInfo_allocate);
+    rb_define_method(classCallbackInfo, "initialize", CallbackInfo_initialize, 2);
     classNativeCallback = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
+    rb_define_alloc_func(classNativeCallback, native_callback_allocate);
     callID = rb_intern("call");
     cbTableID = rb_intern("@__ffi_callback_table__");
 }
