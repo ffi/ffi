@@ -16,28 +16,35 @@ typedef struct Pointer {
 VALUE rb_FFI_Pointer_class;
 static VALUE classPointer = Qnil;
 static void ptr_mark(Pointer* ptr);
-static void ptr_free(Pointer* ptr);
 
 VALUE
 rb_FFI_Pointer_new(void* addr)
 {
     Pointer* p;
-    VALUE retval;
+    VALUE obj;
+
     if (addr == NULL) {
         return rb_FFI_NullPointer_singleton;
     }
-    retval = Data_Make_Struct(classPointer, Pointer, NULL, ptr_free, p);
+
+    obj = Data_Make_Struct(classPointer, Pointer, NULL, -1, p);
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
     p->parent = Qnil;
-    return retval;
+
+    return obj;
 }
 
 static VALUE
 ptr_allocate(VALUE klass)
 {
     Pointer* p;
-    return Data_Make_Struct(classPointer, Pointer, NULL, ptr_free, p);
+    VALUE obj;
+
+    obj = Data_Make_Struct(classPointer, Pointer, NULL, -1, p);
+    p->parent = Qnil;
+
+    return obj;
 }
 
 static VALUE
@@ -51,7 +58,7 @@ ptr_plus(VALUE self, VALUE offset)
     Data_Get_Struct(self, AbstractMemory, ptr);
     checkBounds(ptr, off, 1);
 
-    retval = Data_Make_Struct(classPointer, Pointer, ptr_mark, ptr_free, p);
+    retval = Data_Make_Struct(classPointer, Pointer, ptr_mark, -1, p);
 
     p->memory.address = ptr->address + off;
     p->memory.size = ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off;
@@ -76,7 +83,9 @@ static VALUE
 ptr_null_p(VALUE self)
 {
     Pointer* ptr;
+
     Data_Get_Struct(self, Pointer, ptr);
+
     return ptr->memory.address == NULL ? Qtrue : Qfalse;
 }
 
@@ -84,6 +93,7 @@ static VALUE
 ptr_equals(VALUE self, VALUE other)
 {
     Pointer* ptr;
+    
     Data_Get_Struct(self, Pointer, ptr);
 
     return ptr->memory.address == POINTER(other)->address ? Qtrue : Qfalse;
@@ -101,15 +111,7 @@ ptr_address(VALUE self)
 static void
 ptr_mark(Pointer* ptr)
 {
-    if (ptr->parent != Qnil) {
-        rb_gc_mark(ptr->parent);
-    }
-}
-
-static void
-ptr_free(Pointer* ptr)
-{
-    xfree(ptr);
+    rb_gc_mark(ptr->parent);
 }
 
 void
