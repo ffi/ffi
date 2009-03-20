@@ -33,7 +33,6 @@ PROJ.email = 'wmeissner@gmail.com'
 PROJ.url = 'http://kenai.com/projects/ruby-ffi'
 PROJ.version = '0.3.0'
 PROJ.rubyforge.name = 'ffi'
-
 PROJ.readme_file = 'README.rdoc'
 
 # Annoucement
@@ -51,6 +50,13 @@ PROJ.gem.extensions = %w(ext/ffi_c/extconf.rb gen/Rakefile)
 # RDoc
 PROJ.rdoc.exclude << '^ext\/'
 PROJ.rdoc.opts << '-x' << 'ext'
+
+# Ruby
+PROJ.ruby_opts = []
+PROJ.ruby_opts << '-I' << "\"#{BUILD_DIR}\"" unless RUBY_PLATFORM == "java"
+
+#RSpec
+PROJ.spec.opts << '--color'
 
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
@@ -121,3 +127,5 @@ namespace :bench do
     end
   end
 end
+
+task 'spec:run' => TEST_DEPS
