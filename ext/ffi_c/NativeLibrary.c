@@ -94,16 +94,13 @@ library_dlerror(VALUE self)
 static void
 library_free(Library* library)
 {
-    if (library != NULL) {
-        // dlclose() on MacOS tends to segfault - avoid it
+    // dlclose() on MacOS tends to segfault - avoid it
 #ifndef __APPLE__
-        if (library->handle != NULL) {
-            dl_close(library->handle);
-        }
-#endif
-        library->handle = NULL;
-        xfree(library);
+    if (library->handle != NULL) {
+        dl_close(library->handle);
     }
+#endif
+    xfree(library);
 }
 
 #if defined(_WIN32) || defined(__WIN32__)

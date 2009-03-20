@@ -90,28 +90,22 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
 static void
 cbinfo_free(CallbackInfo* cbInfo)
 {
-    if (cbInfo != NULL) {
-        if (cbInfo->parameterTypes != NULL) {
-            xfree(cbInfo->parameterTypes);
-            cbInfo->parameterTypes = NULL;
-        }
-        if (cbInfo->ffiParameterTypes != NULL) {
-            xfree(cbInfo->ffiParameterTypes);
-            cbInfo->ffiParameterTypes = NULL;
-        }
-        xfree(cbInfo);
+    if (cbInfo->parameterTypes != NULL) {
+        xfree(cbInfo->parameterTypes);
     }
+    if (cbInfo->ffiParameterTypes != NULL) {
+        xfree(cbInfo->ffiParameterTypes);
+    }
+    xfree(cbInfo);
 }
 
 static void
 native_callback_free(NativeCallback* cb)
 {
-    if (cb != NULL) {
-        if (cb->ffi_closure != NULL) {
-            ffi_closure_free(cb->ffi_closure);
-        }
-        xfree(cb);
+    if (cb->ffi_closure != NULL) {
+        ffi_closure_free(cb->ffi_closure);
     }
+    xfree(cb);
 }
 
 static void
