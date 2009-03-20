@@ -177,7 +177,12 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
         s->rbPointer = rb_FFI_MemoryPointer_new(s->layout->size, 1, true);
         s->pointer = (AbstractMemory *) DATA_PTR(s->rbPointer);
     }
-    
+
+    if (s->pointer->ops == NULL) {
+        VALUE name = rb_class_name(CLASS_OF(s->rbPointer));
+        rb_raise(rb_eRuntimeError, "No memory ops set for %s", StringValueCStr(name));
+    }
+
     return self;
 }
 
