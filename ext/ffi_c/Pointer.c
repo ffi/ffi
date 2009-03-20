@@ -103,6 +103,7 @@ static VALUE
 ptr_address(VALUE self)
 {
     Pointer* ptr;
+    
     Data_Get_Struct(self, Pointer, ptr);
 
     return ULL2NUM((uintptr_t) ptr->memory.address);
@@ -119,6 +120,7 @@ rb_FFI_Pointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_Pointer_class = classPointer = rb_define_class_under(moduleFFI, "Pointer", rb_FFI_AbstractMemory_class);
+    rb_global_variable(&rb_FFI_Pointer_class);
 
     rb_define_alloc_func(classPointer, ptr_allocate);
     rb_define_method(classPointer, "inspect", ptr_inspect, 0);
