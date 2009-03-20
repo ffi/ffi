@@ -30,6 +30,7 @@ rb_FFI_Pointer_new(void* addr)
     obj = Data_Make_Struct(classPointer, Pointer, NULL, -1, p);
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
+    p->memory.ops = &rb_FFI_AbstractMemory_ops;
     p->parent = Qnil;
 
     return obj;
@@ -62,6 +63,7 @@ ptr_plus(VALUE self, VALUE offset)
 
     p->memory.address = ptr->address + off;
     p->memory.size = ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off;
+    p->memory.ops = &rb_FFI_AbstractMemory_ops;
     p->parent = self;
 
     return retval;

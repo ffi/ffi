@@ -31,6 +31,7 @@ typedef struct StructLayoutBuilder {
 
 static void struct_mark(Struct *);
 static void struct_layout_mark(StructLayout *);
+static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, int type);
 
 VALUE rb_FFI_Struct_class = Qnil;
 static VALUE classStruct = Qnil, classStructLayout = Qnil;
@@ -87,99 +88,49 @@ struct_field_offset(VALUE self)
     return UINT2NUM(field->offset);
 }
 
+static VALUE
+struct_field_get(VALUE self, VALUE pointer)
+{
+    StructField* f;
+    MemoryOp* op;
+    AbstractMemory* memory = MEMORY(pointer);
+
+    Data_Get_Struct(self, StructField, f);
+    op = ptr_get_op(memory, f->type);
+    if (op == NULL) {
+        VALUE name = rb_class_name(CLASS_OF(self));
+        rb_raise(rb_eArgError, "get not supported for %s", StringValueCStr(name));
+        return Qnil;
+    }
+
+    return (*op->get)(memory, f->offset);
+}
+
+static VALUE
+struct_field_put(VALUE self, VALUE pointer, VALUE value)
+{
+    StructField* f;
+    MemoryOp* op;
+    AbstractMemory* memory = MEMORY(pointer);
+
+    Data_Get_Struct(self, StructField, f);
+    op = ptr_get_op(memory, f->type);
+    if (op == NULL) {
+        VALUE name = rb_class_name(CLASS_OF(self));
+        rb_raise(rb_eArgError, "put not supported for %s", StringValueCStr(name));
+        return self;
+    }
+    
+    (*op->put)(memory, f->offset, value);
+
+    return self;
+}
+
 static inline char*
 memory_address(VALUE self)
 {
     return ((AbstractMemory *)DATA_PTR((self)))->address;
 }
-
-static inline char*
-pointer_native(VALUE value)
-{
-    const int type = TYPE(value);
-
-    if (rb_obj_is_kind_of(value, rb_FFI_Pointer_class) && type == T_DATA) {
-        return memory_address(value);
-    } else if (type == T_NIL) {
-        return NULL;
-    } else if (type == T_FIXNUM) {
-        return (char *)(uintptr_t) FIX2INT(value);
-    } else if (type == T_BIGNUM) {
-        return (char *)(uintptr_t) NUM2ULL(value);
-    } else if (rb_respond_to(value, to_ptr)) {
-        VALUE ptr = rb_funcall2(value, to_ptr, 0, NULL);
-        if (rb_obj_is_kind_of(ptr, rb_FFI_Pointer_class) && TYPE(ptr) == T_DATA) {
-            return memory_address(ptr);
-        } else {
-            rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
-        }
-    } else {
-        rb_raise(rb_eArgError, "value is not a pointer");
-    }
-}
-
-static inline VALUE
-pointer_new(char* value)
-{
-    return rb_FFI_Pointer_new(value);
-}
-
-static inline char*
-string_to_native(VALUE value)
-{
-    rb_raise(rb_eArgError, "Cannot set :string fields");
-}
-
-static inline VALUE
-string_from_native(char* value)
-{
-    return value != NULL ? rb_tainted_str_new2(value) : Qnil;
-}
-
-#define FIELD_OP(name, type, toNative, fromNative) \
-static VALUE struct_field_put_##name(VALUE self, VALUE pointer, VALUE value); \
-static inline void ptr_put_##name(AbstractMemory* ptr, StructField* field, VALUE value); \
-static inline VALUE ptr_get_##name(AbstractMemory* ptr, StructField* field); \
-static inline void \
-ptr_put_##name(AbstractMemory* ptr, StructField* field, VALUE value) \
-{ \
-    type tmp = toNative(value); \
-    memcpy(ptr->address + field->offset, &tmp, sizeof(tmp)); \
-} \
-static inline VALUE \
-ptr_get_##name(AbstractMemory* ptr, StructField* field) \
-{ \
-    type tmp; \
-    memcpy(&tmp, ptr->address + field->offset, sizeof(tmp)); \
-    return fromNative(tmp); \
-} \
-static VALUE \
-struct_field_put_##name(VALUE self, VALUE pointer, VALUE value) \
-{ \
-    StructField* f;  Data_Get_Struct(self, StructField, f); \
-    ptr_put_##name(MEMORY(pointer), f, value); \
-    return self; \
-} \
-static VALUE struct_field_get_##name(VALUE self, VALUE pointer); \
-static VALUE \
-struct_field_get_##name(VALUE self, VALUE pointer) \
-{ \
-    StructField* f;  Data_Get_Struct(self, StructField, f); \
-    return ptr_get_##name(MEMORY(pointer), f); \
-}
-
-FIELD_OP(int8, int8_t, NUM2INT, INT2NUM);
-FIELD_OP(uint8, uint8_t, NUM2UINT, UINT2NUM);
-FIELD_OP(int16, int16_t, NUM2INT, INT2NUM);
-FIELD_OP(uint16, uint16_t, NUM2UINT, UINT2NUM);
-FIELD_OP(int32, int32_t, NUM2INT, INT2NUM);
-FIELD_OP(uint32, uint32_t, NUM2UINT, UINT2NUM);
-FIELD_OP(int64, int64_t, NUM2LL, LL2NUM);
-FIELD_OP(uint64, uint64_t, NUM2ULL, ULL2NUM);
-FIELD_OP(float32, float, NUM2DBL, rb_float_new);
-FIELD_OP(float64, double, NUM2DBL, rb_float_new);
-FIELD_OP(pointer, char*, pointer_native, pointer_new);
-FIELD_OP(string, char*, string_to_native, string_from_native);
 
 static VALUE
 struct_allocate(VALUE klass)
@@ -256,45 +207,81 @@ struct_field(Struct* s, VALUE fieldName)
 }
 
 static VALUE
+struct_field_op_get_string(AbstractMemory* ptr, long offset)
+{
+    void* tmp = NULL;
+
+    if (ptr != NULL && ptr->address != NULL) {
+        checkBounds(ptr, offset, sizeof(tmp));
+        memcpy(&tmp, ptr->address + offset, sizeof(tmp));
+    }
+
+    return tmp != NULL ? rb_tainted_str_new2(tmp) : Qnil;
+}
+
+static void
+struct_field_op_put_string(AbstractMemory* ptr, long offset, VALUE value)
+{
+    rb_raise(rb_eArgError, "Cannot set :string fields");
+}
+
+static MemoryOp struct_field_string_op = { struct_field_op_get_string, struct_field_op_put_string };
+
+static inline MemoryOp*
+ptr_get_op(AbstractMemory* ptr, int type)
+{
+    if (ptr == NULL || ptr->ops == NULL) {
+        return NULL;
+    }
+    switch (type) {
+        case NATIVE_INT8:
+            return ptr->ops->int8;
+        case NATIVE_UINT8:
+            return ptr->ops->uint8;
+        case NATIVE_INT16:
+            return ptr->ops->int16;
+        case NATIVE_UINT16:
+            return ptr->ops->uint16;
+        case NATIVE_INT32:
+            return ptr->ops->int32;
+        case NATIVE_UINT32:
+            return ptr->ops->uint32;
+        case NATIVE_INT64:
+            return ptr->ops->int64;
+        case NATIVE_UINT64:
+            return ptr->ops->uint64;
+        case NATIVE_FLOAT32:
+            return ptr->ops->float32;
+        case NATIVE_FLOAT64:
+            return ptr->ops->float64;
+        case NATIVE_POINTER:
+            return ptr->ops->pointer;
+        case NATIVE_STRING:
+            return &struct_field_string_op;
+        default:
+            return NULL;
+    }
+}
+
+static VALUE
 struct_get_field(VALUE self, VALUE fieldName)
 {
     Struct* s;
     VALUE rbField;
     StructField* f;
+    MemoryOp* op;
 
     Data_Get_Struct(self, Struct, s);
     rbField = struct_field(s, fieldName);
     f = FIELD_CAST(rbField);
 
-    switch (f->type) {
-        case NATIVE_INT8:
-            return ptr_get_int8(s->pointer, f);
-        case NATIVE_UINT8:
-            return ptr_get_uint8(s->pointer, f);
-        case NATIVE_INT16:
-            return ptr_get_int16(s->pointer, f);
-        case NATIVE_UINT16:
-            return ptr_get_uint16(s->pointer, f);
-        case NATIVE_INT32:
-            return ptr_get_int32(s->pointer, f);
-        case NATIVE_UINT32:
-            return ptr_get_uint32(s->pointer, f);
-        case NATIVE_INT64:
-            return ptr_get_int64(s->pointer, f);
-        case NATIVE_UINT64:
-            return ptr_get_uint64(s->pointer, f);
-        case NATIVE_FLOAT32:
-            return ptr_get_float32(s->pointer, f);
-        case NATIVE_FLOAT64:
-            return ptr_get_float64(s->pointer, f);
-        case NATIVE_POINTER:
-            return ptr_get_pointer(s->pointer, f);
-        case NATIVE_STRING:
-            return ptr_get_string(s->pointer, f);
-        default:
-            /* call up to the ruby code to fetch the value */
-            return rb_funcall2(rbField, getID, 1, &s->rbPointer);
+    op = ptr_get_op(s->pointer, f->type);
+    if (op != NULL) {
+        return (*op->get)(s->pointer, f->offset);
     }
+    
+    /* call up to the ruby code to fetch the value */
+    return rb_funcall2(rbField, getID, 1, &s->rbPointer);
 }
 
 static VALUE
@@ -303,55 +290,24 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
     Struct* s;
     VALUE rbField;
     StructField* f;
+    MemoryOp* op;
     VALUE argv[2];
 
     Data_Get_Struct(self, Struct, s);
     rbField = struct_field(s, fieldName);
     f = FIELD_CAST(rbField);
 
-    switch (f->type) {
-        case NATIVE_INT8:
-            ptr_put_int8(s->pointer, f, value);
-            break;
-        case NATIVE_UINT8:
-            ptr_put_uint8(s->pointer, f, value);
-            break;
-        case NATIVE_INT16:
-            ptr_put_int16(s->pointer, f, value);
-            break;
-        case NATIVE_UINT16:
-            ptr_put_uint16(s->pointer, f, value);
-            break;
-        case NATIVE_INT32:
-            ptr_put_int32(s->pointer, f, value);
-            break;
-        case NATIVE_UINT32:
-            ptr_put_uint32(s->pointer, f, value);
-            break;
-        case NATIVE_INT64:
-            ptr_put_int64(s->pointer, f, value);
-            break;
-        case NATIVE_UINT64:
-            ptr_put_uint64(s->pointer, f, value);
-            break;
-        case NATIVE_FLOAT32:
-            ptr_put_float32(s->pointer, f, value);
-            break;
-        case NATIVE_FLOAT64:
-            ptr_put_float64(s->pointer, f, value);
-            break;
-        case NATIVE_POINTER:
-            ptr_put_pointer(s->pointer, f, value);
-            break;
-        case NATIVE_STRING:
-            rb_raise(rb_eArgError, "Cannot set :string fields");
-        default:
-            /* call up to the ruby code to set the value */
-            argv[0] = s->rbPointer;
-            argv[1] = value;
-            rb_funcall2(rbField, putID, 2, argv);
-            break;
+    op = ptr_get_op(s->pointer, f->type);
+    if (op != NULL) {
+        (*op->put)(s->pointer, f->offset, value);
+        return self;
     }
+    
+    /* call up to the ruby code to set the value */
+    argv[0] = s->rbPointer;
+    argv[1] = value;
+    rb_funcall2(rbField, putID, 2, argv);
+    
     return self;
 }
 
@@ -487,7 +443,9 @@ rb_FFI_Struct_Init()
     rb_define_alloc_func(classStructField, struct_field_allocate);
     rb_define_method(classStructField, "initialize", struct_field_initialize, -1);
     rb_define_method(classStructField, "offset", struct_field_offset, 0);
-    
+    rb_define_method(classStructField, "put", struct_field_put, 2);
+    rb_define_method(classStructField, "get", struct_field_get, 1);
+
     rb_define_alloc_func(classStructLayout, struct_layout_allocate);
     rb_define_method(classStructLayout, "initialize", struct_layout_initialize, 4);
     rb_define_method(classStructLayout, "[]", struct_layout_aref, 1);
@@ -502,12 +460,10 @@ rb_FFI_Struct_Init()
 #undef FIELD
 #define FIELD(name, typeName, nativeType, T) do { \
     typedef struct { char c; T v; } s; \
-    klass = rb_define_class_under(classStructLayoutBuilder, #name, classStructField); \
-    rb_define_method(klass, "put", struct_field_put_##typeName, 2); \
-    rb_define_method(klass, "get", struct_field_get_##typeName, 1); \
-    rb_define_const(klass, "ALIGN", INT2NUM((sizeof(s) - sizeof(T)) * 8)); \
-    rb_define_const(klass, "SIZE", INT2NUM(sizeof(T)* 8)); \
-    rb_define_const(klass, "TYPE", INT2NUM(nativeType)); \
+        klass = rb_define_class_under(classStructLayoutBuilder, #name, classStructField); \
+        rb_define_const(klass, "ALIGN", INT2NUM((sizeof(s) - sizeof(T)) * 8)); \
+        rb_define_const(klass, "SIZE", INT2NUM(sizeof(T)* 8)); \
+        rb_define_const(klass, "TYPE", INT2NUM(nativeType)); \
     } while(0)
     
     FIELD(Signed8, int8, NATIVE_INT8, char);

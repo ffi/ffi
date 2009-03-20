@@ -34,7 +34,10 @@ static VALUE
 memptr_allocate(VALUE klass)
 {
     MemoryPointer* p;
-    return Data_Make_Struct(klass, MemoryPointer, NULL, memptr_release, p);
+    VALUE obj = Data_Make_Struct(klass, MemoryPointer, NULL, memptr_release, p);
+    p->memory.ops = &rb_FFI_AbstractMemory_ops;
+
+    return obj;
 }
 
 static VALUE

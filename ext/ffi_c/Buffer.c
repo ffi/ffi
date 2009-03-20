@@ -29,6 +29,7 @@ buffer_allocate(VALUE klass)
 
     obj = Data_Make_Struct(klass, Buffer, NULL, buffer_release, buffer);
     buffer->parent = Qnil;
+    buffer->memory.ops = &rb_FFI_AbstractMemory_ops;
 
     return obj;
 }
@@ -96,6 +97,7 @@ buffer_plus(VALUE self, VALUE offset)
     retval = Data_Make_Struct(classBuffer, Buffer, buffer_mark, -1, p);
     p->memory.address = ptr->memory.address + off;
     p->memory.size = ptr->memory.size - off;
+    p->memory.ops = &rb_FFI_AbstractMemory_ops;
     p->parent = self;
 
     return retval;

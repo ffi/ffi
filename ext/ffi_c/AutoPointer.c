@@ -25,6 +25,7 @@ autoptr_allocate(VALUE klass)
     AutoPointer* p;
     VALUE obj = Data_Make_Struct(klass, AutoPointer, autoptr_mark, -1, p);
     p->parent = Qnil;
+    p->memory.ops = &rb_FFI_AbstractMemory_ops;
 
     return obj;
 }

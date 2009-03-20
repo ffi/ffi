@@ -9,10 +9,33 @@
 extern "C" {
 #endif
 
+typedef struct AbstractMemory_ AbstractMemory;
+
 typedef struct {
+    VALUE (*get)(AbstractMemory* ptr, long offset);
+    void (*put)(AbstractMemory* ptr, long offset, VALUE value);
+} MemoryOp;
+
+typedef struct {
+    MemoryOp* int8;
+    MemoryOp* uint8;
+    MemoryOp* int16;
+    MemoryOp* uint16;
+    MemoryOp* int32;
+    MemoryOp* uint32;
+    MemoryOp* int64;
+    MemoryOp* uint64;
+    MemoryOp* float32;
+    MemoryOp* float64;
+    MemoryOp* pointer;
+} MemoryOps;
+
+struct AbstractMemory_ {
     char* address; // Use char* instead of void* to ensure adding to it works correctly
     long size;
-} AbstractMemory;
+    MemoryOps* ops;
+};
+
 
 static inline void
 checkBounds(AbstractMemory* mem, long off, long len)
@@ -30,6 +53,8 @@ checkBounds(AbstractMemory* mem, long off, long len)
 extern AbstractMemory* rb_FFI_AbstractMemory_cast(VALUE obj, VALUE klass);
 
 extern VALUE rb_FFI_AbstractMemory_class;
+extern MemoryOps rb_FFI_AbstractMemory_ops;
+
 #ifdef	__cplusplus
 }
 #endif

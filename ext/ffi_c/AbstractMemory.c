@@ -19,32 +19,50 @@ static VALUE
 memory_allocate(VALUE klass)
 {
     AbstractMemory* memory;
-    return Data_Make_Struct(klass, AbstractMemory, NULL, -1, memory);
+    VALUE obj;
+    obj = Data_Make_Struct(klass, AbstractMemory, NULL, -1, memory);
+    memory->ops = &rb_FFI_AbstractMemory_ops;
+
+    return obj;
 }
 
 #define NUM_OP(name, type, toNative, fromNative) \
+static void memory_op_put_##name(AbstractMemory* memory, long off, VALUE value); \
+static void \
+memory_op_put_##name(AbstractMemory* memory, long off, VALUE value) \
+{ \
+    type tmp = (type) toNative(value); \
+    checkBounds(memory, off, sizeof(type)); \
+    memcpy(memory->address + off, &tmp, sizeof(tmp)); \
+} \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
 static VALUE \
 memory_put_##name(VALUE self, VALUE offset, VALUE value) \
 { \
-    long off = NUM2LONG(offset); \
-    AbstractMemory* memory = MEMORY(self); \
-    type tmp = (type) toNative(value); \
-    checkBounds(memory, off, sizeof(type)); \
-    memcpy(memory->address + off, &tmp, sizeof(tmp)); \
+    AbstractMemory* memory; \
+    Data_Get_Struct(self, AbstractMemory, memory); \
+    memory_op_put_##name(memory, NUM2LONG(offset), value); \
     return self; \
 } \
-static VALUE memory_get_##name(VALUE self, VALUE offset); \
+static VALUE memory_op_get_##name(AbstractMemory* memory, long off); \
 static VALUE \
-memory_get_##name(VALUE self, VALUE offset) \
+memory_op_get_##name(AbstractMemory* memory, long off) \
 { \
-    long off = NUM2LONG(offset); \
-    AbstractMemory* memory = MEMORY(self); \
     type tmp; \
     checkBounds(memory, off, sizeof(type)); \
     memcpy(&tmp, memory->address + off, sizeof(tmp)); \
     return fromNative(tmp); \
 } \
+static VALUE memory_get_##name(VALUE self, VALUE offset); \
+static VALUE \
+memory_get_##name(VALUE self, VALUE offset) \
+{ \
+    AbstractMemory* memory; \
+    Data_Get_Struct(self, AbstractMemory, memory); \
+    return memory_op_get_##name(memory, NUM2LONG(offset)); \
+} \
+static MemoryOp memory_op_##name = { memory_op_get_##name, memory_op_put_##name }; \
+\
 static VALUE memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary); \
 static VALUE \
 memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
@@ -89,11 +107,9 @@ NUM_OP(uint64, uint64_t, NUM2ULL, ULL2NUM);
 NUM_OP(float32, float, NUM2DBL, rb_float_new);
 NUM_OP(float64, double, NUM2DBL, rb_float_new);
 
-static VALUE
-memory_put_pointer(VALUE self, VALUE offset, VALUE value)
+static void
+memory_op_put_pointer(AbstractMemory* memory, long off, VALUE value)
 { 
-    AbstractMemory* memory = MEMORY(self);
-    long off = NUM2LONG(offset);
     const int type = TYPE(value);
     checkBounds(memory, off, sizeof(void *));
 
@@ -116,19 +132,37 @@ memory_put_pointer(VALUE self, VALUE offset, VALUE value)
     } else {
         rb_raise(rb_eArgError, "value is not a pointer");
     }
+}
+
+static VALUE
+memory_op_get_pointer(AbstractMemory* memory, long off)
+{
+    void* tmp;
+
+    checkBounds(memory, off, sizeof(tmp));
+    memcpy(&tmp, memory->address + off, sizeof(tmp));
+    return rb_FFI_Pointer_new(tmp);
+}
+
+static VALUE
+memory_put_pointer(VALUE self, VALUE offset, VALUE value)
+{
+    AbstractMemory* memory;
+
+    Data_Get_Struct(self, AbstractMemory, memory);
+    memory_op_put_pointer(memory, NUM2LONG(offset), value);
+
     return self;
 }
 
 static VALUE
 memory_get_pointer(VALUE self, VALUE offset)
 {
-    AbstractMemory* memory = MEMORY(self);
-    long off = NUM2LONG(offset);
-    void* tmp;
+    AbstractMemory* memory;
+    
+    Data_Get_Struct(self, AbstractMemory, memory);
 
-    checkBounds(memory, off, sizeof(tmp));
-    memcpy(&tmp, memory->address + off, sizeof(tmp));
-    return rb_FFI_Pointer_new(tmp);
+    return memory_op_get_pointer(memory, NUM2LONG(offset));
 }
 
 static VALUE
@@ -254,6 +288,22 @@ rb_FFI_AbstractMemory_cast(VALUE obj, VALUE klass)
     }
     rb_raise(rb_eArgError, "Invalid Memory object");
 }
+
+static MemoryOp memory_op_pointer = { memory_op_get_pointer, memory_op_put_pointer };
+
+MemoryOps rb_FFI_AbstractMemory_ops = {
+    .int8 = &memory_op_int8,
+    .uint8 = &memory_op_uint8,
+    .int16 = &memory_op_int16,
+    .uint16 = &memory_op_uint16,
+    .int32 = &memory_op_int32,
+    .uint32 = &memory_op_uint32,
+    .int64 = &memory_op_int64,
+    .uint64 = &memory_op_uint64,
+    .float32 = &memory_op_float32,
+    .float64 = &memory_op_float64,
+    .pointer = &memory_op_pointer,
+};
 
 void
 rb_FFI_AbstractMemory_Init()

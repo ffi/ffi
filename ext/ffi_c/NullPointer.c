@@ -9,6 +9,8 @@
 
 static VALUE NullPointerError;
 static VALUE classNullPointer;
+static MemoryOps nullptr_ops;
+
 VALUE rb_FFI_NullPointer_class;
 VALUE rb_FFI_NullPointer_singleton;
 
@@ -21,11 +23,25 @@ rb_FFI_NullPointer_allocate(VALUE klass)
     retval = Data_Make_Struct(klass, AbstractMemory, NULL, -1, p);
     p->address = 0;
     p->size = 0;
+    p->ops = &nullptr_ops;
+
     return retval;
 }
 
 static VALUE
 nullptr_op(int argc, VALUE* argv, VALUE self)
+{
+    rb_raise(NullPointerError, "NULL Pointer access attempted");
+}
+
+static VALUE
+nullptr_op_get(AbstractMemory* ptr, long offset)
+{
+    rb_raise(NullPointerError, "NULL Pointer access attempted");
+}
+
+static void
+nullptr_op_put(AbstractMemory* ptr, long offset, VALUE value)
 {
     rb_raise(NullPointerError, "NULL Pointer access attempted");
 }
@@ -46,10 +62,13 @@ static VALUE
 nullptr_equals(VALUE self, VALUE other)
 {
     AbstractMemory* p2;
+
     if (!rb_obj_is_kind_of(other, rb_FFI_Pointer_class)) {
         rb_raise(rb_eArgError, "Comparing Pointer with non Pointer");
     }
+
     Data_Get_Struct(other, AbstractMemory, p2);
+
     return p2->address == 0 ? Qtrue : Qfalse;
 }
 
@@ -59,6 +78,21 @@ nullptr_address(VALUE self)
     return INT2NUM(0);
 }
 
+static MemoryOp nullptr_memory_op = { nullptr_op_get, nullptr_op_put };
+
+static MemoryOps nullptr_ops = {
+    .int8 = &nullptr_memory_op,
+    .uint8 = &nullptr_memory_op,
+    .int16 = &nullptr_memory_op,
+    .int16 = &nullptr_memory_op,
+    .int32 = &nullptr_memory_op,
+    .uint32 = &nullptr_memory_op,
+    .int64 = &nullptr_memory_op,
+    .uint64 = &nullptr_memory_op,
+    .float32 = &nullptr_memory_op,
+    .float64 = &nullptr_memory_op,
+    .pointer = &nullptr_memory_op,
+};
 
 void
 rb_FFI_NullPointer_Init()
