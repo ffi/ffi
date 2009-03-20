@@ -15,7 +15,7 @@
 #include "extconf.h"
 
 
-static void CallbackInfo_free(CallbackInfo *);
+static void cbinfo_free(CallbackInfo *);
 
 #if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
 static void* ffi_closure_alloc(size_t size, void** code);
@@ -32,14 +32,14 @@ static ID callID = Qnil, cbTableID = Qnil;
 VALUE rb_FFI_CallbackInfo_class = Qnil;
 
 static VALUE
-CallbackInfo_allocate(VALUE klass)
+cbinfo_allocate(VALUE klass)
 {
     CallbackInfo* cbInfo;
-    return Data_Make_Struct(klass, CallbackInfo, NULL, CallbackInfo_free, cbInfo);
+    return Data_Make_Struct(klass, CallbackInfo, NULL, cbinfo_free, cbInfo);
 }
 
 static VALUE
-CallbackInfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
+cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
 {
     CallbackInfo *cbInfo;
     int paramCount;
@@ -53,6 +53,8 @@ CallbackInfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
     cbInfo->parameterCount = paramCount;
     cbInfo->parameterTypes = xcalloc(paramCount, sizeof(NativeType));
     cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
+    cbInfo->returnType = FIX2INT(rbReturnType);
+
     for (i = 0; i < paramCount; ++i) {
         cbInfo->parameterTypes[i] = FIX2INT(rb_ary_entry(rbParamTypes, i));
         cbInfo->ffiParameterTypes[i] = rb_FFI_NativeTypeToFFI(cbInfo->parameterTypes[i]);
@@ -60,7 +62,7 @@ CallbackInfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
             rb_raise(rb_eArgError, "Unknown argument type: %#x", cbInfo->parameterTypes[i]);
         }
     }
-    cbInfo->returnType = FIX2INT(rbReturnType);
+
     cbInfo->ffiReturnType = rb_FFI_NativeTypeToFFI(cbInfo->returnType);
     if (cbInfo->ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Unknown return type: %#x", cbInfo->returnType);
@@ -86,7 +88,7 @@ CallbackInfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
 }
 
 static void
-CallbackInfo_free(CallbackInfo* cbInfo)
+cbinfo_free(CallbackInfo* cbInfo)
 {
     if (cbInfo != NULL) {
         if (cbInfo->parameterTypes != NULL) {
@@ -314,9 +316,11 @@ void
 rb_FFI_Callback_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
+
     rb_FFI_CallbackInfo_class = classCallbackInfo = rb_define_class_under(moduleFFI, "CallbackInfo", rb_cObject);
-    rb_define_alloc_func(classCallbackInfo, CallbackInfo_allocate);
-    rb_define_method(classCallbackInfo, "initialize", CallbackInfo_initialize, 2);
+    rb_define_alloc_func(classCallbackInfo, cbinfo_allocate);
+    rb_define_method(classCallbackInfo, "initialize", cbinfo_initialize, 2);
+
     classNativeCallback = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
     rb_define_alloc_func(classNativeCallback, native_callback_allocate);
     callID = rb_intern("call");
