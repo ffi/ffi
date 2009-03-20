@@ -39,12 +39,6 @@ static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
 static ID pointerID = 0, layoutID = 0, SIZE_ID, ALIGN_ID;
 static ID getID = 0, putID = 0, to_ptr = 0;
 
-#define FIELD_CAST(obj) ((StructField *)((TYPE(obj) == T_DATA && rb_obj_is_kind_of(obj, classStructField)) \
-    ? DATA_PTR(obj) : (rb_raise(rb_eArgError, "StructField expected"), NULL)))
-
-#define LAYOUT_CAST(obj) ((StructLayout *)((TYPE(obj) == T_DATA && rb_obj_is_kind_of(obj, classStructLayout)) \
-    ? DATA_PTR(obj) : (rb_raise(rb_eArgError, "StructLayout expected"), NULL)))
-
 static VALUE
 struct_field_allocate(VALUE klass)
 {
@@ -257,7 +251,7 @@ struct_get_field(VALUE self, VALUE fieldName)
 
     Data_Get_Struct(self, Struct, s);
     rbField = struct_field(s, fieldName);
-    f = FIELD_CAST(rbField);
+    f = (StructField *) DATA_PTR(rbField);
 
     op = ptr_get_op(s->pointer, f->type);
     if (op != NULL) {
@@ -279,7 +273,7 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
 
     Data_Get_Struct(self, Struct, s);
     rbField = struct_field(s, fieldName);
-    f = FIELD_CAST(rbField);
+    f = (StructField *) DATA_PTR(rbField);
 
     op = ptr_get_op(s->pointer, f->type);
     if (op != NULL) {
@@ -364,9 +358,10 @@ static VALUE
 struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size, VALUE align)
 {
     StructLayout* layout;
+    int i;
 
     Data_Get_Struct(self, StructLayout, layout);
-    layout->rbFields = fields;
+    layout->rbFields = rb_hash_new();
     layout->size = NUM2INT(size);
     layout->align = NUM2INT(align);
     
@@ -375,6 +370,14 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
     rb_iv_set(self, "@size", size);
     rb_iv_set(self, "@align", align);
 
+    for (i = 0; i < RARRAY_LEN(field_names); ++i) {
+        VALUE name = RARRAY_PTR(field_names)[i];
+        VALUE field = rb_hash_aref(fields, name);
+        if (TYPE(field) != T_DATA || !rb_obj_is_kind_of(field, classStructField)) {
+            rb_raise(rb_eArgError, "Invalid field");
+        }
+        rb_hash_aset(layout->rbFields, name, field);
+    }
     return self;
 }
 
