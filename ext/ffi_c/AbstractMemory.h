@@ -28,6 +28,7 @@ typedef struct {
     MemoryOp* float32;
     MemoryOp* float64;
     MemoryOp* pointer;
+    MemoryOp* strptr;
 } MemoryOps;
 
 struct AbstractMemory_ {

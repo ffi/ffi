@@ -289,6 +289,27 @@ rb_FFI_AbstractMemory_cast(VALUE obj, VALUE klass)
     rb_raise(rb_eArgError, "Invalid Memory object");
 }
 
+static VALUE
+memory_op_get_strptr(AbstractMemory* ptr, long offset)
+{
+    void* tmp = NULL;
+
+    if (ptr != NULL && ptr->address != NULL) {
+        checkBounds(ptr, offset, sizeof(tmp));
+        memcpy(&tmp, ptr->address + offset, sizeof(tmp));
+    }
+
+    return tmp != NULL ? rb_tainted_str_new2(tmp) : Qnil;
+}
+
+static void
+memory_op_put_strptr(AbstractMemory* ptr, long offset, VALUE value)
+{
+    rb_raise(rb_eArgError, "Cannot set :string fields");
+}
+
+static MemoryOp memory_op_strptr = { memory_op_get_strptr, memory_op_put_strptr };
+
 static MemoryOp memory_op_pointer = { memory_op_get_pointer, memory_op_put_pointer };
 
 MemoryOps rb_FFI_AbstractMemory_ops = {
@@ -303,6 +324,7 @@ MemoryOps rb_FFI_AbstractMemory_ops = {
     .float32 = &memory_op_float32,
     .float64 = &memory_op_float64,
     .pointer = &memory_op_pointer,
+    .strptr = &memory_op_strptr,
 };
 
 void

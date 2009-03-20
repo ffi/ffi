@@ -211,27 +211,6 @@ struct_field(Struct* s, VALUE fieldName)
     return rbField;
 }
 
-static VALUE
-struct_field_op_get_string(AbstractMemory* ptr, long offset)
-{
-    void* tmp = NULL;
-
-    if (ptr != NULL && ptr->address != NULL) {
-        checkBounds(ptr, offset, sizeof(tmp));
-        memcpy(&tmp, ptr->address + offset, sizeof(tmp));
-    }
-
-    return tmp != NULL ? rb_tainted_str_new2(tmp) : Qnil;
-}
-
-static void
-struct_field_op_put_string(AbstractMemory* ptr, long offset, VALUE value)
-{
-    rb_raise(rb_eArgError, "Cannot set :string fields");
-}
-
-static MemoryOp struct_field_string_op = { struct_field_op_get_string, struct_field_op_put_string };
-
 static inline MemoryOp*
 ptr_get_op(AbstractMemory* ptr, int type)
 {
@@ -262,7 +241,7 @@ ptr_get_op(AbstractMemory* ptr, int type)
         case NATIVE_POINTER:
             return ptr->ops->pointer;
         case NATIVE_STRING:
-            return &struct_field_string_op;
+            return ptr->ops->strptr;
         default:
             return NULL;
     }

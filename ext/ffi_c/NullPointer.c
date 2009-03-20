@@ -92,6 +92,7 @@ static MemoryOps nullptr_ops = {
     .float32 = &nullptr_memory_op,
     .float64 = &nullptr_memory_op,
     .pointer = &nullptr_memory_op,
+    .strptr = &nullptr_memory_op,
 };
 
 void
