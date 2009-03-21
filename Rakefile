@@ -129,3 +129,4 @@ namespace :bench do
 end
 
 task 'spec:run' => TEST_DEPS
+task 'spec:specdoc' => TEST_DEPS
