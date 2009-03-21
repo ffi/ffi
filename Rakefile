@@ -56,7 +56,7 @@ PROJ.ruby_opts = []
 PROJ.ruby_opts << '-I' << "\"#{BUILD_DIR}\"" unless RUBY_PLATFORM == "java"
 
 #RSpec
-PROJ.spec.opts << '--color'
+PROJ.spec.opts << '--color' << '-fs'
 
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
