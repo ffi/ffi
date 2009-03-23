@@ -1,3 +1,27 @@
-== 0.3.0 / 2009-03-19
+== 0.3.1 / 2009-03-23
+* Correctly save errno/GetLastError after each call.
 
+== 0.3.0 / 2009-03-19
+* Switch compilation to rake-compiler
+  * Makes cross-compilation from linux -> win32 super easy
+  * win32 support is available now, but highly experimental
+
+* Performance improvements
+  * struct field access approx 3x faster than 0.2.0
+  * function invocation approx 20% faster than 0.2.0
+
+* A bunch of minor improvements
+  * Struct instances can now be passed as :pointer parameters without calling
+    Struct#pointer
+  * Support for array struct members
+  * Structs are now padded correctly to the alignment of the struct's  
+    largest field
+  * Global library variables
+  * Callbacks in global library variables
+  * Strings passed in as :string arguments are scrubbed to avoid 
+    poison-null-byte attacks.
+  * Union support
+  * nil can be passed as a :string argument (passed as NULL)
+  * Structs can now be fields inside another struct
+  * Lots of internal cleanups and refactorings.
  
