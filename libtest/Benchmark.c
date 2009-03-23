@@ -54,6 +54,7 @@ typedef float f32;
 typedef double f64;
 typedef void v;
 typedef char* S;
+typedef void* p;
 
 #define B6(R, T1, T2, T3, T4, T5, T6) R bench_##T1##T2##T3##T4##T5##T6##_##R(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6) {}
 #define B5(R, T1, T2, T3, T4, T5) R bench_##T1##T2##T3##T4##T5##_##R(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5) {}
@@ -69,3 +70,4 @@ BrV(u64);
 BrV(f32);
 BrV(f64);
 BrV(S);
+BrV(p);

@@ -621,16 +621,20 @@ static inline VALUE
 ffi_invoke(ffi_cif* cif, void* function, NativeType returnType, void** ffiValues)
 {
     FFIStorage retval;
+    int error = 0;
+
 #ifdef USE_RAW
     ffi_raw_call(cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
 #else
     ffi_call(cif, FFI_FN(function), &retval, ffiValues);
 #endif
 #if defined(_WIN32) || defined(__WIN32__)
-    threadData->td_errno = GetLastError();
+    error = GetLastError();
 #else
-    threadData->td_errno = errno;
+    error = errno;
 #endif
+    threadData->td_errno = error;
+
     return rb_FFI_NativeValueToRuby(returnType, &retval);
 }
 static VALUE
