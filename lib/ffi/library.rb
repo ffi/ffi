@@ -33,18 +33,18 @@ module FFI::Library
 
   def attach_function(mname, a3, a4, a5=nil)
     cname, arg_types, ret_type = a5 ? [ a3, a4, a5 ] : [ mname.to_s, a3, a4 ]
-    libraries = defined?(@ffi_libs) ? @ffi_libs : [ DEFAULT ]
-    convention = defined?(@ffi_convention) ? @ffi_convention : :default
 
     # Convert :foo to the native type
     arg_types.map! { |e| find_type(e) }
     has_callback = arg_types.any? {|t| t.kind_of?(FFI::CallbackInfo)}
     options = Hash.new
-    options[:convention] = convention
+    options[:convention] = defined?(@ffi_convention) ? @ffi_convention : :default
     options[:type_map] = @ffi_typedefs if defined?(@ffi_typedefs)
     options[:enums] = @enums if defined?(@enums)
+
     # Try to locate the function in any of the libraries
     invokers = []
+    libraries = defined?(@ffi_libs) ? @ffi_libs : [ DEFAULT ]
     libraries.each do |lib|
       begin
         invokers << FFI.create_invoker(lib, cname.to_s, arg_types, ret_type, find_type(ret_type), options)
