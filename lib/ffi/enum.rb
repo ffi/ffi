@@ -71,6 +71,7 @@ module FFI
     def symbol_map
       @kv_map
     end
+    alias to_h symbol_map
 
   end
 
