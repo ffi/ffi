@@ -57,6 +57,7 @@ Init_ffi_c() {
     rb_global_variable(&sizeMap);
     type_size_id = rb_intern("type_size");
     size_id = rb_intern("size");
+    find_id = rb_intern("find");
     
     rb_define_const(moduleNativeType, "VOID", INT2FIX(NATIVE_VOID));
     rb_define_const(moduleNativeType, "INT8", INT2FIX(NATIVE_INT8));
@@ -77,6 +78,7 @@ Init_ffi_c() {
     rb_define_const(moduleNativeType, "BUFFER_OUT", INT2FIX(NATIVE_BUFFER_OUT));
     rb_define_const(moduleNativeType, "BUFFER_INOUT", INT2FIX(NATIVE_BUFFER_INOUT));
     rb_define_const(moduleNativeType, "VARARGS", INT2FIX(NATIVE_VARARGS));
+    rb_define_const(moduleNativeType, "ENUM", INT2FIX(NATIVE_ENUM));
     if (sizeof(long) == 4) {
         rb_define_const(moduleNativeType, "LONG", INT2FIX(NATIVE_INT32));
         rb_define_const(moduleNativeType, "ULONG", INT2FIX(NATIVE_UINT32));

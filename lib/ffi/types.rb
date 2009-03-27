@@ -92,7 +92,10 @@ module FFI
   add_typedef(NativeType::BUFFER_IN, :buffer_in)
   add_typedef(NativeType::BUFFER_OUT, :buffer_out)
   add_typedef(NativeType::BUFFER_INOUT, :buffer_inout)
+
   add_typedef(NativeType::VARARGS, :varargs)
+  
+  add_typedef(NativeType::ENUM, :enum)
 
   # Use for a C struct with a char [] embedded inside.
   add_typedef(NativeType::CHAR_ARRAY, :char_array)

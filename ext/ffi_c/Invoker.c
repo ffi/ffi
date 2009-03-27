@@ -37,12 +37,14 @@ typedef struct Invoker Invoker;
 
 struct Invoker {
     VALUE library;
+    VALUE enums;
     void* function;
     ffi_cif cif;
     int paramCount;
     ffi_type** ffiParamTypes;
     NativeType* paramTypes;
     NativeType returnType;
+    VALUE rbReturnType;
     VALUE callbackArray;
     int callbackCount;
     VALUE* callbackParameters;
@@ -77,7 +79,7 @@ typedef struct ThreadData {
 } ThreadData;
 static VALUE invoker_allocate(VALUE klass);
 static VALUE invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
-        VALUE returnType, VALUE convention);
+        VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums);
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
 static VALUE invoker_call(int argc, VALUE* argv, VALUE self);
@@ -147,7 +149,7 @@ invoker_allocate(VALUE klass)
 
 static VALUE
 invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
-        VALUE returnType, VALUE convention)
+        VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums)
 {
     Invoker* invoker = NULL;
     ffi_type* ffiReturnType;
@@ -156,12 +158,14 @@ invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTyp
     int i;
 
     Check_Type(parameterTypes, T_ARRAY);
+    Check_Type(rbReturnType, T_SYMBOL);
     Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
     Check_Type(library, T_DATA);
     Check_Type(function, T_DATA);
 
     Data_Get_Struct(self, Invoker, invoker);
+    invoker->enums = enums;
     invoker->library = library;
     invoker->function = rb_FFI_AbstractMemory_cast(function, rb_FFI_Pointer_class)->address;
     invoker->paramCount = RARRAY_LEN(parameterTypes);
@@ -185,6 +189,7 @@ invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTyp
             rb_raise(rb_eArgError, "Invalid parameter type");
         }
     }
+    invoker->rbReturnType = rbReturnType;
     invoker->returnType = FIX2INT(returnType);
     ffiReturnType = rb_FFI_NativeTypeToFFI(invoker->returnType);
     if (ffiReturnType == NULL) {
@@ -213,17 +218,19 @@ invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTyp
 }
 
 static VALUE
-variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE returnType, VALUE convention)
+variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums)
 {
     Invoker* invoker = NULL;
     VALUE retval = Qnil;
 
+    Check_Type(rbReturnType, T_SYMBOL);
     Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
     Check_Type(library, T_DATA);
     Check_Type(function, T_DATA);
 
     retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
+    invoker->enums = enums;
     invoker->library = library;
     invoker->function = rb_FFI_AbstractMemory_cast(function, rb_FFI_Pointer_class)->address;
 #if defined(_WIN32) || defined(__WIN32__)
@@ -231,6 +238,7 @@ variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE returnTyp
 #else
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
+    invoker->rbReturnType = rbReturnType;
     invoker->returnType = FIX2INT(returnType);
     invoker->paramCount = -1;
     return retval;
@@ -439,10 +447,16 @@ typedef union {
 } FFIStorage;
 
 static inline int
-getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* typeName)
+getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* typeName, VALUE enums)
 {
     int i;
-    if (type != T_FIXNUM && type != T_BIGNUM) {
+    if (type == T_SYMBOL && enums != Qnil) {
+        value = rb_funcall(enums, rb_intern("__map_symbol"), 1, value);
+        if (value == Qnil) {
+            rb_raise(rb_eTypeError, "Expected a valid enum constant");
+        }
+    }
+    else if (type != T_FIXNUM && type != T_BIGNUM) {
         rb_raise(rb_eTypeError, "Expected an Integer parameter");
     }
     i = NUM2INT(value);
@@ -500,18 +514,18 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
     for (i = 0, argidx = 0, cbidx = 0; i < argCount; ++i) {
         int type = argidx < argc ? TYPE(argv[argidx]) : T_NONE;
         ffiValues[i] = param;
-        
         switch (paramTypes[i]) {
             case NATIVE_INT8:
-                param->s8 = getSignedInt(argv[argidx++], type, -128, 127, "char");
+                param->s8 = getSignedInt(argv[argidx++], type, -128, 127, "char", Qnil);
                 ADJ(param, INT8);
                 break;
             case NATIVE_INT16:
-                param->s16 = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short");
+                param->s16 = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short", Qnil);
                 ADJ(param, INT16);
                 break;
             case NATIVE_INT32:
-                param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int");
+            case NATIVE_ENUM:
+                param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int", invoker->enums);
                 ADJ(param, INT32);
                 break;
             case NATIVE_UINT8:
@@ -618,7 +632,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
     }
 }
 static inline VALUE
-ffi_invoke(ffi_cif* cif, void* function, NativeType returnType, void** ffiValues)
+ffi_invoke(ffi_cif* cif, void* function, NativeType returnType, VALUE rbReturnType, VALUE enums, void** ffiValues)
 {
     FFIStorage retval;
     int error = 0;
@@ -635,7 +649,7 @@ ffi_invoke(ffi_cif* cif, void* function, NativeType returnType, void** ffiValues
 #endif
     threadData->td_errno = error;
 
-    return rb_FFI_NativeValueToRuby(returnType, &retval);
+    return rb_FFI_NativeValueToRuby(returnType, rbReturnType, &retval, enums);
 }
 static VALUE
 invoker_call(int argc, VALUE* argv, VALUE self)
@@ -646,7 +660,7 @@ invoker_call(int argc, VALUE* argv, VALUE self)
 
     Data_Get_Struct(self, Invoker, invoker);
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
 }
 
 static inline VALUE
@@ -658,7 +672,7 @@ invoker_callN(VALUE self, int argc, VALUE* argv)
 
     Data_Get_Struct(self, Invoker, invoker);
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
 }
 
 static VALUE
@@ -669,7 +683,7 @@ invoker_call0(VALUE self)
     void* ffiValues[] = { &arg0 };
     
     Data_Get_Struct(self, Invoker, invoker);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
 }
 
 static VALUE
@@ -705,7 +719,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* us
         ffi_arg_setup(invoker, invoker->paramCount, (VALUE *)&parameters[1],
                 invoker->paramTypes, params, ffiValues);
     }
-    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
 }
 
 static void
@@ -719,7 +733,7 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* u
     VALUE* argv = *(VALUE **) &parameters[1];
 
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
 }
 
 #else
@@ -740,7 +754,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     if (invoker->paramCount > 0) {
         ffi_arg_setup(invoker, invoker->paramCount, argv, invoker->paramTypes, params, ffiValues);
     }
-    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
 }
 #endif /* _WIN32 */
 static void
@@ -754,7 +768,7 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* use
     VALUE* argv = *(VALUE **) parameters[1];
 
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, ffiValues);
+    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
 }
 #endif
 static VALUE
@@ -787,6 +801,12 @@ invoker_mark(Invoker *invoker)
     }
     if (invoker->library != Qnil) {
         rb_gc_mark(invoker->library);
+    }
+    if (invoker->enums != Qnil) {
+        rb_gc_mark(invoker->enums);
+    }
+    if (invoker->rbReturnType != Qnil) {
+        rb_gc_mark(invoker->rbReturnType);
     }
 }
 
@@ -845,6 +865,7 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
             case NATIVE_INT8:
             case NATIVE_INT16:
             case NATIVE_INT32:
+            case NATIVE_ENUM:
                 paramType = NATIVE_INT32;
                 break;
             case NATIVE_UINT8:
@@ -880,7 +901,7 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
     ffi_arg_setup(invoker, paramCount, argv, paramTypes, params, ffiValues);
-    return ffi_invoke(&cif, invoker->function, invoker->returnType, ffiValues);
+    return ffi_invoke(&cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
 }
 
 static void* 
@@ -962,7 +983,7 @@ rb_FFI_Invoker_Init()
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
     classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_define_alloc_func(classInvoker, invoker_allocate);
-    rb_define_method(classInvoker, "initialize", invoker_initialize, 5);
+    rb_define_method(classInvoker, "initialize", invoker_initialize, 7);
     rb_define_method(classInvoker, "call", invoker_call, -1);
     rb_define_method(classInvoker, "call0", invoker_call0, 0);
     rb_define_method(classInvoker, "call1", invoker_call1, 1);
@@ -971,7 +992,7 @@ rb_FFI_Invoker_Init()
     rb_define_method(classInvoker, "arity", invoker_arity, 0);
     rb_define_method(classInvoker, "attach", invoker_attach, 2);
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
-    rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 4);
+    rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 6);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     to_ptr = rb_intern("to_ptr");
     
