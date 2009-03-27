@@ -633,10 +633,14 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
     }
 }
 static inline VALUE
-ffi_invoke(ffi_cif* cif, void* function, NativeType returnType, VALUE rbReturnType, VALUE enums, void** ffiValues)
+ffi_invoke(ffi_cif* cif, Invoker* invoker, void** ffiValues)
 {
     FFIStorage retval;
     int error = 0;
+    void* function = invoker->function;
+    NativeType returnType = invoker->returnType;
+    VALUE rbReturnType = invoker->rbReturnType;
+    VALUE enums = invoker->enums;
 
 #ifdef USE_RAW
     ffi_raw_call(cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
@@ -661,7 +665,7 @@ invoker_call(int argc, VALUE* argv, VALUE self)
 
     Data_Get_Struct(self, Invoker, invoker);
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
+    return ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 
 static inline VALUE
@@ -673,7 +677,7 @@ invoker_callN(VALUE self, int argc, VALUE* argv)
 
     Data_Get_Struct(self, Invoker, invoker);
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
+    return ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 
 static VALUE
@@ -684,7 +688,7 @@ invoker_call0(VALUE self)
     void* ffiValues[] = { &arg0 };
     
     Data_Get_Struct(self, Invoker, invoker);
-    return ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
+    return ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 
 static VALUE
@@ -720,7 +724,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* us
         ffi_arg_setup(invoker, invoker->paramCount, (VALUE *)&parameters[1],
                 invoker->paramTypes, params, ffiValues);
     }
-    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
+    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 
 static void
@@ -734,7 +738,7 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* u
     VALUE* argv = *(VALUE **) &parameters[1];
 
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
+    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 
 #else
@@ -755,7 +759,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     if (invoker->paramCount > 0) {
         ffi_arg_setup(invoker, invoker->paramCount, argv, invoker->paramTypes, params, ffiValues);
     }
-    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
+    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 #endif /* _WIN32 */
 static void
@@ -769,7 +773,7 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* use
     VALUE* argv = *(VALUE **) parameters[1];
 
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
+    *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 #endif
 static VALUE
@@ -902,7 +906,7 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
     ffi_arg_setup(invoker, paramCount, argv, paramTypes, params, ffiValues);
-    return ffi_invoke(&cif, invoker->function, invoker->returnType, invoker->rbReturnType, invoker->enums, ffiValues);
+    return ffi_invoke(&cif, invoker, ffiValues);
 }
 
 static void* 
