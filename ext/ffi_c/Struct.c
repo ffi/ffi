@@ -36,8 +36,8 @@ static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, int type);
 VALUE rb_FFI_Struct_class = Qnil;
 static VALUE classStruct = Qnil, classStructLayout = Qnil;
 static VALUE classStructField = Qnil, classStructLayoutBuilder = Qnil;
-static ID pointerID = 0, layoutID = 0, SIZE_ID, ALIGN_ID;
-static ID getID = 0, putID = 0, to_ptr = 0;
+static ID pointer_var_id = 0, layout_var_id = 0, SIZE_ID, ALIGN_ID, TYPE_ID;
+static ID get_id = 0, put_id = 0, to_ptr = 0, to_s = 0, layout_id = 0;
 
 static VALUE
 struct_field_allocate(VALUE klass)
@@ -58,15 +58,15 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     nargs = rb_scan_args(argc, argv, "11", &offset, &info);
     
     field->offset = NUM2UINT(offset);
-    if (rb_const_defined(CLASS_OF(self), rb_intern("TYPE"))) {
-        field->type = NUM2UINT(rb_const_get(CLASS_OF(self), rb_intern("TYPE")));
+    if (rb_const_defined(CLASS_OF(self), TYPE_ID)) {
+        field->type = NUM2UINT(rb_const_get(CLASS_OF(self), TYPE_ID));
     } else {
         field->type = ~0;
     }
 
 #ifdef notyet
-    field->size = NUM2UINT(rb_const_get(klass, rb_intern("SIZE")));
-    field->align = NUM2UINT(rb_const_get(klass, rb_intern("ALIGN")));
+    field->size = NUM2UINT(rb_const_get(klass, SIZE_ID));
+    field->align = NUM2UINT(rb_const_get(klass, ALIGN_ID));
 #endif
     rb_iv_set(self, "@off", offset);
     rb_iv_set(self, "@info", info);
@@ -151,9 +151,9 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 
     /* Call up into ruby code to adjust the layout */
     if (nargs > 1) {
-        s->rbLayout = rb_funcall2(CLASS_OF(self), rb_intern("layout"), RARRAY_LEN(rest), RARRAY_PTR(rest));
-    } else if (rb_cvar_defined(klass, layoutID)) {
-        s->rbLayout = rb_cvar_get(klass, layoutID);
+        s->rbLayout = rb_funcall2(CLASS_OF(self), layout_id, RARRAY_LEN(rest), RARRAY_PTR(rest));
+    } else if (rb_cvar_defined(klass, layout_var_id)) {
+        s->rbLayout = rb_cvar_get(klass, layout_var_id);
     } else {
         rb_raise(rb_eRuntimeError, "No Struct layout configured");
     }
@@ -198,7 +198,7 @@ struct_field(Struct* s, VALUE fieldName)
 
     rbField = rb_hash_aref(layout->rbFields, fieldName);
     if (rbField == Qnil) {
-        VALUE str = rb_funcall2(fieldName, rb_intern("to_s"), 0, NULL);
+        VALUE str = rb_funcall2(fieldName, to_s, 0, NULL);
         rb_raise(rb_eArgError, "No such field '%s'", StringValuePtr(str));
     }
 
@@ -259,7 +259,7 @@ struct_get_field(VALUE self, VALUE fieldName)
     }
     
     /* call up to the ruby code to fetch the value */
-    return rb_funcall2(rbField, getID, 1, &s->rbPointer);
+    return rb_funcall2(rbField, get_id, 1, &s->rbPointer);
 }
 
 static VALUE
@@ -284,7 +284,7 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
     /* call up to the ruby code to set the value */
     argv[0] = s->rbPointer;
     argv[1] = value;
-    rb_funcall2(rbField, putID, 2, argv);
+    rb_funcall2(rbField, put_id, 2, argv);
     
     return self;
 }
@@ -301,7 +301,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
     Data_Get_Struct(self, Struct, s);
     s->pointer = MEMORY(pointer);
     s->rbPointer = pointer;
-    rb_ivar_set(self, pointerID, pointer);
+    rb_ivar_set(self, pointer_var_id, pointer);
 
     return self;
 }
@@ -327,7 +327,7 @@ struct_set_layout(VALUE self, VALUE layout)
     }
 
     Data_Get_Struct(layout, StructLayout, s->layout);
-    rb_ivar_set(self, layoutID, layout);
+    rb_ivar_set(self, layout_var_id, layout);
 
     return self;
 }
@@ -437,13 +437,16 @@ rb_FFI_Struct_Init()
     rb_define_method(classStructLayout, "initialize", struct_layout_initialize, 4);
     rb_define_method(classStructLayout, "[]", struct_layout_aref, 1);
 
-    pointerID = rb_intern("@pointer");
-    layoutID = rb_intern("@layout");
-    getID = rb_intern("get");
-    putID = rb_intern("put");
+    pointer_var_id = rb_intern("@pointer");
+    layout_var_id = rb_intern("@layout");
+    layout_id = rb_intern("layout");
+    get_id = rb_intern("get");
+    put_id = rb_intern("put");
     to_ptr = rb_intern("to_ptr");
+    to_s = rb_intern("to_s");
     SIZE_ID = rb_intern("SIZE");
     ALIGN_ID = rb_intern("ALIGN");
+    TYPE_ID = rb_intern("TYPE");
 #undef FIELD
 #define FIELD(name, typeName, nativeType, T) do { \
     typedef struct { char c; T v; } s; \

@@ -41,8 +41,7 @@ typedef enum {
 #include <ffi.h>
 extern ffi_type* rb_FFI_NativeTypeToFFI(NativeType type);
 VALUE rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE enums);
-
-extern ID find_id;
+void rb_FFI_Types_Init(void);
 
 #ifdef	__cplusplus
 }

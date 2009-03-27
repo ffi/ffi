@@ -2,7 +2,7 @@
 #include "Pointer.h"
 #include "Types.h"
 
-ID find_id = 0;
+static ID find_id = 0;
 
 ffi_type*
 rb_FFI_NativeTypeToFFI(NativeType type)
@@ -84,4 +84,9 @@ rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE e
         default:
             rb_raise(rb_eRuntimeError, "Unknown type: %d", type);
     }
+}
+
+void rb_FFI_Types_Init(void)
+{
+    find_id = rb_intern("find");
 }

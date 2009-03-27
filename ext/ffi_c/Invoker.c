@@ -104,7 +104,8 @@ static inline ThreadData* thread_data_get(void);
 static int PageSize;
 #endif
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
-static ID to_ptr;
+static ID to_ptr = 0;
+static ID map_symbol_id = 0;
 
 #if defined(USE_PTHREAD_LOCAL)
 static pthread_key_t threadDataKey;
@@ -451,7 +452,7 @@ getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* type
 {
     int i;
     if (type == T_SYMBOL && enums != Qnil) {
-        value = rb_funcall(enums, rb_intern("__map_symbol"), 1, value);
+        value = rb_funcall(enums, map_symbol_id, 1, value);
         if (value == Qnil) {
             rb_raise(rb_eTypeError, "Expected a valid enum constant");
         }
@@ -995,6 +996,7 @@ rb_FFI_Invoker_Init()
     rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 6);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     to_ptr = rb_intern("to_ptr");
+    map_symbol_id = rb_intern("__map_symbol");
     
     rb_define_module_function(moduleError, "error", get_last_error, 0);
     rb_define_module_function(moduleError, "error=", set_last_error, 1);

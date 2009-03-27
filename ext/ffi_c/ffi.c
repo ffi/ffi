@@ -40,7 +40,7 @@ rb_FFI_type_size(VALUE type)
             }
         }
         // Not found - call up to the ruby version to resolve
-        return rb_funcall(moduleFFI, rb_intern("type_size"), 1, &type);
+        return rb_funcall(moduleFFI, type_size_id, 1, &type);
     } else {
         return rb_funcall(type, size_id, 0, NULL);
     }
@@ -57,7 +57,6 @@ Init_ffi_c() {
     rb_global_variable(&sizeMap);
     type_size_id = rb_intern("type_size");
     size_id = rb_intern("size");
-    find_id = rb_intern("find");
     
     rb_define_const(moduleNativeType, "VOID", INT2FIX(NATIVE_VOID));
     rb_define_const(moduleNativeType, "INT8", INT2FIX(NATIVE_INT8));
@@ -97,5 +96,6 @@ Init_ffi_c() {
     rb_FFI_Struct_Init(0);
     rb_FFI_NativeLibrary_Init();
     rb_FFI_Invoker_Init();
+    rb_FFI_Types_Init();
 }
 
