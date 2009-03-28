@@ -36,7 +36,7 @@ typedef struct MethodHandle MethodHandle;
 typedef struct Invoker Invoker;
 
 struct Invoker {
-    VALUE library;
+    VALUE address;
     VALUE enums;
     void* function;
     ffi_cif cif;
@@ -78,7 +78,7 @@ typedef struct ThreadData {
     int td_errno;
 } ThreadData;
 static VALUE invoker_allocate(VALUE klass);
-static VALUE invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
+static VALUE invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
         VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums);
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
@@ -149,7 +149,7 @@ invoker_allocate(VALUE klass)
 }
 
 static VALUE
-invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTypes,
+invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
         VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums)
 {
     Invoker* invoker = NULL;
@@ -162,12 +162,11 @@ invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTyp
     Check_Type(rbReturnType, T_SYMBOL);
     Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
-    Check_Type(library, T_DATA);
     Check_Type(function, T_DATA);
 
     Data_Get_Struct(self, Invoker, invoker);
     invoker->enums = enums;
-    invoker->library = library;
+    invoker->address = function;
     invoker->function = rb_FFI_AbstractMemory_cast(function, rb_FFI_Pointer_class)->address;
     invoker->paramCount = RARRAY_LEN(parameterTypes);
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
@@ -219,7 +218,7 @@ invoker_initialize(VALUE self, VALUE library, VALUE function, VALUE parameterTyp
 }
 
 static VALUE
-variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums)
+variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums)
 {
     Invoker* invoker = NULL;
     VALUE retval = Qnil;
@@ -227,12 +226,11 @@ variadic_invoker_new(VALUE klass, VALUE library, VALUE function, VALUE rbReturnT
     Check_Type(rbReturnType, T_SYMBOL);
     Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
-    Check_Type(library, T_DATA);
     Check_Type(function, T_DATA);
 
     retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
     invoker->enums = enums;
-    invoker->library = library;
+    invoker->address = function;
     invoker->function = rb_FFI_AbstractMemory_cast(function, rb_FFI_Pointer_class)->address;
 #if defined(_WIN32) || defined(__WIN32__)
     invoker->abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
@@ -804,8 +802,8 @@ invoker_mark(Invoker *invoker)
     if (invoker->callbackCount > 0) {
         rb_gc_mark_locations(&invoker->callbackParameters[0], &invoker->callbackParameters[invoker->callbackCount]);
     }
-    if (invoker->library != Qnil) {
-        rb_gc_mark(invoker->library);
+    if (invoker->address != Qnil) {
+        rb_gc_mark(invoker->address);
     }
     if (invoker->enums != Qnil) {
         rb_gc_mark(invoker->enums);
@@ -988,7 +986,7 @@ rb_FFI_Invoker_Init()
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
     classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_define_alloc_func(classInvoker, invoker_allocate);
-    rb_define_method(classInvoker, "initialize", invoker_initialize, 7);
+    rb_define_method(classInvoker, "initialize", invoker_initialize, 6);
     rb_define_method(classInvoker, "call", invoker_call, -1);
     rb_define_method(classInvoker, "call0", invoker_call0, 0);
     rb_define_method(classInvoker, "call1", invoker_call1, 1);
@@ -997,7 +995,7 @@ rb_FFI_Invoker_Init()
     rb_define_method(classInvoker, "arity", invoker_arity, 0);
     rb_define_method(classInvoker, "attach", invoker_attach, 2);
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
-    rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 6);
+    rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 5);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     to_ptr = rb_intern("to_ptr");
     map_symbol_id = rb_intern("__map_symbol");
