@@ -8,7 +8,8 @@ extern "C" {
 #endif
 
 #define MAX_PARAMETERS (32)
-    
+
+extern void rb_FFI_Type_Init(VALUE ffiModule);
 extern void rb_FFI_AbstractMemory_Init();
 extern void rb_FFI_MemoryPointer_Init();
 extern void rb_FFI_Buffer_Init();
