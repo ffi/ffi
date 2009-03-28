@@ -23,6 +23,7 @@
 #include "Platform.h"
 #include "Callback.h"
 #include "Types.h"
+#include "Type.h"
 
 #if defined(__i386__) && !defined(_WIN32) && !defined(__WIN32__)
 #  define USE_RAW

@@ -191,6 +191,7 @@ describe "Callback" do
 
     it "should not blow up when a callback is defined that returns a callback" do
       module LibTest
+        extend FFI::Library
         callback :cb_return_type_1, [ :short ], :short
         callback :cb_lookup_1, [ :short ], :cb_return_type_1
         attach_function :testReturnsCallback_1, :testReturnsClosure, [ :cb_lookup_1, :short ], :cb_return_type_1
@@ -199,6 +200,7 @@ describe "Callback" do
 
     it "should return a callback" do
       module LibTest
+        extend FFI::Library
         callback :cb_return_type, [ :int ], :int
         callback :cb_lookup, [ ], :cb_return_type
         attach_function :testReturnsCallback, :testReturnsClosure, [ :cb_lookup, :int ], :int
@@ -223,6 +225,7 @@ describe "Callback" do
     end
     it 'function returns callable object' do
       module LibTest
+        extend FFI::Library
         callback :funcptr, [ :int ], :int
         attach_function :testReturnsFunctionPointer, [  ], :funcptr
       end

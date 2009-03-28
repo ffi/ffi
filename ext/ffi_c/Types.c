@@ -80,7 +80,8 @@ rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE e
         {
             VALUE enum_obj = rb_funcall(enums, find_id, 1, rbType);
             if (enum_obj == Qnil) {
-                rb_raise(rb_eRuntimeError, "Unknown enumeration: %s", rbType);
+                VALUE s = rb_inspect(rbType);
+                rb_raise(rb_eRuntimeError, "Unknown enumeration: %s", StringValueCStr(s));
             }
             return rb_funcall(enum_obj, find_id, 1, INT2NUM((unsigned int) *(ffi_arg *) ptr));
         }

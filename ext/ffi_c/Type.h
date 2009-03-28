@@ -13,7 +13,7 @@ typedef struct Type_ {
 } Type;
 
     extern VALUE rb_FFI_Type_class;
-    extern int rb_FFI_TypeGetIntValue(VALUE type);
+    extern int rb_FFI_Type_GetIntValue(VALUE type);
 
 
 #ifdef	__cplusplus

@@ -10,6 +10,7 @@
 #include "MemoryPointer.h"
 #include "Callback.h"
 #include "Types.h"
+#include "Type.h"
 #include "rbffi.h"
 #include "compat.h"
 #include "extconf.h"

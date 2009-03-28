@@ -26,6 +26,8 @@
         <itemPath>ext/ffi_c/rbffi.h</itemPath>
         <itemPath>ext/ffi_c/Struct.c</itemPath>
         <itemPath>ext/ffi_c/Struct.h</itemPath>
+        <itemPath>ext/ffi_c/Type.c</itemPath>
+        <itemPath>ext/ffi_c/Type.h</itemPath>
         <itemPath>ext/ffi_c/Types.c</itemPath>
         <itemPath>ext/ffi_c/Types.h</itemPath>
       </logicalFolder>
@@ -33,6 +35,7 @@
         <logicalFolder name="ffi" displayName="ffi" projectFiles="true">
           <itemPath>lib/ffi/autopointer.rb</itemPath>
           <itemPath>lib/ffi/callback.rb</itemPath>
+          <itemPath>lib/ffi/enum.rb</itemPath>
           <itemPath>lib/ffi/ffi.rb</itemPath>
           <itemPath>lib/ffi/io.rb</itemPath>
           <itemPath>lib/ffi/library.rb</itemPath>
@@ -162,6 +165,12 @@
       <item path="ext/ffi_c/Struct.h">
         <itemTool>3</itemTool>
       </item>
+      <item path="ext/ffi_c/Type.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="ext/ffi_c/Type.h">
+        <itemTool>3</itemTool>
+      </item>
       <item path="ext/ffi_c/Types.c">
         <itemTool>0</itemTool>
       </item>
@@ -187,6 +196,9 @@
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/callback.rb">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="lib/ffi/enum.rb">
         <itemTool>3</itemTool>
       </item>
       <item path="lib/ffi/ffi.rb">
