@@ -59,6 +59,7 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
     cbInfo->parameterTypes = xcalloc(paramCount, sizeof(NativeType));
     cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
     cbInfo->returnType = rb_FFI_Type_GetIntValue(rbReturnType);
+    cbInfo->rbReturnType = rbReturnType;
 
     for (i = 0; i < paramCount; ++i) {
         cbInfo->parameterTypes[i] = rb_FFI_Type_GetIntValue(rb_ary_entry(rbParamTypes, i));
@@ -215,7 +216,21 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
                 *((void **) retval) = NULL;
             }
             break;
+
+        case NATIVE_CALLBACK:
+            if (rb_obj_is_kind_of(rbReturnValue, rb_cProc)) {
+                VALUE callback;
+
+                callback = rb_FFI_NativeCallback_for_proc(rbReturnValue, cbInfo->rbReturnType);
+                
+                *((void **) retval) = ((NativeCallback *) DATA_PTR(callback))->code;
+            } else {
+                *((void **) retval) = NULL;
+            }
+            break;
+
         default:
+            *((ffi_arg *) retval) = 0;
             break;
     }
 }

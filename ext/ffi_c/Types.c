@@ -37,6 +37,7 @@ rb_FFI_NativeTypeToFFI(NativeType type)
         case NATIVE_BUFFER_IN:
         case NATIVE_BUFFER_OUT:
         case NATIVE_BUFFER_INOUT:
+        case NATIVE_CALLBACK:
             return &ffi_type_pointer;
         default:
             return NULL;

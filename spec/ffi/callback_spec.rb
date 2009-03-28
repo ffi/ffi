@@ -171,7 +171,7 @@ describe "Callback" do
     LibTest.testCallbackVrP { nil }.null?.should be_true
   end
   it "returning :pointer (MemoryPointer)" do
-    p = MemoryPointer.new :long
+    p = FFI::MemoryPointer.new :long
     LibTest.testCallbackVrP { p }.should == p
   end
 
