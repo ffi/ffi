@@ -40,7 +40,7 @@ module FFI::Library
     options = Hash.new
     options[:convention] = defined?(@ffi_convention) ? @ffi_convention : :default
     options[:type_map] = @ffi_typedefs if defined?(@ffi_typedefs)
-    options[:enums] = @enums if defined?(@enums)
+    options[:enums] = @ffi_enums if defined?(@ffi_enums)
 
     # Try to locate the function in any of the libraries
     invokers = []
@@ -173,15 +173,15 @@ module FFI::Library
     @ffi_typedefs[add] = code
   end
   def enum(info, tag=nil)
-    @enums = FFI::Enums.new unless defined?(@enums)
-    @enums << FFI::Enum.new(info, tag)
+    @ffi_enums = FFI::Enums.new unless defined?(@ffi_enums)
+    @ffi_enums << FFI::Enum.new(info, tag)
   end
   def get_enum(query)
-    return nil unless defined?(@enums)
-    @enums.find(query)
+    return nil unless defined?(@ffi_enums)
+    @ffi_enums.find(query)
   end
   def [](symbol)
-    @enums.__map_symbol(symbol)
+    @ffi_enums.__map_symbol(symbol)
   end
   def find_type(name)
     code = if defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(name)
