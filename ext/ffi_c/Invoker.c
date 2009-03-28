@@ -83,7 +83,6 @@ static VALUE invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
 static VALUE invoker_call(int argc, VALUE* argv, VALUE self);
-static VALUE invoker_call0(VALUE self);
 static VALUE invoker_arity(VALUE self);
 static void* callback_param(VALUE proc, VALUE cbinfo);
 #ifdef USE_RAW
@@ -666,59 +665,24 @@ ffi_invoke(ffi_cif* cif, Invoker* invoker, void** ffiValues)
 
     return rb_FFI_NativeValueToRuby(returnType, rbReturnType, &retval, enums);
 }
+
 static VALUE
 invoker_call(int argc, VALUE* argv, VALUE self)
 {
     Invoker* invoker;
-    FFIStorage params[MAX_PARAMETERS];
-    void* ffiValues[MAX_PARAMETERS];
+    FFIStorage params_[6], *params = &params_[0];
+    void* ffiValues_[6], **ffiValues = &ffiValues_[0];
 
     Data_Get_Struct(self, Invoker, invoker);
-    ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker, ffiValues);
-}
-
-static inline VALUE
-invoker_callN(VALUE self, int argc, VALUE* argv)
-{
-    Invoker* invoker;
-    FFIStorage params[3];
-    void* ffiValues[3];
-
-    Data_Get_Struct(self, Invoker, invoker);
-    ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
-    return ffi_invoke(&invoker->cif, invoker, ffiValues);
-}
-
-static VALUE
-invoker_call0(VALUE self)
-{
-    Invoker* invoker;
-    FFIStorage arg0;
-    void* ffiValues[] = { &arg0 };
     
-    Data_Get_Struct(self, Invoker, invoker);
+    if (argc > 6) {
+        params = ALLOCA_N(FFIStorage, argc);
+        ffiValues = ALLOCA_N(void *, argc);
+    }
+
+    ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
+
     return ffi_invoke(&invoker->cif, invoker, ffiValues);
-}
-
-static VALUE
-invoker_call1(VALUE self, VALUE arg1)
-{
-    return invoker_callN(self, 1, &arg1);
-}
-
-static VALUE
-invoker_call2(VALUE self, VALUE arg1, VALUE arg2)
-{
-    VALUE argv[] = { arg1, arg2 };
-    return invoker_callN(self, 2, argv);
-}
-
-static VALUE
-invoker_call3(VALUE self, VALUE arg1, VALUE arg2, VALUE arg3)
-{
-    VALUE argv[] = { arg1, arg2, arg3 };
-    return invoker_callN(self, 3, argv);
 }
 
 #ifdef USE_RAW
@@ -1000,10 +964,10 @@ rb_FFI_Invoker_Init()
     rb_define_alloc_func(classInvoker, invoker_allocate);
     rb_define_method(classInvoker, "initialize", invoker_initialize, 6);
     rb_define_method(classInvoker, "call", invoker_call, -1);
-    rb_define_method(classInvoker, "call0", invoker_call0, 0);
-    rb_define_method(classInvoker, "call1", invoker_call1, 1);
-    rb_define_method(classInvoker, "call2", invoker_call2, 2);
-    rb_define_method(classInvoker, "call3", invoker_call3, 3);
+    rb_define_alias(classInvoker, "call0", "call");
+    rb_define_alias(classInvoker, "call1", "call");
+    rb_define_alias(classInvoker, "call2", "call");
+    rb_define_alias(classInvoker, "call3", "call");
     rb_define_method(classInvoker, "arity", invoker_arity, 0);
     rb_define_method(classInvoker, "attach", invoker_attach, 2);
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
