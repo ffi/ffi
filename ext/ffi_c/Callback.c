@@ -14,7 +14,7 @@
 #include "compat.h"
 #include "extconf.h"
 
-
+static void cbinfo_mark(CallbackInfo* cbInfo);
 static void cbinfo_free(CallbackInfo *);
 
 #if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
@@ -35,7 +35,12 @@ static VALUE
 cbinfo_allocate(VALUE klass)
 {
     CallbackInfo* cbInfo;
-    return Data_Make_Struct(klass, CallbackInfo, NULL, cbinfo_free, cbInfo);
+    VALUE obj = Data_Make_Struct(klass, CallbackInfo, cbinfo_mark, cbinfo_free, cbInfo);
+
+    cbInfo->type.nativeType = NATIVE_CALLBACK;
+    cbInfo->rbReturnType = Qnil;
+
+    return obj;
 }
 
 static VALUE
@@ -53,10 +58,10 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
     cbInfo->parameterCount = paramCount;
     cbInfo->parameterTypes = xcalloc(paramCount, sizeof(NativeType));
     cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
-    cbInfo->returnType = FIX2INT(rbReturnType);
+    cbInfo->returnType = rb_FFI_Type_GetIntValue(rbReturnType);
 
     for (i = 0; i < paramCount; ++i) {
-        cbInfo->parameterTypes[i] = FIX2INT(rb_ary_entry(rbParamTypes, i));
+        cbInfo->parameterTypes[i] = rb_FFI_Type_GetIntValue(rb_ary_entry(rbParamTypes, i));
         cbInfo->ffiParameterTypes[i] = rb_FFI_NativeTypeToFFI(cbInfo->parameterTypes[i]);
         if (cbInfo->ffiParameterTypes[i] == NULL) {
             rb_raise(rb_eArgError, "Unknown argument type: %#x", cbInfo->parameterTypes[i]);
@@ -85,6 +90,12 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
     return self;
+}
+
+static void
+cbinfo_mark(CallbackInfo* cbInfo)
+{
+    rb_gc_mark(cbInfo->rbReturnType);
 }
 
 static void
@@ -311,7 +322,7 @@ rb_FFI_Callback_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
 
-    rb_FFI_CallbackInfo_class = classCallbackInfo = rb_define_class_under(moduleFFI, "CallbackInfo", rb_cObject);
+    rb_FFI_CallbackInfo_class = classCallbackInfo = rb_define_class_under(moduleFFI, "CallbackInfo", rb_FFI_Type_class);
     rb_define_alloc_func(classCallbackInfo, cbinfo_allocate);
     rb_define_method(classCallbackInfo, "initialize", cbinfo_initialize, 2);
 

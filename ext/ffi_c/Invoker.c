@@ -160,7 +160,6 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
 
     Check_Type(parameterTypes, T_ARRAY);
     Check_Type(rbReturnType, T_SYMBOL);
-    Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
     Check_Type(function, T_DATA);
 
@@ -181,7 +180,7 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
             invoker->paramTypes[i] = NATIVE_CALLBACK;
             invoker->ffiParamTypes[i] = &ffi_type_pointer;
         } else {
-            int paramType = FIX2INT(entry);
+            int paramType = rb_FFI_Type_GetIntValue(entry);
             invoker->paramTypes[i] = paramType;
             invoker->ffiParamTypes[i] = rb_FFI_NativeTypeToFFI(paramType);
         }
@@ -190,7 +189,7 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
         }
     }
     invoker->rbReturnType = rbReturnType;
-    invoker->returnType = FIX2INT(returnType);
+    invoker->returnType = rb_FFI_Type_GetIntValue(returnType);
     ffiReturnType = rb_FFI_NativeTypeToFFI(invoker->returnType);
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
@@ -224,7 +223,6 @@ variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnType, VALUE retu
     VALUE retval = Qnil;
 
     Check_Type(rbReturnType, T_SYMBOL);
-    Check_Type(returnType, T_FIXNUM);
     Check_Type(convention, T_STRING);
     Check_Type(function, T_DATA);
 
@@ -238,7 +236,7 @@ variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnType, VALUE retu
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
     invoker->rbReturnType = rbReturnType;
-    invoker->returnType = FIX2INT(returnType);
+    invoker->returnType = rb_FFI_Type_GetIntValue(returnType);
     invoker->paramCount = -1;
     return retval;
 }
@@ -863,7 +861,7 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
     for (i = 0; i < paramCount; ++i) {
         VALUE entry = rb_ary_entry(parameterTypes, i);
-        int paramType = FIX2INT(entry);
+        int paramType = rb_FFI_Type_GetIntValue(entry);
         switch (paramType) {
             case NATIVE_INT8:
             case NATIVE_INT16:

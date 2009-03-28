@@ -5,20 +5,20 @@
 #include "rbffi.h"
 #include "compat.h"
 #include "Types.h"
+#include "Type.h"
 
-typedef struct Type_ {
-    NativeType nativeType;
-} Type;
 
 typedef struct BuiltinType_ {
-    NativeType nativeType;
+    Type type;
     char* name;
     int size;
 } BuiltinType;
 
 static void builtin_type_free(BuiltinType *);
 
-static VALUE classType = Qnil, classBuiltinType = Qnil;
+VALUE  rb_FFI_Type_class = Qnil;
+
+static VALUE classBuiltinType = Qnil;
 
 static VALUE
 type_allocate(VALUE klass)
@@ -33,12 +33,24 @@ type_initialize(VALUE self)
     return self;
 }
 
+int
+rb_FFI_Type_GetIntValue(VALUE type)
+{
+    if (rb_obj_is_kind_of(type, rb_FFI_Type_class)) {
+        Type* t;
+        Data_Get_Struct(type, Type, t);
+        return t->nativeType;
+    } else {
+        rb_raise(rb_eArgError, "Invalid type argument");
+    }
+}
+
 static VALUE
 builtin_type_new(VALUE klass, int nativeType, const char* name, int size)
 {
     BuiltinType* type;
     VALUE obj = Data_Make_Struct(klass, BuiltinType, NULL, builtin_type_free, type);
-    type->nativeType = nativeType;
+    type->type.nativeType = nativeType;
     type->name = strdup(name);
     type->size = size;
 
@@ -76,8 +88,8 @@ void
 rb_FFI_Type_Init(VALUE moduleFFI)
 {
     VALUE moduleNativeType;
-    classType = rb_define_class_under(moduleFFI, "Type", rb_cObject);
-    classBuiltinType = rb_define_class_under(classType, "Builtin", classType);
+    VALUE classType = rb_FFI_Type_class = rb_define_class_under(moduleFFI, "Type", rb_cObject);
+    classBuiltinType = rb_define_class_under(rb_FFI_Type_class, "Builtin", rb_FFI_Type_class);
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
 
     rb_define_alloc_func(classType, type_allocate);
@@ -88,13 +100,14 @@ rb_FFI_Type_Init(VALUE moduleFFI)
     rb_define_method(classBuiltinType, "inspect", builtin_type_inspect, 0);
     rb_define_method(classBuiltinType, "size", builtin_type_size, 0);
 
-    rb_global_variable(&classType);
+    rb_global_variable(&rb_FFI_Type_class);
     rb_global_variable(&classBuiltinType);
 
     // Define all the builtin types
     #define T(x, size) do { \
-        rb_define_const(classType, #x, builtin_type_new(classBuiltinType, NATIVE_##x, #x, size)); \
-        rb_define_const(moduleNativeType, #x, INT2FIX(NATIVE_##x)); \
+        VALUE t = Qnil; \
+        rb_define_const(classType, #x, t = builtin_type_new(classBuiltinType, NATIVE_##x, #x, size)); \
+        rb_define_const(moduleNativeType, #x, t); \
     } while(0)
 
     T(VOID, 0);
@@ -119,14 +132,16 @@ rb_FFI_Type_Init(VALUE moduleFFI)
     T(ENUM, sizeof(int));
 
     if (sizeof(long) == 4) {
-        rb_define_const(classType, "LONG", builtin_type_new(classBuiltinType, NATIVE_INT32, "LONG", 4));
-        rb_define_const(classType, "ULONG", builtin_type_new(classBuiltinType, NATIVE_UINT32, "ULONG", 4));
-        rb_define_const(moduleNativeType, "LONG", INT2FIX(NATIVE_INT32));
-        rb_define_const(moduleNativeType, "ULONG", INT2FIX(NATIVE_UINT32));
+        VALUE t = Qnil;
+        rb_define_const(classType, "LONG", t = builtin_type_new(classBuiltinType, NATIVE_INT32, "LONG", 4));
+        rb_define_const(moduleNativeType, "LONG", t);
+        rb_define_const(classType, "ULONG", t = builtin_type_new(classBuiltinType, NATIVE_UINT32, "ULONG", 4));
+        rb_define_const(moduleNativeType, "ULONG", t);
     } else {
-        rb_define_const(classType, "LONG", builtin_type_new(classBuiltinType, NATIVE_INT64, "LONG", 8));
-        rb_define_const(classType, "ULONG", builtin_type_new(classBuiltinType, NATIVE_UINT64, "ULONG", 8));
-        rb_define_const(moduleNativeType, "LONG", INT2FIX(NATIVE_INT64));
-        rb_define_const(moduleNativeType, "ULONG", INT2FIX(NATIVE_UINT64));
+        VALUE t = Qnil;
+        rb_define_const(classType, "LONG", t = builtin_type_new(classBuiltinType, NATIVE_INT64, "LONG", 4));
+        rb_define_const(moduleNativeType, "LONG", t);
+        rb_define_const(classType, "ULONG", t = builtin_type_new(classBuiltinType, NATIVE_UINT64, "ULONG", 4));
+        rb_define_const(moduleNativeType, "ULONG", t);
     }
 }

@@ -88,7 +88,7 @@ module FFI::Library
     address = nil
     libraries.each do |lib|
       begin
-        address = lib.find_symbol(cname.to_s)
+        address = lib.find_variable(cname.to_s)
         break unless address.nil?
       rescue LoadError
       end
@@ -157,7 +157,7 @@ module FFI::Library
   end
   def typedef(current, add, info=nil)
     @ffi_typedefs = Hash.new unless defined?(@ffi_typedefs)
-    if current.kind_of? Integer
+    if current.kind_of?(FFI::Type)
       code = current
     else
       if current == :enum
@@ -190,8 +190,9 @@ module FFI::Library
       @ffi_callbacks[name]
     elsif name.is_a?(Class) && name < FFI::Struct
       FFI::NativeType::POINTER
+    elsif name.kind_of?(FFI::Type)
+      name
     end
-    code = name if !code && name.kind_of?(FFI::CallbackInfo)
     if code.nil? || code.kind_of?(Symbol)
       FFI.find_type(name)
     else
