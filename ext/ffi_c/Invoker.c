@@ -145,7 +145,14 @@ static VALUE
 invoker_allocate(VALUE klass)
 {
     Invoker *invoker;
-    return Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
+    VALUE obj = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
+
+    invoker->rbReturnType = Qnil;
+    invoker->callbackArray = Qnil;
+    invoker->address = Qnil;
+    invoker->enums = Qnil;
+
+    return obj;
 }
 
 static VALUE
