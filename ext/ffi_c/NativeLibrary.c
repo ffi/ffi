@@ -12,12 +12,25 @@
 
 #include "rbffi.h"
 #include "compat.h"
+#include "AbstractMemory.h"
 #include "Pointer.h"
 #include "NativeLibrary.h"
 
+typedef struct LibrarySymbol_ {
+    AbstractMemory memory;
+    VALUE library;
+    VALUE name;
+} LibrarySymbol;
+
 static VALUE library_initialize(VALUE self, VALUE libname, VALUE libflags);
 static void library_free(Library* lib);
-static VALUE classLibrary;
+
+
+static VALUE symbol_allocate(VALUE klass);
+static VALUE symbol_new(VALUE library, void* address, VALUE name);
+static void symbol_mark(LibrarySymbol* sym);
+
+static VALUE classLibrary = Qnil, classSymbol = Qnil;
 
 #if defined(_WIN32) || defined(__WIN32__)
 static void* dl_open(const char* name, int flags);
@@ -80,7 +93,8 @@ library_dlsym(VALUE self, VALUE name)
 
     Data_Get_Struct(self, Library, library);
     address = dl_sym(library->handle, StringValueCStr(name));
-    return address != NULL ? rb_FFI_Pointer_new(address) : Qnil;
+    
+    return address != NULL ? symbol_new(self, address, name) : Qnil;
 }
 
 static VALUE
@@ -122,19 +136,71 @@ dl_error(char* buf, int size)
 }
 #endif
 
+static VALUE
+symbol_allocate(VALUE klass)
+{
+    LibrarySymbol* sym;
+    VALUE obj = Data_Make_Struct(klass, LibrarySymbol, NULL, -1, sym);
+    sym->name = Qnil;
+    sym->library = Qnil;
+
+    return obj;
+}
+
+static VALUE
+symbol_new(VALUE library, void* address, VALUE name)
+{
+    LibrarySymbol* sym;
+    VALUE obj = Data_Make_Struct(classSymbol, LibrarySymbol, symbol_mark, -1, sym);
+
+    sym->memory.address = address;
+    sym->memory.size = LONG_MAX;
+    sym->library = library;
+    sym->name = name;
+
+    return obj;
+}
+
+static void
+symbol_mark(LibrarySymbol* sym)
+{
+    rb_gc_mark(sym->library);
+    rb_gc_mark(sym->name);
+}
+
+static VALUE
+symbol_inspect(VALUE self)
+{
+    LibrarySymbol* sym;
+    char buf[256];
+
+    Data_Get_Struct(self, LibrarySymbol, sym);
+    snprintf(buf, sizeof(buf), "#<FFI::Library::Symbol name=%s address=%p>",
+             StringValueCStr(sym->name), sym->memory.address);
+    return rb_str_new2(buf);
+}
+
 void
 rb_FFI_NativeLibrary_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     classLibrary = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
+    classSymbol = rb_define_class_under(classLibrary, "Symbol", rb_FFI_Pointer_class);
+
     rb_define_const(moduleFFI, "NativeLibrary", classLibrary); // backwards compat library
     rb_define_alloc_func(classLibrary, library_allocate);
     rb_define_singleton_method(classLibrary, "open", library_open, 2);
     rb_define_singleton_method(classLibrary, "last_error", library_dlerror, 0);
     rb_define_method(classLibrary, "initialize", library_initialize, 2);
     rb_define_method(classLibrary, "find_symbol", library_dlsym, 1);
+    rb_define_method(classLibrary, "find_function", library_dlsym, 1);
+    rb_define_method(classLibrary, "find_variable", library_dlsym, 1);
     rb_define_method(classLibrary, "last_error", library_dlerror, 0);
     rb_define_attr(classLibrary, "name", 1, 0);
+
+    rb_define_alloc_func(classSymbol, symbol_allocate);
+    rb_undef_method(classSymbol, "new");
+    rb_define_method(classSymbol, "inspect", symbol_inspect, 0);
 
 #define DEF(x) rb_define_const(classLibrary, "RTLD_" #x, UINT2NUM(RTLD_##x))
     DEF(LAZY);
