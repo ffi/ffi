@@ -174,7 +174,8 @@ module FFI::Library
   end
   def enum(info, tag=nil)
     @ffi_enums = FFI::Enums.new unless defined?(@ffi_enums)
-    @ffi_enums << FFI::Enum.new(info, tag)
+    @ffi_enums << (e = FFI::Enum.new(info, tag))
+    e
   end
   def get_enum(query)
     return nil unless defined?(@ffi_enums)
