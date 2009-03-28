@@ -24,13 +24,43 @@ static VALUE
 type_allocate(VALUE klass)
 {
     Type* type;
-    return Data_Make_Struct(klass, Type, NULL, -1, type);
+    VALUE obj = Data_Make_Struct(klass, Type, NULL, -1, type);
+
+    type->nativeType = -1;
+
+    return obj;
 }
 
 static VALUE
-type_initialize(VALUE self)
+type_initialize(VALUE self, VALUE value)
 {
+    Type* type;
+    Type* other;
+
+    Data_Get_Struct(self, Type, type);
+
+    if (FIXNUM_P(value)) {
+        type->nativeType = FIX2INT(value);
+    } else if (rb_obj_is_kind_of(value, rb_FFI_Type_class)) {
+        Data_Get_Struct(value, Type, other);
+        type->nativeType = other->nativeType;
+    } else {
+        rb_raise(rb_eArgError, "wrong type");
+    }
+    
     return self;
+}
+
+static VALUE
+enum_allocate(VALUE klass)
+{
+    Type* type;
+    VALUE obj;
+
+    obj = Data_Make_Struct(klass, Type, NULL, -1, type);
+    type->nativeType = NATIVE_ENUM;
+
+    return obj;
 }
 
 int
@@ -89,16 +119,19 @@ rb_FFI_Type_Init(VALUE moduleFFI)
 {
     VALUE moduleNativeType;
     VALUE classType = rb_FFI_Type_class = rb_define_class_under(moduleFFI, "Type", rb_cObject);
+    VALUE classEnum =  rb_define_class_under(moduleFFI, "Enum", classType);
     classBuiltinType = rb_define_class_under(rb_FFI_Type_class, "Builtin", rb_FFI_Type_class);
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
 
     rb_define_alloc_func(classType, type_allocate);
-    rb_define_method(classType, "initialize", type_initialize, 0);
+    rb_define_method(classType, "initialize", type_initialize, 1);
 
     // Make Type::Builtin non-allocatable
     rb_undef_method(CLASS_OF(classBuiltinType), "new");
     rb_define_method(classBuiltinType, "inspect", builtin_type_inspect, 0);
     rb_define_method(classBuiltinType, "size", builtin_type_size, 0);
+
+    rb_define_alloc_func(classEnum, enum_allocate);
 
     rb_global_variable(&rb_FFI_Type_class);
     rb_global_variable(&classBuiltinType);
@@ -108,6 +141,7 @@ rb_FFI_Type_Init(VALUE moduleFFI)
         VALUE t = Qnil; \
         rb_define_const(classType, #x, t = builtin_type_new(classBuiltinType, NATIVE_##x, #x, size)); \
         rb_define_const(moduleNativeType, #x, t); \
+        rb_define_const(moduleFFI, "TYPE_" #x, t); \
     } while(0)
 
     T(VOID, 0);
