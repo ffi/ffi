@@ -187,6 +187,50 @@ describe "Callback" do
     end
   end
 
+  describe "as return value" do
+
+    it "should not blow up when a callback is defined that returns a callback" do
+      module LibTest
+        callback :cb_return_type_1, [ :short ], :short
+        callback :cb_lookup_1, [ :short ], :cb_return_type_1
+        attach_function :testReturnsCallback_1, :testReturnsClosure, [ :cb_lookup_1, :short ], :cb_return_type_1
+      end      
+    end
+
+    it "should return a callback" do
+      module LibTest
+        callback :cb_return_type, [ :int ], :int
+        callback :cb_lookup, [ ], :cb_return_type
+        attach_function :testReturnsCallback, :testReturnsClosure, [ :cb_lookup, :int ], :int
+      end      
+
+      lookup_proc_called = false
+      return_proc_called = false
+
+      return_proc = Proc.new do |a|
+        return_proc_called = true
+        a * 2
+      end
+      lookup_proc = Proc.new do
+        lookup_proc_called = true
+        return_proc
+      end
+
+      val = LibTest.testReturnsCallback(lookup_proc, 0x1234)
+      val.should == 0x1234 * 2
+      lookup_proc_called.should be_true
+      return_proc_called.should be_true
+    end
+    it 'function returns callable object' do
+      module LibTest
+        callback :funcptr, [ :int ], :int
+        attach_function :testReturnsFunctionPointer, [  ], :funcptr
+      end
+      f = LibTest.testReturnsFunctionPointer
+      f.call(3).should == 6
+    end
+  end
+
 end
 describe "primitive argument" do
   #

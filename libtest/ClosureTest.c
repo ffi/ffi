@@ -25,6 +25,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
+
 void testClosureVrV(void (*closure)(void))
 {
     (*closure)();
@@ -87,6 +89,27 @@ void testOptionalClosureBrV(void (*closure)(char), char a1)
         (*closure)(a1);
     }
 }
+
+
+typedef int (*returnTypeClosure_t)(int) ;
+typedef returnTypeClosure_t (*lookupClosure_t)();
+
+int testReturnsClosure(lookupClosure_t lookup, int val)
+{
+    returnTypeClosure_t func = lookup ? (*lookup)() : NULL;
+    return func ? (*func)(val) : 0;
+}
+
+static int multiplyByTwo(int value)
+{
+    return value * 2;
+}
+
+returnTypeClosure_t testReturnsFunctionPointer()
+{
+    return multiplyByTwo;
+}
+
 //
 // These macros produce functions of the form:
 // testClosureBIrV(void (*closure)(char, int), char a1, int a2) {}
