@@ -103,6 +103,8 @@ static inline ThreadData* thread_data_get(void);
 #ifndef _WIN32
 static int PageSize;
 #endif
+
+VALUE rb_FFI_Invoker_class = Qnil;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID to_ptr = 0;
 static ID map_symbol_id = 0;
@@ -157,7 +159,7 @@ invoker_allocate(VALUE klass)
 
 static VALUE
 invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
-        VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums)
+        VALUE rbReturnTypeSymbol, VALUE returnType, VALUE convention, VALUE enums)
 {
     Invoker* invoker = NULL;
     ffi_type* ffiReturnType;
@@ -166,7 +168,7 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
     int i;
 
     Check_Type(parameterTypes, T_ARRAY);
-    Check_Type(rbReturnType, T_SYMBOL);
+    Check_Type(rbReturnTypeSymbol, T_SYMBOL);
     Check_Type(convention, T_STRING);
     Check_Type(function, T_DATA);
 
@@ -195,8 +197,11 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
             rb_raise(rb_eArgError, "Invalid parameter type");
         }
     }
-    invoker->rbReturnType = rbReturnType;
+
     invoker->returnType = rb_FFI_Type_GetIntValue(returnType);
+    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rb_FFI_CallbackInfo_class)
+        ? returnType : rbReturnTypeSymbol;
+    
     ffiReturnType = rb_FFI_NativeTypeToFFI(invoker->returnType);
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
@@ -224,12 +229,12 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
 }
 
 static VALUE
-variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums)
+variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnTypeSymbol, VALUE returnType, VALUE convention, VALUE enums)
 {
     Invoker* invoker = NULL;
     VALUE retval = Qnil;
 
-    Check_Type(rbReturnType, T_SYMBOL);
+    Check_Type(rbReturnTypeSymbol, T_SYMBOL);
     Check_Type(convention, T_STRING);
     Check_Type(function, T_DATA);
 
@@ -242,7 +247,9 @@ variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnType, VALUE retu
 #else
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
-    invoker->rbReturnType = rbReturnType;
+
+    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rb_FFI_CallbackInfo_class)
+        ? returnType : rbReturnTypeSymbol;
     invoker->returnType = rb_FFI_Type_GetIntValue(returnType);
     invoker->paramCount = -1;
     return retval;
@@ -989,7 +996,7 @@ rb_FFI_Invoker_Init()
     int i;
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
-    classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
+    rb_FFI_Invoker_class = classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_define_alloc_func(classInvoker, invoker_allocate);
     rb_define_method(classInvoker, "initialize", invoker_initialize, 6);
     rb_define_method(classInvoker, "call", invoker_call, -1);

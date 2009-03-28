@@ -12,6 +12,8 @@ extern "C" {
 typedef struct {
     Type type; // The native type of a CallbackInfo object
     VALUE rbReturnType;
+    VALUE rbParameterTypes;
+
     NativeType returnType;
     NativeType* parameterTypes;
     ffi_type* ffiReturnType;

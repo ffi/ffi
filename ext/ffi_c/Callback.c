@@ -60,6 +60,7 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
     cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
     cbInfo->returnType = rb_FFI_Type_GetIntValue(rbReturnType);
     cbInfo->rbReturnType = rbReturnType;
+    cbInfo->rbParameterTypes = rbParamTypes;
 
     for (i = 0; i < paramCount; ++i) {
         cbInfo->parameterTypes[i] = rb_FFI_Type_GetIntValue(rb_ary_entry(rbParamTypes, i));
@@ -97,6 +98,7 @@ static void
 cbinfo_mark(CallbackInfo* cbInfo)
 {
     rb_gc_mark(cbInfo->rbReturnType);
+    rb_gc_mark(cbInfo->rbParameterTypes);
 }
 
 static void
