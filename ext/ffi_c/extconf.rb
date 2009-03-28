@@ -16,7 +16,7 @@ $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 create_makefile("ffi_c")
 create_header("extconf.h")
 File.open("Makefile", "a") do |mf|
-  mf.puts "CPPFLAGS += -Werror -Wunused -Wformat"
+  mf.puts "CPPFLAGS += -Werror -Wunused -Wformat -Wimplicit"
   unless libffi_ok 
     mf.puts "include $(srcdir)/ffi.mk"
     mf.puts "LIBFFI_HOST=--host=#{Config::CONFIG['host_alias']}" if Config::CONFIG.has_key?("host_alias")
