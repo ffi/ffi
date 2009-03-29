@@ -172,9 +172,14 @@ module FFI::Library
 
     @ffi_typedefs[add] = code
   end
-  def enum(info, tag=nil)
+  def enum(*args)
+    values, tag = if args[0].kind_of?(Array)
+      [ args[0], args[1] ]
+    else
+      [ args, nil ]
+    end
     @ffi_enums = FFI::Enums.new unless defined?(@ffi_enums)
-    @ffi_enums << (e = FFI::Enum.new(info, tag))
+    @ffi_enums << (e = FFI::Enum.new(values, tag))
     e
   end
   def get_enum(query)
