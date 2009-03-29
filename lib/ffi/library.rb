@@ -155,23 +155,24 @@ module FFI::Library
     @ffi_callbacks = Hash.new unless defined?(@ffi_callbacks)
     @ffi_callbacks[name] = FFI::CallbackInfo.new(find_type(ret), args.map { |e| find_type(e) })
   end
+  
   def typedef(current, add, info=nil)
     @ffi_typedefs = Hash.new unless defined?(@ffi_typedefs)
-    if current.kind_of?(FFI::Type)
-      code = current
-    else
-      if current == :enum
-        if add.kind_of?(Array)
-          self.enum(add)
-        else
-          self.enum(info, add)
-        end
+    code = if current.kind_of?(FFI::Type)
+      current
+    elsif current == :enum
+      if add.kind_of?(Array)
+        self.enum(add)
+      else
+        self.enum(info, add)
       end
-      code = @ffi_typedefs[current] || FFI.find_type(current)
+    else
+      @ffi_typedefs[current] || FFI.find_type(current)
     end
 
     @ffi_typedefs[add] = code
   end
+
   def enum(*args)
     values, tag = if args[0].kind_of?(Array)
       [ args[0], args[1] ]
