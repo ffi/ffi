@@ -236,7 +236,7 @@ describe "Callback" do
         extend FFI::Library
         callback :cb_argument, [ :int ], :int
         callback :cb_with_cb_argument, [ :cb_argument, :int ], :int
-        attach_function :testCallbackAsArgument, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
+        attach_function :testCallbackAsArgument, :testArgumentClosure, [ :cb_with_cb_argument, :cb_argument, :int ], :int
       end   
       callback_arg_called = false
       callback_with_callback_arg_called = false         
@@ -244,11 +244,11 @@ describe "Callback" do
         callback_arg_called = true
         val * 2
       end
-      callback_with_callback_arg = Proc.new do |callback_arg, val|
+      callback_with_callback_arg = Proc.new do |cb, val|
         callback_with_callback_arg_called = true
-        callback_arg.call(val)
+        cb.call(val)
       end
-      val = LibTest.testCallbackAsArgument(callback_with_callback_arg, 0xff1)
+      val = LibTest.testCallbackAsArgument(callback_with_callback_arg, callback_arg, 0xff1)
       val.should == 0xff1 * 2
       callback_arg_called.should be_true
       callback_with_callback_arg_called.should be_true         
