@@ -179,6 +179,10 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             case NATIVE_POINTER:
                 param = rb_FFI_Pointer_new(*(void **) parameters[i]);
                 break;
+            case NATIVE_CALLBACK:
+                param = rb_FFI_NativeValueToRuby(NATIVE_CALLBACK,
+                     rb_ary_entry(cbInfo->rbParameterTypes, i), parameters[i], Qnil);
+                break;
             default:
                 param = Qnil;
                 break;
