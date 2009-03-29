@@ -671,14 +671,17 @@ static VALUE
 invoker_call(int argc, VALUE* argv, VALUE self)
 {
     Invoker* invoker;
-    FFIStorage params_[6], *params = &params_[0];
-    void* ffiValues_[6], **ffiValues = &ffiValues_[0];
+    int argCount;
+    FFIStorage params_[MAX_FIXED_ARITY], *params = &params_[0];
+    void* ffiValues_[MAX_FIXED_ARITY], **ffiValues = &ffiValues_[0];
 
     Data_Get_Struct(self, Invoker, invoker);
-    
-    if (argc > 6) {
-        params = ALLOCA_N(FFIStorage, argc);
-        ffiValues = ALLOCA_N(void *, argc);
+
+    argCount = invoker->paramCount != -1 ? invoker->paramCount : argc;
+
+    if (argCount > MAX_FIXED_ARITY) {
+        params = ALLOCA_N(FFIStorage, argCount);
+        ffiValues = ALLOCA_N(void *, argCount);
     }
 
     ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
@@ -687,6 +690,10 @@ invoker_call(int argc, VALUE* argv, VALUE self)
 }
 
 #ifdef USE_RAW
+
+/*
+ * attached_method_invoke is used as the <= 3 argument fixed-arity fast path
+ */
 static void
 attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data)
 {
@@ -702,6 +709,9 @@ attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* us
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 
+/*
+ * attached_method_vinvoke is used functions with more than 3 parameters
+ */
 static void
 attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data)
 {
@@ -751,13 +761,19 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* use
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 #endif
+
 static VALUE
 invoker_attach(VALUE self, VALUE module, VALUE name)
 {
     Invoker* invoker;
     MethodHandle* handle;
     char var[1024];
+
     Data_Get_Struct(self, Invoker, invoker);
+    if (invoker->paramCount == -1) {
+        rb_raise(rb_eRuntimeError, "Cannot attach variadic invokers");
+    }
+
     handle = invoker->methodHandle;
     rb_define_module_function(module, StringValuePtr(name), 
             handle->code, handle->arity);
@@ -974,6 +990,8 @@ rb_FFI_Invoker_Init()
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
     rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 5);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
+    rb_define_alias(classVariadicInvoker, "call", "invoke");
+
     to_ptr = rb_intern("to_ptr");
     map_symbol_id = rb_intern("__map_symbol");
     
