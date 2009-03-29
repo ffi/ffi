@@ -110,6 +110,15 @@ returnTypeClosure_t testReturnsFunctionPointer()
     return multiplyByTwo;
 }
 
+typedef int (*argumentClosure_t)(int);
+typedef int (*withArgumentClosure_t)(argumentClosure_t, int);
+
+int testArgumentClosure(withArgumentClosure_t closure_with, argumentClosure_t closure_arg, int val)
+{
+  return (*closure_with)(closure_arg, val);
+}
+
+
 //
 // These macros produce functions of the form:
 // testClosureBIrV(void (*closure)(char, int), char a1, int a2) {}
