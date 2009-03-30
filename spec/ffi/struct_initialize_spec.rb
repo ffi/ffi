@@ -20,10 +20,11 @@ describe FFI::ManagedStruct, ' with an initialize function' do
       layout :string, :string
       attr_accessor :magic
       def initialize
-        super
+        super MemoryPointer.new(:pointer).put_int(0, 0x1234).get_pointer(0)
         self.magic = 42
       end
+      def self.release;end
     end
-    StructWithInitialize.new.magic.should == 42
+    ManagedStructWithInitialize.new.magic.should == 42
   end
 end
