@@ -187,6 +187,17 @@ describe "Callback" do
     end
   end
 
+  describe 'when inlined' do
+    it 'could be anonymous' do
+      pending do
+        module LibTest
+          extend FFI::Library
+          attach_function :testCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
+        end       
+      end  
+    end
+  end
+
   describe "as return value" do
 
     it "should not blow up when a callback is defined that returns a callback" do
