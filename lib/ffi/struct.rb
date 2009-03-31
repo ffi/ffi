@@ -241,6 +241,11 @@ module FFI
     def self.out
       :buffer_out
     end
+    protected
+    def self.callback(*args)
+      self.enclosing_module.callback(*args)
+    end
+
     private
     def self.builder
       StructLayoutBuilder.new
