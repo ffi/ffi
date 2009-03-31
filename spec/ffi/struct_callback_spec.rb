@@ -7,8 +7,8 @@ describe FFI::Struct, ' with inline callback functions' do
       ffi_lib TestLibrary::PATH
       class TestStruct < FFI::Struct
         layout \
-          :add, callback(:add, [ :int, :int ], :int),
-          :sub, callback(:sub, [ :int, :int ], :int)
+          :add, callback([ :int, :int ], :int),
+          :sub, callback([ :int, :int ], :int)
         end
       attach_function :struct_call_add_cb, [TestStruct, :int, :int], :int
       attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int

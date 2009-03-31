@@ -242,8 +242,10 @@ module FFI
       :buffer_out
     end
     protected
-    def self.callback(*args)
-      self.enclosing_module.callback(*args)
+
+    def self.callback(params, ret)
+      mod = enclosing_module
+      FFI::CallbackInfo.new(find_type(ret, mod), params.map { |e| find_type(e, mod) })
     end
 
     private
@@ -261,10 +263,12 @@ module FFI
     def self.is_a_struct?(type)
       type.is_a?(Class) and type < Struct
     end
+
     def self.find_type(type, mod = nil)
       return type if is_a_struct?(type) or type.is_a?(::Array)
       mod ? mod.find_type(type) : FFI.find_type(type)
     end
+
     def self.hash_layout(spec)
       raise "Ruby version not supported" if RUBY_VERSION =~ /1.8.*/
       builder = self.builder
