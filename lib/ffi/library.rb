@@ -151,9 +151,23 @@ module FFI::Library
     end
     address
   end
-  def callback(name, args, ret)
-    @ffi_callbacks = Hash.new unless defined?(@ffi_callbacks)
-    @ffi_callbacks[name] = FFI::CallbackInfo.new(find_type(ret), args.map { |e| find_type(e) })
+
+  def callback(*args)
+    raise ArgError, "wrong number of arguments" if args.length < 2 || args.length > 3
+    name, params, ret = if args.length == 3
+      args
+    else
+      [ nil, args[0], args[1] ]
+    end
+    cb = FFI::CallbackInfo.new(find_type(ret), params.map { |e| find_type(e) })
+
+    # Add to the symbol -> type map (unless there was no name)
+    unless name.nil?
+      @ffi_callbacks = Hash.new unless defined?(@ffi_callbacks)
+      @ffi_callbacks[name] = cb
+    end
+
+    cb
   end
   
   def typedef(current, add, info=nil)

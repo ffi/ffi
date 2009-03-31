@@ -189,12 +189,11 @@ describe "Callback" do
 
   describe 'when inlined' do
     it 'could be anonymous' do
-      pending do
-        module LibTest
-          extend FFI::Library
-          attach_function :testCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
-        end       
-      end  
+      module LibTest
+        extend FFI::Library
+        attach_function :testCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
+      end
+      LibTest.testCallbackVrS8 { 0 }.should == 0
     end
   end
 
