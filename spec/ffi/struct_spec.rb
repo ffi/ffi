@@ -1,6 +1,6 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+include FFI
 describe "Struct tests" do
-  include FFI
   StructTypes = {
     's8' => :char,
     's16' => :short,
