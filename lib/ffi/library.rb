@@ -188,22 +188,35 @@ module FFI::Library
   end
 
   def enum(*args)
-    values, tag = if args[0].kind_of?(Array)
+    #
+    # enum can be called as:
+    # enum :zero, :one, :two  # unnamed enum
+    # enum [ :zero, :one, :two ] # equivalent to above
+    # enum :foo, [ :zero, :one, :two ] create an enum named :foo
+    #
+    name, values = if args[0].kind_of?(Symbol) && args[1].kind_of?(Array)
       [ args[0], args[1] ]
+    elsif args[0].kind_of?(Array)
+      [ nil, args[0] ]
     else
-      [ args, nil ]
+      [ nil, args ]
     end
     @ffi_enums = FFI::Enums.new unless defined?(@ffi_enums)
-    @ffi_enums << (e = FFI::Enum.new(values, tag))
+    @ffi_enums << (e = FFI::Enum.new(values, name))
+
+    # If called as enum :foo, [ :zero, :one, :two ], add a typedef alias
+    typedef(e, name) if name
     e
   end
-  def get_enum(query)
-    return nil unless defined?(@ffi_enums)
-    @ffi_enums.find(query)
+
+  def enum_type(name)
+    @ffi_enums.find(name) if defined?(@ffi_enums)
   end
-  def [](symbol)
+
+  def enum_value(symbol)
     @ffi_enums.__map_symbol(symbol)
   end
+
   def find_type(name)
     code = if defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(name)
       @ffi_typedefs[name]
