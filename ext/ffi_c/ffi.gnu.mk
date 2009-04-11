@@ -10,7 +10,7 @@ LOCAL_LIBS += $(LIBFFI)
 FFI_CFLAGS = $(FFI_MMAP_EXEC)
 BUILD_DIR := $(shell pwd)
 ifeq ($(srcdir),.)
-  LIBFFI_SRC_DIR := $(shell pwd)/$(srcdir)/libffi
+  LIBFFI_SRC_DIR := $(shell pwd)/libffi
 else
   LIBFFI_SRC_DIR := $(srcdir)/libffi
 endif
