@@ -16,15 +16,18 @@ CC=gcc
 CCC=g++
 CXX=g++
 FC=
+AS=
 
 # Macros
-PLATFORM=GNU-MacOSX
+CND_PLATFORM=GNU-MacOSX
+CND_CONF=Default
+CND_DISTDIR=dist
 
 # Include project Makefile
 include ruby-ffi-Makefile.mk
 
 # Object Directory
-OBJECTDIR=build/Default/${PLATFORM}
+OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES=
@@ -38,6 +41,9 @@ CXXFLAGS=
 
 # Fortran Compiler Flags
 FFLAGS=
+
+# Assembler Flags
+ASFLAGS=
 
 # Link Libraries and Options
 LDLIBSOPTIONS=

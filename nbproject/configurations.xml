@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="51">
+<configurationDescriptor version="58">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="ruby-ffi" displayName="ruby-ffi" projectFiles="true">
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
@@ -64,6 +64,7 @@
       <logicalFolder name="f2" displayName="spec" projectFiles="true">
         <itemPath>spec/ffi/buffer_spec.rb</itemPath>
         <itemPath>spec/ffi/callback_spec.rb</itemPath>
+        <itemPath>spec/ffi/enum_spec.rb</itemPath>
         <itemPath>spec/ffi/errno_spec.rb</itemPath>
         <itemPath>spec/ffi/library_spec.rb</itemPath>
         <itemPath>spec/ffi/managed_struct_spec.rb</itemPath>
@@ -99,207 +100,13 @@
           <buildCommand>rake compile</buildCommand>
           <cleanCommand>rake clean</cleanCommand>
           <executablePath></executablePath>
-          <cCompilerTool>
-            <includeDirectories>
-              <directoryPath>/opt/local/include</directoryPath>
-            </includeDirectories>
-          </cCompilerTool>
+          <cTool>
+            <incDir>
+              <pElem>/opt/local/include</pElem>
+            </incDir>
+          </cTool>
         </makeTool>
-        <requiredProjects>
-        </requiredProjects>
       </makefileType>
-      <item path="ext/ffi_c/AbstractMemory.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/AbstractMemory.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/AutoPointer.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/AutoPointer.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/Buffer.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/Callback.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/Callback.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/Invoker.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/MemoryPointer.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/MemoryPointer.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/NativeLibrary.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/NativeLibrary.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/NullPointer.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/Platform.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/Platform.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/Pointer.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/Pointer.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/Struct.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/Struct.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/Type.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/Type.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/Types.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/Types.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/compat.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/extconf.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="ext/ffi_c/ffi.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="ext/ffi_c/rbffi.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/autopointer.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/callback.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/enum.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/ffi.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/io.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/library.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/memorypointer.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/platform.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/pointer.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/struct.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/types.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="lib/ffi/variadic.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="libtest/Benchmark.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/BufferTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/ClosureTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/GlobalVariable.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/LastErrorTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/NumberTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/PointerTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/ReferenceTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/StringTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/StructTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="libtest/VariadicTest.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="spec/ffi/buffer_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/callback_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/errno_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/library_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/managed_struct_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/number_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/pointer_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/spec_helper.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/string_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/struct_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/typedef_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/union_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="spec/ffi/variadic_spec.rb">
-        <itemTool>3</itemTool>
-      </item>
     </conf>
   </confs>
 </configurationDescriptor>
