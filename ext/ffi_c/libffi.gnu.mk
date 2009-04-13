@@ -1,11 +1,10 @@
 # -*- makefile -*-
-
-# CFLAGS += -Werror -Wformat
+#
+#  Common definitions for all systems that use GNU make
+#
 INCFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
 CPPFLAGS += -I$(BUILD_DIR) -I$(LIBFFI_BUILD_DIR)/include
-# CPPFLAGS += -mwin32
 LOCAL_LIBS += $(LIBFFI)
-# LOCAL_LIBS += -lpthread
 
 FFI_CFLAGS = $(FFI_MMAP_EXEC)
 BUILD_DIR := $(shell pwd)
