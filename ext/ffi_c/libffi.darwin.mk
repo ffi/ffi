@@ -1,12 +1,21 @@
 # -*- makefile -*-
-ARCHES := 
+include libffi.gnu.mk
+
 CCACHE := $(shell type -p ccache)
+BUILD_DIR := $(shell pwd)
+
+INCFLAGS += -I${BUILD_DIR}
+
+# Work out which arches we need to compile the lib for
+ARCHES := 
 ifneq ($(findstring -arch ppc,$(CFLAGS)),)
   ARCHES += ppc
 endif
+
 ifneq ($(findstring -arch i386,$(CFLAGS)),)
   ARCHES += i386
 endif
+
 ifneq ($(findstring -arch x86_64,$(CFLAGS)),)
   ARCHES += x86_64
 endif
@@ -19,14 +28,13 @@ build_ffi = \
 	(if [ ! -f $(BUILD_DIR)/libffi-$(1)/Makefile ]; then \
 	    echo "Configuring libffi for $(1)"; \
 	    cd $(BUILD_DIR)/libffi-$(1) && \
-	      env CC="$(CCACHE) $(CC)" CFLAGS="-arch $(1) $(FFI_CFLAGS)" LDFLAGS="-arch $(1)" \
+	      env CC="$(CCACHE) $(CC)" CFLAGS="-arch $(1) $(LIBFFI_CFLAGS)" LDFLAGS="-arch $(1)" \
 		$(FFI_CONFIGURE) --host=$(1)-apple-darwin > /dev/null; \
 	fi); \
 	env MACOSX_DEPLOYMENT_TARGET=10.4 $(MAKE) -C $(BUILD_DIR)/libffi-$(1)
-	
+
 $(LIBFFI):
-	@for arch in $(ARCHES); do $(call build_ffi,$$arch);done
-	
+	@for arch in $(ARCHES); do $(call build_ffi,$$arch);done	
 	# Assemble into a FAT (i386, ppc) library
 	@mkdir -p $(BUILD_DIR)/libffi/.libs
 	env MACOSX_DEPLOYMENT_TARGET=10.4 /usr/bin/libtool -static -o $@ \
@@ -51,5 +59,4 @@ $(LIBFFI):
 		printf "#include \"libffi-ppc/include/ffitarget.h\"\n";\
 		printf "#endif\n";\
 	) > $(LIBFFI_BUILD_DIR)/include/ffitarget.h
-	
 

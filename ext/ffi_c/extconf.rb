@@ -20,12 +20,12 @@ File.open("Makefile", "a") do |mf|
   unless libffi_ok 
     mf.puts "LIBFFI_HOST=--host=#{Config::CONFIG['host_alias']}" if Config::CONFIG.has_key?("host_alias")
     mf.puts "FFI_MMAP_EXEC=-DFFI_MMAP_EXEC_WRIT=#{Config::CONFIG['host_os'] =~ /win/ ? 0 : 1}"
-    if Config::CONFIG['host_os'] =~ /darwin/
-      mf.puts "include $(srcdir)/libffi.gnu.mk"
-      mf.puts "include $(srcdir)/libffi.darwin.mk"
+    if Config::CONFIG['host_os'].downcase =~ /darwin/
+      mf.puts "include ${srcdir}/libffi.darwin.mk"
+    elsif Config::CONFIG['host_os'].downcase =~ /bsd/
+      mf.puts ".include ${srcdir)}libffi.bsd.mk"
     else
-      mf.puts "include $(srcdir)/libffi.gnu.mk"
-      mf.puts "include $(srcdir)/libffi.mk"
+      mf.puts "include ${srcdir}/libffi.mk"
     end
   end
 end
