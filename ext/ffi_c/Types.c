@@ -110,3 +110,4 @@ void rb_FFI_Types_Init(void)
 {
     find_id = rb_intern("find");
 }
+

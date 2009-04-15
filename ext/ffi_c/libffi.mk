@@ -1,6 +1,6 @@
 # -*- makefile -*-
 
-include libffi.gnu.mk
+include ${srcdir}/libffi.gnu.mk
 
 $(LIBFFI):		
 	@mkdir -p $(LIBFFI_BUILD_DIR)
