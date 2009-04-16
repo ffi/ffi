@@ -10,7 +10,7 @@
 #include "MemoryPointer.h"
 #include "AutoPointer.h"
 #include "Struct.h"
-#include "NativeLibrary.h"
+#include "DynamicLibrary.h"
 #include "Platform.h"
 #include "Types.h"
 
@@ -67,7 +67,7 @@ Init_ffi_c() {
     rb_FFI_Buffer_Init();
     rb_FFI_Callback_Init();
     rb_FFI_Struct_Init(0);
-    rb_FFI_NativeLibrary_Init();
+    rb_FFI_DynamicLibrary_Init();
     rb_FFI_Invoker_Init();
     rb_FFI_Types_Init();
 }

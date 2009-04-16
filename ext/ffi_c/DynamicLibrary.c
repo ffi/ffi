@@ -14,7 +14,7 @@
 #include "compat.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
-#include "NativeLibrary.h"
+#include "DynamicLibrary.h"
 
 typedef struct LibrarySymbol_ {
     AbstractMemory memory;
@@ -181,7 +181,7 @@ symbol_inspect(VALUE self)
 }
 
 void
-rb_FFI_NativeLibrary_Init()
+rb_FFI_DynamicLibrary_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     classLibrary = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
