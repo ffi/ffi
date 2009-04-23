@@ -40,9 +40,9 @@ rb_FFI_type_size(VALUE type)
             }
         }
         // Not found - call up to the ruby version to resolve
-        return INT2NUM(rb_funcall2(moduleFFI, rb_intern("type_size"), 1, &type));
+        return NUM2INT(rb_funcall2(moduleFFI, rb_intern("type_size"), 1, &type));
     } else {
-        return INT2NUM(rb_funcall2(type, size_id, 0, NULL));
+        return NUM2INT(rb_funcall2(type, size_id, 0, NULL));
     }
 }
 
