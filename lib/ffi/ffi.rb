@@ -54,7 +54,6 @@ require 'ffi/callback'
 require 'ffi/io'
 require 'ffi/autopointer'
 require 'ffi/variadic'
-require 'ffi/enum'
 
 module FFI
   
@@ -68,7 +67,7 @@ module FFI
     end
     lib
   end
-  def self.create_invoker(lib, name, args, ret_type, native_ret_type, options = { :convention => :default })
+  def self.create_invoker(lib, name, args, ret, options = { :convention => :default })
     # Current artificial limitation based on JRuby::FFI limit
     raise SignatureError, 'FFI functions may take max 32 arguments!' if args.size > 32
 
@@ -83,14 +82,14 @@ module FFI
     else
       raise LoadError, "Invalid library '#{lib}'"
     end
-    function = library.find_function(name)
+    function = library.find_symbol(name)
     raise NotFoundError.new(name, library.name) unless function
 
     args = args.map {|e| find_type(e) }
     if args.length > 0 && args[args.length - 1] == FFI::NativeType::VARARGS
-      invoker = FFI::VariadicInvoker.new(function, args, ret_type, find_type(native_ret_type), options)
+      invoker = FFI::VariadicInvoker.new(library, function, args, find_type(ret), options)
     else
-      invoker = FFI::Invoker.new(function, args, ret_type, find_type(native_ret_type), options[:convention].to_s, options[:enums])
+      invoker = FFI::Invoker.new(library, function, args, find_type(ret), options[:convention].to_s)
     end
     raise NotFoundError.new(name, library.name) unless invoker
     return invoker

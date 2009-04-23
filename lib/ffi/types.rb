@@ -1,7 +1,7 @@
 module FFI
 #  TypeDefs = Hash.new
   def self.add_typedef(current, add)
-    if current.kind_of?(FFI::Type)
+    if current.kind_of? Integer
       code = current
     else
       code = TypeDefs[current]
@@ -13,7 +13,8 @@ module FFI
   def self.find_type(name, type_map = nil)
     type_map = TypeDefs if type_map.nil?
     code = type_map[name]
-    code = name if !code && name.kind_of?(FFI::Type)
+    code = name if !code && name.kind_of?(Integer)
+    code = name if !code && name.kind_of?(FFI::CallbackInfo)
     raise TypeError, "Unable to resolve type '#{name}'" unless code
     return code
   end
@@ -91,10 +92,7 @@ module FFI
   add_typedef(NativeType::BUFFER_IN, :buffer_in)
   add_typedef(NativeType::BUFFER_OUT, :buffer_out)
   add_typedef(NativeType::BUFFER_INOUT, :buffer_inout)
-
   add_typedef(NativeType::VARARGS, :varargs)
-  
-  add_typedef(NativeType::ENUM, :enum)
 
   # Use for a C struct with a char [] embedded inside.
   add_typedef(NativeType::CHAR_ARRAY, :char_array)

@@ -2,7 +2,6 @@
 #define	_CALLBACK_H
 
 #include "Types.h"
-#include "Type.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -10,10 +9,6 @@ extern "C" {
 #include <ffi.h>
     
 typedef struct {
-    Type type; // The native type of a CallbackInfo object
-    VALUE rbReturnType;
-    VALUE rbParameterTypes;
-
     NativeType returnType;
     NativeType* parameterTypes;
     ffi_type* ffiReturnType;

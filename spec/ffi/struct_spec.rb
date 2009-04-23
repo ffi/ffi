@@ -1,5 +1,6 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 describe "Struct tests" do
+  include FFI
   StructTypes = {
     's8' => :char,
     's16' => :short,
@@ -28,54 +29,54 @@ describe "Struct tests" do
   end
   it "Struct#[:pointer]" do
     magic = 0x12345678
-    mp = FFI::MemoryPointer.new :long
+    mp = MemoryPointer.new :long
     mp.put_long(0, magic)
-    smp = FFI::MemoryPointer.new :pointer
+    smp = MemoryPointer.new :pointer
     smp.put_pointer(0, mp)
     s = PointerMember.new smp
     s[:pointer].should == mp
   end
   it "Struct#[:pointer].nil? for NULL value" do
     magic = 0x12345678
-    mp = FFI::MemoryPointer.new :long
+    mp = MemoryPointer.new :long
     mp.put_long(0, magic)
-    smp = FFI::MemoryPointer.new :pointer
+    smp = MemoryPointer.new :pointer
     smp.put_pointer(0, nil)
     s = PointerMember.new smp
     s[:pointer].null?.should == true
   end
   it "Struct#[:pointer]=" do
     magic = 0x12345678
-    mp = FFI::MemoryPointer.new :long
+    mp = MemoryPointer.new :long
     mp.put_long(0, magic)
-    smp = FFI::MemoryPointer.new :pointer
+    smp = MemoryPointer.new :pointer
     s = PointerMember.new smp
     s[:pointer] = mp
     smp.get_pointer(0).should == mp
   end
   it "Struct#[:pointer]=struct" do
     magic = 0x12345678
-    smp = FFI::MemoryPointer.new :pointer
+    smp = MemoryPointer.new :pointer
     s = PointerMember.new smp
     lambda { s[:pointer] = s }.should_not raise_error
   end
   it "Struct#[:pointer]=nil" do
-    smp = FFI::MemoryPointer.new :pointer
+    smp = MemoryPointer.new :pointer
     s = PointerMember.new smp
     s[:pointer] = nil
     smp.get_pointer(0).null?.should == true
   end
   it "Struct#[:string]" do
     magic = "test"
-    mp = FFI::MemoryPointer.new 1024
+    mp = MemoryPointer.new 1024
     mp.put_string(0, magic)
-    smp = FFI::MemoryPointer.new :pointer
+    smp = MemoryPointer.new :pointer
     smp.put_pointer(0, mp)
     s = StringMember.new smp
     s[:string].should == magic
   end
   it "Struct#[:string].nil? for NULL value" do
-    smp = FFI::MemoryPointer.new :pointer
+    smp = MemoryPointer.new :pointer
     smp.put_pointer(0, nil)
     s = StringMember.new smp
     s[:string].nil?.should == true
@@ -86,7 +87,7 @@ describe "Struct tests" do
     end
     ll_off = (FFI::Platform::ADDRESS_SIZE == 32 ? 4 : 8)
     PairLayout.size.should == (ll_off + 8)
-    mp = FFI::MemoryPointer.new(PairLayout.size)
+    mp = MemoryPointer.new(PairLayout.size)
     s = PairLayout.new mp
     s[:a] = 0x12345678
     mp.get_int(0).should == 0x12345678
@@ -98,7 +99,7 @@ describe "Struct tests" do
       layout :a, :int, 0, :b, :long_long, 4
     end
     PairLayout.size.should == (FFI::Platform::ADDRESS_SIZE == 32 ? 12 : 16)
-    mp = FFI::MemoryPointer.new(PairLayout.size)
+    mp = MemoryPointer.new(PairLayout.size)
     s = PairLayout.new mp
     s[:a] = 0x12345678
     mp.get_int(0).should == 0x12345678
@@ -110,7 +111,7 @@ describe "Struct tests" do
       layout :a, :int, :b, :long_long, 4
     end
     MixedLayout.size.should == (FFI::Platform::ADDRESS_SIZE == 32 ? 12 : 16)
-    mp = FFI::MemoryPointer.new(MixedLayout.size)
+    mp = MemoryPointer.new(MixedLayout.size)
     s = MixedLayout.new mp
     s[:a] = 0x12345678
     mp.get_int(0).should == 0x12345678
@@ -125,7 +126,7 @@ describe "Struct tests" do
       end
       ll_off = (FFI::Platform::ADDRESS_SIZE == 32 ? 4 : 8)
       HashLayout.size.should == (ll_off + 8)
-      mp = FFI::MemoryPointer.new(HashLayout.size)
+      mp = MemoryPointer.new(HashLayout.size)
       s = HashLayout.new mp
       s[:a] = 0x12345678
       mp.get_int(0).should == 0x12345678
@@ -392,6 +393,7 @@ describe FFI::Struct, ' with an array field'  do
   before do
     @s = LibTest::StructWithArray.new
   end
+  it 'should align correctly array field'
   it 'should correctly calculate StructWithArray size (in bytes)' do
     LibTest::StructWithArray.size.should == 24
   end
@@ -447,30 +449,5 @@ describe 'BuggedStruct' do
     LibTest::BuggedStruct.offsets.sort do |a, b|
       a[1] <=> b[1] 
     end.should == [[:visible, 0], [:x, 4], [:y, 8], [:rx, 12], [:ry, 14], [:order, 16], [:size, 17]]
-  end
-end
-
-describe "Struct allocation" do
-  it "MemoryPointer.new(Struct, 2)" do
-    class S < FFI::Struct
-      layout :i, :uint
-    end
-    p = FFI::MemoryPointer.new(S, 2)
-    p.total.should == 8
-    p.type_size.should == 4
-    p.put_uint(4, 0xdeadbeef)
-    S.new(p[1])[:i].should == 0xdeadbeef
-    p[1].address.should == (p[0].address + 4)
-  end
-
-  it "Buffer.new(Struct, 2)" do
-    class S < FFI::Struct
-      layout :i, :uint
-    end
-    p = FFI::Buffer.new(S, 2)
-    p.total.should == 8
-    p.type_size.should == 4
-    p.put_uint(4, 0xdeadbeef)
-    S.new(p[1])[:i].should == 0xdeadbeef
   end
 end

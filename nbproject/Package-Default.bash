@@ -6,10 +6,8 @@
 
 # Macros
 TOP=`pwd`
-CND_PLATFORM=GNU-MacOSX
-CND_CONF=Default
-CND_DISTDIR=dist
-TMPDIR=build/${CND_CONF}/${CND_PLATFORM}/tmp-packaging
+PLATFORM=GNU-MacOSX
+TMPDIR=build/Default/${PLATFORM}/tmp-packaging
 TMPDIRNAME=tmp-packaging
 OUTPUT_PATH=MissingOutputInProject
 OUTPUT_BASENAME=MissingOutputInProject
@@ -52,7 +50,7 @@ function copyFileToTmpDir
 
 # Setup
 cd "${TOP}"
-mkdir -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package
+mkdir -p dist/Default/${PLATFORM}/package
 rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}
 
@@ -64,9 +62,9 @@ copyFileToTmpDir "${OUTPUT_PATH}" "${TMPDIR}/${PACKAGE_TOP_DIR}bin/${OUTPUT_BASE
 
 # Generate tar file
 cd "${TOP}"
-rm -f ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package/ruby-ffi.tar
+rm -f dist/Default/${PLATFORM}/package/ruby-ffi.tar
 cd ${TMPDIR}
-tar -vcf ../../../../${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package/ruby-ffi.tar *
+tar -vcf ../../../../dist/Default/${PLATFORM}/package/ruby-ffi.tar *
 checkReturnCode
 
 # Cleanup

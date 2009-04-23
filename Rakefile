@@ -43,7 +43,7 @@ PROJ.ann.email[:server] = 'smtp.gmail.com'
 
 # Gem specifications
 PROJ.gem.need_tar = false
-PROJ.gem.files = %w(LICENSE README.rdoc Rakefile) + Dir.glob("{ext,lib,spec}/**/*")
+PROJ.gem.files = %w(LICENSE README.rdoc Rakefile) + Dir.glob("{ext,lib,nbproject,samples,spec}/**/*")
 PROJ.gem.platform = Gem::Platform::RUBY
 PROJ.gem.extensions = %w(ext/ffi_c/extconf.rb gen/Rakefile)
 
