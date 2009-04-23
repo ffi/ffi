@@ -50,18 +50,17 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
 {
     VALUE size = Qnil, count = Qnil, clear = Qnil;
     Buffer* p;
-    unsigned long msize;
     int nargs;
-    
-    nargs = rb_scan_args(argc, argv, "12", &size, &count, &clear);
-    msize = rb_FFI_type_size(size) * (nargs > 1 ? NUM2LONG(count) : 1);
 
     Data_Get_Struct(self, Buffer, p);
-    p->memory.size = msize;
 
-    p->storage = malloc(msize + 7);
+    nargs = rb_scan_args(argc, argv, "12", &size, &count, &clear);
+    p->type_size = rb_FFI_type_size(size);
+    p->memory.size = p->type_size * (nargs > 1 ? NUM2LONG(count) : 1);
+
+    p->storage = malloc(p->memory.size + 7);
     if (p->storage == NULL) {
-        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", msize);
+        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", p->memory.size);
     }
 
     /* ensure the memory is aligned on at least a 8 byte boundary */
@@ -101,6 +100,24 @@ buffer_plus(VALUE self, VALUE offset)
     p->parent = self;
 
     return retval;
+}
+
+static VALUE
+buffer_aref(VALUE self, VALUE offset)
+{
+    Buffer* ptr;
+
+    Data_Get_Struct(self, Buffer, ptr);
+    return buffer_plus(self, INT2FIX(ptr->type_size * NUM2INT(offset)));
+}
+
+static VALUE
+buffer_type_size(VALUE self)
+{
+    Buffer* ptr;
+
+    Data_Get_Struct(self, Buffer, ptr);
+    return INT2NUM(ptr->type_size);
 }
 
 static VALUE
@@ -149,5 +166,7 @@ rb_FFI_Buffer_Init()
     
     rb_define_method(classBuffer, "initialize", buffer_initialize, -1);
     rb_define_method(classBuffer, "inspect", buffer_inspect, 0);
+    rb_define_method(classBuffer, "type_size", buffer_type_size, 0);
+    rb_define_method(classBuffer, "[]", buffer_aref, 1);
     rb_define_method(classBuffer, "+", buffer_plus, 1);
 }
