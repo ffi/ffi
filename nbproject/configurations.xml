@@ -11,13 +11,13 @@
         <itemPath>ext/ffi_c/Callback.c</itemPath>
         <itemPath>ext/ffi_c/Callback.h</itemPath>
         <itemPath>ext/ffi_c/compat.h</itemPath>
+        <itemPath>ext/ffi_c/DynamicLibrary.c</itemPath>
+        <itemPath>ext/ffi_c/DynamicLibrary.h</itemPath>
         <itemPath>ext/ffi_c/extconf.rb</itemPath>
         <itemPath>ext/ffi_c/ffi.c</itemPath>
         <itemPath>ext/ffi_c/Invoker.c</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.c</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.h</itemPath>
-        <itemPath>ext/ffi_c/NativeLibrary.c</itemPath>
-        <itemPath>ext/ffi_c/NativeLibrary.h</itemPath>
         <itemPath>ext/ffi_c/NullPointer.c</itemPath>
         <itemPath>ext/ffi_c/Platform.c</itemPath>
         <itemPath>ext/ffi_c/Platform.h</itemPath>
