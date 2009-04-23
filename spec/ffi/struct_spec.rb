@@ -449,3 +449,28 @@ describe 'BuggedStruct' do
     end.should == [[:visible, 0], [:x, 4], [:y, 8], [:rx, 12], [:ry, 14], [:order, 16], [:size, 17]]
   end
 end
+
+describe "Struct allocation" do
+  it "MemoryPointer.new(Struct, 2)" do
+    class S < FFI::Struct
+      layout :i, :uint
+    end
+    p = FFI::MemoryPointer.new(S, 2)
+    p.total.should == 8
+    p.type_size.should == 4
+    p.put_uint(4, 0xdeadbeef)
+    S.new(p[1])[:i].should == 0xdeadbeef
+    p[1].address.should == (p[0].address + 4)
+  end
+
+  it "Buffer.new(Struct, 2)" do
+    class S < FFI::Struct
+      layout :i, :uint
+    end
+    p = FFI::Buffer.new(S, 2)
+    p.total.should == 8
+    p.type_size.should == 4
+    p.put_uint(4, 0xdeadbeef)
+    S.new(p[1])[:i].should == 0xdeadbeef
+  end
+end
