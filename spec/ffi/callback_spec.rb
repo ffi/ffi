@@ -171,7 +171,7 @@ describe "Callback" do
     LibTest.testCallbackVrP { nil }.null?.should be_true
   end
   it "returning :pointer (MemoryPointer)" do
-    p = FFI::MemoryPointer.new :long
+    p = MemoryPointer.new :long
     LibTest.testCallbackVrP { p }.should == p
   end
 
@@ -184,93 +184,6 @@ describe "Callback" do
   describe "When the callback is considered optional by the underlying library" do
     it "should handle receiving 'nil' in place of the closure" do
       LibTest.testOptionalCallbackCrV(nil, 13)
-    end
-  end
-
-  describe 'when inlined' do
-    it 'could be anonymous' do
-      module LibTest
-        extend FFI::Library
-        attach_function :testCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
-      end
-      LibTest.testCallbackVrS8 { 0 }.should == 0
-    end
-  end
-
-  describe "as return value" do
-
-    it "should not blow up when a callback is defined that returns a callback" do
-      module LibTest
-        extend FFI::Library
-        callback :cb_return_type_1, [ :short ], :short
-        callback :cb_lookup_1, [ :short ], :cb_return_type_1
-        attach_function :testReturnsCallback_1, :testReturnsClosure, [ :cb_lookup_1, :short ], :cb_return_type_1
-      end      
-    end
-
-    it "should return a callback" do
-      module LibTest
-        extend FFI::Library
-        callback :cb_return_type, [ :int ], :int
-        callback :cb_lookup, [ ], :cb_return_type
-        attach_function :testReturnsCallback, :testReturnsClosure, [ :cb_lookup, :int ], :int
-      end      
-
-      lookup_proc_called = false
-      return_proc_called = false
-
-      return_proc = Proc.new do |a|
-        return_proc_called = true
-        a * 2
-      end
-      lookup_proc = Proc.new do
-        lookup_proc_called = true
-        return_proc
-      end
-
-      val = LibTest.testReturnsCallback(lookup_proc, 0x1234)
-      val.should == 0x1234 * 2
-      lookup_proc_called.should be_true
-      return_proc_called.should be_true
-    end
-    it 'should not blow up when a callback takes a callback as argument' do
-      module LibTest
-        extend FFI::Library
-        callback :cb_argument, [ :int ], :int
-        callback :cb_with_cb_argument, [ :cb_argument, :int ], :int
-        attach_function :testCallbackAsArgument, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
-      end   
-    end
-    it 'should be able to use the callback argument' do
-      module LibTest
-        extend FFI::Library
-        callback :cb_argument, [ :int ], :int
-        callback :cb_with_cb_argument, [ :cb_argument, :int ], :int
-        attach_function :testCallbackAsArgument, :testArgumentClosure, [ :cb_with_cb_argument, :cb_argument, :int ], :int
-      end   
-      callback_arg_called = false
-      callback_with_callback_arg_called = false         
-      callback_arg = Proc.new do |val|
-        callback_arg_called = true
-        val * 2
-      end
-      callback_with_callback_arg = Proc.new do |cb, val|
-        callback_with_callback_arg_called = true
-        cb.call(val)
-      end
-      val = LibTest.testCallbackAsArgument(callback_with_callback_arg, callback_arg, 0xff1)
-      val.should == 0xff1 * 2
-      callback_arg_called.should be_true
-      callback_with_callback_arg_called.should be_true         
-    end
-    it 'function returns callable object' do
-      module LibTest
-        extend FFI::Library
-        callback :funcptr, [ :int ], :int
-        attach_function :testReturnsFunctionPointer, [  ], :funcptr
-      end
-      f = LibTest.testReturnsFunctionPointer
-      f.call(3).should == 6
     end
   end
 

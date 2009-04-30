@@ -34,14 +34,11 @@ typedef enum {
     NATIVE_RBXSTRING,
     /** The function takes a variable number of arguments */
     NATIVE_VARARGS,
-    /** A typedef-ed enum */
-    NATIVE_ENUM,
 } NativeType;
 
 #include <ffi.h>
 extern ffi_type* rb_FFI_NativeTypeToFFI(NativeType type);
-VALUE rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE enums);
-void rb_FFI_Types_Init(void);
+VALUE rb_FFI_NativeValueToRuby(NativeType type, const void* ptr);
 
 #ifdef	__cplusplus
 }

@@ -1,7 +1,7 @@
 module FFI
   class VariadicInvoker
-    def VariadicInvoker.new(function, arg_types, rb_ret_type, ret_type, options)
-      invoker = self.__new(function, rb_ret_type, ret_type, options[:convention].to_s, options[:enums])
+    def VariadicInvoker.new(library, function, arg_types, ret_type, options)
+      invoker = self.__new(library, function, ret_type, options[:convention].to_s)
       invoker.init(arg_types, options[:type_map])
       invoker
     end

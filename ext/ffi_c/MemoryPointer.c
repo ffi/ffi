@@ -24,8 +24,6 @@ VALUE rb_FFI_MemoryPointer_class;
 static VALUE classMemoryPointer = Qnil;
 #define MEMPTR(obj) ((MemoryPointer *) rb_FFI_AbstractMemory_cast(obj, rb_FFI_MemoryPointer_class))
 
-static ID plus_id = 0;
-
 VALUE
 rb_FFI_MemoryPointer_new(long size, long count, bool clear)
 {
@@ -102,7 +100,7 @@ memptr_aref(VALUE self, VALUE which)
 {
     MemoryPointer* ptr = MEMPTR(self);
     VALUE offset = INT2NUM(ptr->type_size * NUM2INT(which));
-    return rb_funcall2(self, plus_id, 1, &offset);
+    return rb_funcall2(self, rb_intern("+"), 1, &offset);
 }
 
 static VALUE
@@ -148,6 +146,4 @@ rb_FFI_MemoryPointer_Init()
     rb_define_method(classMemoryPointer, "free", memptr_free, 0);
     rb_define_method(classMemoryPointer, "type_size", memptr_type_size, 0);
     rb_define_method(classMemoryPointer, "[]", memptr_aref, 1);
-    
-    plus_id = rb_intern("+");
 }
