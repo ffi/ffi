@@ -32,12 +32,14 @@ static VALUE
 nullptr_op(int argc, VALUE* argv, VALUE self)
 {
     rb_raise(NullPointerError, "NULL Pointer access attempted");
+    return Qnil;
 }
 
 static VALUE
 nullptr_op_get(AbstractMemory* ptr, long offset)
 {
     rb_raise(NullPointerError, "NULL Pointer access attempted");
+    return Qnil;
 }
 
 static void

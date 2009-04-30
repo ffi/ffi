@@ -287,6 +287,7 @@ rb_FFI_AbstractMemory_cast(VALUE obj, VALUE klass)
         return memory;
     }
     rb_raise(rb_eArgError, "Invalid Memory object");
+    return NULL;
 }
 
 static VALUE

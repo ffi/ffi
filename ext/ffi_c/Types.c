@@ -103,6 +103,7 @@ rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE e
 
         default:
             rb_raise(rb_eRuntimeError, "Unknown type: %d", type);
+            return Qnil;
     }
 }
 
