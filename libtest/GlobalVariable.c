@@ -15,7 +15,6 @@ typedef float f32;
 typedef double f64;
 typedef unsigned long ulong;
 typedef void* pointer;
-typedef void* P;
 
 #define GVAR(T) \
     extern T gvar_##T; \
