@@ -1,4 +1,5 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'java' if RUBY_PLATFORM =~ /java/
 
 describe "Managed Struct" do
   include FFI
@@ -33,7 +34,11 @@ describe "Managed Struct" do
         loop = 5
         while loop > 0 && @@count < count
           loop -= 1
-          GC.start
+          if RUBY_PLATFORM =~ /java/
+            java.lang.System.gc
+          else
+            GC.start
+          end
           sleep 0.05 if @@count < count
         end
       end

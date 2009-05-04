@@ -1,5 +1,7 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 require 'delegate'
+require 'java' if RUBY_PLATFORM =~ /java/
+
 module LibTest
   attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
   attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], :pointer
@@ -106,7 +108,11 @@ describe "AutoPointer" do
       loop = 5
       while @@count < count && loop > 0
         loop -= 1
-        GC.start
+        if RUBY_PLATFORM =~ /java/
+          java.lang.System.gc
+        else
+          GC.start
+        end
         sleep 0.05 unless @@count == count
       end
       @@count = 0
