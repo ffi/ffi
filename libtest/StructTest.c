@@ -49,7 +49,7 @@ typedef struct bugged_struct {
 } bugged_struct_t;
 
 unsigned int
-bugged_struct_size() { 
+bugged_struct_size() {
     return sizeof(bugged_struct_t);
 }
 
@@ -215,62 +215,3 @@ struct_s8s32_s64_ret_s64(struct s8s32 s, long long s64)
 {
     return s64;
 }
-
-struct s8s32 {
-    s8 s8;
-    s32 s32;
-};
-
-struct s8f32s32 {
-    s8 s8;
-    f32 f32;
-    s32 s32;
-};
-
-struct s8s32
-struct_s8s32_default()
-{
-    struct s8s32 s;
-    s.s8 = 0x7f;
-    s.s32 = 0x12345678;
-
-    return s;
-}
-
-struct s8s32
-struct_s8s32_make(s8 s8, s32 s32)
-{
-    struct s8s32 s;
-
-    s.s8 = s8;
-    s.s32 = s32;
-
-    return s;
-}
-
-s8
-struct_s8s32_get_s8(struct s8s32 s)
-{
-    return s.s8;
-}
-
-s32
-struct_s8s32_get_s32(struct s8s32 s)
-{
-    return s.s32;
-}
-
-// Pass a struct and an int arg, ensure the int arg is passed correctly
-s32
-struct_s8s32_s32_ret_s32(struct s8s32 s, s32 s32)
-{
-    return s32;
-}
-
-// Pass a struct and a long long arg, ensure the long long arg is passed correctly
-s64
-struct_s8s32_s64_ret_s64(struct s8s32 s, s64 s64)
-{
-    return s64;
-}
-
