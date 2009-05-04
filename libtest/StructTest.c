@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Wayne Meissner. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -26,10 +26,10 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdlib.h>
 
 typedef char s8;
 typedef short s16;
@@ -48,7 +48,10 @@ typedef struct bugged_struct {
   unsigned char size;
 } bugged_struct_t;
 
-unsigned int bugged_struct_size() { return sizeof(bugged_struct_t); };
+unsigned int
+bugged_struct_size() { 
+    return sizeof(bugged_struct_t);
+}
 
 struct test1 {
     char b;
@@ -70,28 +73,31 @@ struct nested {
     int i;
 };
 
-struct container { 
+struct container {
     char first;
     struct nested s;
 };
 
-int struct_align_nested_struct(struct container* a) { return a->s.i; }
+int
+struct_align_nested_struct(struct container* a) { return a->s.i; }
 
-void* struct_field_array(struct struct_with_array* s) { return &s->a; }
+void*
+struct_field_array(struct struct_with_array* s) { return &s->a; }
 
-#define T(x, type) \
-    type struct_field_##type(struct test1* t) { return t->x; } \
-    struct type##_align { char first; type value; }; \
-    type struct_align_##type(struct type##_align* a) { return a->value; }
-
-struct container* struct_make_container_struct(int i) 
-{ 
+struct container*
+struct_make_container_struct(int i)
+{
     static struct container cs;
     memset(&cs, 0, sizeof(cs));
     cs.first = 1;
     cs.s.i = i;
     return &cs;
 }
+
+#define T(x, type) \
+    type struct_field_##type(struct test1* t) { return t->x; } \
+    struct type##_align { char first; type value; }; \
+    type struct_align_##type(struct type##_align* a) { return a->value; }
 
 T(b, s8);
 T(s, s16);
@@ -101,14 +107,14 @@ T(f, f32);
 T(d, f64);
 T(l, long);
 
-void 
-struct_set_string(struct test1* t, char* s) 
+void
+struct_set_string(struct test1* t, char* s)
 {
     strcpy(t->string, s);
 }
 
 struct test1*
-struct_make_struct(char b, short s, int i, long long ll, float f, double d) 
+struct_make_struct(char b, short s, int i, long long ll, float f, double d)
 {
     static struct test1 t;
     memset(&t, 0, sizeof(t));
@@ -141,7 +147,7 @@ struct_call_sub_cb(struct test2* t, int a1, int a2)
 }
 
 
-struct struct_with_array* 
+struct struct_with_array*
 struct_make_struct_with_array(int a_0, int a_1, int a_2, int a_3, int a_4)
 {
     static struct struct_with_array s;
@@ -155,5 +161,57 @@ struct_make_struct_with_array(int a_0, int a_1, int a_2, int a_3, int a_4)
     s.a[4] = a_4;
 
     return &s;
- 
+
+}
+
+struct s8s32 {
+    char s8;
+    int s32;
+};
+
+struct s8s32
+struct_return_s8s32()
+{
+    struct s8s32 s;
+    s.s8 = 0x7f;
+    s.s32 = 0x12345678;
+
+    return s;
+}
+
+struct s8s32
+struct_s8s32_set(char s8, int s32)
+{
+    struct s8s32 s;
+
+    s.s8 = s8;
+    s.s32 = s32;
+
+    return s;
+}
+
+int
+struct_s8s32_get_s8(struct s8s32 s)
+{
+    return s.s8;
+}
+
+int
+struct_s8s32_get_s32(struct s8s32 s)
+{
+    return s.s32;
+}
+
+// Pass a struct and an int arg, ensure the int arg is passed correctly
+int
+struct_s8s32_s32_ret_s32(struct s8s32 s, int s32)
+{
+    return s32;
+}
+
+// Pass a struct and a long long arg, ensure the long long arg is passed correctly
+long long
+struct_s8s32_s64_ret_s64(struct s8s32 s, long long s64)
+{
+    return s64;
 }
