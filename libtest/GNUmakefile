@@ -7,14 +7,12 @@ ifeq ($(OS), sunos)
   OS = solaris
 endif
 
-JNI_DIR = $(shell pwd)
 SRC_DIR = libtest
 BUILD_DIR ?= build
 TEST_BUILD_DIR = $(BUILD_DIR)/libtest
 # Set defaults to unix (linux/solaris/bsd)
 PREFIX = lib
 LIBEXT = so
-JNIEXT = so
 LIBNAME = $(PREFIX)test.$(LIBEXT)
 
 export MACOSX_DEPLOYMENT_TARGET=10.4
@@ -62,11 +60,19 @@ endif
 ifeq ($(OS), linux)
   SOFLAGS += -Wl,-soname,$(LIBNAME)
 endif
+
 ifeq ($(OS), solaris)
   CC = /usr/sfw/bin/gcc -std=c99
   LD = /usr/ccs/bin/ld
   SOFLAGS = -shared -static-libgcc 
 endif
+
+ifeq ($(OS), aix)
+  LIBEXT = a
+  SOFLAGS = -shared -static-libgcc
+  PICFLAGS += -pthread
+endif
+
 ifneq ($(findstring cygwin, $(OS)),)
   CFLAGS += -mno-cygwin -mwin32
   LIBEXT = dll
@@ -85,9 +91,16 @@ ifeq ($(CPU), amd64)
   MODEL = 64
 endif
 
-ifeq ($(MODEL), 64)
-  CC += -m64
-  LD += -m64
+ifeq ($(CPU), x86_64)
+  MODEL = 64
+endif
+
+# On platforms (linux, solaris) that support both 32bit and 64bit, force building for one or the other
+ifneq ($(or $(findstring linux, $(OS)), $(findstring solaris, $(OS))),)
+  # Change the CC/LD instead of CFLAGS/LDFLAGS, incase other things in the flags
+  # makes the libffi build choke
+  CC += -m$(MODEL)
+  LD += -m$(MODEL)
 endif
 
 LIBTEST = $(BUILD_DIR)/$(LIBNAME)
