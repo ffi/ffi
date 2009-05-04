@@ -90,6 +90,23 @@ void testOptionalClosureBrV(void (*closure)(char), char a1)
     }
 }
 
+struct s8f32s32 {
+    char s8;
+    float f32;
+    int s32;
+};
+
+// Takes a struct argument
+void testClosureTrV(void (*closure)(struct s8f32s32 s), struct s8f32s32* s)
+{
+    (*closure)(*s);
+}
+
+// Returns a struct value
+struct s8f32s32 testClosureVrT(struct s8f32s32 (*closure)())
+{
+    return (*closure)();
+}
 
 typedef int (*returnTypeClosure_t)(int) ;
 typedef returnTypeClosure_t (*lookupClosure_t)();
