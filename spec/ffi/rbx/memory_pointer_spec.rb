@@ -18,12 +18,6 @@ describe "MemoryPointer" do
     m.read_string.should == "FFI is Awesome"
   end
   
-  it "reads back a string from an Array of ints" do
-    m = FFI::MemoryPointer.new(:int, 4)
-    m.write_array_of_int([541673030, 1092645737, 1869833591, 538994029])
-    m.read_string(16).should == "FFI is Awesome  "
-  end
-  
   it "makes a pointer for a certain number of bytes" do
     m = FFI::MemoryPointer.new(8)
     m.write_array_of_int([1,2])
