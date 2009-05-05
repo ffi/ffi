@@ -52,3 +52,4 @@ typedef enum {c13 = 42, c14 = 4242, c15 = 424242, c16 = 42424242} enum_type4;
 enum_type4 test_tagged_typedef_enum4(enum_type4 val) {
     return val;
 }
+
