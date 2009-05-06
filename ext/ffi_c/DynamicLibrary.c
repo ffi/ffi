@@ -30,7 +30,7 @@ static VALUE symbol_allocate(VALUE klass);
 static VALUE symbol_new(VALUE library, void* address, VALUE name);
 static void symbol_mark(LibrarySymbol* sym);
 
-static VALUE classLibrary = Qnil, classSymbol = Qnil;
+static VALUE LibraryClass = Qnil, SymbolClass = Qnil;
 
 #if defined(_WIN32) || defined(__WIN32__)
 static void* dl_open(const char* name, int flags);
@@ -151,7 +151,7 @@ static VALUE
 symbol_new(VALUE library, void* address, VALUE name)
 {
     LibrarySymbol* sym;
-    VALUE obj = Data_Make_Struct(classSymbol, LibrarySymbol, symbol_mark, -1, sym);
+    VALUE obj = Data_Make_Struct(SymbolClass, LibrarySymbol, symbol_mark, -1, sym);
 
     sym->memory.address = address;
     sym->memory.size = LONG_MAX;
@@ -181,29 +181,29 @@ symbol_inspect(VALUE self)
 }
 
 void
-rb_FFI_DynamicLibrary_Init(VALUE moduleFFI)
+rbffi_DynamicLibrary_Init(VALUE moduleFFI)
 {
-    classLibrary = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
-    rb_global_variable(&classLibrary);
-    classSymbol = rb_define_class_under(classLibrary, "Symbol", rb_FFI_Pointer_class);
-    rb_global_variable(&classSymbol);
+    LibraryClass = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
+    rb_global_variable(&LibraryClass);
+    SymbolClass = rb_define_class_under(LibraryClass, "Symbol", rbffi_PointerClass);
+    rb_global_variable(&SymbolClass);
 
-    rb_define_const(moduleFFI, "NativeLibrary", classLibrary); // backwards compat library
-    rb_define_alloc_func(classLibrary, library_allocate);
-    rb_define_singleton_method(classLibrary, "open", library_open, 2);
-    rb_define_singleton_method(classLibrary, "last_error", library_dlerror, 0);
-    rb_define_method(classLibrary, "initialize", library_initialize, 2);
-    rb_define_method(classLibrary, "find_symbol", library_dlsym, 1);
-    rb_define_method(classLibrary, "find_function", library_dlsym, 1);
-    rb_define_method(classLibrary, "find_variable", library_dlsym, 1);
-    rb_define_method(classLibrary, "last_error", library_dlerror, 0);
-    rb_define_attr(classLibrary, "name", 1, 0);
+    rb_define_const(moduleFFI, "NativeLibrary", LibraryClass); // backwards compat library
+    rb_define_alloc_func(LibraryClass, library_allocate);
+    rb_define_singleton_method(LibraryClass, "open", library_open, 2);
+    rb_define_singleton_method(LibraryClass, "last_error", library_dlerror, 0);
+    rb_define_method(LibraryClass, "initialize", library_initialize, 2);
+    rb_define_method(LibraryClass, "find_symbol", library_dlsym, 1);
+    rb_define_method(LibraryClass, "find_function", library_dlsym, 1);
+    rb_define_method(LibraryClass, "find_variable", library_dlsym, 1);
+    rb_define_method(LibraryClass, "last_error", library_dlerror, 0);
+    rb_define_attr(LibraryClass, "name", 1, 0);
 
-    rb_define_alloc_func(classSymbol, symbol_allocate);
-    rb_undef_method(classSymbol, "new");
-    rb_define_method(classSymbol, "inspect", symbol_inspect, 0);
+    rb_define_alloc_func(SymbolClass, symbol_allocate);
+    rb_undef_method(SymbolClass, "new");
+    rb_define_method(SymbolClass, "inspect", symbol_inspect, 0);
 
-#define DEF(x) rb_define_const(classLibrary, "RTLD_" #x, UINT2NUM(RTLD_##x))
+#define DEF(x) rb_define_const(LibraryClass, "RTLD_" #x, UINT2NUM(RTLD_##x))
     DEF(LAZY);
     DEF(NOW);
     DEF(GLOBAL);

@@ -8,12 +8,12 @@ extern "C" {
 
 
 
-extern void rb_FFI_Pointer_Init(VALUE moduleFFI);
-extern void rb_FFI_NullPointer_Init(VALUE moduleFFI);
-extern VALUE rb_FFI_Pointer_new(void* addr);
-extern VALUE rb_FFI_Pointer_class;
-extern VALUE rb_FFI_NullPointer_class;
-extern VALUE rb_FFI_NullPointer_singleton;
+extern void rbffi_Pointer_Init(VALUE moduleFFI);
+extern void rbffi_NullPointer_Init(VALUE moduleFFI);
+extern VALUE rbffi_Pointer_NewInstance(void* addr);
+extern VALUE rbffi_PointerClass;
+extern VALUE rbffi_NullPointerClass;
+extern VALUE rbffi_NullPointerSingleton;
 
 #ifdef	__cplusplus
 }

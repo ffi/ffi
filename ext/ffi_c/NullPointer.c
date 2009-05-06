@@ -7,15 +7,14 @@
 #include "AbstractMemory.h"
 #include "Pointer.h"
 
-static VALUE NullPointerError;
-static VALUE classNullPointer;
-static MemoryOps nullptr_ops;
+static VALUE NullPointerErrorClass;
+static MemoryOps NullPointerOps;
 
-VALUE rb_FFI_NullPointer_class;
-VALUE rb_FFI_NullPointer_singleton;
+VALUE rbffi_NullPointerClass;
+VALUE rbffi_NullPointerSingleton;
 
-VALUE
-rb_FFI_NullPointer_allocate(VALUE klass)
+static VALUE
+nullptr_allocate(VALUE klass)
 {
     AbstractMemory* p;
     VALUE retval;
@@ -23,7 +22,7 @@ rb_FFI_NullPointer_allocate(VALUE klass)
     retval = Data_Make_Struct(klass, AbstractMemory, NULL, -1, p);
     p->address = 0;
     p->size = 0;
-    p->ops = &nullptr_ops;
+    p->ops = &NullPointerOps;
 
     return retval;
 }
@@ -31,21 +30,21 @@ rb_FFI_NullPointer_allocate(VALUE klass)
 static VALUE
 nullptr_op(int argc, VALUE* argv, VALUE self)
 {
-    rb_raise(NullPointerError, "NULL Pointer access attempted");
+    rb_raise(NullPointerErrorClass, "NULL Pointer access attempted");
     return Qnil;
 }
 
 static VALUE
 nullptr_op_get(AbstractMemory* ptr, long offset)
 {
-    rb_raise(NullPointerError, "NULL Pointer access attempted");
+    rb_raise(NullPointerErrorClass, "NULL Pointer access attempted");
     return Qnil;
 }
 
 static void
 nullptr_op_put(AbstractMemory* ptr, long offset, VALUE value)
 {
-    rb_raise(NullPointerError, "NULL Pointer access attempted");
+    rb_raise(NullPointerErrorClass, "NULL Pointer access attempted");
 }
 
 static VALUE
@@ -65,7 +64,7 @@ nullptr_equals(VALUE self, VALUE other)
 {
     AbstractMemory* p2;
 
-    if (!rb_obj_is_kind_of(other, rb_FFI_Pointer_class)) {
+    if (!rb_obj_is_kind_of(other, rbffi_PointerClass)) {
         rb_raise(rb_eArgError, "Comparing Pointer with non Pointer");
     }
 
@@ -80,45 +79,44 @@ nullptr_address(VALUE self)
     return INT2NUM(0);
 }
 
-static MemoryOp nullptr_memory_op = { nullptr_op_get, nullptr_op_put };
+static MemoryOp NullPointerMemoryOp = { nullptr_op_get, nullptr_op_put };
 
-static MemoryOps nullptr_ops = {
-    .int8 = &nullptr_memory_op,
-    .uint8 = &nullptr_memory_op,
-    .int16 = &nullptr_memory_op,
-    .int16 = &nullptr_memory_op,
-    .int32 = &nullptr_memory_op,
-    .uint32 = &nullptr_memory_op,
-    .int64 = &nullptr_memory_op,
-    .uint64 = &nullptr_memory_op,
-    .float32 = &nullptr_memory_op,
-    .float64 = &nullptr_memory_op,
-    .pointer = &nullptr_memory_op,
-    .strptr = &nullptr_memory_op,
+static MemoryOps NullPointerOps = {
+    .int8 = &NullPointerMemoryOp,
+    .uint8 = &NullPointerMemoryOp,
+    .int16 = &NullPointerMemoryOp,
+    .int16 = &NullPointerMemoryOp,
+    .int32 = &NullPointerMemoryOp,
+    .uint32 = &NullPointerMemoryOp,
+    .int64 = &NullPointerMemoryOp,
+    .uint64 = &NullPointerMemoryOp,
+    .float32 = &NullPointerMemoryOp,
+    .float64 = &NullPointerMemoryOp,
+    .pointer = &NullPointerMemoryOp,
+    .strptr = &NullPointerMemoryOp,
 };
 
 void
-rb_FFI_NullPointer_Init(VALUE moduleFFI)
+rbffi_NullPointer_Init(VALUE moduleFFI)
 {
-    rb_FFI_NullPointer_class = classNullPointer = rb_define_class_under(moduleFFI, "NullPointer", rb_FFI_Pointer_class);
-    rb_global_variable(&rb_FFI_NullPointer_class);
-    rb_global_variable(&classNullPointer);
+    rbffi_NullPointerClass = rb_define_class_under(moduleFFI, "NullPointer", rbffi_PointerClass);
+    rb_global_variable(&rbffi_NullPointerClass);
+    
+    NullPointerErrorClass = rb_define_class_under(moduleFFI, "NullPointerError", rb_eRuntimeError);
+    rb_global_variable(&NullPointerErrorClass);
 
-    NullPointerError = rb_define_class_under(moduleFFI, "NullPointerError", rb_eRuntimeError);
-    rb_global_variable(&NullPointerError);
-
-    rb_define_alloc_func(classNullPointer, rb_FFI_NullPointer_allocate);
-    rb_define_method(classNullPointer, "inspect", nullptr_inspect, 0);
-    rb_define_method(classNullPointer, "+", nullptr_op, -1);
-    rb_define_method(classNullPointer, "null?", nullptr_null_p, 0);
-    rb_define_method(classNullPointer, "address", nullptr_address, 0);
-    rb_define_method(classNullPointer, "==", nullptr_equals, 1);
+    rb_define_alloc_func(rbffi_NullPointerClass, nullptr_allocate);
+    rb_define_method(rbffi_NullPointerClass, "inspect", nullptr_inspect, 0);
+    rb_define_method(rbffi_NullPointerClass, "+", nullptr_op, -1);
+    rb_define_method(rbffi_NullPointerClass, "null?", nullptr_null_p, 0);
+    rb_define_method(rbffi_NullPointerClass, "address", nullptr_address, 0);
+    rb_define_method(rbffi_NullPointerClass, "==", nullptr_equals, 1);
 
 #define NOP(name) \
-    rb_define_method(classNullPointer, "get_" #name, nullptr_op, -1); \
-    rb_define_method(classNullPointer, "put_" #name, nullptr_op, -1); \
-    rb_define_method(classNullPointer, "get_array_of_" #name, nullptr_op, -1); \
-    rb_define_method(classNullPointer, "put_array_of_" #name, nullptr_op, -1); \
+    rb_define_method(rbffi_NullPointerClass, "get_" #name, nullptr_op, -1); \
+    rb_define_method(rbffi_NullPointerClass, "put_" #name, nullptr_op, -1); \
+    rb_define_method(rbffi_NullPointerClass, "get_array_of_" #name, nullptr_op, -1); \
+    rb_define_method(rbffi_NullPointerClass, "put_array_of_" #name, nullptr_op, -1); \
 
 
     NOP(int8); NOP(uint8); NOP(int16); NOP(uint16);
@@ -130,16 +128,16 @@ rb_FFI_NullPointer_Init(VALUE moduleFFI)
 
 #undef NOP
 #define NOP(name) \
-    rb_define_method(classNullPointer, "get_" #name, nullptr_op,  -1); \
-    rb_define_method(classNullPointer, "put_" #name, nullptr_op, -1);
+    rb_define_method(rbffi_NullPointerClass, "get_" #name, nullptr_op,  -1); \
+    rb_define_method(rbffi_NullPointerClass, "put_" #name, nullptr_op, -1);
 
     NOP(string); NOP(bytes); NOP(pointer); NOP(callback);
 
-    rb_define_method(classNullPointer, "clear", nullptr_op, -1); \
-    rb_define_method(classNullPointer, "total", nullptr_op, -1);
+    rb_define_method(rbffi_NullPointerClass, "clear", nullptr_op, -1); \
+    rb_define_method(rbffi_NullPointerClass, "total", nullptr_op, -1);
 
     // Create a singleton instance of NullPointer that can be shared
-    rb_FFI_NullPointer_singleton = rb_FFI_NullPointer_allocate(classNullPointer);
-    rb_global_variable(&rb_FFI_NullPointer_singleton);
+    rbffi_NullPointerSingleton = nullptr_allocate(rbffi_NullPointerClass);
+    rb_global_variable(&rbffi_NullPointerSingleton);
 }
 

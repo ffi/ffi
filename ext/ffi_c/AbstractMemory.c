@@ -11,8 +11,8 @@
 
 
 static inline char* memory_address(VALUE self);
-VALUE rb_FFI_AbstractMemory_class = Qnil;
-static ID to_ptr = 0;
+VALUE rbffi_AbstractMemoryClass = Qnil;
+static ID id_to_ptr = 0;
 
 static VALUE
 memory_allocate(VALUE klass)
@@ -20,7 +20,7 @@ memory_allocate(VALUE klass)
     AbstractMemory* memory;
     VALUE obj;
     obj = Data_Make_Struct(klass, AbstractMemory, NULL, -1, memory);
-    memory->ops = &rb_FFI_AbstractMemory_ops;
+    memory->ops = &rbffi_AbstractMemoryOps;
 
     return obj;
 }
@@ -112,7 +112,7 @@ memory_op_put_pointer(AbstractMemory* memory, long off, VALUE value)
     const int type = TYPE(value);
     checkBounds(memory, off, sizeof(void *));
 
-    if (rb_obj_is_kind_of(value, rb_FFI_Pointer_class) && type == T_DATA) {
+    if (rb_obj_is_kind_of(value, rbffi_PointerClass) && type == T_DATA) {
         void* tmp = memory_address(value);
         memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else if (type == T_NIL) {
@@ -124,8 +124,8 @@ memory_op_put_pointer(AbstractMemory* memory, long off, VALUE value)
     } else if (type == T_BIGNUM) {
         uintptr_t tmp = (uintptr_t) NUM2ULL(value);
         memcpy(memory->address + off, &tmp, sizeof(tmp));
-    } else if (rb_respond_to(value, to_ptr)) {
-        VALUE ptr = rb_funcall2(value, to_ptr, 0, NULL);
+    } else if (rb_respond_to(value, id_to_ptr)) {
+        VALUE ptr = rb_funcall2(value, id_to_ptr, 0, NULL);
         void* tmp = MEMORY_PTR(ptr);
         memcpy(memory->address + off, &tmp, sizeof(tmp));
     } else {
@@ -140,7 +140,7 @@ memory_op_get_pointer(AbstractMemory* memory, long off)
 
     checkBounds(memory, off, sizeof(tmp));
     memcpy(&tmp, memory->address + off, sizeof(tmp));
-    return rb_FFI_Pointer_new(tmp);
+    return rbffi_Pointer_NewInstance(tmp);
 }
 
 static VALUE
@@ -172,7 +172,7 @@ memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
     checkBounds(memory, off, sizeof(void *));
 
     if (rb_obj_is_kind_of(proc, rb_cProc)) {
-        VALUE callback = rb_FFI_NativeCallback_for_proc(proc, cbInfo);
+        VALUE callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
         void* code = ((NativeCallback *) DATA_PTR(callback))->code;
         memcpy(memory->address + off, &code, sizeof(code));
     } else {
@@ -278,13 +278,14 @@ memory_address(VALUE obj)
 }
 
 AbstractMemory*
-rb_FFI_AbstractMemory_cast(VALUE obj, VALUE klass)
+rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass)
 {
     if (rb_obj_is_kind_of(obj, klass)) {
         AbstractMemory* memory;
         Data_Get_Struct(obj, AbstractMemory, memory);
         return memory;
     }
+
     rb_raise(rb_eArgError, "Invalid Memory object");
     return NULL;
 }
@@ -312,7 +313,7 @@ static MemoryOp memory_op_strptr = { memory_op_get_strptr, memory_op_put_strptr 
 
 static MemoryOp memory_op_pointer = { memory_op_get_pointer, memory_op_put_pointer };
 
-MemoryOps rb_FFI_AbstractMemory_ops = {
+MemoryOps rbffi_AbstractMemoryOps = {
     .int8 = &memory_op_int8,
     .uint8 = &memory_op_uint8,
     .int16 = &memory_op_int16,
@@ -328,11 +329,11 @@ MemoryOps rb_FFI_AbstractMemory_ops = {
 };
 
 void
-rb_FFI_AbstractMemory_Init(VALUE moduleFFI)
+rbffi_AbstractMemory_Init(VALUE moduleFFI)
 {
     VALUE classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
-    rb_FFI_AbstractMemory_class = classMemory;
-    rb_global_variable(&rb_FFI_AbstractMemory_class);
+    rbffi_AbstractMemoryClass = classMemory;
+    rb_global_variable(&rbffi_AbstractMemoryClass);
 
     rb_define_alloc_func(classMemory, memory_allocate);
 #undef INT
@@ -404,6 +405,6 @@ rb_FFI_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "clear", memory_clear, 0);
     rb_define_method(classMemory, "total", memory_size, 0);
 
-    to_ptr = rb_intern("to_ptr");
+    id_to_ptr = rb_intern("to_ptr");
 }
 

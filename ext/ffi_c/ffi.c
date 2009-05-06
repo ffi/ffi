@@ -23,7 +23,7 @@ static VALUE typeMap = Qnil, sizeMap = Qnil;
 static ID type_size_id = 0, size_id;
 
 int
-rb_FFI_type_size(VALUE type)
+rbffi_type_size(VALUE type)
 {
     int t = TYPE(type);
     if (t == T_FIXNUM || t == T_BIGNUM) {
@@ -57,19 +57,19 @@ Init_ffi_c() {
     type_size_id = rb_intern("type_size");
     size_id = rb_intern("size");
 
-    rb_FFI_Type_Init(moduleFFI);
+    rbffi_Type_Init(moduleFFI);
 
-    rb_FFI_Platform_Init(moduleFFI);
-    rb_FFI_AbstractMemory_Init(moduleFFI);
-    rb_FFI_Pointer_Init(moduleFFI);
-    rb_FFI_AutoPointer_Init(moduleFFI);
-    rb_FFI_NullPointer_Init(moduleFFI);
-    rb_FFI_MemoryPointer_Init(moduleFFI);
-    rb_FFI_Buffer_Init(moduleFFI);
-    rb_FFI_Callback_Init(moduleFFI);
-    rb_FFI_Struct_Init(moduleFFI);
-    rb_FFI_DynamicLibrary_Init(moduleFFI);
-    rb_FFI_Invoker_Init(moduleFFI);
-    rb_FFI_Types_Init(moduleFFI);
+    rbffi_Platform_Init(moduleFFI);
+    rbffi_AbstractMemory_Init(moduleFFI);
+    rbffi_Pointer_Init(moduleFFI);
+    rbffi_AutoPointer_Init(moduleFFI);
+    rbffi_NullPointer_Init(moduleFFI);
+    rbffi_MemoryPointer_Init(moduleFFI);
+    rbffi_Buffer_Init(moduleFFI);
+    rbffi_Callback_Init(moduleFFI);
+    rbffi_Struct_Init(moduleFFI);
+    rbffi_DynamicLibrary_Init(moduleFFI);
+    rbffi_Invoker_Init(moduleFFI);
+    rbffi_Types_Init(moduleFFI);
 }
 

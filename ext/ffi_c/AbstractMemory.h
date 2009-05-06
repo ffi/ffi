@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+#include "compat.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -47,16 +49,16 @@ checkBounds(AbstractMemory* mem, long off, long len)
     }
 }
 
-#define MEMORY(obj) rb_FFI_AbstractMemory_cast((obj), rb_FFI_AbstractMemory_class)
+#define MEMORY(obj) rbffi_AbstractMemory_Cast((obj), rbffi_AbstractMemoryClass)
 #define MEMORY_PTR(obj) MEMORY((obj))->address
 #define MEMORY_LEN(obj) MEMORY((obj))->size
 
-extern void rb_FFI_AbstractMemory_Init(VALUE ffiModule);
+extern void rbffi_AbstractMemory_Init(VALUE ffiModule);
 
-extern AbstractMemory* rb_FFI_AbstractMemory_cast(VALUE obj, VALUE klass);
+extern AbstractMemory* rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass);
 
-extern VALUE rb_FFI_AbstractMemory_class;
-extern MemoryOps rb_FFI_AbstractMemory_ops;
+extern VALUE rbffi_AbstractMemoryClass;
+extern MemoryOps rbffi_AbstractMemoryOps;
 
 #ifdef	__cplusplus
 }

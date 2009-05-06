@@ -104,7 +104,7 @@ static inline ThreadData* thread_data_get(void);
 static int PageSize;
 #endif
 
-VALUE rb_FFI_Invoker_class = Qnil;
+VALUE rbffi_InvokerClass = Qnil;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID to_ptr = 0;
 static ID map_symbol_id = 0;
@@ -175,34 +175,34 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
     Data_Get_Struct(self, Invoker, invoker);
     invoker->enums = enums;
     invoker->address = function;
-    invoker->function = rb_FFI_AbstractMemory_cast(function, rb_FFI_Pointer_class)->address;
+    invoker->function = rbffi_AbstractMemory_Cast(function, rbffi_PointerClass)->address;
     invoker->paramCount = RARRAY_LEN(parameterTypes);
     invoker->paramTypes = ALLOC_N(NativeType, invoker->paramCount);
     invoker->ffiParamTypes = ALLOC_N(ffi_type *, invoker->paramCount);
 
     for (i = 0; i < invoker->paramCount; ++i) {
         VALUE entry = rb_ary_entry(parameterTypes, i);
-        if (rb_obj_is_kind_of(entry, rb_FFI_CallbackInfo_class)) {
+        if (rb_obj_is_kind_of(entry, rbffi_CallbackInfoClass)) {
             invoker->callbackParameters = REALLOC_N(invoker->callbackParameters, VALUE,
                     invoker->callbackCount + 1);
             invoker->callbackParameters[invoker->callbackCount++] = entry;
             invoker->paramTypes[i] = NATIVE_CALLBACK;
             invoker->ffiParamTypes[i] = &ffi_type_pointer;
         } else {
-            int paramType = rb_FFI_Type_GetIntValue(entry);
+            int paramType = rbffi_Type_GetIntValue(entry);
             invoker->paramTypes[i] = paramType;
-            invoker->ffiParamTypes[i] = rb_FFI_NativeTypeToFFI(paramType);
+            invoker->ffiParamTypes[i] = rbffi_NativeType_ToFFI(paramType);
         }
         if (invoker->ffiParamTypes[i] == NULL) {
             rb_raise(rb_eArgError, "Invalid parameter type");
         }
     }
 
-    invoker->returnType = rb_FFI_Type_GetIntValue(returnType);
-    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rb_FFI_CallbackInfo_class)
+    invoker->returnType = rbffi_Type_GetIntValue(returnType);
+    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_CallbackInfoClass)
         ? returnType : rbReturnTypeSymbol;
     
-    ffiReturnType = rb_FFI_NativeTypeToFFI(invoker->returnType);
+    ffiReturnType = rbffi_NativeType_ToFFI(invoker->returnType);
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
     }
@@ -241,16 +241,16 @@ variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnTypeSymbol, VALU
     retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
     invoker->enums = enums;
     invoker->address = function;
-    invoker->function = rb_FFI_AbstractMemory_cast(function, rb_FFI_Pointer_class)->address;
+    invoker->function = rbffi_AbstractMemory_Cast(function, rbffi_PointerClass)->address;
 #if defined(_WIN32) || defined(__WIN32__)
     invoker->abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
 
-    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rb_FFI_CallbackInfo_class)
+    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_CallbackInfoClass)
         ? returnType : rbReturnTypeSymbol;
-    invoker->returnType = rb_FFI_Type_GetIntValue(returnType);
+    invoker->returnType = rbffi_Type_GetIntValue(returnType);
     invoker->paramCount = -1;
     return retval;
 }
@@ -602,9 +602,9 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
             case NATIVE_BUFFER_IN:
             case NATIVE_BUFFER_OUT:
             case NATIVE_BUFFER_INOUT:
-                if (type == T_DATA && rb_obj_is_kind_of(argv[argidx], rb_FFI_AbstractMemory_class)) {
+                if (type == T_DATA && rb_obj_is_kind_of(argv[argidx], rbffi_AbstractMemoryClass)) {
                     param->ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
-                } else if (type == T_DATA && rb_obj_is_kind_of(argv[argidx], rb_FFI_Struct_class)) {
+                } else if (type == T_DATA && rb_obj_is_kind_of(argv[argidx], rbffi_StructClass)) {
                     AbstractMemory* memory = ((Struct *) DATA_PTR(argv[argidx]))->pointer;
                     param->ptr = memory != NULL ? memory->address : NULL;
                 } else if (type == T_STRING) {
@@ -616,7 +616,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                     param->ptr = NULL;
                 } else if (rb_respond_to(argv[argidx], to_ptr)) {
                     VALUE ptr = rb_funcall2(argv[argidx], to_ptr, 0, NULL);
-                    if (rb_obj_is_kind_of(ptr, rb_FFI_AbstractMemory_class) && TYPE(ptr) == T_DATA) {
+                    if (rb_obj_is_kind_of(ptr, rbffi_AbstractMemoryClass) && TYPE(ptr) == T_DATA) {
                         param->ptr = ((AbstractMemory *) DATA_PTR(ptr))->address;
                     } else {
                         rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
@@ -664,7 +664,7 @@ ffi_invoke(ffi_cif* cif, Invoker* invoker, void** ffiValues)
 #endif
     threadData->td_errno = error;
 
-    return rb_FFI_NativeValueToRuby(returnType, rbReturnType, &retval, enums);
+    return rbffi_NativeValue_ToRuby(returnType, rbReturnType, &retval, enums);
 }
 
 static VALUE
@@ -856,7 +856,7 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
     for (i = 0; i < paramCount; ++i) {
         VALUE entry = rb_ary_entry(parameterTypes, i);
-        int paramType = rb_FFI_Type_GetIntValue(entry);
+        int paramType = rbffi_Type_GetIntValue(entry);
         switch (paramType) {
             case NATIVE_INT8:
             case NATIVE_INT16:
@@ -874,14 +874,14 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
                 break;
         }
         paramTypes[i] = paramType;
-        ffiParamTypes[i] = rb_FFI_NativeTypeToFFI(paramType);
+        ffiParamTypes[i] = rbffi_NativeType_ToFFI(paramType);
         if (ffiParamTypes[i] == NULL) {
             rb_raise(rb_eArgError, "Invalid parameter type #%x", paramType);
         }
         argv[i] = rb_ary_entry(parameterValues, i);
     }
 
-    ffiReturnType = rb_FFI_NativeTypeToFFI(invoker->returnType);
+    ffiReturnType = rbffi_NativeType_ToFFI(invoker->returnType);
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
     }
@@ -907,7 +907,7 @@ callback_param(VALUE proc, VALUE cbInfo)
     if (proc == Qnil) {
         return NULL ;
     }
-    callback = rb_FFI_NativeCallback_for_proc(proc, cbInfo);
+    callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
 
@@ -972,13 +972,13 @@ set_last_error(VALUE self, VALUE error)
 }
 
 void 
-rb_FFI_Invoker_Init(VALUE moduleFFI)
+rbffi_Invoker_Init(VALUE moduleFFI)
 {
     ffi_type* ffiValueType;
     int i;
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
-    rb_FFI_Invoker_class = classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
-    rb_global_variable(&rb_FFI_Invoker_class);
+    rbffi_InvokerClass = classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
+    rb_global_variable(&rbffi_InvokerClass);
     rb_global_variable(&classInvoker);
 
     rb_define_alloc_func(classInvoker, invoker_allocate);

@@ -4,10 +4,10 @@
 #include "Callback.h"
 #include "Types.h"
 
-static ID find_id = 0;
+static ID id_find = 0;
 
 ffi_type*
-rb_FFI_NativeTypeToFFI(NativeType type)
+rbffi_NativeType_ToFFI(NativeType type)
 {
     switch (type) {
         case NATIVE_VOID:
@@ -47,7 +47,7 @@ rb_FFI_NativeTypeToFFI(NativeType type)
 }
 
 VALUE
-rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE enums)
+rbffi_NativeValue_ToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE enums)
 {
     switch (type) {
         case NATIVE_VOID:
@@ -75,20 +75,20 @@ rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE e
         case NATIVE_STRING:
             return rb_tainted_str_new2(*(char **) ptr);
         case NATIVE_POINTER:
-            return rb_FFI_Pointer_new(*(void **) ptr);
+            return rbffi_Pointer_NewInstance(*(void **) ptr);
         case NATIVE_ENUM:
         {
-            VALUE enum_obj = rb_funcall(enums, find_id, 1, rbType);
+            VALUE enum_obj = rb_funcall(enums, id_find, 1, rbType);
             if (enum_obj == Qnil) {
                 VALUE s = rb_inspect(rbType);
                 rb_raise(rb_eRuntimeError, "Unknown enumeration: %s", StringValueCStr(s));
             }
-            return rb_funcall(enum_obj, find_id, 1, INT2NUM((unsigned int) *(ffi_arg *) ptr));
+            return rb_funcall(enum_obj, id_find, 1, INT2NUM((unsigned int) *(ffi_arg *) ptr));
         }
         case NATIVE_CALLBACK: {
             CallbackInfo* cbInfo;
             VALUE argv[6];
-            VALUE funcptr = rb_FFI_Pointer_new(*(void **) ptr);
+            VALUE funcptr = rbffi_Pointer_NewInstance(*(void **) ptr);
 
             Data_Get_Struct(rbType, CallbackInfo, cbInfo);
             argv[0] = funcptr;
@@ -98,7 +98,7 @@ rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE e
             argv[4] = rb_str_new2("default");
             argv[5] = Qnil;
 
-            return rb_class_new_instance(6, argv, rb_FFI_Invoker_class);
+            return rb_class_new_instance(6, argv, rbffi_InvokerClass);
         }
 
         default:
@@ -107,8 +107,9 @@ rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE e
     }
 }
 
-void rb_FFI_Types_Init(VALUE moduleFFI)
+void
+rbffi_Types_Init(VALUE moduleFFI)
 {
-    find_id = rb_intern("find");
+    id_find = rb_intern("find");
 }
 

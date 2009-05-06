@@ -34,10 +34,10 @@ typedef struct {
     VALUE rbProc;
 } NativeCallback;
 
-extern VALUE rb_FFI_CallbackInfo_class;
-extern void rb_FFI_Callback_Init(VALUE ffiModule);
-extern VALUE rb_FFI_NativeCallback_new(VALUE, VALUE);
-extern VALUE rb_FFI_NativeCallback_for_proc(VALUE proc, VALUE cbInfo);
+extern VALUE rbffi_CallbackInfoClass;
+extern void rbffi_Callback_Init(VALUE ffiModule);
+extern VALUE rbffi_NativeCallback_NewInstance(VALUE, VALUE);
+extern VALUE rbffi_NativeCallback_ForProc(VALUE proc, VALUE cbInfo);
 
 #ifdef	__cplusplus
 }

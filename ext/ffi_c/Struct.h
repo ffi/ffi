@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-    void rb_FFI_Struct_Init(VALUE ffiModule);
+    extern void rbffi_Struct_Init(VALUE ffiModule);
 
     struct StructLayout;
     typedef struct Struct {
@@ -17,7 +17,7 @@ extern "C" {
         VALUE rbPointer;
     } Struct;
 
-    extern VALUE rb_FFI_Struct_class;
+    extern VALUE rbffi_StructClass;
 #ifdef	__cplusplus
 }
 #endif

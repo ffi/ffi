@@ -20,16 +20,16 @@ static void memptr_release(MemoryPointer* ptr);
 static VALUE memptr_malloc(VALUE self, long size, long count, bool clear);
 static VALUE memptr_free(VALUE self);
 
-VALUE rb_FFI_MemoryPointer_class;
+VALUE rbffi_MemoryPointerClass;
 
-#define MEMPTR(obj) ((MemoryPointer *) rb_FFI_AbstractMemory_cast(obj, rb_FFI_MemoryPointer_class))
+#define MEMPTR(obj) ((MemoryPointer *) rbffi_AbstractMemory_Cast(obj, rbffi_MemoryPointerClass))
 
 static ID plus_id = 0;
 
 VALUE
-rb_FFI_MemoryPointer_new(long size, long count, bool clear)
+rbffi_MemoryPointer_NewInstance(long size, long count, bool clear)
 {
-    return memptr_malloc(memptr_allocate(rb_FFI_MemoryPointer_class), size, count, clear);
+    return memptr_malloc(memptr_allocate(rbffi_MemoryPointerClass), size, count, clear);
 }
 
 static VALUE
@@ -37,7 +37,7 @@ memptr_allocate(VALUE klass)
 {
     MemoryPointer* p;
     VALUE obj = Data_Make_Struct(klass, MemoryPointer, NULL, memptr_release, p);
-    p->memory.ops = &rb_FFI_AbstractMemory_ops;
+    p->memory.ops = &rbffi_AbstractMemoryOps;
 
     return obj;
 }
@@ -47,12 +47,14 @@ memptr_initialize(int argc, VALUE* argv, VALUE self)
 {
     VALUE size = Qnil, count = Qnil, clear = Qnil;
     int nargs = rb_scan_args(argc, argv, "12", &size, &count, &clear);
-    memptr_malloc(self, rb_FFI_type_size(size), nargs > 1 ? NUM2LONG(count) : 1,
+
+    memptr_malloc(self, rbffi_type_size(size), nargs > 1 ? NUM2LONG(count) : 1,
         nargs > 2 && RTEST(clear));
     
     if (rb_block_given_p()) {
         return rb_rescue(rb_yield, self, memptr_free, self);
     }
+
     return self;
 }
 
@@ -137,19 +139,18 @@ memptr_release(MemoryPointer* ptr)
 }
 
 void
-rb_FFI_MemoryPointer_Init(VALUE moduleFFI)
+rbffi_MemoryPointer_Init(VALUE moduleFFI)
 {
-    VALUE classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_Pointer_class);
-    rb_FFI_MemoryPointer_class = classMemoryPointer;
-    rb_global_variable(&rb_FFI_MemoryPointer_class);
+    rbffi_MemoryPointerClass = rb_define_class_under(moduleFFI, "MemoryPointer", rbffi_PointerClass);
+    rb_global_variable(&rbffi_MemoryPointerClass);
 
-    rb_define_alloc_func(classMemoryPointer, memptr_allocate);
-    rb_define_method(classMemoryPointer, "initialize", memptr_initialize, -1);
-    rb_define_method(classMemoryPointer, "inspect", memptr_inspect, 0);
-    rb_define_method(classMemoryPointer, "autorelease=", memptr_autorelease, 1);
-    rb_define_method(classMemoryPointer, "free", memptr_free, 0);
-    rb_define_method(classMemoryPointer, "type_size", memptr_type_size, 0);
-    rb_define_method(classMemoryPointer, "[]", memptr_aref, 1);
+    rb_define_alloc_func(rbffi_MemoryPointerClass, memptr_allocate);
+    rb_define_method(rbffi_MemoryPointerClass, "initialize", memptr_initialize, -1);
+    rb_define_method(rbffi_MemoryPointerClass, "inspect", memptr_inspect, 0);
+    rb_define_method(rbffi_MemoryPointerClass, "autorelease=", memptr_autorelease, 1);
+    rb_define_method(rbffi_MemoryPointerClass, "free", memptr_free, 0);
+    rb_define_method(rbffi_MemoryPointerClass, "type_size", memptr_type_size, 0);
+    rb_define_method(rbffi_MemoryPointerClass, "[]", memptr_aref, 1);
     
     plus_id = rb_intern("+");
 }

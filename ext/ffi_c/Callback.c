@@ -26,11 +26,11 @@ ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
         void* user_data, void* code);
 #endif /* HAVE_FFI_CLOSURE_ALLOC */
 
-static VALUE classCallbackInfo = Qnil;
-static VALUE classNativeCallback = Qnil;
-static ID call_id = Qnil, cbtable_id = Qnil;
+static VALUE CallbackInfoClass = Qnil;
+static VALUE NativeCallbackClass = Qnil;
+static ID id_call = Qnil, id_cbtable = Qnil;
 
-VALUE rb_FFI_CallbackInfo_class = Qnil;
+VALUE rbffi_CallbackInfoClass = Qnil;
 
 static VALUE
 cbinfo_allocate(VALUE klass)
@@ -59,19 +59,19 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
     cbInfo->parameterCount = paramCount;
     cbInfo->parameterTypes = xcalloc(paramCount, sizeof(NativeType));
     cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
-    cbInfo->returnType = rb_FFI_Type_GetIntValue(rbReturnType);
+    cbInfo->returnType = rbffi_Type_GetIntValue(rbReturnType);
     cbInfo->rbReturnType = rbReturnType;
     cbInfo->rbParameterTypes = rbParamTypes;
 
     for (i = 0; i < paramCount; ++i) {
-        cbInfo->parameterTypes[i] = rb_FFI_Type_GetIntValue(rb_ary_entry(rbParamTypes, i));
-        cbInfo->ffiParameterTypes[i] = rb_FFI_NativeTypeToFFI(cbInfo->parameterTypes[i]);
+        cbInfo->parameterTypes[i] = rbffi_Type_GetIntValue(rb_ary_entry(rbParamTypes, i));
+        cbInfo->ffiParameterTypes[i] = rbffi_NativeType_ToFFI(cbInfo->parameterTypes[i]);
         if (cbInfo->ffiParameterTypes[i] == NULL) {
             rb_raise(rb_eArgError, "Unknown argument type: %#x", cbInfo->parameterTypes[i]);
         }
     }
 
-    cbInfo->ffiReturnType = rb_FFI_NativeTypeToFFI(cbInfo->returnType);
+    cbInfo->ffiReturnType = rbffi_NativeType_ToFFI(cbInfo->returnType);
     if (cbInfo->ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Unknown return type: %#x", cbInfo->returnType);
     }
@@ -177,10 +177,10 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
                 param = rb_tainted_str_new2(*(char **) parameters[i]);
                 break;
             case NATIVE_POINTER:
-                param = rb_FFI_Pointer_new(*(void **) parameters[i]);
+                param = rbffi_Pointer_NewInstance(*(void **) parameters[i]);
                 break;
             case NATIVE_CALLBACK:
-                param = rb_FFI_NativeValueToRuby(NATIVE_CALLBACK,
+                param = rbffi_NativeValue_ToRuby(NATIVE_CALLBACK,
                      rb_ary_entry(cbInfo->rbParameterTypes, i), parameters[i], Qnil);
                 break;
             default:
@@ -189,7 +189,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
         }
         rbParams[i] = param;
     }
-    rbReturnValue = rb_funcall2(cb->rbProc, call_id, cbInfo->parameterCount, rbParams);
+    rbReturnValue = rb_funcall2(cb->rbProc, id_call, cbInfo->parameterCount, rbParams);
     if (rbReturnValue == Qnil || TYPE(rbReturnValue) == T_NIL) {
         memset(retval, 0, cbInfo->ffiReturnType->size);
     } else switch (cbInfo->returnType) {
@@ -216,7 +216,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             *((double *) retval) = NUM2DBL(rbReturnValue);
             break;
         case NATIVE_POINTER:
-            if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rb_FFI_Pointer_class)) {
+            if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
             } else {
                 // Default to returning NULL if not a value pointer object.  handles nil case as well
@@ -228,7 +228,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             if (rb_obj_is_kind_of(rbReturnValue, rb_cProc)) {
                 VALUE callback;
 
-                callback = rb_FFI_NativeCallback_for_proc(rbReturnValue, cbInfo->rbReturnType);
+                callback = rbffi_NativeCallback_ForProc(rbReturnValue, cbInfo->rbReturnType);
                 
                 *((void **) retval) = ((NativeCallback *) DATA_PTR(callback))->code;
             } else {
@@ -256,7 +256,7 @@ native_callback_allocate(VALUE klass)
 }
 
 VALUE
-rb_FFI_NativeCallback_new(VALUE rbCallbackInfo, VALUE rbProc)
+rbffi_NativeCallback_NewInstance(VALUE rbCallbackInfo, VALUE rbProc)
 {
     NativeCallback* closure = NULL;
     CallbackInfo* cbInfo;
@@ -264,7 +264,7 @@ rb_FFI_NativeCallback_new(VALUE rbCallbackInfo, VALUE rbProc)
     ffi_status status;
 
     Data_Get_Struct(rbCallbackInfo, CallbackInfo, cbInfo);
-    obj = Data_Make_Struct(classNativeCallback, NativeCallback, native_callback_mark, native_callback_free, closure);
+    obj = Data_Make_Struct(NativeCallbackClass, NativeCallback, native_callback_mark, native_callback_free, closure);
     closure->cbInfo = cbInfo;
     closure->rbProc = rbProc;
     closure->rbCallbackInfo = rbCallbackInfo;
@@ -284,19 +284,19 @@ rb_FFI_NativeCallback_new(VALUE rbCallbackInfo, VALUE rbProc)
 }
 
 VALUE
-rb_FFI_NativeCallback_for_proc(VALUE proc, VALUE cbInfo)
+rbffi_NativeCallback_ForProc(VALUE proc, VALUE cbInfo)
 {
     VALUE callback;
-    VALUE cbTable = RTEST(rb_ivar_defined(proc, cbtable_id)) ? rb_ivar_get(proc, cbtable_id) : Qnil;
+    VALUE cbTable = RTEST(rb_ivar_defined(proc, id_cbtable)) ? rb_ivar_get(proc, id_cbtable) : Qnil;
     if (cbTable == Qnil) {
         cbTable = rb_hash_new();
-        rb_ivar_set(proc, cbtable_id, cbTable);
+        rb_ivar_set(proc, id_cbtable, cbTable);
     }
     callback = rb_hash_aref(cbTable, cbInfo);
     if (callback != Qnil) {
         return callback;
     }
-    callback = rb_FFI_NativeCallback_new(cbInfo, proc);
+    callback = rbffi_NativeCallback_NewInstance(cbInfo, proc);
     rb_hash_aset(cbTable, cbInfo, callback);
     return callback;
 }
@@ -340,17 +340,17 @@ ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
 #endif /* HAVE_FFI_CLOSURE_ALLOC */
 
 void
-rb_FFI_Callback_Init(VALUE moduleFFI)
+rbffi_Callback_Init(VALUE moduleFFI)
 {
-    rb_FFI_CallbackInfo_class = classCallbackInfo = rb_define_class_under(moduleFFI, "CallbackInfo", rb_FFI_Type_class);
-    rb_global_variable(&rb_FFI_CallbackInfo_class);
+    rbffi_CallbackInfoClass = CallbackInfoClass = rb_define_class_under(moduleFFI, "CallbackInfo", rbffi_TypeClass);
+    rb_global_variable(&rbffi_CallbackInfoClass);
 
-    rb_define_alloc_func(classCallbackInfo, cbinfo_allocate);
-    rb_define_method(classCallbackInfo, "initialize", cbinfo_initialize, 2);
+    rb_define_alloc_func(CallbackInfoClass, cbinfo_allocate);
+    rb_define_method(CallbackInfoClass, "initialize", cbinfo_initialize, 2);
 
-    classNativeCallback = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
-    rb_global_variable(&classNativeCallback);
-    rb_define_alloc_func(classNativeCallback, native_callback_allocate);
-    call_id = rb_intern("call");
-    cbtable_id = rb_intern("@__ffi_callback_table__");
+    NativeCallbackClass = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
+    rb_global_variable(&NativeCallbackClass);
+    rb_define_alloc_func(NativeCallbackClass, native_callback_allocate);
+    id_call = rb_intern("call");
+    id_cbtable = rb_intern("@__ffi_callback_table__");
 }

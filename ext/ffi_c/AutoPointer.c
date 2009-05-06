@@ -17,7 +17,7 @@ static void autoptr_mark(AutoPointer* ptr);
 static VALUE autoptr_allocate(VALUE klass);
 static VALUE autoptr_set_parent(VALUE self, VALUE parent);
 
-VALUE rb_FFI_AutoPointer_class = Qnil;
+VALUE rbffi_AutoPointerClass = Qnil;
 
 static VALUE
 autoptr_allocate(VALUE klass)
@@ -25,7 +25,7 @@ autoptr_allocate(VALUE klass)
     AutoPointer* p;
     VALUE obj = Data_Make_Struct(klass, AutoPointer, autoptr_mark, -1, p);
     p->parent = Qnil;
-    p->memory.ops = &rb_FFI_AbstractMemory_ops;
+    p->memory.ops = &rbffi_AbstractMemoryOps;
 
     return obj;
 }
@@ -34,7 +34,7 @@ static VALUE
 autoptr_set_parent(VALUE self, VALUE parent)
 {
     AutoPointer* p;
-    AbstractMemory* ptr = rb_FFI_AbstractMemory_cast(parent, rb_FFI_Pointer_class);
+    AbstractMemory* ptr = rbffi_AbstractMemory_Cast(parent, rbffi_PointerClass);
 
     Data_Get_Struct(self, AutoPointer, p);
     p->memory = *ptr;
@@ -50,11 +50,11 @@ autoptr_mark(AutoPointer* ptr)
 }
 
 void
-rb_FFI_AutoPointer_Init(VALUE moduleFFI)
+rbffi_AutoPointer_Init(VALUE moduleFFI)
 {
-    rb_FFI_AutoPointer_class = rb_define_class_under(moduleFFI, "AutoPointer", rb_FFI_Pointer_class);
-    rb_global_variable(&rb_FFI_AutoPointer_class);
+    rbffi_AutoPointerClass = rb_define_class_under(moduleFFI, "AutoPointer", rbffi_PointerClass);
+    rb_global_variable(&rbffi_AutoPointerClass);
     
-    rb_define_alloc_func(rb_FFI_AutoPointer_class, autoptr_allocate);
-    rb_define_protected_method(rb_FFI_AutoPointer_class, "parent=", autoptr_set_parent, 1);
+    rb_define_alloc_func(rbffi_AutoPointerClass, autoptr_allocate);
+    rb_define_protected_method(rbffi_AutoPointerClass, "parent=", autoptr_set_parent, 1);
 }

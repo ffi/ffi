@@ -18,8 +18,8 @@ static void buffer_release(Buffer* ptr);
 static void buffer_mark(Buffer* ptr);
 static VALUE buffer_free(VALUE self);
 
-static VALUE classBuffer = Qnil;
-#define BUFFER(obj)  ((Buffer *) rb_FFI_AbstractMemory_cast((obj), classBuffer))
+static VALUE BufferClass = Qnil;
+#define BUFFER(obj)  ((Buffer *) rbffi_AbstractMemory_Cast((obj), BufferClass))
 
 static VALUE
 buffer_allocate(VALUE klass)
@@ -29,7 +29,7 @@ buffer_allocate(VALUE klass)
 
     obj = Data_Make_Struct(klass, Buffer, NULL, buffer_release, buffer);
     buffer->parent = Qnil;
-    buffer->memory.ops = &rb_FFI_AbstractMemory_ops;
+    buffer->memory.ops = &rbffi_AbstractMemoryOps;
 
     return obj;
 }
@@ -55,7 +55,7 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     Data_Get_Struct(self, Buffer, p);
 
     nargs = rb_scan_args(argc, argv, "12", &size, &count, &clear);
-    p->type_size = rb_FFI_type_size(size);
+    p->type_size = rbffi_type_size(size);
     p->memory.size = p->type_size * (nargs > 1 ? NUM2LONG(count) : 1);
 
     p->storage = malloc(p->memory.size + 7);
@@ -93,10 +93,10 @@ buffer_plus(VALUE self, VALUE offset)
 
     checkBounds(&ptr->memory, off, 1);
 
-    retval = Data_Make_Struct(classBuffer, Buffer, buffer_mark, -1, p);
+    retval = Data_Make_Struct(BufferClass, Buffer, buffer_mark, -1, p);
     p->memory.address = ptr->memory.address + off;
     p->memory.size = ptr->memory.size - off;
-    p->memory.ops = &rb_FFI_AbstractMemory_ops;
+    p->memory.ops = &rbffi_AbstractMemoryOps;
     p->parent = self;
 
     return retval;
@@ -152,20 +152,20 @@ buffer_mark(Buffer* ptr)
 }
 
 void
-rb_FFI_Buffer_Init(VALUE moduleFFI)
+rbffi_Buffer_Init(VALUE moduleFFI)
 {
-    classBuffer = rb_define_class_under(moduleFFI, "Buffer", rb_FFI_AbstractMemory_class);
+    BufferClass = rb_define_class_under(moduleFFI, "Buffer", rbffi_AbstractMemoryClass);
 
-    rb_global_variable(&classBuffer);
-    rb_define_alloc_func(classBuffer, buffer_allocate);
+    rb_global_variable(&BufferClass);
+    rb_define_alloc_func(BufferClass, buffer_allocate);
 
-    rb_define_singleton_method(classBuffer, "alloc_inout", buffer_alloc_inout, -1);
-    rb_define_singleton_method(classBuffer, "alloc_out", buffer_alloc_inout, -1);
-    rb_define_singleton_method(classBuffer, "alloc_in", buffer_alloc_inout, -1);
+    rb_define_singleton_method(BufferClass, "alloc_inout", buffer_alloc_inout, -1);
+    rb_define_singleton_method(BufferClass, "alloc_out", buffer_alloc_inout, -1);
+    rb_define_singleton_method(BufferClass, "alloc_in", buffer_alloc_inout, -1);
     
-    rb_define_method(classBuffer, "initialize", buffer_initialize, -1);
-    rb_define_method(classBuffer, "inspect", buffer_inspect, 0);
-    rb_define_method(classBuffer, "type_size", buffer_type_size, 0);
-    rb_define_method(classBuffer, "[]", buffer_aref, 1);
-    rb_define_method(classBuffer, "+", buffer_plus, 1);
+    rb_define_method(BufferClass, "initialize", buffer_initialize, -1);
+    rb_define_method(BufferClass, "inspect", buffer_inspect, 0);
+    rb_define_method(BufferClass, "type_size", buffer_type_size, 0);
+    rb_define_method(BufferClass, "[]", buffer_aref, 1);
+    rb_define_method(BufferClass, "+", buffer_plus, 1);
 }

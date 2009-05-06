@@ -11,26 +11,25 @@ typedef struct Pointer {
     VALUE parent;
 } Pointer;
 
-#define POINTER(obj) rb_FFI_AbstractMemory_cast((obj), rb_FFI_Pointer_class)
+#define POINTER(obj) rbffi_AbstractMemory_Cast((obj), rbffi_PointerClass)
 
-VALUE rb_FFI_Pointer_class;
-static VALUE classPointer = Qnil;
+VALUE rbffi_PointerClass;
 static void ptr_mark(Pointer* ptr);
 
 VALUE
-rb_FFI_Pointer_new(void* addr)
+rbffi_Pointer_NewInstance(void* addr)
 {
     Pointer* p;
     VALUE obj;
 
     if (addr == NULL) {
-        return rb_FFI_NullPointer_singleton;
+        return rbffi_NullPointerSingleton;
     }
 
-    obj = Data_Make_Struct(classPointer, Pointer, NULL, -1, p);
+    obj = Data_Make_Struct(rbffi_PointerClass, Pointer, NULL, -1, p);
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
-    p->memory.ops = &rb_FFI_AbstractMemory_ops;
+    p->memory.ops = &rbffi_AbstractMemoryOps;
     p->parent = Qnil;
 
     return obj;
@@ -42,7 +41,7 @@ ptr_allocate(VALUE klass)
     Pointer* p;
     VALUE obj;
 
-    obj = Data_Make_Struct(classPointer, Pointer, NULL, -1, p);
+    obj = Data_Make_Struct(rbffi_PointerClass, Pointer, NULL, -1, p);
     p->parent = Qnil;
 
     return obj;
@@ -59,11 +58,11 @@ ptr_plus(VALUE self, VALUE offset)
     Data_Get_Struct(self, AbstractMemory, ptr);
     checkBounds(ptr, off, 1);
 
-    retval = Data_Make_Struct(classPointer, Pointer, ptr_mark, -1, p);
+    retval = Data_Make_Struct(rbffi_PointerClass, Pointer, ptr_mark, -1, p);
 
     p->memory.address = ptr->address + off;
     p->memory.size = ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off;
-    p->memory.ops = &rb_FFI_AbstractMemory_ops;
+    p->memory.ops = &rbffi_AbstractMemoryOps;
     p->parent = self;
 
     return retval;
@@ -118,16 +117,15 @@ ptr_mark(Pointer* ptr)
 }
 
 void
-rb_FFI_Pointer_Init(VALUE moduleFFI)
+rbffi_Pointer_Init(VALUE moduleFFI)
 {
-    rb_FFI_Pointer_class = classPointer = rb_define_class_under(moduleFFI, "Pointer", rb_FFI_AbstractMemory_class);
-    rb_global_variable(&classPointer);
-    rb_global_variable(&rb_FFI_Pointer_class);
+    rbffi_PointerClass = rb_define_class_under(moduleFFI, "Pointer", rbffi_AbstractMemoryClass);
+    rb_global_variable(&rbffi_PointerClass);
 
-    rb_define_alloc_func(classPointer, ptr_allocate);
-    rb_define_method(classPointer, "inspect", ptr_inspect, 0);
-    rb_define_method(classPointer, "+", ptr_plus, 1);
-    rb_define_method(classPointer, "null?", ptr_null_p, 0);
-    rb_define_method(classPointer, "address", ptr_address, 0);
-    rb_define_method(classPointer, "==", ptr_equals, 1);
+    rb_define_alloc_func(rbffi_PointerClass, ptr_allocate);
+    rb_define_method(rbffi_PointerClass, "inspect", ptr_inspect, 0);
+    rb_define_method(rbffi_PointerClass, "+", ptr_plus, 1);
+    rb_define_method(rbffi_PointerClass, "null?", ptr_null_p, 0);
+    rb_define_method(rbffi_PointerClass, "address", ptr_address, 0);
+    rb_define_method(rbffi_PointerClass, "==", ptr_equals, 1);
 }

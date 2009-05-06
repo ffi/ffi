@@ -16,7 +16,7 @@ typedef struct BuiltinType_ {
 
 static void builtin_type_free(BuiltinType *);
 
-VALUE  rb_FFI_Type_class = Qnil;
+VALUE rbffi_TypeClass = Qnil;
 
 static VALUE classBuiltinType = Qnil;
 
@@ -41,7 +41,7 @@ type_initialize(VALUE self, VALUE value)
 
     if (FIXNUM_P(value)) {
         type->nativeType = FIX2INT(value);
-    } else if (rb_obj_is_kind_of(value, rb_FFI_Type_class)) {
+    } else if (rb_obj_is_kind_of(value, rbffi_TypeClass)) {
         Data_Get_Struct(value, Type, other);
         type->nativeType = other->nativeType;
     } else {
@@ -64,9 +64,9 @@ enum_allocate(VALUE klass)
 }
 
 int
-rb_FFI_Type_GetIntValue(VALUE type)
+rbffi_Type_GetIntValue(VALUE type)
 {
-    if (rb_obj_is_kind_of(type, rb_FFI_Type_class)) {
+    if (rb_obj_is_kind_of(type, rbffi_TypeClass)) {
         Type* t;
         Data_Get_Struct(type, Type, t);
         return t->nativeType;
@@ -115,15 +115,15 @@ builtin_type_size(VALUE self)
 }
 
 void
-rb_FFI_Type_Init(VALUE moduleFFI)
+rbffi_Type_Init(VALUE moduleFFI)
 {
     VALUE moduleNativeType;
-    VALUE classType = rb_FFI_Type_class = rb_define_class_under(moduleFFI, "Type", rb_cObject);
+    VALUE classType = rbffi_TypeClass = rb_define_class_under(moduleFFI, "Type", rb_cObject);
     VALUE classEnum =  rb_define_class_under(moduleFFI, "Enum", classType);
-    classBuiltinType = rb_define_class_under(rb_FFI_Type_class, "Builtin", rb_FFI_Type_class);
+    classBuiltinType = rb_define_class_under(rbffi_TypeClass, "Builtin", rbffi_TypeClass);
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
 
-    rb_global_variable(&rb_FFI_Type_class);
+    rb_global_variable(&rbffi_TypeClass);
     rb_global_variable(&classBuiltinType);
     rb_global_variable(&moduleNativeType);
 
@@ -137,7 +137,7 @@ rb_FFI_Type_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(classEnum, enum_allocate);
 
-    rb_global_variable(&rb_FFI_Type_class);
+    rb_global_variable(&rbffi_TypeClass);
     rb_global_variable(&classBuiltinType);
 
     // Define all the builtin types

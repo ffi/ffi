@@ -12,8 +12,8 @@ typedef struct Type_ {
     NativeType nativeType;
 } Type;
 
-    extern VALUE rb_FFI_Type_class;
-    extern int rb_FFI_Type_GetIntValue(VALUE type);
+    extern VALUE rbffi_TypeClass;
+    extern int rbffi_Type_GetIntValue(VALUE type);
 
 
 #ifdef	__cplusplus

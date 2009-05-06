@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include "Platform.h"
 
-static VALUE modulePlatform = Qnil;
+static VALUE PlatformModule = Qnil;
 
 /*
  * Determine the cpu type at compile time - useful for MacOSX where the the
@@ -47,13 +47,12 @@ export_primitive_types(VALUE module)
 }
 
 void
-rb_FFI_Platform_Init(VALUE moduleFFI)
+rbffi_Platform_Init(VALUE moduleFFI)
 {
-    VALUE platform = rb_define_module_under(moduleFFI, "Platform");
-    rb_define_const(platform, "BYTE_ORDER", INT2FIX(BYTE_ORDER));
-    rb_define_const(platform, "LITTLE_ENDIAN", INT2FIX(LITTLE_ENDIAN));
-    rb_define_const(platform, "BIG_ENDIAN", INT2FIX(BIG_ENDIAN));
-    rb_define_const(platform, "CPU", rb_str_new2(CPU));
-    export_primitive_types(platform);
-    modulePlatform = platform;
+    PlatformModule = rb_define_module_under(moduleFFI, "Platform");
+    rb_define_const(PlatformModule, "BYTE_ORDER", INT2FIX(BYTE_ORDER));
+    rb_define_const(PlatformModule, "LITTLE_ENDIAN", INT2FIX(LITTLE_ENDIAN));
+    rb_define_const(PlatformModule, "BIG_ENDIAN", INT2FIX(BIG_ENDIAN));
+    rb_define_const(PlatformModule, "CPU", rb_str_new2(CPU));
+    export_primitive_types(PlatformModule);
 }

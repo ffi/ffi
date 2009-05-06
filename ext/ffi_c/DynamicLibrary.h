@@ -12,7 +12,7 @@ typedef struct Library {
     void* handle;
 } Library;
 
-extern void rb_FFI_DynamicLibrary_Init(VALUE ffiModule);
+extern void rbffi_DynamicLibrary_Init(VALUE ffiModule);
 
 #ifdef	__cplusplus
 }
