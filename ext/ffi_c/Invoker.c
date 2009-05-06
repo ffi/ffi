@@ -33,6 +33,10 @@
 #endif
 #define MAX_FIXED_ARITY (3)
 
+#ifndef roundup
+#  define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
+#endif
+
 typedef struct MethodHandle MethodHandle;
 typedef struct Invoker Invoker;
 
