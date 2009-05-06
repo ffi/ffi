@@ -2,6 +2,7 @@
 #define	_TYPE_H
 
 #include <ruby.h>
+#include <ffi.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -10,10 +11,13 @@ extern "C" {
     
 typedef struct Type_ {
     NativeType nativeType;
+    ffi_type* ffiType;
+    int size;
+    int alignment;
 } Type;
 
-    extern VALUE rbffi_TypeClass;
-    extern int rbffi_Type_GetIntValue(VALUE type);
+extern VALUE rbffi_TypeClass;
+extern int rbffi_Type_GetIntValue(VALUE type);
 
 
 #ifdef	__cplusplus
