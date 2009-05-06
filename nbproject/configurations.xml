@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="58">
+<configurationDescriptor version="60">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="ruby-ffi" displayName="ruby-ffi" projectFiles="true">
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
@@ -103,6 +103,7 @@
           <cTool>
             <incDir>
               <pElem>/opt/local/include</pElem>
+              <pElem>/usr/local/ruby-1.8.6-p287/lib/ruby/1.8/i686-linux</pElem>
             </incDir>
           </cTool>
         </makeTool>
