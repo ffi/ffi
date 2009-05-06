@@ -21,7 +21,7 @@ static VALUE memptr_malloc(VALUE self, long size, long count, bool clear);
 static VALUE memptr_free(VALUE self);
 
 VALUE rb_FFI_MemoryPointer_class;
-static VALUE classMemoryPointer = Qnil;
+
 #define MEMPTR(obj) ((MemoryPointer *) rb_FFI_AbstractMemory_cast(obj, rb_FFI_MemoryPointer_class))
 
 static ID plus_id = 0;
@@ -29,7 +29,7 @@ static ID plus_id = 0;
 VALUE
 rb_FFI_MemoryPointer_new(long size, long count, bool clear)
 {
-    return memptr_malloc(memptr_allocate(classMemoryPointer), size, count, clear);
+    return memptr_malloc(memptr_allocate(rb_FFI_MemoryPointer_class), size, count, clear);
 }
 
 static VALUE
@@ -140,7 +140,10 @@ void
 rb_FFI_MemoryPointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
-    rb_FFI_MemoryPointer_class = classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_Pointer_class);
+    VALUE classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_Pointer_class);
+    rb_FFI_MemoryPointer_class = classMemoryPointer;
+    rb_global_variable(&rb_FFI_MemoryPointer_class);
+
     rb_define_alloc_func(classMemoryPointer, memptr_allocate);
     rb_define_method(classMemoryPointer, "initialize", memptr_initialize, -1);
     rb_define_method(classMemoryPointer, "inspect", memptr_inspect, 0);

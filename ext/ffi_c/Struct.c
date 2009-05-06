@@ -404,9 +404,14 @@ rb_FFI_Struct_Init()
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE klass;
     rb_FFI_Struct_class = classStruct = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
+    rb_global_variable(&rb_FFI_Struct_class);
+    rb_global_variable(&classStruct);
     classStructLayout = rb_define_class_under(moduleFFI, "StructLayout", rb_cObject);
+    rb_global_variable(&classStructLayout);
     classStructLayoutBuilder = rb_define_class_under(moduleFFI, "StructLayoutBuilder", rb_cObject);
+    rb_global_variable(&classStructLayoutBuilder);
     classStructField = rb_define_class_under(classStructLayoutBuilder, "Field", rb_cObject);
+    rb_global_variable(&classStructField);
 
     rb_define_alloc_func(classStruct, struct_allocate);
     rb_define_method(classStruct, "initialize", struct_initialize, -1);

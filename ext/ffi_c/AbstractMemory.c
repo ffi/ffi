@@ -12,7 +12,6 @@
 
 static inline char* memory_address(VALUE self);
 VALUE rb_FFI_AbstractMemory_class = Qnil;
-static VALUE classMemory = Qnil;
 static ID to_ptr = 0;
 
 static VALUE
@@ -332,7 +331,9 @@ void
 rb_FFI_AbstractMemory_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
-    rb_FFI_AbstractMemory_class = classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
+    VALUE classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
+    rb_FFI_AbstractMemory_class = classMemory;
+    rb_global_variable(&rb_FFI_AbstractMemory_class);
 
     rb_define_alloc_func(classMemory, memory_allocate);
 #undef INT

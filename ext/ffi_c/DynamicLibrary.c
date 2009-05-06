@@ -185,7 +185,9 @@ rb_FFI_DynamicLibrary_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     classLibrary = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
+    rb_global_variable(&classLibrary);
     classSymbol = rb_define_class_under(classLibrary, "Symbol", rb_FFI_Pointer_class);
+    rb_global_variable(&classSymbol);
 
     rb_define_const(moduleFFI, "NativeLibrary", classLibrary); // backwards compat library
     rb_define_alloc_func(classLibrary, library_allocate);

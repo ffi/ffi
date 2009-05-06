@@ -123,6 +123,10 @@ rb_FFI_Type_Init(VALUE moduleFFI)
     classBuiltinType = rb_define_class_under(rb_FFI_Type_class, "Builtin", rb_FFI_Type_class);
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
 
+    rb_global_variable(&rb_FFI_Type_class);
+    rb_global_variable(&classBuiltinType);
+    rb_global_variable(&moduleNativeType);
+
     rb_define_alloc_func(classType, type_allocate);
     rb_define_method(classType, "initialize", type_initialize, 1);
 

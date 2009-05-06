@@ -964,6 +964,7 @@ get_last_error(VALUE self)
 {
     return INT2NUM(threadData->td_errno);
 }
+
 static VALUE
 set_last_error(VALUE self, VALUE error)
 {
@@ -978,6 +979,9 @@ rb_FFI_Invoker_Init()
     VALUE moduleFFI = rb_define_module("FFI");
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
     rb_FFI_Invoker_class = classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
+    rb_global_variable(&rb_FFI_Invoker_class);
+    rb_global_variable(&classInvoker);
+
     rb_define_alloc_func(classInvoker, invoker_allocate);
     rb_define_method(classInvoker, "initialize", invoker_initialize, 6);
     rb_define_method(classInvoker, "call", invoker_call, -1);
@@ -988,6 +992,8 @@ rb_FFI_Invoker_Init()
     rb_define_method(classInvoker, "arity", invoker_arity, 0);
     rb_define_method(classInvoker, "attach", invoker_attach, 2);
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
+    rb_global_variable(&classVariadicInvoker);
+    
     rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 5);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     rb_define_alias(classVariadicInvoker, "call", "invoke");

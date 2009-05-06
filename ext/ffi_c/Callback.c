@@ -28,7 +28,7 @@ ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
 
 static VALUE classCallbackInfo = Qnil;
 static VALUE classNativeCallback = Qnil;
-static ID callID = Qnil, cbTableID = Qnil;
+static ID call_id = Qnil, cbtable_id = Qnil;
 
 VALUE rb_FFI_CallbackInfo_class = Qnil;
 
@@ -189,7 +189,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
         }
         rbParams[i] = param;
     }
-    rbReturnValue = rb_funcall2(cb->rbProc, callID, cbInfo->parameterCount, rbParams);
+    rbReturnValue = rb_funcall2(cb->rbProc, call_id, cbInfo->parameterCount, rbParams);
     if (rbReturnValue == Qnil || TYPE(rbReturnValue) == T_NIL) {
         memset(retval, 0, cbInfo->ffiReturnType->size);
     } else switch (cbInfo->returnType) {
@@ -287,10 +287,10 @@ VALUE
 rb_FFI_NativeCallback_for_proc(VALUE proc, VALUE cbInfo)
 {
     VALUE callback;
-    VALUE cbTable = RTEST(rb_ivar_defined(proc, cbTableID)) ? rb_ivar_get(proc, cbTableID) : Qnil;
+    VALUE cbTable = RTEST(rb_ivar_defined(proc, cbtable_id)) ? rb_ivar_get(proc, cbtable_id) : Qnil;
     if (cbTable == Qnil) {
         cbTable = rb_hash_new();
-        rb_ivar_set(proc, cbTableID, cbTable);
+        rb_ivar_set(proc, cbtable_id, cbTable);
     }
     callback = rb_hash_aref(cbTable, cbInfo);
     if (callback != Qnil) {
@@ -345,11 +345,14 @@ rb_FFI_Callback_Init()
     VALUE moduleFFI = rb_define_module("FFI");
 
     rb_FFI_CallbackInfo_class = classCallbackInfo = rb_define_class_under(moduleFFI, "CallbackInfo", rb_FFI_Type_class);
+    rb_global_variable(&rb_FFI_CallbackInfo_class);
+
     rb_define_alloc_func(classCallbackInfo, cbinfo_allocate);
     rb_define_method(classCallbackInfo, "initialize", cbinfo_initialize, 2);
 
     classNativeCallback = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
+    rb_global_variable(&classNativeCallback);
     rb_define_alloc_func(classNativeCallback, native_callback_allocate);
-    callID = rb_intern("call");
-    cbTableID = rb_intern("@__ffi_callback_table__");
+    call_id = rb_intern("call");
+    cbtable_id = rb_intern("@__ffi_callback_table__");
 }

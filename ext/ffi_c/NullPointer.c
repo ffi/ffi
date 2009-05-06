@@ -102,7 +102,12 @@ rb_FFI_NullPointer_Init()
 {
     VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_NullPointer_class = classNullPointer = rb_define_class_under(moduleFFI, "NullPointer", rb_FFI_Pointer_class);
+    rb_global_variable(&rb_FFI_NullPointer_class);
+    rb_global_variable(&classNullPointer);
+
     NullPointerError = rb_define_class_under(moduleFFI, "NullPointerError", rb_eRuntimeError);
+    rb_global_variable(&NullPointerError);
+
     rb_define_alloc_func(classNullPointer, rb_FFI_NullPointer_allocate);
     rb_define_method(classNullPointer, "inspect", nullptr_inspect, 0);
     rb_define_method(classNullPointer, "+", nullptr_op, -1);
@@ -136,6 +141,6 @@ rb_FFI_NullPointer_Init()
 
     // Create a singleton instance of NullPointer that can be shared
     rb_FFI_NullPointer_singleton = rb_FFI_NullPointer_allocate(classNullPointer);
-    rb_gc_register_address(&rb_FFI_NullPointer_singleton);
+    rb_global_variable(&rb_FFI_NullPointer_singleton);
 }
 
