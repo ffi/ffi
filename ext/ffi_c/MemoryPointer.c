@@ -52,7 +52,7 @@ memptr_initialize(int argc, VALUE* argv, VALUE self)
         nargs > 2 && RTEST(clear));
     
     if (rb_block_given_p()) {
-        return rb_rescue(rb_yield, self, memptr_free, self);
+        return rb_ensure(rb_yield, self, memptr_free, self);
     }
 
     return self;
