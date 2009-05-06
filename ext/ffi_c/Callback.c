@@ -340,10 +340,8 @@ ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
 #endif /* HAVE_FFI_CLOSURE_ALLOC */
 
 void
-rb_FFI_Callback_Init()
+rb_FFI_Callback_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
-
     rb_FFI_CallbackInfo_class = classCallbackInfo = rb_define_class_under(moduleFFI, "CallbackInfo", rb_FFI_Type_class);
     rb_global_variable(&rb_FFI_CallbackInfo_class);
 

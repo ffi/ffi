@@ -181,9 +181,8 @@ symbol_inspect(VALUE self)
 }
 
 void
-rb_FFI_DynamicLibrary_Init()
+rb_FFI_DynamicLibrary_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     classLibrary = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
     rb_global_variable(&classLibrary);
     classSymbol = rb_define_class_under(classLibrary, "Symbol", rb_FFI_Pointer_class);

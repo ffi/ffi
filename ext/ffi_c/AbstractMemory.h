@@ -51,6 +51,8 @@ checkBounds(AbstractMemory* mem, long off, long len)
 #define MEMORY_PTR(obj) MEMORY((obj))->address
 #define MEMORY_LEN(obj) MEMORY((obj))->size
 
+extern void rb_FFI_AbstractMemory_Init(VALUE ffiModule);
+
 extern AbstractMemory* rb_FFI_AbstractMemory_cast(VALUE obj, VALUE klass);
 
 extern VALUE rb_FFI_AbstractMemory_class;

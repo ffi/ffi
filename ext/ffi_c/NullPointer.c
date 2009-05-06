@@ -98,9 +98,8 @@ static MemoryOps nullptr_ops = {
 };
 
 void
-rb_FFI_NullPointer_Init()
+rb_FFI_NullPointer_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_NullPointer_class = classNullPointer = rb_define_class_under(moduleFFI, "NullPointer", rb_FFI_Pointer_class);
     rb_global_variable(&rb_FFI_NullPointer_class);
     rb_global_variable(&classNullPointer);

@@ -10,6 +10,7 @@
 #include "MemoryPointer.h"
 #include "AutoPointer.h"
 #include "Struct.h"
+#include "Callback.h"
 #include "DynamicLibrary.h"
 #include "Platform.h"
 #include "Types.h"
@@ -58,17 +59,17 @@ Init_ffi_c() {
 
     rb_FFI_Type_Init(moduleFFI);
 
-    rb_FFI_Platform_Init();
-    rb_FFI_AbstractMemory_Init();
-    rb_FFI_Pointer_Init();
-    rb_FFI_AutoPointer_Init();
-    rb_FFI_NullPointer_Init();
-    rb_FFI_MemoryPointer_Init();
-    rb_FFI_Buffer_Init();
-    rb_FFI_Callback_Init();
-    rb_FFI_Struct_Init(0);
-    rb_FFI_DynamicLibrary_Init();
-    rb_FFI_Invoker_Init();
-    rb_FFI_Types_Init();
+    rb_FFI_Platform_Init(moduleFFI);
+    rb_FFI_AbstractMemory_Init(moduleFFI);
+    rb_FFI_Pointer_Init(moduleFFI);
+    rb_FFI_AutoPointer_Init(moduleFFI);
+    rb_FFI_NullPointer_Init(moduleFFI);
+    rb_FFI_MemoryPointer_Init(moduleFFI);
+    rb_FFI_Buffer_Init(moduleFFI);
+    rb_FFI_Callback_Init(moduleFFI);
+    rb_FFI_Struct_Init(moduleFFI);
+    rb_FFI_DynamicLibrary_Init(moduleFFI);
+    rb_FFI_Invoker_Init(moduleFFI);
+    rb_FFI_Types_Init(moduleFFI);
 }
 

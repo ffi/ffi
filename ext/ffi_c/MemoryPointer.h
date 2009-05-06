@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-    extern void rb_FFI_MemoryPointer_Init();
+    extern void rb_FFI_MemoryPointer_Init(VALUE moduleFFI);
     extern VALUE rb_FFI_MemoryPointer_class;
     extern VALUE rb_FFI_MemoryPointer_new(long size, long count, bool clear);
 #ifdef	__cplusplus

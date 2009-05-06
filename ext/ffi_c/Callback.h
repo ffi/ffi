@@ -35,6 +35,7 @@ typedef struct {
 } NativeCallback;
 
 extern VALUE rb_FFI_CallbackInfo_class;
+extern void rb_FFI_Callback_Init(VALUE ffiModule);
 extern VALUE rb_FFI_NativeCallback_new(VALUE, VALUE);
 extern VALUE rb_FFI_NativeCallback_for_proc(VALUE proc, VALUE cbInfo);
 

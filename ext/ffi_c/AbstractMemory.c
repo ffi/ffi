@@ -328,9 +328,8 @@ MemoryOps rb_FFI_AbstractMemory_ops = {
 };
 
 void
-rb_FFI_AbstractMemory_Init()
+rb_FFI_AbstractMemory_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     VALUE classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
     rb_FFI_AbstractMemory_class = classMemory;
     rb_global_variable(&rb_FFI_AbstractMemory_class);

@@ -972,11 +972,10 @@ set_last_error(VALUE self, VALUE error)
 }
 
 void 
-rb_FFI_Invoker_Init()
+rb_FFI_Invoker_Init(VALUE moduleFFI)
 {
     ffi_type* ffiValueType;
     int i;
-    VALUE moduleFFI = rb_define_module("FFI");
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
     rb_FFI_Invoker_class = classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_global_variable(&rb_FFI_Invoker_class);

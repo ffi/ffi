@@ -50,9 +50,8 @@ autoptr_mark(AutoPointer* ptr)
 }
 
 void
-rb_FFI_AutoPointer_Init()
+rb_FFI_AutoPointer_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_AutoPointer_class = rb_define_class_under(moduleFFI, "AutoPointer", rb_FFI_Pointer_class);
     rb_global_variable(&rb_FFI_AutoPointer_class);
     

@@ -107,7 +107,7 @@ rb_FFI_NativeValueToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE e
     }
 }
 
-void rb_FFI_Types_Init(void)
+void rb_FFI_Types_Init(VALUE moduleFFI)
 {
     find_id = rb_intern("find");
 }

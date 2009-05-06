@@ -152,9 +152,8 @@ buffer_mark(Buffer* ptr)
 }
 
 void
-rb_FFI_Buffer_Init()
+rb_FFI_Buffer_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     classBuffer = rb_define_class_under(moduleFFI, "Buffer", rb_FFI_AbstractMemory_class);
 
     rb_global_variable(&classBuffer);

@@ -47,9 +47,8 @@ export_primitive_types(VALUE module)
 }
 
 void
-rb_FFI_Platform_Init()
+rb_FFI_Platform_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     VALUE platform = rb_define_module_under(moduleFFI, "Platform");
     rb_define_const(platform, "BYTE_ORDER", INT2FIX(BYTE_ORDER));
     rb_define_const(platform, "LITTLE_ENDIAN", INT2FIX(LITTLE_ENDIAN));

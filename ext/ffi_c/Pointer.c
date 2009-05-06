@@ -118,9 +118,8 @@ ptr_mark(Pointer* ptr)
 }
 
 void
-rb_FFI_Pointer_Init()
+rb_FFI_Pointer_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     rb_FFI_Pointer_class = classPointer = rb_define_class_under(moduleFFI, "Pointer", rb_FFI_AbstractMemory_class);
     rb_global_variable(&classPointer);
     rb_global_variable(&rb_FFI_Pointer_class);

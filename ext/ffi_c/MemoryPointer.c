@@ -137,9 +137,8 @@ memptr_release(MemoryPointer* ptr)
 }
 
 void
-rb_FFI_MemoryPointer_Init()
+rb_FFI_MemoryPointer_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     VALUE classMemoryPointer = rb_define_class_under(moduleFFI, "MemoryPointer", rb_FFI_Pointer_class);
     rb_FFI_MemoryPointer_class = classMemoryPointer;
     rb_global_variable(&rb_FFI_MemoryPointer_class);

@@ -399,9 +399,8 @@ struct_layout_mark(StructLayout *layout)
 }
 
 void
-rb_FFI_Struct_Init()
+rb_FFI_Struct_Init(VALUE moduleFFI)
 {
-    VALUE moduleFFI = rb_define_module("FFI");
     VALUE klass;
     rb_FFI_Struct_class = classStruct = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
     rb_global_variable(&rb_FFI_Struct_class);

@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-extern void rb_FFI_AutoPointer_Init(void);
+extern void rb_FFI_AutoPointer_Init(VALUE ffiModule);
 extern VALUE rb_FFI_AutoPointer_class;
 
 
