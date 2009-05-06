@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-    extern void rb_FFI_Platform_Init();
+    extern void rb_FFI_Platform_Init(void);
 
 
 #ifdef	__cplusplus

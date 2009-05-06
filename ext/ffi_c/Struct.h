@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-    void rb_FFI_Struct_Init();
+    extern void rb_FFI_Struct_Init(void);
 
     struct StructLayout;
     typedef struct Struct {
