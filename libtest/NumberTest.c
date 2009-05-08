@@ -30,6 +30,12 @@
 #include <string.h>
 #include <stdint.h>
 
+#ifdef __sparc
+    #define fix_mem_access __asm("ta 6")
+#else
+    #define fix_mem_access
+#endif
+
 typedef int8_t s8;
 typedef uint8_t u8;
 typedef int16_t s16;
@@ -106,6 +112,7 @@ TEST2(u64)
 #define pack_uL pack_int
 
 #define PACK3(R, T1, T2, T3) void pack_##T1##T2##T3##_##R(T1 arg1, T2 arg2, T3 arg3, R* r) { \
+    fix_mem_access; \
     pack_##T1(&r[0], arg1); \
     pack_##T2(&r[1], arg2); \
     pack_##T3(&r[2], arg3); \

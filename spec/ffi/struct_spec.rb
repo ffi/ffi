@@ -84,7 +84,7 @@ describe "Struct tests" do
     class PairLayout < FFI::Struct
       layout :a, :int, :b, :long_long
     end
-    ll_off = (FFI::Platform::ADDRESS_SIZE == 32 ? 4 : 8)
+    ll_off = (FFI::TYPE_UINT64.alignment == 4 ? 4 : 8)
     PairLayout.size.should == (ll_off + 8)
     mp = FFI::MemoryPointer.new(PairLayout.size)
     s = PairLayout.new mp
@@ -97,7 +97,7 @@ describe "Struct tests" do
     class PairLayout < FFI::Struct
       layout :a, :int, 0, :b, :long_long, 4
     end
-    PairLayout.size.should == (FFI::Platform::ADDRESS_SIZE == 32 ? 12 : 16)
+    PairLayout.size.should == (FFI::TYPE_UINT64.alignment == 4 ? 12 : 16)
     mp = FFI::MemoryPointer.new(PairLayout.size)
     s = PairLayout.new mp
     s[:a] = 0x12345678
@@ -109,7 +109,7 @@ describe "Struct tests" do
     class MixedLayout < FFI::Struct
       layout :a, :int, :b, :long_long, 4
     end
-    MixedLayout.size.should == (FFI::Platform::ADDRESS_SIZE == 32 ? 12 : 16)
+    MixedLayout.size.should == (FFI::TYPE_UINT64.alignment == 4 ? 12 : 16)
     mp = FFI::MemoryPointer.new(MixedLayout.size)
     s = MixedLayout.new mp
     s[:a] = 0x12345678
@@ -123,7 +123,7 @@ describe "Struct tests" do
       class HashLayout < FFI::Struct
         layout :a => :int, :b => :long_long
       end
-      ll_off = (FFI::Platform::ADDRESS_SIZE == 32 ? 4 : 8)
+      ll_off = (FFI::TYPE_UINT64.alignment == 4? 4 : 8)
       HashLayout.size.should == (ll_off + 8)
       mp = FFI::MemoryPointer.new(HashLayout.size)
       s = HashLayout.new mp
