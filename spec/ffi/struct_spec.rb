@@ -393,7 +393,6 @@ describe FFI::Struct, ' with an array field'  do
   before do
     @s = LibTest::StructWithArray.new
   end
-  it 'should align correctly array field'
   it 'should correctly calculate StructWithArray size (in bytes)' do
     LibTest::StructWithArray.size.should == 24
   end
