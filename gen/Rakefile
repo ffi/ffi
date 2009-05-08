@@ -1,7 +1,7 @@
 require 'fileutils'
 require "#{File.join(ENV['RUBYLIBDIR'], 'ffi', 'tools', 'types_generator.rb')}"
 types_conf = File.join(ENV['RUBYLIBDIR'], 'ffi', 'types.conf') 
-task types_conf do |task|
+file types_conf do |task|
   options = {}
   FileUtils.mkdir_p(File.dirname(task.name), { :mode => 0755 })
   File.open(task.name, File::CREAT|File::TRUNC|File::RDWR, 0644) do |f|
