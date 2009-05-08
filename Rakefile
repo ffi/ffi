@@ -31,7 +31,7 @@ PROJ.name = 'ffi'
 PROJ.authors = 'Wayne Meissner'
 PROJ.email = 'wmeissner@gmail.com'
 PROJ.url = 'http://kenai.com/projects/ruby-ffi'
-PROJ.version = '0.3.4'
+PROJ.version = '0.3.5'
 PROJ.rubyforge.name = 'ffi'
 PROJ.readme_file = 'README.rdoc'
 
