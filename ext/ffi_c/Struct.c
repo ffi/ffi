@@ -457,8 +457,8 @@ rbffi_Struct_Init(VALUE moduleFFI)
 #define FIELD(name, typeName, nativeType, T) do { \
     typedef struct { char c; T v; } s; \
         klass = rb_define_class_under(StructLayoutBuilderClass, #name, StructFieldClass); \
-        rb_define_const(klass, "ALIGN", INT2NUM((sizeof(s) - sizeof(T)) * 8)); \
-        rb_define_const(klass, "SIZE", INT2NUM(sizeof(T)* 8)); \
+        rb_define_const(klass, "ALIGN", INT2NUM((sizeof(s) - sizeof(T)))); \
+        rb_define_const(klass, "SIZE", INT2NUM(sizeof(T))); \
         rb_define_const(klass, "TYPE", INT2NUM(nativeType)); \
     } while(0)
     

@@ -1,5 +1,6 @@
 require 'ffi/platform'
 module FFI
+
   class StructLayout
     attr_reader :size, :align
 
@@ -13,6 +14,7 @@ module FFI
       @fields[field_name].offset
     end
   end
+
   class StructLayoutBuilder
     class Field
       def size
@@ -31,6 +33,7 @@ module FFI
         const_get(:ALIGN)
       end
     end
+
     def self.struct_field_class_from(type)
       klass_name = type.name.split('::').last
       code = <<-code
@@ -39,7 +42,7 @@ module FFI
           class << self
             attr_reader :info
             def size
-              #{type.size} * 8
+              #{type.size}
             end
             def align
               #{type.align}
@@ -53,6 +56,7 @@ module FFI
       code
       self.module_eval(code)
     end
+
     def self.array_field_class_from(type, num)
       klass_name = type.name.split('::').last
       code = <<-code
@@ -80,22 +84,32 @@ module FFI
       code
       self.module_eval(code)
     end
+
     class CallbackField < Field
-      def self.size; Platform::ADDRESS_SIZE; end
-      def self.align; Platform::ADDRESS_ALIGN; end
+      def self.size
+        FFI::Type::POINTER.size
+      end
+
+      def self.align
+        FFI::Type::POINTER.alignment
+      end
+
       def put(ptr, proc)
         ptr.put_callback(@off, proc, @info)
       end
+
       def get(ptr)
         raise ArgumentError, "Cannot get callback fields"
       end
     end
+
     def initialize
       @field_names = []
       @fields = {}
       @size = 0
       @min_align = 1
     end
+
     def native_field_class_from(type)
       case type
       when :char, NativeType::INT8
@@ -128,15 +142,19 @@ module FFI
         StringField
       end
     end
+
     def callback_field_class_from(type)
       return CallbackField, type if type.is_a?(FFI::CallbackInfo)
     end
+
     def struct_field_class_from(type)
       self.class.struct_field_class_from(type) if type.is_a?(Class) and type < FFI::Struct
     end
+
     def array_field_class_from(type)
       self.class.array_field_class_from(field_class_from(type[0]), type[1]) if type.is_a?(Array)
     end
+
     def field_class_from(type)
       field_class = native_field_class_from(type) ||
         callback_field_class_from(type) ||
@@ -144,24 +162,24 @@ module FFI
         struct_field_class_from(type)
       field_class or raise ArgumentError, "Unknown type: #{type}"
     end
+
     def add_field(name, type, offset = nil)
       field_class, info = field_class_from(type)
       off = calc_alignment_of(field_class, offset)
-      calc_current_size(off, field_class.size / 8)
+      calc_current_size(off, field_class.size)
       @field_names << name
       @fields[name] = field_class.new(off, info)
       @min_align = field_class.align if field_class.align > @min_align
     end
+
     def build
-      align = @min_align / 8
-      StructLayout.new @field_names, @fields, align + ((@size - 1) & ~(align - 1)), @min_align
+      StructLayout.new(@field_names, @fields, align(@size, @min_align), @min_align)
     end
-    def align(offset, bits)
-      bytes = bits / 8
-      mask = bytes - 1;
-      off = offset;
-      ((off & mask) != 0) ? (off & ~mask) + bytes : off
+
+    def align(offset, align)
+      align + ((offset - 1) & ~(align - 1))
     end
+
     private
     def calc_alignment_of(field_class, offset)
       offset ? offset.to_i : align(@size, field_class.align)
@@ -170,77 +188,99 @@ module FFI
       @size = offset + size
     end
   end
+
   class Struct
     class Array
       include Enumerable
+
       def initialize(ptr, type, num)
         @pointer, @type, @num = ptr, type, num
       end
-      def to_ptr 
+
+      def to_ptr
         @pointer 
       end
+
       def to_a
         get_array_data(@pointer)
       end
+
       def size
-        @num * @type.size / 8
+        @num * @type.size
       end
+
       def each(&blk)
         to_a.each(&blk)
       end
+
       private
       def get_array_data(ptr)
         (0..@num - 1).inject([]) do |array, index| 
-          array << @type.new(0).get(ptr + index * @type.size / 8)
+          array << @type.new(0).get(ptr + index * @type.size)
         end
       end
     end
+
     def self.size
       @size
     end
+
     def self.members
       @layout.members
     end
+
     def self.align
       @layout.align
     end
+
     def self.offsets
       @layout.offsets
     end
+
     def self.offset_of(field_name)
       @layout.offset_of(field_name)
     end
+
     def size
       self.class.size
     end
+
     def align
       self.class.align
     end
+
     def members
       layout.members
     end
+
     def values
       layout.members.map { |m| self[m] }
     end
     def offsets
       self.class.offsets
     end
+
     def offset_of(field_name)
       self.class.offset_of(field_name)
     end
+
     def clear
       pointer.clear
       self
     end
+
     def to_ptr
       pointer
     end
+
     def self.in
       :buffer_in
     end
+
     def self.out
       :buffer_out
     end
+
     protected
 
     def self.callback(params, ret)
@@ -249,9 +289,11 @@ module FFI
     end
 
     private
+
     def self.builder
       StructLayoutBuilder.new
     end
+
     def self.enclosing_module
       begin
         mod = self.name.split("::")[0..-2].inject(Object) { |obj, c| obj.const_get(c) }
@@ -260,6 +302,7 @@ module FFI
         nil
       end
     end
+
     def self.is_a_struct?(type)
       type.is_a?(Class) and type < Struct
     end
@@ -278,6 +321,7 @@ module FFI
       end
       builder.build
     end
+
     def self.array_layout(spec)
       builder = self.builder
       mod = enclosing_module
@@ -297,6 +341,7 @@ module FFI
       end
       builder.build
     end
+
     public
     def self.layout(*spec)
       return @layout if spec.size == 0
