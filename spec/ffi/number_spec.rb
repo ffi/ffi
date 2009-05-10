@@ -20,6 +20,36 @@ describe "Function with primitive integer arguments" do
     attach_function :set_double, [ :double ], :void
     attach_function :get_double, [ ], :double
   end
+  it "int8.size" do
+    FFI::TYPE_INT8.size.should == 1
+  end
+  it "uint8.size" do
+    FFI::TYPE_UINT8.size.should == 1
+  end
+  it "int16.size" do
+    FFI::TYPE_INT16.size.should == 2
+  end
+  it "uint16.size" do
+    FFI::TYPE_UINT16.size.should == 2
+  end
+  it "int32.size" do
+    FFI::TYPE_INT32.size.should == 4
+  end
+  it "uint32.size" do
+    FFI::TYPE_UINT32.size.should == 4
+  end
+  it "int64.size" do
+    FFI::TYPE_INT64.size.should == 8
+  end
+  it "uint64.size" do
+    FFI::TYPE_UINT64.size.should == 8
+  end
+  it "float.size" do
+    FFI::TYPE_FLOAT32.size.should == 4
+  end
+  it "double.size" do
+    FFI::TYPE_FLOAT64.size.should == 8
+  end
   [ 0, 127, -128, -1 ].each do |i|
     it ":char call(:char (#{i}))" do
       LibTest.ret_s8(i).should == i

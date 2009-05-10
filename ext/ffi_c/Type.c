@@ -192,7 +192,7 @@ rbffi_Type_Init(VALUE moduleFFI)
     T(INT32, &ffi_type_sint32);
     T(UINT32, &ffi_type_uint32);
     T(INT64, &ffi_type_sint64);
-    T(UINT64, &ffi_type_uint32);
+    T(UINT64, &ffi_type_uint64);
     T(FLOAT32, &ffi_type_float);
     T(FLOAT64, &ffi_type_double);
     T(POINTER, &ffi_type_pointer);
