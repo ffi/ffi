@@ -1,5 +1,6 @@
 # -*- makefile -*-
-include libffi.gnu.mk
+
+include ${srcdir}/libffi.gnu.mk
 
 CCACHE := $(shell type -p ccache)
 BUILD_DIR := $(shell pwd)
