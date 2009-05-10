@@ -30,7 +30,7 @@ build_ffi = \
 	    echo "Configuring libffi for $(1)"; \
 	    cd $(BUILD_DIR)/libffi-$(1) && \
 	      env CC="$(CCACHE) $(CC)" CFLAGS="-arch $(1) $(LIBFFI_CFLAGS)" LDFLAGS="-arch $(1)" \
-		$(FFI_CONFIGURE) --host=$(1)-apple-darwin > /dev/null; \
+		$(LIBFFI_CONFIGURE) --host=$(1)-apple-darwin > /dev/null; \
 	fi); \
 	env MACOSX_DEPLOYMENT_TARGET=10.4 $(MAKE) -C $(BUILD_DIR)/libffi-$(1)
 
