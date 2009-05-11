@@ -3,5 +3,19 @@ module FFI
     def self.for_fd(fd, mode = "r")
       ::IO.for_fd(fd, mode)
     end
+
+    #
+    # A version of IO#read that reads into a native buffer
+    # 
+    # This will be optimized at some future time to eliminate the double copy
+    #
+    def self.read(io, buf, len)
+      tmp = io.read(len)
+      return -1 unless tmp
+      buf.put_bytes(0, tmp)
+      tmp.length
+    end
+
   end
 end
+
