@@ -37,21 +37,28 @@ describe "Callback" do
     callback :cbVrU16, [ ], :ushort
     callback :cbVrS32, [ ], :int
     callback :cbVrU32, [ ], :uint
+    callback :cbVrL, [ ], :long
+    callback :cbVrUL, [ ], :ulong
     callback :cbVrS64, [ ], :long_long
     callback :cbVrU64, [ ], :ulong_long
     callback :cbVrP, [], :pointer
     callback :cbCrV, [ :char ], :void
     callback :cbSrV, [ :short ], :void
     callback :cbIrV, [ :int ], :void
+    callback :cbLrV, [ :long ], :void
+    callback :cbULrV, [ :ulong ], :void
     callback :cbLrV, [ :long_long ], :void
+
     attach_function :testCallbackVrS8, :testClosureVrB, [ :cbVrS8 ], :char
     attach_function :testCallbackVrU8, :testClosureVrB, [ :cbVrU8 ], :uchar
     attach_function :testCallbackVrS16, :testClosureVrS, [ :cbVrS16 ], :short
     attach_function :testCallbackVrU16, :testClosureVrS, [ :cbVrU16 ], :ushort
     attach_function :testCallbackVrS32, :testClosureVrI, [ :cbVrS32 ], :int
     attach_function :testCallbackVrU32, :testClosureVrI, [ :cbVrU32 ], :uint
-    attach_function :testCallbackVrS64, :testClosureVrL, [ :cbVrS64 ], :long_long
-    attach_function :testCallbackVrU64, :testClosureVrL, [ :cbVrU64 ], :ulong_long
+    attach_function :testCallbackVrL, :testClosureVrL, [ :cbVrL ], :long
+    attach_function :testCallbackVrUL, :testClosureVrL, [ :cbVrUL ], :ulong
+    attach_function :testCallbackVrS64, :testClosureVrLL, [ :cbVrS64 ], :long_long
+    attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbCrV, :char ], :void
     attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
@@ -122,7 +129,6 @@ describe "Callback" do
   it "returning :ushort (-1)" do
     LibTest.testCallbackVrU16 { -1 }.should == 0xffff
   end
-
   it "returning :int (0)" do
     LibTest.testCallbackVrS32 { 0 }.should == 0
   end
@@ -136,7 +142,6 @@ describe "Callback" do
   it "returning :int (-1)" do
     LibTest.testCallbackVrS32 { -1 }.should == -1
   end
-
   it "returning :uint (0)" do
     LibTest.testCallbackVrU32 { 0 }.should == 0
   end
@@ -153,7 +158,35 @@ describe "Callback" do
   it "Callback returning :uint (-1)" do
     LibTest.testCallbackVrU32 { -1 }.should == 0xffffffff
   end
-
+  it "returning :long (0)" do
+    LibTest.testCallbackVrL { 0 }.should == 0
+  end
+  it "returning :long (0x7fffffff)" do
+    LibTest.testCallbackVrL { 0x7fffffff }.should == 0x7fffffff
+  end
+  # test wrap around
+  it "returning :long (-0x80000000)" do
+    LibTest.testCallbackVrL { -0x80000000 }.should == -0x80000000
+  end
+  it "returning :long (-1)" do
+    LibTest.testCallbackVrL { -1 }.should == -1
+  end
+  it "returning :ulong (0)" do
+    LibTest.testCallbackVrUL { 0 }.should == 0
+  end
+  it "returning :ulong (0x7fffffff)" do
+    LibTest.testCallbackVrUL { 0x7fffffff }.should == 0x7fffffff
+  end
+  # test wrap around
+  it "returning :ulong (0x80000000)" do
+    LibTest.testCallbackVrUL { 0x80000000 }.should == 0x80000000
+  end
+  it "returning :ulong (0xffffffff)" do
+    LibTest.testCallbackVrUL { 0xffffffff }.should == 0xffffffff
+  end
+  it "Callback returning :ulong (-1)" do
+    LibTest.testCallbackVrUL { -1 }.should == 0xffffffff
+  end
   it "returning :long_long (0)" do
     LibTest.testCallbackVrS64 { 0 }.should == 0
   end
@@ -286,8 +319,13 @@ describe "primitive argument" do
     callback :cbU8rV, [ :uchar ], :void
     callback :cbS16rV, [ :short ], :void
     callback :cbU16rV, [ :ushort ], :void
+
     callback :cbS32rV, [ :int ], :void
     callback :cbU32rV, [ :uint ], :void
+
+    callback :cbLrV, [ :long ], :void
+    callback :cbULrV, [ :ulong ], :void
+
     callback :cbS64rV, [ :long_long ], :void
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbS8rV, :char ], :void
     attach_function :testCallbackU8rV, :testClosureBrV, [ :cbU8rV, :uchar ], :void
@@ -295,7 +333,11 @@ describe "primitive argument" do
     attach_function :testCallbackU16rV, :testClosureSrV, [ :cbU16rV, :ushort ], :void
     attach_function :testCallbackIrV, :testClosureIrV, [ :cbS32rV, :int ], :void
     attach_function :testCallbackU32rV, :testClosureIrV, [ :cbU32rV, :uint ], :void
-    attach_function :testCallbackLrV, :testClosureLrV, [ :cbS64rV, :long_long ], :void
+
+    attach_function :testCallbackLrV, :testClosureLrV, [ :cbLrV, :long ], :void
+    attach_function :testCallbackULrV, :testClosureULrV, [ :cbULrV, :ulong ], :void
+
+    attach_function :testCallbackLLrV, :testClosureLLrV, [ :cbS64rV, :long_long ], :void
   end
   it ":char (0) argument" do
     v = 0xdeadbeef
@@ -317,7 +359,6 @@ describe "primitive argument" do
     LibTest.testCallbackCrV(-1) { |i| v = i }
     v.should == -1
   end
-
   it ":uchar (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU8rV(0) { |i| v = i }
@@ -359,7 +400,6 @@ describe "primitive argument" do
     LibTest.testCallbackSrV(-1) { |i| v = i }
     v.should == -1
   end
-
   it ":ushort (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU16rV(0) { |i| v = i }
@@ -380,7 +420,6 @@ describe "primitive argument" do
     LibTest.testCallbackU16rV(0xffff) { |i| v = i }
     v.should == 0xffff
   end
-
   it ":int (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackIrV(0) { |i| v = i }
@@ -401,7 +440,6 @@ describe "primitive argument" do
     LibTest.testCallbackIrV(-1) { |i| v = i }
     v.should == -1
   end
-
   it ":uint (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU32rV(0) { |i| v = i }
@@ -422,26 +460,65 @@ describe "primitive argument" do
     LibTest.testCallbackU32rV(0xffffffff) { |i| v = i }
     v.should == 0xffffffff
   end
-
-  it ":long_long (0) argument" do
+  it ":long (0) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackLrV(0) { |i| v = i }
     v.should == 0
   end
-  it ":long_long (0x7fffffffffffffff) argument" do
+  it ":long (0x7fffffff) argument" do
     v = 0xdeadbeef
-    LibTest.testCallbackLrV(0x7fffffffffffffff) { |i| v = i }
-    v.should == 0x7fffffffffffffff
+    LibTest.testCallbackLrV(0x7fffffff) { |i| v = i }
+    v.should == 0x7fffffff
   end
-  it ":long_long (-0x8000000000000000) argument" do
+  it ":long (-0x80000000) argument" do
     v = 0xdeadbeef
-    LibTest.testCallbackLrV(-0x8000000000000000) { |i| v = i }
-    v.should == -0x8000000000000000
+    LibTest.testCallbackLrV(-0x80000000) { |i| v = i }
+    v.should == -0x80000000
   end
-  it ":long_long (-1) argument" do
+  it ":long (-1) argument" do
     v = 0xdeadbeef
     LibTest.testCallbackLrV(-1) { |i| v = i }
     v.should == -1
   end
+  it ":ulong (0) argument" do
+    v = 0xdeadbeef
+    LibTest.testCallbackULrV(0) { |i| v = i }
+    v.should == 0
+  end
+  it ":ulong (0x7fffffff) argument" do
+    v = 0xdeadbeef
+    LibTest.testCallbackULrV(0x7fffffff) { |i| v = i }
+    v.should == 0x7fffffff
+  end
+  it ":ulong (0x80000000) argument" do
+    v = 0xdeadbeef
+    LibTest.testCallbackULrV(0x80000000) { |i| v = i }
+    v.should == 0x80000000
+  end
+  it ":ulong (0xffffffff) argument" do
+    v = 0xdeadbeef
+    LibTest.testCallbackULrV(0xffffffff) { |i| v = i }
+    v.should == 0xffffffff
+  end
+  it ":long_long (0) argument" do
+    v = 0xdeadbeef
+    LibTest.testCallbackLLrV(0) { |i| v = i }
+    v.should == 0
+  end
+  it ":long_long (0x7fffffffffffffff) argument" do
+    v = 0xdeadbeef
+    LibTest.testCallbackLLrV(0x7fffffffffffffff) { |i| v = i }
+    v.should == 0x7fffffffffffffff
+  end
+  it ":long_long (-0x8000000000000000) argument" do
+    v = 0xdeadbeef
+    LibTest.testCallbackLLrV(-0x8000000000000000) { |i| v = i }
+    v.should == -0x8000000000000000
+  end
+  it ":long_long (-1) argument" do
+    v = 0xdeadbeef
+    LibTest.testCallbackLLrV(-1) { |i| v = i }
+    v.should == -1
+  end
   
-end unless true
+end # unless true
