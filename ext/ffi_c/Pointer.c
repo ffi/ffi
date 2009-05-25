@@ -43,9 +43,36 @@ ptr_allocate(VALUE klass)
 
     obj = Data_Make_Struct(rbffi_PointerClass, Pointer, NULL, -1, p);
     p->parent = Qnil;
+    p->memory.ops = &rbffi_AbstractMemoryOps;
 
     return obj;
 }
+
+static VALUE
+ptr_initialize(int argc, VALUE* argv, VALUE self)
+{
+    Pointer* p;
+    VALUE type, address;
+
+    Data_Get_Struct(self, Pointer, p);
+    p->memory.size = LONG_MAX;
+
+    switch (rb_scan_args(argc, argv, "11", &type, &address)) {
+        case 1:
+            p->memory.address = (void*)(uintptr_t) NUM2LL(type);
+            // FIXME set type_size to 1
+            break;
+        case 2:
+            p->memory.address = (void*)(uintptr_t) NUM2LL(address);
+            // FIXME set type_size to rbffi_type_size(type)
+            break;
+        default:
+            rb_raise(rb_eArgError, "Invalid arguments");
+    }
+
+    return self;
+}
+
 
 static VALUE
 ptr_plus(VALUE self, VALUE offset)
@@ -123,6 +150,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_global_variable(&rbffi_PointerClass);
 
     rb_define_alloc_func(rbffi_PointerClass, ptr_allocate);
+    rb_define_method(rbffi_PointerClass, "initialize", ptr_initialize, -1);
     rb_define_method(rbffi_PointerClass, "inspect", ptr_inspect, 0);
     rb_define_method(rbffi_PointerClass, "+", ptr_plus, 1);
     rb_define_method(rbffi_PointerClass, "null?", ptr_null_p, 0);
