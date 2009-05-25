@@ -155,5 +155,6 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_method(rbffi_PointerClass, "+", ptr_plus, 1);
     rb_define_method(rbffi_PointerClass, "null?", ptr_null_p, 0);
     rb_define_method(rbffi_PointerClass, "address", ptr_address, 0);
+    rb_define_alias(rbffi_PointerClass, "to_i", "address");
     rb_define_method(rbffi_PointerClass, "==", ptr_equals, 1);
 }
