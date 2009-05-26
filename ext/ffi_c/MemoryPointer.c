@@ -49,7 +49,7 @@ memptr_initialize(int argc, VALUE* argv, VALUE self)
     int nargs = rb_scan_args(argc, argv, "12", &size, &count, &clear);
 
     memptr_malloc(self, rbffi_type_size(size), nargs > 1 ? NUM2LONG(count) : 1,
-        nargs > 2 && RTEST(clear));
+        RTEST(clear) || clear == Qnil);
     
     if (rb_block_given_p()) {
         return rb_ensure(rb_yield, self, memptr_free, self);

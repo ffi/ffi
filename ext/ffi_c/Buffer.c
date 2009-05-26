@@ -66,7 +66,7 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (void *) (((uintptr_t) p->storage + 0x7) & (uintptr_t) ~0x7UL);
     
-    if (nargs > 2 && RTEST(clear) && p->memory.size > 0) {
+    if (nargs > 2 && (RTEST(clear) || clear == Qnil) && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
 
