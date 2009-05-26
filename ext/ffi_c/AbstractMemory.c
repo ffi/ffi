@@ -106,63 +106,26 @@ NUM_OP(uint64, uint64_t, NUM2ULL, ULL2NUM);
 NUM_OP(float32, float, NUM2DBL, rb_float_new);
 NUM_OP(float64, double, NUM2DBL, rb_float_new);
 
-static void
-memory_op_put_pointer(AbstractMemory* memory, long off, VALUE value)
-{ 
+static inline void*
+get_pointer_value(VALUE value)
+{
     const int type = TYPE(value);
-    checkBounds(memory, off, sizeof(void *));
-
-    if (rb_obj_is_kind_of(value, rbffi_PointerClass) && type == T_DATA) {
-        void* tmp = memory_address(value);
-        memcpy(memory->address + off, &tmp, sizeof(tmp));
+    if (type == T_DATA && rb_obj_is_kind_of(value, rbffi_PointerClass)) {
+        return memory_address(value);
     } else if (type == T_NIL) {
-        void* tmp = NULL;
-        memcpy(memory->address + off, &tmp, sizeof(tmp));
+        return NULL;
     } else if (type == T_FIXNUM) {
-        uintptr_t tmp = (uintptr_t) FIX2INT(value);
-        memcpy(memory->address + off, &tmp, sizeof(tmp));
+        return (void *) (uintptr_t) FIX2INT(value);
     } else if (type == T_BIGNUM) {
-        uintptr_t tmp = (uintptr_t) NUM2ULL(value);
-        memcpy(memory->address + off, &tmp, sizeof(tmp));
+        return (void *) (uintptr_t) NUM2ULL(value);
     } else if (rb_respond_to(value, id_to_ptr)) {
-        VALUE ptr = rb_funcall2(value, id_to_ptr, 0, NULL);
-        void* tmp = MEMORY_PTR(ptr);
-        memcpy(memory->address + off, &tmp, sizeof(tmp));
+        return MEMORY_PTR(rb_funcall2(value, id_to_ptr, 0, NULL));
     } else {
         rb_raise(rb_eArgError, "value is not a pointer");
     }
 }
 
-static VALUE
-memory_op_get_pointer(AbstractMemory* memory, long off)
-{
-    void* tmp;
-
-    checkBounds(memory, off, sizeof(tmp));
-    memcpy(&tmp, memory->address + off, sizeof(tmp));
-    return rbffi_Pointer_NewInstance(tmp);
-}
-
-static VALUE
-memory_put_pointer(VALUE self, VALUE offset, VALUE value)
-{
-    AbstractMemory* memory;
-
-    Data_Get_Struct(self, AbstractMemory, memory);
-    memory_op_put_pointer(memory, NUM2LONG(offset), value);
-
-    return self;
-}
-
-static VALUE
-memory_get_pointer(VALUE self, VALUE offset)
-{
-    AbstractMemory* memory;
-    
-    Data_Get_Struct(self, AbstractMemory, memory);
-
-    return memory_op_get_pointer(memory, NUM2LONG(offset));
-}
+NUM_OP(pointer, void *, get_pointer_value, rbffi_Pointer_NewInstance);
 
 static VALUE
 memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
@@ -350,7 +313,7 @@ memory_op_put_strptr(AbstractMemory* ptr, long offset, VALUE value)
 
 static MemoryOp memory_op_strptr = { memory_op_get_strptr, memory_op_put_strptr };
 
-static MemoryOp memory_op_pointer = { memory_op_get_pointer, memory_op_put_pointer };
+//static MemoryOp memory_op_pointer = { memory_op_get_pointer, memory_op_put_pointer };
 
 MemoryOps rbffi_AbstractMemoryOps = {
     .int8 = &memory_op_int8,
@@ -435,6 +398,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_alias(classMemory, "get_array_of_double", "get_array_of_float64");
     rb_define_method(classMemory, "put_pointer", memory_put_pointer, 2);
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
+    rb_define_method(classMemory, "put_array_of_pointer", memory_put_array_of_pointer, 2);
+    rb_define_method(classMemory, "get_array_of_pointer", memory_get_array_of_pointer, 2);
     rb_define_method(classMemory, "put_callback", memory_put_callback, 3);
     rb_define_method(classMemory, "get_string", memory_get_string, -1);
     rb_define_method(classMemory, "put_string", memory_put_string, 2);
