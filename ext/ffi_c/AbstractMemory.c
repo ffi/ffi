@@ -262,7 +262,7 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
     off = NUM2LONG(offset);
     len = RSTRING_LEN(str);
 
-    checkBounds(ptr, off, len);
+    checkBounds(ptr, off, len + 1);
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
     }
