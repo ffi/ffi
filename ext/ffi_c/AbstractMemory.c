@@ -214,6 +214,45 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
+memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
+{
+    VALUE offset = Qnil, countnum = Qnil, retVal = Qnil;
+    AbstractMemory* ptr;
+    long off;
+    int count;
+
+    rb_scan_args(argc, argv, "11", &offset, &countnum);
+    off = NUM2LONG(offset);
+    count = (countnum == Qnil ? 0 : NUM2INT(countnum));
+    retVal = rb_ary_new2(count);
+
+    Data_Get_Struct(self, AbstractMemory, ptr);
+
+    if (countnum != Qnil) {
+        int i;
+
+        checkBounds(ptr, off, count * sizeof (char*));
+        
+        for (i = 0; i < count; ++i) {
+            const char* strptr = *((const char**) (ptr->address + off) + i);
+            rb_ary_push(retVal, (strptr == NULL ? Qnil : rb_tainted_str_new2(strptr)));
+        }
+
+    } else {
+        checkBounds(ptr, off, sizeof (char*));
+        for ( ; off < ptr->size - sizeof (void *); off += sizeof (void *)) {
+            const char* strptr = *(const char**) (ptr->address + off);
+            if (strptr == NULL) {
+                break;
+            }
+            rb_ary_push(retVal, rb_tainted_str_new2(strptr));
+        }
+    }
+
+    return retVal;
+}
+
+static VALUE
 memory_put_string(VALUE self, VALUE offset, VALUE str)
 {
     AbstractMemory* ptr = MEMORY(self);
@@ -401,6 +440,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "put_string", memory_put_string, 2);
     rb_define_method(classMemory, "get_bytes", memory_get_bytes, 2);
     rb_define_method(classMemory, "put_bytes", memory_put_bytes, -1);
+    rb_define_method(classMemory, "get_array_of_string", memory_get_array_of_string, -1);
 
     rb_define_method(classMemory, "clear", memory_clear, 0);
     rb_define_method(classMemory, "total", memory_size, 0);

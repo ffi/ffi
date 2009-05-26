@@ -39,4 +39,61 @@ describe "String tests" do
   it "casts nil as NULL pointer" do
     LibTest.string_dummy(nil)
   end
+  it "reads an array of strings until encountering a NULL pointer" do
+    strings = ["foo", "bar", "baz", "testing", "ffi"]
+    ptrary = MemoryPointer.new(:pointer, 6)
+    ary = strings.inject([]) do |a, str|
+      f = MemoryPointer.new(1024)
+      f.put_string(0, str)
+      a << f
+    end
+    ary.insert(3, nil)
+    ptrary.write_array_of_pointer(ary)
+    ptrary.get_array_of_string(0).should == ["foo", "bar", "baz"]
+  end
+  it "reads an array of strings of the size specified, substituting nil when a pointer is NULL" do
+    strings = ["foo", "bar", "baz", "testing", "ffi"]
+    ptrary = MemoryPointer.new(:pointer, 6)
+    ary = strings.inject([]) do |a, str|
+      f = MemoryPointer.new(1024)
+      f.put_string(0, str)
+      a << f
+    end
+    ary.insert(2, nil)
+    ptrary.write_array_of_pointer(ary)
+    ptrary.get_array_of_string(0, 4).should == ["foo", "bar", nil, "baz"]
+  end
+  it "reads an array of strings, taking a memory offset parameter" do
+    strings = ["foo", "bar", "baz", "testing", "ffi"]
+    ptrary = MemoryPointer.new(:pointer, 5)
+    ary = strings.inject([]) do |a, str|
+      f = MemoryPointer.new(1024)
+      f.put_string(0, str)
+      a << f
+    end
+    ptrary.write_array_of_pointer(ary)
+    ptrary.get_array_of_string(2 * FFI.type_size(:pointer), 3).should == ["baz", "testing", "ffi"]
+  end
+  it "raises an IndexError when trying to read an array of strings out of bounds" do
+    strings = ["foo", "bar", "baz", "testing", "ffi"]
+    ptrary = MemoryPointer.new(:pointer, 5)
+    ary = strings.inject([]) do |a, str|
+      f = MemoryPointer.new(1024)
+      f.put_string(0, str)
+      a << f
+    end
+    ptrary.write_array_of_pointer(ary)
+    lambda { ptrary.get_array_of_string(0, 6) }.should raise_error
+  end
+  it "raises an IndexError when trying to read an array of strings using a negative offset" do
+    strings = ["foo", "bar", "baz", "testing", "ffi"]
+    ptrary = MemoryPointer.new(:pointer, 5)
+    ary = strings.inject([]) do |a, str|
+      f = MemoryPointer.new(1024)
+      f.put_string(0, str)
+      a << f
+    end
+    ptrary.write_array_of_pointer(ary)
+    lambda { ptrary.get_array_of_string(-1) }.should raise_error
+  end
 end
