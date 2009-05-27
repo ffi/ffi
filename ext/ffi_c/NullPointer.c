@@ -139,5 +139,6 @@ rbffi_NullPointer_Init(VALUE moduleFFI)
     // Create a singleton instance of NullPointer that can be shared
     rbffi_NullPointerSingleton = nullptr_allocate(rbffi_NullPointerClass);
     rb_global_variable(&rbffi_NullPointerSingleton);
+    rb_define_const(rbffi_PointerClass, "NULL", rbffi_NullPointerSingleton);
 }
 
