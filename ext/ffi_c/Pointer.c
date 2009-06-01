@@ -55,7 +55,6 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
     VALUE type, address;
 
     Data_Get_Struct(self, Pointer, p);
-    p->memory.size = LONG_MAX;
 
     switch (rb_scan_args(argc, argv, "11", &type, &address)) {
         case 1:
@@ -69,7 +68,12 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
         default:
             rb_raise(rb_eArgError, "Invalid arguments");
     }
+    if (p->memory.address == NULL) {
+        p->memory.ops = &rbffi_NullPointerOps;
+    }
 
+    p->memory.size = LONG_MAX;
+    
     return self;
 }
 

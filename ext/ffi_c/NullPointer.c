@@ -8,7 +8,6 @@
 #include "Pointer.h"
 
 static VALUE NullPointerErrorClass;
-static MemoryOps NullPointerOps;
 
 VALUE rbffi_NullPointerClass;
 VALUE rbffi_NullPointerSingleton;
@@ -22,7 +21,7 @@ nullptr_allocate(VALUE klass)
     retval = Data_Make_Struct(klass, AbstractMemory, NULL, -1, p);
     p->address = 0;
     p->size = 0;
-    p->ops = &NullPointerOps;
+    p->ops = &rbffi_NullPointerOps;
 
     return retval;
 }
@@ -81,7 +80,7 @@ nullptr_address(VALUE self)
 
 static MemoryOp NullPointerMemoryOp = { nullptr_op_get, nullptr_op_put };
 
-static MemoryOps NullPointerOps = {
+MemoryOps rbffi_NullPointerOps = {
     .int8 = &NullPointerMemoryOp,
     .uint8 = &NullPointerMemoryOp,
     .int16 = &NullPointerMemoryOp,
