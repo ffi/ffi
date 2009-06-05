@@ -86,7 +86,22 @@ describe "Pointer" do
         array[j].address.should == address
       end
     end
+    
+  end
 
+  describe 'NULL' do
+    it 'should be obtained using Pointer::NULL constant' do
+      null_ptr = FFI::Pointer::NULL
+      null_ptr.null?.should be_true
+    end
+    it 'should be obtained passing address 0 to constructor' do
+      FFI::Pointer.new(0).null?.should be_true
+    end
+    it 'should raise an error when attempting read/write operations on it' do
+      null_ptr = FFI::Pointer::NULL
+      lambda { null_ptr.read_int }.should raise_error(FFI::NullPointerError)
+      lambda { null_ptr.write_int(0xff1) }.should raise_error(FFI::NullPointerError)
+    end
   end
 
 end
