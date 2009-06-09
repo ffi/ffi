@@ -27,7 +27,7 @@ describe "Pointer" do
   end
   class PointerDelegate < DelegateClass(FFI::Pointer)
     def initialize(ptr)
-      super
+      super()
       @ptr = ptr
     end
     def to_ptr
@@ -121,15 +121,17 @@ describe "AutoPointer" do
       self.method(:release).to_proc
     end
   end
-
+  class AutoPointerSubclass < FFI::AutoPointer
+    def self.release(ptr); end
+  end
   it "cleanup via default release method" do
-    FFI::AutoPointer.should_receive(:release).at_least(loop_count-wiggle_room).times
+    AutoPointerSubclass.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
       # note that if we called
       # AutoPointerTestHelper.method(:release).to_proc inline, we'd
       # have a reference to the pointer and it would never get GC'd.
-      ap = FFI::AutoPointer.new(LibTest.ptr_from_address(magic))
+      ap = AutoPointerSubclass.new(LibTest.ptr_from_address(magic))
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -164,13 +166,13 @@ describe "AutoPointer" do
 end
 describe "AutoPointer#new" do
   it "MemoryPointer argument raises ArgumentError" do
-    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(ArgumentError)
+    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(TypeError)
   end
   it "AutoPointer argument raises ArgumentError" do
-    lambda { FFI::AutoPointer.new(FFI::AutoPointer.new(LibTest.ptr_from_address(0))) }.should raise_error(ArgumentError)
+    lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(LibTest.ptr_from_address(0))) }.should raise_error(TypeError)
   end
   it "Buffer argument raises ArgumentError" do
-    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(ArgumentError)
+    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(TypeError)
   end
 
 end

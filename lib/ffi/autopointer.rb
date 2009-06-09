@@ -28,7 +28,7 @@ module FFI
     # release(), which by default does nothing.
     #
     def initialize(ptr, proc=nil, &block)
-      raise ArgumentError, "Invalid pointer" if ptr.nil? || !ptr.kind_of?(Pointer) \
+      raise TypeError, "Invalid pointer" if ptr.nil? || !ptr.kind_of?(Pointer) \
         || ptr.kind_of?(MemoryPointer) || ptr.kind_of?(AutoPointer)
       free_lambda = if proc and proc.is_a? Method
                       AutoPointer.finalize(ptr, AutoPointer.method_to_proc(proc))
