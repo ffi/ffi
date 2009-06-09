@@ -20,20 +20,6 @@ puts "Benchmark FFI getpid performance, #{iter}x calls"
     iter.times { Posix.getpid }
   }
 }
-unless RUBY_PLATFORM =~ /java/
-puts "Benchmark FFI Invoker#call0() getpid performance, #{iter}x calls"
-invoker = FFI.create_invoker(nil, 'getpid', [], :uint)
-unless invoker.respond_to?("call1")
-  class FFI::Invoker
-    alias :call0 :call
-  end
-end
-10.times {
-  puts Benchmark.measure {
-    iter.times { invoker.call0() }
-  }
-}
-end
 puts "Benchmark Process.pid performance, #{iter}x calls"
 10.times {
   puts Benchmark.measure {
