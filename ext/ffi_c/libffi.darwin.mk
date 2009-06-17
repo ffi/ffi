@@ -21,7 +21,7 @@ ifneq ($(findstring -arch x86_64,$(CFLAGS)),)
   ARCHES += x86_64
 endif
 
-ifeq ($(ARCHES),)
+ifeq ($(strip $(ARCHES)),)
 # Just build the one (default) architecture
 $(LIBFFI):		
 	@mkdir -p $(LIBFFI_BUILD_DIR)
