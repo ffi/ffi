@@ -184,13 +184,13 @@ describe "AutoPointer#new" do
     def self.release(ptr); end
   end
   it "MemoryPointer argument raises ArgumentError" do
-    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(FFI::TypeError)
+    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(::TypeError)
   end
   it "AutoPointer argument raises ArgumentError" do
-    lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(LibTest.ptr_from_address(0))) }.should raise_error(FFI::TypeError)
+    lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(LibTest.ptr_from_address(0))) }.should raise_error(::TypeError)
   end
   it "Buffer argument raises ArgumentError" do
-    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(FFI::TypeError)
+    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(::TypeError)
   end
 
 end

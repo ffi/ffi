@@ -30,8 +30,6 @@ module FFI
   #  Specialised error classes
   class NativeError < LoadError; end
   
-  class TypeError < NativeError; end
-  
   class SignatureError < NativeError; end
   
   class NotFoundError < NativeError

@@ -121,7 +121,7 @@ module FFI::Library
       if ffi_type.is_a?(FFI::CallbackInfo)
         op = :callback
       else
-        raise FFI::TypeError, "Cannot access library variable of type #{type}"
+        raise TypeError, "Cannot access library variable of type #{type}"
       end
     end
     #
