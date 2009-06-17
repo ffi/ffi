@@ -20,10 +20,21 @@ endif
 ifneq ($(findstring -arch x86_64,$(CFLAGS)),)
   ARCHES += x86_64
 endif
-ifeq ($(ARCHES),)
-  ARCHES = $(shell arch)
-endif
 
+ifeq ($(ARCHES),)
+# Just build the one (default) architecture
+$(LIBFFI):		
+	@mkdir -p $(LIBFFI_BUILD_DIR)
+	@if [ ! -f $(LIBFFI_BUILD_DIR)/Makefile ]; then \
+	    echo "Configuring libffi"; \
+	    cd $(LIBFFI_BUILD_DIR) && \
+		/usr/bin/env CC="$(CC)" LD="$(LD)" CFLAGS="$(LIBFFI_CFLAGS)" \
+		/bin/sh $(LIBFFI_CONFIGURE) $(LIBFFI_HOST) > /dev/null; \
+	fi
+	cd $(LIBFFI_BUILD_DIR) && $(MAKE)
+
+else
+# Build a fat binary and assemble
 build_ffi = \
 	mkdir -p $(BUILD_DIR)/libffi-$(1); \
 	(if [ ! -f $(BUILD_DIR)/libffi-$(1)/Makefile ]; then \
@@ -61,3 +72,4 @@ $(LIBFFI):
 		printf "#endif\n";\
 	) > $(LIBFFI_BUILD_DIR)/include/ffitarget.h
 
+endif
