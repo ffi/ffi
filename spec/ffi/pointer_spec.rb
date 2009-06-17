@@ -180,6 +180,9 @@ describe "AutoPointer" do
   end
 end
 describe "AutoPointer#new" do
+  class AutoPointerSubclass < FFI::AutoPointer
+    def self.release(ptr); end
+  end
   it "MemoryPointer argument raises ArgumentError" do
     lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(FFI::TypeError)
   end
