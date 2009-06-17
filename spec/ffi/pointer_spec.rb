@@ -27,7 +27,7 @@ describe "Pointer" do
   end
   class PointerDelegate < DelegateClass(FFI::Pointer)
     def initialize(ptr)
-      super()
+      super
       @ptr = ptr
     end
     def to_ptr
@@ -181,13 +181,13 @@ describe "AutoPointer" do
 end
 describe "AutoPointer#new" do
   it "MemoryPointer argument raises ArgumentError" do
-    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(TypeError)
+    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(FFI::TypeError)
   end
   it "AutoPointer argument raises ArgumentError" do
-    lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(LibTest.ptr_from_address(0))) }.should raise_error(TypeError)
+    lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(LibTest.ptr_from_address(0))) }.should raise_error(FFI::TypeError)
   end
   it "Buffer argument raises ArgumentError" do
-    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(TypeError)
+    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(FFI::TypeError)
   end
 
 end
