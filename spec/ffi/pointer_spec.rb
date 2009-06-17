@@ -27,7 +27,6 @@ describe "Pointer" do
   end
   class PointerDelegate < DelegateClass(FFI::Pointer)
     def initialize(ptr)
-      super
       @ptr = ptr
     end
     def to_ptr
