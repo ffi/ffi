@@ -185,7 +185,11 @@ describe "Callback" do
     LibTest.testCallbackVrUL { 0xffffffff }.should == 0xffffffff
   end
   it "Callback returning :ulong (-1)" do
-    LibTest.testCallbackVrUL { -1 }.should == 0xffffffff
+    if FFI::Platform::LONG_SIZE == 32
+      LibTest.testCallbackVrUL { -1 }.should == 0xffffffff
+    else
+      LibTest.testCallbackVrUL { -1 }.should == 0xffffffffffffffff
+    end
   end
   it "returning :long_long (0)" do
     LibTest.testCallbackVrS64 { 0 }.should == 0
