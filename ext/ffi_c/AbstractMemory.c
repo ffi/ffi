@@ -370,16 +370,11 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     ALIAS(long_long, int64);
     
     if (sizeof(long) == 4) {
-        rb_define_alias(classMemory, "put_long", "put_int32");
-        rb_define_alias(classMemory, "put_ulong", "put_uint32");
-        rb_define_alias(classMemory, "get_long", "get_int32");
-        rb_define_alias(classMemory, "get_ulong", "get_uint32");
+        ALIAS(long, int32);
     } else {
-        rb_define_alias(classMemory, "put_long", "put_int64");
-        rb_define_alias(classMemory, "put_ulong", "put_uint64");
-        rb_define_alias(classMemory, "get_long", "get_int64");
-        rb_define_alias(classMemory, "get_ulong", "get_uint64");
+        ALIAS(long, int32);
     }
+
     rb_define_method(classMemory, "put_float32", memory_put_float32, 2);
     rb_define_method(classMemory, "get_float32", memory_get_float32, 1);
     rb_define_alias(classMemory, "put_float", "put_float32");
