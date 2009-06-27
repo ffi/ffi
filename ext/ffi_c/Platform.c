@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ruby.h>
 #include <ctype.h>
+#include "endian.h"
 #include "Platform.h"
 
 static VALUE PlatformModule = Qnil;
