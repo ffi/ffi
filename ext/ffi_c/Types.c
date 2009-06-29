@@ -20,6 +20,7 @@ rbffi_NativeType_ToFFI(NativeType type)
             return &ffi_type_sint16;
         case NATIVE_UINT16:
             return &ffi_type_uint16;
+        case NATIVE_BOOL:
         case NATIVE_INT32:
         case NATIVE_ENUM:
             return &ffi_type_sint32;
@@ -76,6 +77,8 @@ rbffi_NativeValue_ToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE e
             return rb_tainted_str_new2(*(char **) ptr);
         case NATIVE_POINTER:
             return rbffi_Pointer_NewInstance(*(void **) ptr);
+        case NATIVE_BOOL:
+            return ((int) *(ffi_arg *) ptr) ? Qtrue : Qfalse;
         case NATIVE_ENUM:
         {
             VALUE enum_obj = rb_funcall(enums, id_find, 1, rbType);

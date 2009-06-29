@@ -25,6 +25,7 @@ typedef enum {
     NATIVE_BUFFER_OUT,
     NATIVE_BUFFER_INOUT,
     NATIVE_CHAR_ARRAY,
+    NATIVE_BOOL,
     
     /**
      * An immutable string.  Nul terminated, but only copies in to the native function

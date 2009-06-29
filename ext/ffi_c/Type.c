@@ -202,6 +202,7 @@ rbffi_Type_Init(VALUE moduleFFI)
     T(BUFFER_OUT, &ffi_type_pointer);
     T(BUFFER_INOUT, &ffi_type_pointer);
     T(ENUM, &ffi_type_sint);
+    T(BOOL, &ffi_type_sint);
 
 
     T(CHAR_ARRAY, &ffi_type_void);

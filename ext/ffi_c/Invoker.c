@@ -543,6 +543,10 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int", invoker->enums);
                 ADJ(param, INT32);
                 break;
+            case NATIVE_BOOL:
+                param->s32 = RTEST(argv[argidx++]) ? 1 : 0;
+                ADJ(param, INT32);
+                break;
             case NATIVE_UINT8:
                 param->u8 = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
                 ADJ(param, INT8);
