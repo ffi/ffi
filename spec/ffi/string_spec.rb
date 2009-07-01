@@ -1,7 +1,7 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 describe "String tests" do
   include FFI
-  module LibTest
+  module StrLibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
@@ -19,13 +19,13 @@ describe "String tests" do
     sp = MemoryPointer.new 1024
     sp.put_string(0, "test")
     mp.put_pointer(0, sp)
-    str = LibTest.ptr_ret_pointer(mp, 0)
+    str = StrLibTest.ptr_ret_pointer(mp, 0)
     str.should == "test"
     str.tainted?.should == true
   end
   it "Poison null byte raises error" do
     s = "123\0abc"
-    lambda { LibTest.string_equals(s, s) }.should raise_error
+    lambda { StrLibTest.string_equals(s, s) }.should raise_error
   end
   it "Tainted String parameter should throw a SecurityError" do
     $SAFE = 1
@@ -37,7 +37,7 @@ describe "String tests" do
     end
   end if false
   it "casts nil as NULL pointer" do
-    LibTest.string_dummy(nil)
+    StrLibTest.string_dummy(nil)
   end
   it "reads an array of strings until encountering a NULL pointer" do
     strings = ["foo", "bar", "baz", "testing", "ffi"]
