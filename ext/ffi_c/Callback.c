@@ -225,7 +225,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             break;
 
         case NATIVE_CALLBACK:
-            if (rb_obj_is_kind_of(rbReturnValue, rb_cProc)) {
+            if (rb_obj_is_kind_of(rbReturnValue, rb_cProc) || rb_respond_to(rbReturnValue, id_call)) {
                 VALUE callback;
 
                 callback = rbffi_NativeCallback_ForProc(rbReturnValue, cbInfo->rbReturnType);

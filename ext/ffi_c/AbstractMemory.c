@@ -13,6 +13,7 @@
 static inline char* memory_address(VALUE self);
 VALUE rbffi_AbstractMemoryClass = Qnil;
 static ID id_to_ptr = 0;
+static ID id_call = 0;
 
 static VALUE
 memory_allocate(VALUE klass)
@@ -134,7 +135,7 @@ memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
     long off = NUM2LONG(offset);
     checkBounds(memory, off, sizeof(void *));
 
-    if (rb_obj_is_kind_of(proc, rb_cProc)) {
+    if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, id_call)) {
         VALUE callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
         void* code = ((NativeCallback *) DATA_PTR(callback))->code;
         memcpy(memory->address + off, &code, sizeof(code));
@@ -406,5 +407,6 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "total", memory_size, 0);
 
     id_to_ptr = rb_intern("to_ptr");
+    id_call = rb_intern("call");
 }
 

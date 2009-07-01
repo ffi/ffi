@@ -270,6 +270,26 @@ describe "Callback" do
       lookup_proc_called.should be_true
       return_proc_called.should be_true
     end
+
+    it "should return a method callback" do
+      module LibTest
+        extend FFI::Library
+        callback :cb_return_type, [ :int ], :int
+        callback :cb_lookup, [ ], :cb_return_type
+        attach_function :testReturnsCallback, :testReturnsClosure, [ :cb_lookup, :int ], :int
+      end
+      module MethodCallback
+        def self.lookup
+          method(:perform)
+        end
+        def self.perform num
+          num * 2
+        end
+      end
+
+      LibTest.testReturnsCallback(MethodCallback.method(:lookup), 0x1234).should == 0x2468
+    end
+
     it 'should not blow up when a callback takes a callback as argument' do
       module LibTest
         extend FFI::Library
