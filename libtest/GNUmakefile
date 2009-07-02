@@ -1,5 +1,6 @@
 # -*- makefile -*-
-OS = $(shell uname -s | tr '[:upper:]' '[:lower:]')
+BUILD_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+OS ?= $(BUILD_OS)
 CPU = $(shell uname -m | sed -e 's/i[345678]86/i386/')
 MODEL = 32 # Default to 32bit compiles
 PLATFORM = $(CPU)-$(OS)
@@ -38,8 +39,13 @@ IFLAGS = -I"$(BUILD_DIR)"
 CFLAGS = $(OFLAGS) $(WFLAGS) $(IFLAGS) $(PICFLAGS) -D_REENTRANT
 
 ifeq ($(OS), win32)
-	CC += -mno-cygwin
-	LDFLAGS += -mno-cygwin -Wl,--add-stdcall-alias
+  # For cygwin => win32-native builds, strip out cygwin deps
+  ifneq ($(findstring cygwin, $(BUILD_OS)),)
+    CC += -mno-cygwin -mwin32
+    LDFLAGS += -mno-cygwin -Wl,--add-stdcall-alias
+  endif
+  PICFLAGS=
+  LIBEXT=dll
 endif
 ifeq ($(OS), darwin)
   ARCHFLAGS = -arch ppc
