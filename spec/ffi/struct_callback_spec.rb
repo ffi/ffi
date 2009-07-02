@@ -37,5 +37,17 @@ describe FFI::Struct, ' with inline callback functions' do
 
     CallbackMember.struct_call_add_cb(ts, 1, 2).should == 3
   end
+  it 'should take methods as callbacks' do
+    module StructCallbacks
+      def self.add a, b
+        a+b
+      end
+    end
+
+    ts = CallbackMember::TestStruct.new
+    ts[:add] = StructCallbacks.method(:add)
+
+    CallbackMember.struct_call_add_cb(ts, 1, 2).should == 3
+  end
 end
 
