@@ -47,3 +47,8 @@ void
 string_dummy(char* dummy)
 {
 }
+const char*
+string_null(void)
+{
+    return NULL;
+}

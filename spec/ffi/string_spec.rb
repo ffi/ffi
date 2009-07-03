@@ -7,6 +7,7 @@ describe "String tests" do
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
     attach_function :string_equals, [ :string, :string ], :int
     attach_function :string_dummy, [ :string ], :void
+    attach_function :string_null, [ ], :string
   end
   it "MemoryPointer#get_string returns a tainted string" do
     mp = MemoryPointer.new 1024
@@ -38,6 +39,9 @@ describe "String tests" do
   end if false
   it "casts nil as NULL pointer" do
     StrLibTest.string_dummy(nil)
+  end
+  it "return nil for NULL char*" do
+    StrLibTest.string_null.should == nil
   end
   it "reads an array of strings until encountering a NULL pointer" do
     strings = ["foo", "bar", "baz", "testing", "ffi"]
