@@ -15,8 +15,8 @@ RANLIB=ranlib
 CC=gcc
 CCC=g++
 CXX=g++
-FC=
-AS=as
+FC=g77
+AS=gas
 
 # Macros
 CND_PLATFORM=GNU-MacOSX

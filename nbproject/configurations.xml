@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="60">
+<configurationDescriptor version="62">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="ruby-ffi" displayName="ruby-ffi" projectFiles="true">
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
@@ -10,11 +10,8 @@
         <itemPath>ext/ffi_c/Buffer.c</itemPath>
         <itemPath>ext/ffi_c/Callback.c</itemPath>
         <itemPath>ext/ffi_c/Callback.h</itemPath>
-        <itemPath>ext/ffi_c/compat.h</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.c</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.h</itemPath>
-        <itemPath>ext/ffi_c/extconf.rb</itemPath>
-        <itemPath>ext/ffi_c/ffi.c</itemPath>
         <itemPath>ext/ffi_c/Invoker.c</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.c</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.h</itemPath>
@@ -23,13 +20,16 @@
         <itemPath>ext/ffi_c/Platform.h</itemPath>
         <itemPath>ext/ffi_c/Pointer.c</itemPath>
         <itemPath>ext/ffi_c/Pointer.h</itemPath>
-        <itemPath>ext/ffi_c/rbffi.h</itemPath>
         <itemPath>ext/ffi_c/Struct.c</itemPath>
         <itemPath>ext/ffi_c/Struct.h</itemPath>
         <itemPath>ext/ffi_c/Type.c</itemPath>
         <itemPath>ext/ffi_c/Type.h</itemPath>
         <itemPath>ext/ffi_c/Types.c</itemPath>
         <itemPath>ext/ffi_c/Types.h</itemPath>
+        <itemPath>ext/ffi_c/compat.h</itemPath>
+        <itemPath>ext/ffi_c/extconf.rb</itemPath>
+        <itemPath>ext/ffi_c/ffi.c</itemPath>
+        <itemPath>ext/ffi_c/rbffi.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <logicalFolder name="ffi" displayName="ffi" projectFiles="true">
