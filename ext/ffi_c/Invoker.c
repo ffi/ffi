@@ -544,7 +544,10 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 ADJ(param, INT32);
                 break;
             case NATIVE_BOOL:
-                param->s32 = RTEST(argv[argidx++]) ? 1 : 0;
+                if (type != T_TRUE && type != T_FALSE) {
+                    rb_raise(rb_eTypeError, "Expected a Boolean parameter");
+                }
+                param->s32 = argv[argidx++] == Qtrue;
                 ADJ(param, INT32);
                 break;
             case NATIVE_UINT8:
