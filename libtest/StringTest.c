@@ -52,3 +52,4 @@ string_null(void)
 {
     return NULL;
 }
+
