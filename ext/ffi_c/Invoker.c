@@ -48,7 +48,7 @@ struct Invoker {
     int paramCount;
     ffi_type** ffiParamTypes;
     NativeType* paramTypes;
-    NativeType returnType;
+    Type* returnType;
     VALUE rbReturnType;
     VALUE callbackArray;
     int callbackCount;
@@ -192,23 +192,25 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
             invoker->callbackParameters[invoker->callbackCount++] = entry;
             invoker->paramTypes[i] = NATIVE_CALLBACK;
             invoker->ffiParamTypes[i] = &ffi_type_pointer;
-        } else {
+        } else if (rb_obj_is_kind_of(entry, rbffi_TypeClass)){
             int paramType = rbffi_Type_GetIntValue(entry);
             invoker->paramTypes[i] = paramType;
             invoker->ffiParamTypes[i] = rbffi_NativeType_ToFFI(paramType);
         }
         if (invoker->ffiParamTypes[i] == NULL) {
-            rb_raise(rb_eArgError, "Invalid parameter type");
+            rb_raise(rb_eTypeError, "Invalid parameter type");
         }
     }
-
-    invoker->returnType = rbffi_Type_GetIntValue(returnType);
+    if (!rb_obj_is_kind_of(returnType, rbffi_TypeClass)) {
+        rb_raise(rb_eTypeError, "Invalid return type");
+    }
+    Data_Get_Struct(returnType, Type, invoker->returnType);
     invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_CallbackInfoClass)
         ? returnType : rbReturnTypeSymbol;
     
-    ffiReturnType = rbffi_NativeType_ToFFI(invoker->returnType);
+    ffiReturnType = invoker->returnType->ffiType;
     if (ffiReturnType == NULL) {
-        rb_raise(rb_eArgError, "Invalid return type");
+        rb_raise(rb_eTypeError, "Invalid return type");
     }
 #if defined(_WIN32) || defined(__WIN32__)
     abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
@@ -254,7 +256,10 @@ variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnTypeSymbol, VALU
 
     invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_CallbackInfoClass)
         ? returnType : rbReturnTypeSymbol;
-    invoker->returnType = rbffi_Type_GetIntValue(returnType);
+    if (!rb_obj_is_kind_of(returnType, rbffi_TypeClass)) {
+        rb_raise(rb_eTypeError, "Invalid return type");
+    }
+    Data_Get_Struct(returnType, Type, invoker->returnType);
     invoker->paramCount = -1;
     return retval;
 }
@@ -659,7 +664,7 @@ ffi_invoke(ffi_cif* cif, Invoker* invoker, void** ffiValues)
     FFIStorage retval;
     int error = 0;
     void* function = invoker->function;
-    NativeType returnType = invoker->returnType;
+    NativeType returnType = invoker->returnType->nativeType;
     VALUE rbReturnType = invoker->rbReturnType;
     VALUE enums = invoker->enums;
 
@@ -892,7 +897,7 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
         argv[i] = rb_ary_entry(parameterValues, i);
     }
 
-    ffiReturnType = rbffi_NativeType_ToFFI(invoker->returnType);
+    ffiReturnType = invoker->returnType->ffiType;
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
     }

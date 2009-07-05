@@ -95,6 +95,7 @@ enum_allocate(VALUE klass)
 
     obj = Data_Make_Struct(klass, Type, NULL, -1, type);
     type->nativeType = NATIVE_ENUM;
+    type->ffiType = &ffi_type_sint;
     type->size = ffi_type_sint.size;
     type->alignment = ffi_type_sint.alignment;
 

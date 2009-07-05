@@ -38,6 +38,9 @@ cbinfo_allocate(VALUE klass)
     CallbackInfo* cbInfo;
     VALUE obj = Data_Make_Struct(klass, CallbackInfo, cbinfo_mark, cbinfo_free, cbInfo);
 
+    cbInfo->type.ffiType = &ffi_type_pointer;
+    cbInfo->type.size = ffi_type_pointer.size;
+    cbInfo->type.alignment = ffi_type_pointer.alignment;
     cbInfo->type.nativeType = NATIVE_CALLBACK;
     cbInfo->rbReturnType = Qnil;
 
