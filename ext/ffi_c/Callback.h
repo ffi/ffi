@@ -14,8 +14,8 @@ typedef struct {
     VALUE rbReturnType;
     VALUE rbParameterTypes;
 
-    NativeType returnType;
-    NativeType* parameterTypes;
+    Type* returnType;
+    Type** parameterTypes;
     ffi_type* ffiReturnType;
     ffi_type** ffiParameterTypes;
     ffi_cif ffi_cif;

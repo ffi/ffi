@@ -56,25 +56,35 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
     int i;
 
     Check_Type(rbParamTypes, T_ARRAY);
+
+    
     paramCount = RARRAY_LEN(rbParamTypes);
 
     Data_Get_Struct(self, CallbackInfo, cbInfo);
     cbInfo->parameterCount = paramCount;
-    cbInfo->parameterTypes = xcalloc(paramCount, sizeof(NativeType));
+    cbInfo->parameterTypes = xcalloc(paramCount, sizeof(*cbInfo->parameterTypes));
     cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
-    cbInfo->returnType = rbffi_Type_GetIntValue(rbReturnType);
+    Data_Get_Struct(rbReturnType, Type, cbInfo->returnType);
     cbInfo->rbReturnType = rbReturnType;
     cbInfo->rbParameterTypes = rbParamTypes;
 
     for (i = 0; i < paramCount; ++i) {
-        cbInfo->parameterTypes[i] = rbffi_Type_GetIntValue(rb_ary_entry(rbParamTypes, i));
-        cbInfo->ffiParameterTypes[i] = rbffi_NativeType_ToFFI(cbInfo->parameterTypes[i]);
+        VALUE entry = rb_ary_entry(rbParamTypes, i);
+        if (!rb_obj_is_kind_of(entry, rbffi_TypeClass)) {
+            rb_raise(rb_eTypeError, "Invalid parameter type");
+        }
+        Data_Get_Struct(entry, Type, cbInfo->parameterTypes[i]);
+        cbInfo->ffiParameterTypes[i] = cbInfo->parameterTypes[i]->ffiType;
         if (cbInfo->ffiParameterTypes[i] == NULL) {
             rb_raise(rb_eArgError, "Unknown argument type: %#x", cbInfo->parameterTypes[i]);
         }
     }
 
-    cbInfo->ffiReturnType = rbffi_NativeType_ToFFI(cbInfo->returnType);
+    if (!rb_obj_is_kind_of(rbReturnType, rbffi_TypeClass)) {
+        rb_raise(rb_eTypeError, "Invalid return type");
+    }
+
+    cbInfo->ffiReturnType = cbInfo->returnType->ffiType;
     if (cbInfo->ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Unknown return type: %#x", cbInfo->returnType);
     }
@@ -145,7 +155,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     rbParams = ALLOCA_N(VALUE, cbInfo->parameterCount);
     for (i = 0; i < cbInfo->parameterCount; ++i) {
         VALUE param;
-        switch (cbInfo->parameterTypes[i]) {
+        switch (cbInfo->parameterTypes[i]->nativeType) {
             case NATIVE_INT8:
                 param = INT2NUM(*(int8_t *) parameters[i]);
                 break;
@@ -195,7 +205,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
     rbReturnValue = rb_funcall2(cb->rbProc, id_call, cbInfo->parameterCount, rbParams);
     if (rbReturnValue == Qnil || TYPE(rbReturnValue) == T_NIL) {
         memset(retval, 0, cbInfo->ffiReturnType->size);
-    } else switch (cbInfo->returnType) {
+    } else switch (cbInfo->returnType->nativeType) {
         case NATIVE_INT8:
         case NATIVE_INT16:
         case NATIVE_INT32:
