@@ -19,7 +19,7 @@ FC=g77
 AS=gas
 
 # Macros
-CND_PLATFORM=GNU-MacOSX
+CND_PLATFORM=GNU-Solaris-x86
 CND_CONF=Default
 CND_DISTDIR=dist
 

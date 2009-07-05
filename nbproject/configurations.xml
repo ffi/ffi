@@ -92,7 +92,7 @@
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <compilerSet>GNU|GNU</compilerSet>
-        <platform>4</platform>
+        <platform>1</platform>
       </toolsSet>
       <makefileType>
         <makeTool>
@@ -102,8 +102,7 @@
           <executablePath></executablePath>
           <cTool>
             <incDir>
-              <pElem>/opt/local/include</pElem>
-              <pElem>/usr/local/ruby-1.8.6-p287/lib/ruby/1.8/i686-linux</pElem>
+              <pElem>/usr/local/ruby-1.8.6-p369/lib/ruby/1.8/i386-solaris2.11</pElem>
             </incDir>
           </cTool>
         </makeTool>
