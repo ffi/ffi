@@ -48,9 +48,9 @@ rbffi_NativeType_ToFFI(NativeType type)
 }
 
 VALUE
-rbffi_NativeValue_ToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE enums)
+rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
 {
-    switch (type) {
+    switch (type->nativeType) {
         case NATIVE_VOID:
             return Qnil;
         case NATIVE_INT8:

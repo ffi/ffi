@@ -193,7 +193,7 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
                 param = rbffi_Pointer_NewInstance(*(void **) parameters[i]);
                 break;
             case NATIVE_CALLBACK:
-                param = rbffi_NativeValue_ToRuby(NATIVE_CALLBACK,
+                param = rbffi_NativeValue_ToRuby(cbInfo->parameterTypes[i],
                      rb_ary_entry(cbInfo->rbParameterTypes, i), parameters[i], Qnil);
                 break;
             default:

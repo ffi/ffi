@@ -663,15 +663,11 @@ ffi_invoke(ffi_cif* cif, Invoker* invoker, void** ffiValues)
 {
     FFIStorage retval;
     int error = 0;
-    void* function = invoker->function;
-    NativeType returnType = invoker->returnType->nativeType;
-    VALUE rbReturnType = invoker->rbReturnType;
-    VALUE enums = invoker->enums;
 
 #ifdef USE_RAW
-    ffi_raw_call(cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
+    ffi_raw_call(cif, FFI_FN(invoker->function), &retval, (ffi_raw *) ffiValues[0]);
 #else
-    ffi_call(cif, FFI_FN(function), &retval, ffiValues);
+    ffi_call(cif, FFI_FN(invoker->function), &retval, ffiValues);
 #endif
 #if defined(_WIN32) || defined(__WIN32__)
     error = GetLastError();
@@ -680,7 +676,8 @@ ffi_invoke(ffi_cif* cif, Invoker* invoker, void** ffiValues)
 #endif
     threadData->td_errno = error;
 
-    return rbffi_NativeValue_ToRuby(returnType, rbReturnType, &retval, enums);
+    return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, &retval,
+        invoker->enums);
 }
 
 static VALUE

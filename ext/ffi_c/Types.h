@@ -40,8 +40,10 @@ typedef enum {
 } NativeType;
 
 #include <ffi.h>
+#include "Type.h"
+
 extern ffi_type* rbffi_NativeType_ToFFI(NativeType type);
-VALUE rbffi_NativeValue_ToRuby(NativeType type, VALUE rbType, const void* ptr, VALUE enums);
+VALUE rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums);
 void rbffi_Types_Init(VALUE moduleFFI);
 
 #ifdef	__cplusplus
