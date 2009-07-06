@@ -788,10 +788,12 @@ invoker_attach(VALUE self, VALUE module, VALUE name)
     }
 
     handle = invoker->methodHandle;
-    rb_define_module_function(module, StringValuePtr(name), 
+    rb_define_module_function(module, StringValueCStr(name), 
             handle->code, handle->arity);
     snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
     rb_cv_set(module, var, self);
+    rb_define_method(module, StringValueCStr(name), 
+            handle->code, handle->arity);
     return self;
 }
 static VALUE
