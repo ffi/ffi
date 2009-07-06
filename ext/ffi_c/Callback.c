@@ -76,7 +76,7 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
         Data_Get_Struct(entry, Type, cbInfo->parameterTypes[i]);
         cbInfo->ffiParameterTypes[i] = cbInfo->parameterTypes[i]->ffiType;
         if (cbInfo->ffiParameterTypes[i] == NULL) {
-            rb_raise(rb_eArgError, "Unknown argument type: %#x", cbInfo->parameterTypes[i]);
+            rb_raise(rb_eArgError, "Unknown argument type: %#x", cbInfo->parameterTypes[i]->nativeType);
         }
     }
 
@@ -86,7 +86,7 @@ cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
 
     cbInfo->ffiReturnType = cbInfo->returnType->ffiType;
     if (cbInfo->ffiReturnType == NULL) {
-        rb_raise(rb_eArgError, "Unknown return type: %#x", cbInfo->returnType);
+        rb_raise(rb_eArgError, "Unknown return type: %#x", cbInfo->returnType->nativeType);
     }
 #if defined(_WIN32) && defined(notyet)
     cbInfo->abi = (flags & STDCALL) ? FFI_STDCALL : FFI_DEFAULT_ABI;

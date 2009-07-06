@@ -105,7 +105,7 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
         }
 
         default:
-            rb_raise(rb_eRuntimeError, "Unknown type: %d", type);
+            rb_raise(rb_eRuntimeError, "Unknown type: %d", type->nativeType);
             return Qnil;
     }
 }
