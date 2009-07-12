@@ -23,7 +23,7 @@ File.open("Makefile", "a") do |mf|
     if Config::CONFIG['host_os'].downcase =~ /darwin/
       mf.puts "include ${srcdir}/libffi.darwin.mk"
     elsif Config::CONFIG['host_os'].downcase =~ /bsd/
-      mf.puts ".include ${srcdir)}/libffi.bsd.mk"
+      mf.puts '.include "${srcdir}/libffi.bsd.mk"'
     else
       mf.puts "include ${srcdir}/libffi.mk"
     end
