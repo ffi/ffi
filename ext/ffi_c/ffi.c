@@ -14,6 +14,7 @@
 #include "DynamicLibrary.h"
 #include "Platform.h"
 #include "Types.h"
+#include "LastError.h"
 
 
 void Init_ffi_c();
@@ -58,7 +59,7 @@ Init_ffi_c() {
     size_id = rb_intern("size");
 
     rbffi_Type_Init(moduleFFI);
-
+    rbffi_LastError_Init(moduleFFI);
     rbffi_Platform_Init(moduleFFI);
     rbffi_AbstractMemory_Init(moduleFFI);
     rbffi_Pointer_Init(moduleFFI);

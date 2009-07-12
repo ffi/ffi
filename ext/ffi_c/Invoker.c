@@ -11,9 +11,6 @@
 #include <ruby.h>
 
 #include <ffi.h>
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
-# include <pthread.h>
-#endif
 #include "rbffi.h"
 #include "compat.h"
 
@@ -24,12 +21,10 @@
 #include "Callback.h"
 #include "Types.h"
 #include "Type.h"
+#include "LastError.h"
 
 #if defined(__i386__) && !defined(_WIN32) && !defined(__WIN32__)
 #  define USE_RAW
-#endif
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
-#  define USE_PTHREAD_LOCAL
 #endif
 #define MAX_FIXED_ARITY (3)
 
@@ -79,9 +74,7 @@ struct MethodHandlePool {
     MethodHandle* list;
 };
 #endif /* _WIN32 */
-typedef struct ThreadData {
-    int td_errno;
-} ThreadData;
+
 static VALUE invoker_allocate(VALUE klass);
 static VALUE invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
         VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums);
@@ -102,7 +95,6 @@ static void attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameter
 static MethodHandle* method_handle_alloc(int arity);
 static void method_handle_free(MethodHandle *);
 
-static inline ThreadData* thread_data_get(void);
 
 #ifndef _WIN32
 static int PageSize;
@@ -112,12 +104,6 @@ VALUE rbffi_InvokerClass = Qnil;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
 static ID to_ptr = 0;
 static ID map_symbol_id = 0;
-
-#if defined(USE_PTHREAD_LOCAL)
-static pthread_key_t threadDataKey;
-#endif
-
-#define threadData (thread_data_get())
 
 #ifdef USE_RAW
 #  ifndef __i386__
@@ -662,19 +648,13 @@ static inline VALUE
 ffi_invoke(ffi_cif* cif, Invoker* invoker, void** ffiValues)
 {
     FFIStorage retval;
-    int error = 0;
 
 #ifdef USE_RAW
     ffi_raw_call(cif, FFI_FN(invoker->function), &retval, (ffi_raw *) ffiValues[0]);
 #else
     ffi_call(cif, FFI_FN(invoker->function), &retval, ffiValues);
 #endif
-#if defined(_WIN32) || defined(__WIN32__)
-    error = GetLastError();
-#else
-    error = errno;
-#endif
-    threadData->td_errno = error;
+    rbffi_save_errno();
 
     return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, &retval,
         invoker->enums);
@@ -926,72 +906,12 @@ callback_param(VALUE proc, VALUE cbInfo)
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
 
-#if defined(USE_PTHREAD_LOCAL)
-static ThreadData*
-thread_data_init()
-{
-    ThreadData* td = ALLOC_N(ThreadData, 1);
-    memset(td, 0, sizeof(*td));
-    pthread_setspecific(threadDataKey, td);
-    return td;
-}
-
-static inline ThreadData*
-thread_data_get()
-{
-    ThreadData* td = pthread_getspecific(threadDataKey);
-    return td != NULL ? td : thread_data_init();
-}
-
-static void
-thread_data_free(void *ptr)
-{
-    xfree(ptr);
-}
-
-#else
-static ID thread_data_id;
-
-static ThreadData*
-thread_data_init()
-{
-    ThreadData* td;
-    VALUE obj;
-    obj = Data_Make_Struct(rb_cObject, ThreadData, NULL, -1, td);
-    rb_thread_local_aset(rb_thread_current(), thread_data_id, obj);
-    return td;
-}
-
-static inline ThreadData*
-thread_data_get()
-{
-    VALUE obj = rb_thread_local_aref(rb_thread_current(), thread_data_id);
-
-    if (obj != Qnil && TYPE(obj) == T_DATA) {
-        return (ThreadData *) DATA_PTR(obj);
-    }
-    return thread_data_init();
-}
-
-#endif
-static VALUE
-get_last_error(VALUE self)
-{
-    return INT2NUM(threadData->td_errno);
-}
-
-static VALUE
-set_last_error(VALUE self, VALUE error)
-{
-    return Qnil;
-}
-
 void 
 rbffi_Invoker_Init(VALUE moduleFFI)
 {
     ffi_type* ffiValueType;
     int i;
-    VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
+
     rbffi_InvokerClass = classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_global_variable(&rbffi_InvokerClass);
     rb_global_variable(&classInvoker);
@@ -1015,9 +935,6 @@ rbffi_Invoker_Init(VALUE moduleFFI)
     to_ptr = rb_intern("to_ptr");
     map_symbol_id = rb_intern("__map_symbol");
     
-    rb_define_module_function(moduleError, "error", get_last_error, 0);
-    rb_define_module_function(moduleError, "error=", set_last_error, 1);
-
     ffiValueType = (sizeof (VALUE) == sizeof (long))
             ? &ffi_type_ulong : &ffi_type_uint64;
     for (i = 0; i <= MAX_FIXED_ARITY + 1; ++i) {
@@ -1028,15 +945,5 @@ rbffi_Invoker_Init(VALUE moduleFFI)
 #ifndef _WIN32
     PageSize = sysconf(_SC_PAGESIZE);
 #endif /* _WIN32 */
-
-#if defined(USE_PTHREAD_LOCAL)
-    pthread_key_create(&threadDataKey, thread_data_free);
-    for (i = 0; i < 4; ++i) {
-        pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
-    }
-    pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);
-#else
-    thread_data_id = rb_intern("ffi_thread_local_data");
-#endif /* USE_PTHREAD_LOCAL */
 
 }
