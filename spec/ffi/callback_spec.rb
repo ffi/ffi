@@ -42,6 +42,7 @@ describe "Callback" do
     callback :cbVrS64, [ ], :long_long
     callback :cbVrU64, [ ], :ulong_long
     callback :cbVrP, [], :pointer
+    callback :cbVrZ, [], :bool
     callback :cbCrV, [ :char ], :void
     callback :cbSrV, [ :short ], :void
     callback :cbIrV, [ :int ], :void
@@ -56,6 +57,7 @@ describe "Callback" do
     attach_function :testCallbackVrS32, :testClosureVrI, [ :cbVrS32 ], :int
     attach_function :testCallbackVrU32, :testClosureVrI, [ :cbVrU32 ], :uint
     attach_function :testCallbackVrL, :testClosureVrL, [ :cbVrL ], :long
+    attach_function :testCallbackVrZ, :testClosureVrZ, [ :cbVrZ ], :bool
     attach_function :testCallbackVrUL, :testClosureVrL, [ :cbVrUL ], :ulong
     attach_function :testCallbackVrS64, :testClosureVrLL, [ :cbVrS64 ], :long_long
     attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
@@ -204,6 +206,9 @@ describe "Callback" do
   it "returning :long_long (-1)" do
     LibTest.testCallbackVrS64 { -1 }.should == -1
   end
+  it "returning bool" do
+    LibTest.testCallbackVrZ { true }.should be_true
+  end
   it "returning :pointer (nil)" do
     LibTest.testCallbackVrP { nil }.null?.should be_true
   end
@@ -344,6 +349,7 @@ describe "primitive argument" do
     callback :cbS16rV, [ :short ], :void
     callback :cbU16rV, [ :ushort ], :void
 
+    callback :cbZrV, [ :bool ], :void
     callback :cbS32rV, [ :int ], :void
     callback :cbU32rV, [ :uint ], :void
 
@@ -355,6 +361,7 @@ describe "primitive argument" do
     attach_function :testCallbackU8rV, :testClosureBrV, [ :cbU8rV, :uchar ], :void
     attach_function :testCallbackSrV, :testClosureSrV, [ :cbS16rV, :short ], :void
     attach_function :testCallbackU16rV, :testClosureSrV, [ :cbU16rV, :ushort ], :void
+    attach_function :testCallbackZrV, :testClosureZrV, [ :cbZrV, :bool ], :void
     attach_function :testCallbackIrV, :testClosureIrV, [ :cbS32rV, :int ], :void
     attach_function :testCallbackU32rV, :testClosureIrV, [ :cbU32rV, :uint ], :void
 
@@ -443,6 +450,11 @@ describe "primitive argument" do
     v = 0xdeadbeef
     LibTest.testCallbackU16rV(0xffff) { |i| v = i }
     v.should == 0xffff
+  end
+  it ":bool (true) argument" do
+    v = false
+    LibTest.testCallbackZrV(true) { |i| v = i }
+    v.should be_true
   end
   it ":int (0) argument" do
     v = 0xdeadbeef

@@ -26,12 +26,17 @@
  */
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 void testClosureVrV(void (*closure)(void))
 {
     (*closure)();
 }
 char testClosureVrB(char (*closure)(void))
+{
+    return (*closure)();
+}
+bool testClosureVrZ(bool (*closure)(void))
 {
     return (*closure)();
 }
@@ -62,6 +67,10 @@ double testClosureVrD(double (*closure)(void))
 void* testClosureVrP(void* (*closure)(void))
 {
     return (*closure)();
+}
+void testClosureZrV(void (*closure)(bool), bool a1)
+{
+    (*closure)(a1);
 }
 void testClosureBrV(void (*closure)(char), char a1)
 {
