@@ -13,7 +13,9 @@ typedef signed long sL;
 typedef unsigned long uL;
 typedef float f32;
 typedef double f64;
+#if !defined(__OpenBSD__)
 typedef unsigned long ulong;
+#endif
 typedef void* pointer;
 typedef void* P;
 

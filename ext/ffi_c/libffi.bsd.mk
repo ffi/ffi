@@ -4,9 +4,9 @@
 #
 
 INCFLAGS += -I${LIBFFI_BUILD_DIR}/include
-LOCAL_LIBS += ${LIBFFI}
+LOCAL_LIBS += ${LIBFFI} -lpthread
 
-LIBFFI_CFLAGS = ${FFI_MMAP_EXEC}
+LIBFFI_CFLAGS = ${FFI_MMAP_EXEC} -pthread
 LIBFFI_BUILD_DIR = ${.CURDIR}/libffi
 
 .if "${srcdir}" == "."

@@ -79,6 +79,12 @@ ifeq ($(OS), aix)
   PICFLAGS += -pthread
 endif
 
+ifneq ($(findstring bsd, $(OS)),)
+  SOFLAGS = -shared -static-libgcc
+  CFLAGS += -pthread
+  LDFLAGS += -pthread
+endif
+
 ifneq ($(findstring cygwin, $(OS)),)
   CFLAGS += -mno-cygwin -mwin32
   LIBEXT = dll
