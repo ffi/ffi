@@ -192,6 +192,9 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             case NATIVE_POINTER:
                 param = rbffi_Pointer_NewInstance(*(void **) parameters[i]);
                 break;
+            case NATIVE_BOOL:
+                param = (*(void **) parameters[i]) ? Qtrue : Qfalse;
+                break;
             case NATIVE_CALLBACK:
                 param = rbffi_NativeValue_ToRuby(cbInfo->parameterTypes[i],
                      rb_ary_entry(cbInfo->rbParameterTypes, i), parameters[i], Qnil);
@@ -236,7 +239,9 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
                 *((void **) retval) = NULL;
             }
             break;
-
+        case NATIVE_BOOL:
+            *((ffi_sarg *) retval) = TYPE(rbReturnValue) == T_TRUE ? 1 : 0;
+            break;
         case NATIVE_CALLBACK:
             if (rb_obj_is_kind_of(rbReturnValue, rb_cProc) || rb_respond_to(rbReturnValue, id_call)) {
                 VALUE callback;
