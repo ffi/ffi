@@ -13,6 +13,8 @@
         <itemPath>ext/ffi_c/DynamicLibrary.c</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.h</itemPath>
         <itemPath>ext/ffi_c/Invoker.c</itemPath>
+        <itemPath>ext/ffi_c/LastError.c</itemPath>
+        <itemPath>ext/ffi_c/LastError.h</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.c</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.h</itemPath>
         <itemPath>ext/ffi_c/NullPointer.c</itemPath>
