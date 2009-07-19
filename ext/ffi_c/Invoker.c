@@ -26,6 +26,9 @@
 #if defined(__i386__) && !defined(_WIN32) && !defined(__WIN32__)
 #  define USE_RAW
 #endif
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
+#  define USE_PTHREAD_LOCAL
+#endif
 #define MAX_FIXED_ARITY (3)
 
 #ifndef roundup
@@ -945,5 +948,12 @@ rbffi_Invoker_Init(VALUE moduleFFI)
 #ifndef _WIN32
     PageSize = sysconf(_SC_PAGESIZE);
 #endif /* _WIN32 */
+
+#if defined(USE_PTHREAD_LOCAL)
+    for (i = 0; i < 4; ++i) {
+        pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
+    }
+    pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);
+#endif /* USE_PTHREAD_LOCAL */
 
 }

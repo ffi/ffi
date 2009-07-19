@@ -130,10 +130,6 @@ rbffi_LastError_Init(VALUE moduleFFI)
 
 #if defined(USE_PTHREAD_LOCAL)
     pthread_key_create(&threadDataKey, thread_data_free);
-    for (i = 0; i < 4; ++i) {
-        pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
-    }
-    pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);
 #else
     id_thread_data = rb_intern("ffi_thread_local_data");
 #endif /* USE_PTHREAD_LOCAL */
