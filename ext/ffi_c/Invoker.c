@@ -12,6 +12,9 @@
 #endif
 #include <errno.h>
 #include <ruby.h>
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
+# include <pthread.h>
+#endif
 
 #include <ffi.h>
 #include "rbffi.h"
