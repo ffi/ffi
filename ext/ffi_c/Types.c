@@ -6,47 +6,6 @@
 
 static ID id_find = 0;
 
-ffi_type*
-rbffi_NativeType_ToFFI(NativeType type)
-{
-    switch (type) {
-        case NATIVE_VOID:
-            return &ffi_type_void;
-        case NATIVE_INT8:
-            return &ffi_type_sint8;
-        case NATIVE_UINT8:
-            return &ffi_type_uint8;
-        case NATIVE_INT16:
-            return &ffi_type_sint16;
-        case NATIVE_UINT16:
-            return &ffi_type_uint16;
-        case NATIVE_BOOL:
-        case NATIVE_INT32:
-        case NATIVE_ENUM:
-            return &ffi_type_sint32;
-        case NATIVE_UINT32:
-            return &ffi_type_uint32;
-        case NATIVE_INT64:
-            return &ffi_type_sint64;
-        case NATIVE_UINT64:
-            return &ffi_type_uint64;
-        case NATIVE_FLOAT32:
-            return &ffi_type_float;
-        case NATIVE_FLOAT64:
-            return &ffi_type_double;
-        case NATIVE_STRING:
-        case NATIVE_RBXSTRING:
-        case NATIVE_POINTER:
-        case NATIVE_BUFFER_IN:
-        case NATIVE_BUFFER_OUT:
-        case NATIVE_BUFFER_INOUT:
-        case NATIVE_CALLBACK:
-        case NATIVE_FUNCTION:
-            return &ffi_type_pointer;
-        default:
-            return NULL;
-    }
-}
 
 VALUE
 rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
