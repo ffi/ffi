@@ -15,12 +15,16 @@ typedef struct {
 
     Type* returnType;
     Type** parameterTypes;
+    NativeType* nativeParameterTypes;
     ffi_type* ffiReturnType;
     ffi_type** ffiParameterTypes;
     ffi_cif ffi_cif;
     int parameterCount;
     int flags;
     ffi_abi abi;
+    int callbackCount;
+    VALUE* callbackParameters;
+    VALUE rbEnums;
 } FunctionInfo;
 
 extern VALUE rbffi_FunctionInfoClass;
