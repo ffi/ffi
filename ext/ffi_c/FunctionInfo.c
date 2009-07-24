@@ -48,9 +48,7 @@ static void
 fninfo_mark(FunctionInfo* fnInfo)
 {
     rb_gc_mark(fnInfo->rbReturnType);
-    if (fnInfo->rbParameterTypes != NULL) {
-        rb_gc_mark_locations(&fnInfo->rbParameterTypes[0], &fnInfo->rbParameterTypes[fnInfo->parameterCount]);
-    }
+    rb_gc_mark(fnInfo->rbParameterTypes);
 }
 
 static void
@@ -58,9 +56,6 @@ fninfo_free(FunctionInfo* fnInfo)
 {
     if (fnInfo->parameterTypes != NULL) {
         xfree(fnInfo->parameterTypes);
-    }
-    if (fnInfo->rbParameterTypes != NULL) {
-        xfree(fnInfo->rbParameterTypes);
     }
     if (fnInfo->ffiParameterTypes != NULL) {
         xfree(fnInfo->ffiParameterTypes);
@@ -84,7 +79,7 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
     fnInfo->parameterCount = RARRAY_LEN(rbParamTypes);
     fnInfo->parameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->parameterTypes));
     fnInfo->ffiParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(ffi_type *));
-    fnInfo->rbParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->parameterTypes));
+    fnInfo->rbParameterTypes = rb_ary_new2(fnInfo->parameterCount);
 
     for (i = 0; i < fnInfo->parameterCount; ++i) {
         VALUE entry = rb_ary_entry(rbParamTypes, i);
@@ -95,6 +90,7 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
             rb_raise(rb_eTypeError, "Invalid parameter type (%s)", RSTRING_PTR(typeName));
         }
 
+        rb_ary_push(fnInfo->rbParameterTypes, type);
         Data_Get_Struct(type, Type, fnInfo->parameterTypes[i]);
         fnInfo->ffiParameterTypes[i] = fnInfo->parameterTypes[i]->ffiType;
     }
