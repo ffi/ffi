@@ -40,14 +40,8 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
         case NATIVE_BOOL:
             return ((int) *(ffi_arg *) ptr) ? Qtrue : Qfalse;
         case NATIVE_ENUM:
-        {
-            VALUE enum_obj = rb_funcall(enums, id_find, 1, rbType);
-            if (enum_obj == Qnil) {
-                VALUE s = rb_inspect(rbType);
-                rb_raise(rb_eRuntimeError, "Unknown enumeration: %s", StringValueCStr(s));
-            }
-            return rb_funcall(enum_obj, id_find, 1, INT2NUM((unsigned int) *(ffi_arg *) ptr));
-        }
+            return rb_funcall(rbType, id_find, 1, INT2NUM((unsigned int) *(ffi_arg *) ptr));
+        
         case NATIVE_FUNCTION:
         case NATIVE_CALLBACK: {
             FunctionInfo* cbInfo;
@@ -57,12 +51,11 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
             Data_Get_Struct(rbType, FunctionInfo, cbInfo);
             argv[0] = funcptr;
             argv[1] = cbInfo->rbParameterTypes;
-            argv[2] = ID2SYM(rb_intern("cb")); // just shove a dummy value
-            argv[3] = cbInfo->rbReturnType;
-            argv[4] = rb_str_new2("default");
-            argv[5] = Qnil;
+            argv[2] = cbInfo->rbReturnType;
+            argv[3] = rb_str_new2("default");
+            argv[4] = Qnil;
 
-            return rb_class_new_instance(6, argv, rbffi_InvokerClass);
+            return rb_class_new_instance(5, argv, rbffi_InvokerClass);
         }
 
         default:

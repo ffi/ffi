@@ -86,7 +86,7 @@ struct MethodHandlePool {
 
 static VALUE invoker_allocate(VALUE klass);
 static VALUE invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
-        VALUE rbReturnType, VALUE returnType, VALUE convention, VALUE enums);
+        VALUE returnType, VALUE convention, VALUE enums);
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
 static VALUE invoker_call(int argc, VALUE* argv, VALUE self);
@@ -157,7 +157,7 @@ invoker_allocate(VALUE klass)
 
 static VALUE
 invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
-        VALUE rbReturnTypeSymbol, VALUE returnType, VALUE convention, VALUE enums)
+       VALUE returnType, VALUE convention, VALUE enums)
 {
     Invoker* invoker = NULL;
     ffi_type* ffiReturnType;
@@ -166,7 +166,6 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
     int i;
 
     Check_Type(parameterTypes, T_ARRAY);
-    Check_Type(rbReturnTypeSymbol, T_SYMBOL);
     Check_Type(convention, T_STRING);
     Check_Type(function, T_DATA);
 
@@ -203,10 +202,8 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
     if (!rb_obj_is_kind_of(returnType, rbffi_TypeClass)) {
         rb_raise(rb_eTypeError, "Invalid return type");
     }
+    invoker->rbReturnType = returnType;
     Data_Get_Struct(returnType, Type, invoker->returnType);
-    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_FunctionInfoClass)
-        ? returnType : rbReturnTypeSymbol;
-    
     ffiReturnType = invoker->returnType->ffiType;
     if (ffiReturnType == NULL) {
         rb_raise(rb_eTypeError, "Invalid return type");
@@ -234,12 +231,11 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
 }
 
 static VALUE
-variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnTypeSymbol, VALUE returnType, VALUE convention, VALUE enums)
+variadic_invoker_new(VALUE klass, VALUE function, VALUE returnType, VALUE convention, VALUE enums)
 {
     Invoker* invoker = NULL;
     VALUE retval = Qnil;
 
-    Check_Type(rbReturnTypeSymbol, T_SYMBOL);
     Check_Type(convention, T_STRING);
     Check_Type(function, T_DATA);
 
@@ -247,18 +243,25 @@ variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnTypeSymbol, VALU
     invoker->enums = enums;
     invoker->address = function;
     invoker->function = rbffi_AbstractMemory_Cast(function, rbffi_PointerClass)->address;
+
 #if defined(_WIN32) || defined(__WIN32__)
     invoker->abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
 
-    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_FunctionInfoClass)
-        ? returnType : rbReturnTypeSymbol;
     if (!rb_obj_is_kind_of(returnType, rbffi_TypeClass)) {
         rb_raise(rb_eTypeError, "Invalid return type");
     }
+
+    invoker->rbReturnType = rbffi_Type_Lookup(returnType);
+    if (!RTEST(invoker->rbReturnType)) {
+        VALUE typeName = rb_funcall2(returnType, rb_intern("inspect"), 0, NULL);
+        rb_raise(rb_eTypeError, "Invalid return type (%s)", RSTRING_PTR(typeName));
+    }
+
     Data_Get_Struct(returnType, Type, invoker->returnType);
+
     invoker->paramCount = -1;
     return retval;
 }
@@ -939,7 +942,7 @@ rbffi_Invoker_Init(VALUE moduleFFI)
     rb_global_variable(&classInvoker);
 
     rb_define_alloc_func(classInvoker, invoker_allocate);
-    rb_define_method(classInvoker, "initialize", invoker_initialize, 6);
+    rb_define_method(classInvoker, "initialize", invoker_initialize, 5);
     rb_define_method(classInvoker, "call", invoker_call, -1);
     rb_define_alias(classInvoker, "call0", "call");
     rb_define_alias(classInvoker, "call1", "call");
@@ -950,7 +953,7 @@ rbffi_Invoker_Init(VALUE moduleFFI)
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
     rb_global_variable(&classVariadicInvoker);
     
-    rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 5);
+    rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 4);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     rb_define_alias(classVariadicInvoker, "call", "invoke");
 
