@@ -15,7 +15,7 @@
 #include "Platform.h"
 #include "Types.h"
 #include "LastError.h"
-
+#include "Function.h"
 
 void Init_ffi_c();
 
@@ -48,7 +48,7 @@ rbffi_type_size(VALUE type)
 }
 
 void
-Init_ffi_c() {
+Init_ffi_c(void) {
     moduleFFI = rb_define_module("FFI");
     rb_global_variable(&moduleFFI);
     rb_define_const(moduleFFI, "TypeDefs", typeMap = rb_hash_new());
@@ -65,6 +65,7 @@ Init_ffi_c() {
     rbffi_Pointer_Init(moduleFFI);
     rbffi_AutoPointer_Init(moduleFFI);
     rbffi_NullPointer_Init(moduleFFI);
+    rbffi_Function_Init(moduleFFI);
     rbffi_MemoryPointer_Init(moduleFFI);
     rbffi_Buffer_Init(moduleFFI);
     rbffi_Callback_Init(moduleFFI);
