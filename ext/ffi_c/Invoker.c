@@ -55,7 +55,6 @@ struct Invoker {
     NativeType* paramTypes;
     Type* returnType;
     VALUE rbReturnType;
-    VALUE callbackArray;
     int callbackCount;
     VALUE* callbackParameters;
     ffi_abi abi;
@@ -150,7 +149,6 @@ invoker_allocate(VALUE klass)
     VALUE obj = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
 
     invoker->rbReturnType = Qnil;
-    invoker->callbackArray = Qnil;
     invoker->address = Qnil;
     invoker->enums = Qnil;
 
