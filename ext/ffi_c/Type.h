@@ -8,17 +8,20 @@
 extern "C" {
 #endif
 
+typedef struct Type_ Type;
+
+#include "Types.h"
     
-typedef struct Type_ {
+struct Type_ {
     NativeType nativeType;
     ffi_type* ffiType;
     int size;
     int alignment;
-} Type;
+};
 
 extern VALUE rbffi_TypeClass;
 extern int rbffi_Type_GetIntValue(VALUE type);
-
+extern VALUE rbffi_Type_Lookup(VALUE type);
 
 #ifdef	__cplusplus
 }

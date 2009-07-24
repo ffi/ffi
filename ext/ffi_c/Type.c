@@ -18,6 +18,8 @@ static void builtin_type_free(BuiltinType *);
 VALUE rbffi_TypeClass = Qnil;
 
 static VALUE classBuiltinType = Qnil;
+static VALUE typeMap = Qnil, sizeMap = Qnil;
+static ID id_find_type = 0, id_type_size = 0, id_size = 0;
 
 static VALUE
 type_allocate(VALUE klass)
@@ -149,12 +151,67 @@ builtin_type_inspect(VALUE self)
     return rb_str_new2(buf);
 }
 
+int
+rbffi_type_size(VALUE type)
+{
+    int t = TYPE(type);
+    if (t == T_FIXNUM || t == T_BIGNUM) {
+        return NUM2INT(type);
+    } else if (t == T_SYMBOL) {
+        /*
+         * Try looking up directly in the type and size maps
+         */
+        VALUE nType;
+        if ((nType = rb_hash_aref(typeMap, type)) != Qnil) {
+            VALUE nSize = rb_hash_aref(sizeMap, nType);
+            if (TYPE(nSize) == T_FIXNUM) {
+                return FIX2INT(nSize);
+            }
+        }
+        // Not found - call up to the ruby version to resolve
+        return NUM2INT(rb_funcall2(rbffi_FFIModule, id_type_size, 1, &type));
+    } else {
+        return NUM2INT(rb_funcall2(type, id_size, 0, NULL));
+    }
+}
+
+VALUE
+rbffi_Type_Lookup(VALUE name)
+{
+    int t = TYPE(name);
+    if (t == T_SYMBOL || t == T_STRING) {
+        /*
+         * Try looking up directly in the type Map
+         */
+        VALUE nType;
+        if ((nType = rb_hash_aref(typeMap, name)) != Qnil && rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
+            return nType;
+        }
+    } else if (rb_obj_is_kind_of(name, rbffi_TypeClass)) {
+    
+        return name;
+    }
+
+    /* Nothing found - let caller handle raising exceptions */
+    return Qnil;
+}
+
 void
 rbffi_Type_Init(VALUE moduleFFI)
 {
     VALUE moduleNativeType;
     VALUE classType = rbffi_TypeClass = rb_define_class_under(moduleFFI, "Type", rb_cObject);
     VALUE classEnum =  rb_define_class_under(moduleFFI, "Enum", classType);
+
+    rb_define_const(moduleFFI, "TypeDefs", typeMap = rb_hash_new());
+    rb_define_const(moduleFFI, "SizeTypes", sizeMap = rb_hash_new());
+    rb_global_variable(&typeMap);
+    rb_global_variable(&sizeMap);
+    id_find_type = rb_intern("find_type");
+    id_type_size = rb_intern("type_size");
+    id_size = rb_intern("size");
+
+
     classBuiltinType = rb_define_class_under(rbffi_TypeClass, "Builtin", rbffi_TypeClass);
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
 

@@ -29,11 +29,50 @@
 
 VALUE rbffi_FunctionClass;
 
+typedef struct Function_ {
+    AbstractMemory memory;
+    FunctionInfo* info;
+    void* address;
+
+    VALUE rbAddress;
+    VALUE enums;
+    VALUE rbReturnType;
+    VALUE callbackArray;
+    int callbackCount;
+    VALUE* callbackParameters;
+    ffi_abi abi;
+} Function;
+
+static VALUE
+function_allocate(VALUE klass)
+{
+#ifdef notyet
+    Function *function;
+    VALUE obj = Data_Make_Struct(klass, Function, function_mark, function_free, function);
+
+    function->rbAddress = Qnil;
+    function->rbReturnType = Qnil;
+    function->callbackArray = Qnil;
+    function->address = Qnil;
+    function->enums = Qnil;
+
+    return obj;
+#else
+    return Qnil;
+#endif
+}
+
 void
 rbffi_Function_Init(VALUE moduleFFI)
 {
+    rbffi_FunctionInfo_Init(moduleFFI);
     rbffi_FunctionClass = rb_define_class_under(moduleFFI, "Function", rbffi_PointerClass);
+    
     rb_global_variable(&rbffi_FunctionClass);
-
+    rb_define_alloc_func(rbffi_FunctionClass, function_allocate);
+#ifdef notyet
+    rb_define_method(rbffi_FunctionClass, "initialize", function_initialize, 6);
+    rb_define_method(rbffi_FunctionClass, "call", function_call, -1);
+#endif
 }
 
