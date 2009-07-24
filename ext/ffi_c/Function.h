@@ -11,7 +11,7 @@ extern "C" {
 typedef struct {
     Type type; // The native type of a FunctionInfo object
     VALUE rbReturnType;
-    VALUE* rbParameterTypes;
+    VALUE rbParameterTypes;
 
     Type* returnType;
     Type** parameterTypes;
@@ -22,6 +22,8 @@ typedef struct {
     int flags;
     ffi_abi abi;
 } FunctionInfo;
+
+extern VALUE rbffi_FunctionInfoClass;
 
 void rbffi_Function_Init(VALUE moduleFFI);
 void rbffi_FunctionInfo_Init(VALUE moduleFFI);

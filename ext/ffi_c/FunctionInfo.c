@@ -26,7 +26,7 @@
 static void fninfo_mark(FunctionInfo*);
 static void fninfo_free(FunctionInfo *);
 
-static VALUE rbffi_FunctionInfoClass = Qnil;
+VALUE rbffi_FunctionInfoClass = Qnil;
 
 static VALUE
 fninfo_allocate(VALUE klass)
@@ -129,6 +129,8 @@ void
 rbffi_FunctionInfo_Init(VALUE moduleFFI)
 {
     rbffi_FunctionInfoClass = rb_define_class_under(moduleFFI, "FunctionInfo", rbffi_TypeClass);
+    rb_global_variable(&rbffi_FunctionInfoClass);
+    rb_define_const(moduleFFI, "CallbackInfo", rbffi_FunctionInfoClass);
 
     rb_define_alloc_func(rbffi_FunctionInfoClass, fninfo_allocate);
     rb_define_method(rbffi_FunctionInfoClass, "initialize", fninfo_initialize, -1);

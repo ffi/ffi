@@ -24,6 +24,7 @@
 #include "Pointer.h"
 #include "Struct.h"
 #include "Platform.h"
+#include "Function.h"
 #include "Callback.h"
 #include "Types.h"
 #include "Type.h"
@@ -181,7 +182,7 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
 
     for (i = 0; i < invoker->paramCount; ++i) {
         VALUE entry = rb_ary_entry(parameterTypes, i);
-        if (rb_obj_is_kind_of(entry, rbffi_CallbackInfoClass)) {
+        if (rb_obj_is_kind_of(entry, rbffi_FunctionInfoClass)) {
             invoker->callbackParameters = REALLOC_N(invoker->callbackParameters, VALUE,
                     invoker->callbackCount + 1);
             invoker->callbackParameters[invoker->callbackCount++] = entry;
@@ -202,7 +203,7 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
         rb_raise(rb_eTypeError, "Invalid return type");
     }
     Data_Get_Struct(returnType, Type, invoker->returnType);
-    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_CallbackInfoClass)
+    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_FunctionInfoClass)
         ? returnType : rbReturnTypeSymbol;
     
     ffiReturnType = invoker->returnType->ffiType;
@@ -251,7 +252,7 @@ variadic_invoker_new(VALUE klass, VALUE function, VALUE rbReturnTypeSymbol, VALU
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
 
-    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_CallbackInfoClass)
+    invoker->rbReturnType = rb_obj_is_kind_of(returnType, rbffi_FunctionInfoClass)
         ? returnType : rbReturnTypeSymbol;
     if (!rb_obj_is_kind_of(returnType, rbffi_TypeClass)) {
         rb_raise(rb_eTypeError, "Invalid return type");

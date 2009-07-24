@@ -48,12 +48,13 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
             }
             return rb_funcall(enum_obj, id_find, 1, INT2NUM((unsigned int) *(ffi_arg *) ptr));
         }
+        case NATIVE_FUNCTION:
         case NATIVE_CALLBACK: {
-            CallbackInfo* cbInfo;
+            FunctionInfo* cbInfo;
             VALUE argv[6];
             VALUE funcptr = rbffi_Pointer_NewInstance(*(void **) ptr);
 
-            Data_Get_Struct(rbType, CallbackInfo, cbInfo);
+            Data_Get_Struct(rbType, FunctionInfo, cbInfo);
             argv[0] = funcptr;
             argv[1] = cbInfo->rbParameterTypes;
             argv[2] = ID2SYM(rb_intern("cb")); // just shove a dummy value

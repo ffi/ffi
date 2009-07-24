@@ -8,15 +8,13 @@
 #include "AbstractMemory.h"
 #include "Pointer.h"
 #include "MemoryPointer.h"
+#include "Function.h"
 #include "Callback.h"
 #include "Types.h"
 #include "Type.h"
 #include "rbffi.h"
 #include "compat.h"
 #include "extconf.h"
-
-static void cbinfo_mark(CallbackInfo* cbInfo);
-static void cbinfo_free(CallbackInfo *);
 
 #if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
 static void* ffi_closure_alloc(size_t size, void** code);
@@ -26,106 +24,8 @@ ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
         void* user_data, void* code);
 #endif /* HAVE_FFI_CLOSURE_ALLOC */
 
-static VALUE CallbackInfoClass = Qnil;
 static VALUE NativeCallbackClass = Qnil;
 static ID id_call = Qnil, id_cbtable = Qnil;
-
-VALUE rbffi_CallbackInfoClass = Qnil;
-
-static VALUE
-cbinfo_allocate(VALUE klass)
-{
-    CallbackInfo* cbInfo;
-    VALUE obj = Data_Make_Struct(klass, CallbackInfo, cbinfo_mark, cbinfo_free, cbInfo);
-
-    cbInfo->type.ffiType = &ffi_type_pointer;
-    cbInfo->type.size = ffi_type_pointer.size;
-    cbInfo->type.alignment = ffi_type_pointer.alignment;
-    cbInfo->type.nativeType = NATIVE_CALLBACK;
-    cbInfo->rbReturnType = Qnil;
-
-    return obj;
-}
-
-static VALUE
-cbinfo_initialize(VALUE self, VALUE rbReturnType, VALUE rbParamTypes)
-{
-    CallbackInfo *cbInfo;
-    int paramCount;
-    ffi_status status;
-    int i;
-
-    Check_Type(rbParamTypes, T_ARRAY);
-
-    
-    paramCount = RARRAY_LEN(rbParamTypes);
-
-    Data_Get_Struct(self, CallbackInfo, cbInfo);
-    cbInfo->parameterCount = paramCount;
-    cbInfo->parameterTypes = xcalloc(paramCount, sizeof(*cbInfo->parameterTypes));
-    cbInfo->ffiParameterTypes = xcalloc(paramCount, sizeof(ffi_type *));
-    Data_Get_Struct(rbReturnType, Type, cbInfo->returnType);
-    cbInfo->rbReturnType = rbReturnType;
-    cbInfo->rbParameterTypes = rbParamTypes;
-
-    for (i = 0; i < paramCount; ++i) {
-        VALUE entry = rb_ary_entry(rbParamTypes, i);
-        if (!rb_obj_is_kind_of(entry, rbffi_TypeClass)) {
-            rb_raise(rb_eTypeError, "Invalid parameter type");
-        }
-        Data_Get_Struct(entry, Type, cbInfo->parameterTypes[i]);
-        cbInfo->ffiParameterTypes[i] = cbInfo->parameterTypes[i]->ffiType;
-        if (cbInfo->ffiParameterTypes[i] == NULL) {
-            rb_raise(rb_eArgError, "Unknown argument type: %#x", cbInfo->parameterTypes[i]->nativeType);
-        }
-    }
-
-    if (!rb_obj_is_kind_of(rbReturnType, rbffi_TypeClass)) {
-        rb_raise(rb_eTypeError, "Invalid return type");
-    }
-
-    cbInfo->ffiReturnType = cbInfo->returnType->ffiType;
-    if (cbInfo->ffiReturnType == NULL) {
-        rb_raise(rb_eArgError, "Unknown return type: %#x", cbInfo->returnType->nativeType);
-    }
-#if defined(_WIN32) && defined(notyet)
-    cbInfo->abi = (flags & STDCALL) ? FFI_STDCALL : FFI_DEFAULT_ABI;
-#else
-    cbInfo->abi = FFI_DEFAULT_ABI;
-#endif
-    status = ffi_prep_cif(&cbInfo->ffi_cif, cbInfo->abi, cbInfo->parameterCount, 
-            cbInfo->ffiReturnType, cbInfo->ffiParameterTypes);
-    switch (status) {
-        case FFI_BAD_ABI:
-            rb_raise(rb_eArgError, "Invalid ABI specified");
-        case FFI_BAD_TYPEDEF:
-            rb_raise(rb_eArgError, "Invalid argument type specified");
-        case FFI_OK:
-            break;
-        default:
-            rb_raise(rb_eArgError, "Unknown FFI error");
-    }
-    return self;
-}
-
-static void
-cbinfo_mark(CallbackInfo* cbInfo)
-{
-    rb_gc_mark(cbInfo->rbReturnType);
-    rb_gc_mark(cbInfo->rbParameterTypes);
-}
-
-static void
-cbinfo_free(CallbackInfo* cbInfo)
-{
-    if (cbInfo->parameterTypes != NULL) {
-        xfree(cbInfo->parameterTypes);
-    }
-    if (cbInfo->ffiParameterTypes != NULL) {
-        xfree(cbInfo->ffiParameterTypes);
-    }
-    xfree(cbInfo);
-}
 
 static void
 native_callback_free(NativeCallback* cb)
@@ -139,7 +39,7 @@ native_callback_free(NativeCallback* cb)
 static void
 native_callback_mark(NativeCallback* cb)
 {
-    rb_gc_mark(cb->rbCallbackInfo);
+    rb_gc_mark(cb->rbFunctionInfo);
     rb_gc_mark(cb->rbProc);
 }
 
@@ -147,7 +47,7 @@ static void
 native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
     NativeCallback* cb = (NativeCallback *) user_data;
-    CallbackInfo *cbInfo = cb->cbInfo;
+    FunctionInfo *cbInfo = cb->cbInfo;
     VALUE* rbParams;
     VALUE rbReturnValue;
     int i;
@@ -195,6 +95,8 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
             case NATIVE_BOOL:
                 param = (*(void **) parameters[i]) ? Qtrue : Qfalse;
                 break;
+
+            case NATIVE_FUNCTION:
             case NATIVE_CALLBACK:
                 param = rbffi_NativeValue_ToRuby(cbInfo->parameterTypes[i],
                      rb_ary_entry(cbInfo->rbParameterTypes, i), parameters[i], Qnil);
@@ -242,6 +144,8 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
         case NATIVE_BOOL:
             *((ffi_sarg *) retval) = TYPE(rbReturnValue) == T_TRUE ? 1 : 0;
             break;
+
+        case NATIVE_FUNCTION:
         case NATIVE_CALLBACK:
             if (rb_obj_is_kind_of(rbReturnValue, rb_cProc) || rb_respond_to(rbReturnValue, id_call)) {
                 VALUE callback;
@@ -267,25 +171,25 @@ native_callback_allocate(VALUE klass)
     VALUE obj;
 
     obj = Data_Make_Struct(klass, NativeCallback, native_callback_mark, native_callback_free, closure);
-    closure->rbCallbackInfo = Qnil;
+    closure->rbFunctionInfo = Qnil;
     closure->rbProc = Qnil;
     
     return obj;
 }
 
 VALUE
-rbffi_NativeCallback_NewInstance(VALUE rbCallbackInfo, VALUE rbProc)
+rbffi_NativeCallback_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
 {
     NativeCallback* closure = NULL;
-    CallbackInfo* cbInfo;
+    FunctionInfo* cbInfo;
     VALUE obj;
     ffi_status status;
 
-    Data_Get_Struct(rbCallbackInfo, CallbackInfo, cbInfo);
+    Data_Get_Struct(rbFunctionInfo, FunctionInfo, cbInfo);
     obj = Data_Make_Struct(NativeCallbackClass, NativeCallback, native_callback_mark, native_callback_free, closure);
     closure->cbInfo = cbInfo;
     closure->rbProc = rbProc;
-    closure->rbCallbackInfo = rbCallbackInfo;
+    closure->rbFunctionInfo = rbFunctionInfo;
 
     closure->ffi_closure = ffi_closure_alloc(sizeof(*closure->ffi_closure), &closure->code);
     if (closure->ffi_closure == NULL) {
@@ -360,12 +264,6 @@ ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
 void
 rbffi_Callback_Init(VALUE moduleFFI)
 {
-    rbffi_CallbackInfoClass = CallbackInfoClass = rb_define_class_under(moduleFFI, "CallbackInfo", rbffi_TypeClass);
-    rb_global_variable(&rbffi_CallbackInfoClass);
-
-    rb_define_alloc_func(CallbackInfoClass, cbinfo_allocate);
-    rb_define_method(CallbackInfoClass, "initialize", cbinfo_initialize, 2);
-
     NativeCallbackClass = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
     rb_global_variable(&NativeCallbackClass);
     rb_define_alloc_func(NativeCallbackClass, native_callback_allocate);
