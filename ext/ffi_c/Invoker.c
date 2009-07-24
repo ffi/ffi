@@ -180,23 +180,26 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
 
     for (i = 0; i < invoker->paramCount; ++i) {
         VALUE entry = rb_ary_entry(parameterTypes, i);
-        if (rb_obj_is_kind_of(entry, rbffi_FunctionInfoClass)) {
+        VALUE rbType = rbffi_Type_Lookup(entry);
+        Type* type;
+
+        if (!RTEST(rbType)) {
+            VALUE typeName = rb_funcall2(entry, rb_intern("inspect"), 0, NULL);
+            rb_raise(rb_eTypeError, "Invalid parameter type (%s)", RSTRING_PTR(typeName));
+        }
+
+        Data_Get_Struct(entry, Type, type);
+
+        if (rb_obj_is_kind_of(rbType, rbffi_FunctionInfoClass)) {
             invoker->callbackParameters = REALLOC_N(invoker->callbackParameters, VALUE,
                     invoker->callbackCount + 1);
             invoker->callbackParameters[invoker->callbackCount++] = entry;
-            invoker->paramTypes[i] = NATIVE_CALLBACK;
-            invoker->ffiParamTypes[i] = &ffi_type_pointer;
-        } else if (rb_obj_is_kind_of(entry, rbffi_TypeClass)){
-            int paramType = rbffi_Type_GetIntValue(entry);
-            Type* type;
-            Data_Get_Struct(entry, Type, type);
-            invoker->paramTypes[i] = paramType;
-            invoker->ffiParamTypes[i] = type->ffiType;
         }
-        if (invoker->ffiParamTypes[i] == NULL) {
-            rb_raise(rb_eTypeError, "Invalid parameter type");
-        }
+
+        invoker->paramTypes[i] = type->nativeType;
+        invoker->ffiParamTypes[i] = type->ffiType;
     }
+
     if (!rb_obj_is_kind_of(returnType, rbffi_TypeClass)) {
         rb_raise(rb_eTypeError, "Invalid return type");
     }
@@ -640,6 +643,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 ADJ(param, ADDRESS);
                 ++argidx;
                 break;
+            case NATIVE_FUNCTION:
             case NATIVE_CALLBACK:
                 if (callbackProc != Qnil) {
                     param->ptr = callback_param(callbackProc, invoker->callbackParameters[cbidx++]);
