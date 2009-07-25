@@ -16,6 +16,7 @@
 #include "Types.h"
 #include "LastError.h"
 #include "Function.h"
+#include "Call.h"
 
 void Init_ffi_c(void);
 
@@ -30,6 +31,7 @@ Init_ffi_c(void) {
     
     rbffi_Type_Init(moduleFFI);
     rbffi_LastError_Init(moduleFFI);
+    rbffi_Call_Init(moduleFFI);
     rbffi_Platform_Init(moduleFFI);
     rbffi_AbstractMemory_Init(moduleFFI);
     rbffi_Pointer_Init(moduleFFI);

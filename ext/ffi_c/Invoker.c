@@ -29,14 +29,13 @@
 #include "Types.h"
 #include "Type.h"
 #include "LastError.h"
+#include "Call.h"
 
-#if defined(__i386__) && !defined(_WIN32) && !defined(__WIN32__)
-#  define USE_RAW
-#endif
+
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
 #  define USE_PTHREAD_LOCAL
 #endif
-#define MAX_FIXED_ARITY (3)
+
 
 #ifndef roundup
 #  define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
@@ -92,7 +91,7 @@ static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
 static VALUE invoker_call(int argc, VALUE* argv, VALUE self);
 static VALUE invoker_arity(VALUE self);
-static void* callback_param(VALUE proc, VALUE cbinfo);
+
 #ifdef USE_RAW
 static void attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data);
 static void attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* user_data);
@@ -112,36 +111,6 @@ static int PageSize;
 
 VALUE rbffi_InvokerClass = Qnil;
 static VALUE classInvoker = Qnil, classVariadicInvoker = Qnil;
-static ID to_ptr = 0;
-static ID map_symbol_id = 0;
-
-#ifdef USE_RAW
-#  ifndef __i386__
-#    error "RAW argument packing only supported on i386"
-#  endif
-
-#define INT8_SIZE (sizeof(char))
-#define INT16_SIZE (sizeof(short))
-#define INT32_SIZE (sizeof(int))
-#define INT64_SIZE (sizeof(long long))
-#define FLOAT32_SIZE (sizeof(float))
-#define FLOAT64_SIZE (sizeof(double))
-#define ADDRESS_SIZE (sizeof(void *))
-#define INT8_ADJ (4)
-#define INT16_ADJ (4)
-#define INT32_ADJ (4)
-#define INT64_ADJ (8)
-#define FLOAT32_ADJ (4)
-#define FLOAT64_ADJ (8)
-#define ADDRESS_ADJ (sizeof(void *))
-
-#endif /* USE_RAW */
-
-#ifdef USE_RAW
-#  define ADJ(p, a) ((p) = (FFIStorage*) (((char *) p) + a##_ADJ))
-#else
-#  define ADJ(p, a) (++(p))
-#endif
 
 static VALUE
 invoker_allocate(VALUE klass)
@@ -474,219 +443,6 @@ method_handle_free(MethodHandle* method)
 }
 #endif /* _WIN32 */
 
-typedef union {
-#ifdef USE_RAW
-    signed int s8, s16, s32;
-    unsigned int u8, u16, u32;
-#else
-    signed char s8;
-    unsigned char u8;
-    signed short s16;
-    unsigned short u16;
-    signed int s32;
-    unsigned int u32;
-#endif
-    signed long long i64;
-    unsigned long long u64;
-    void* ptr;
-    float f32;
-    double f64;
-} FFIStorage;
-
-static inline int
-getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* typeName, VALUE enums)
-{
-    int i;
-    if (type == T_SYMBOL && enums != Qnil) {
-        value = rb_funcall(enums, map_symbol_id, 1, value);
-        if (value == Qnil) {
-            rb_raise(rb_eTypeError, "Expected a valid enum constant");
-        }
-    }
-    else if (type != T_FIXNUM && type != T_BIGNUM) {
-        rb_raise(rb_eTypeError, "Expected an Integer parameter");
-    }
-    i = NUM2INT(value);
-    if (i < minValue || i > maxValue) {
-        rb_raise(rb_eRangeError, "Value %d outside %s range", i, typeName);
-    }
-    return i;
-}
-
-static inline int
-getUnsignedInt(VALUE value, int type, int maxValue, const char* typeName)
-{
-    int i;
-    if (type != T_FIXNUM && type != T_BIGNUM) {
-        rb_raise(rb_eTypeError, "Expected an Integer parameter");
-    }
-    i = NUM2INT(value);
-    if (i < 0 || i > maxValue) {
-        rb_raise(rb_eRangeError, "Value %d outside %s range", i, typeName);
-    }
-    return i;
-}
-
-/* Special handling/checking for unsigned 32 bit integers */
-static inline unsigned int
-getUnsignedInt32(VALUE value, int type)
-{
-    long long i;
-    if (type != T_FIXNUM && type != T_BIGNUM) {
-        rb_raise(rb_eTypeError, "Expected an Integer parameter");
-    }
-    i = NUM2LL(value);
-    if (i < 0L || i > 0xffffffffL) {
-        rb_raise(rb_eRangeError, "Value %lld outside unsigned int range", i);
-    }
-    return (unsigned int) i;
-}
-
-static void
-ffi_arg_setup(int argc, VALUE* argv, int paramCount, NativeType* paramTypes,
-        FFIStorage* paramStorage, void** ffiValues,
-        VALUE* callbackParameters, int callbackCount, VALUE enums)
-{
-    VALUE callbackProc = Qnil;
-    FFIStorage* param = &paramStorage[0];
-    int i, argidx, cbidx, argCount;
-
-    if (paramCount != -1 && paramCount != argc) {
-        if (argc == (paramCount - 1) && callbackCount == 1 && rb_block_given_p()) {
-            callbackProc = rb_block_proc();
-        } else {
-            rb_raise(rb_eArgError, "wrong number of arguments (%d for %d)", argc, paramCount);
-        }
-    }
-    argCount = paramCount != -1 ? paramCount : argc;
-    for (i = 0, argidx = 0, cbidx = 0; i < argCount; ++i) {
-        int type = argidx < argc ? TYPE(argv[argidx]) : T_NONE;
-        ffiValues[i] = param;
-        switch (paramTypes[i]) {
-            case NATIVE_INT8:
-                param->s8 = getSignedInt(argv[argidx++], type, -128, 127, "char", Qnil);
-                ADJ(param, INT8);
-                break;
-            case NATIVE_INT16:
-                param->s16 = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short", Qnil);
-                ADJ(param, INT16);
-                break;
-            case NATIVE_INT32:
-            case NATIVE_ENUM:
-                param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int", enums);
-                ADJ(param, INT32);
-                break;
-            case NATIVE_BOOL:
-                if (type != T_TRUE && type != T_FALSE) {
-                    rb_raise(rb_eTypeError, "Expected a Boolean parameter");
-                }
-                param->s32 = argv[argidx++] == Qtrue;
-                ADJ(param, INT32);
-                break;
-            case NATIVE_UINT8:
-                param->u8 = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
-                ADJ(param, INT8);
-                break;
-            case NATIVE_UINT16:
-                param->u16 = getUnsignedInt(argv[argidx++], type, 0xffff, "unsigned short");
-                ADJ(param, INT16);
-                break;
-            case NATIVE_UINT32:
-                /* Special handling/checking for unsigned 32 bit integers */
-                param->u32 = getUnsignedInt32(argv[argidx++], type);
-                ADJ(param, INT32);
-                break;
-            case NATIVE_INT64:
-                if (type != T_FIXNUM && type != T_BIGNUM) {
-                    rb_raise(rb_eTypeError, "Expected an Integer parameter");
-                }
-                param->i64 = NUM2LL(argv[argidx]);
-                ADJ(param, INT64);
-                ++argidx;
-                break;
-            case NATIVE_UINT64:
-                if (type != T_FIXNUM && type != T_BIGNUM) {
-                    rb_raise(rb_eTypeError, "Expected an Integer parameter");
-                }
-                param->u64 = NUM2ULL(argv[argidx]);
-                ADJ(param, INT64);
-                ++argidx;
-                break;
-            case NATIVE_FLOAT32:
-                if (type != T_FLOAT && type != T_FIXNUM) {
-                    rb_raise(rb_eTypeError, "Expected a Float parameter");
-                }
-                param->f32 = (float) NUM2DBL(argv[argidx]);
-                ADJ(param, FLOAT32);
-                ++argidx;
-                break;
-            case NATIVE_FLOAT64:
-                if (type != T_FLOAT && type != T_FIXNUM) {
-                    rb_raise(rb_eTypeError, "Expected a Float parameter");
-                }
-                param->f64 = NUM2DBL(argv[argidx]);
-                ADJ(param, FLOAT64);
-                ++argidx;
-                break;
-            case NATIVE_STRING:
-                if (type == T_STRING) {
-                    if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
-                        rb_raise(rb_eSecurityError, "Unsafe string parameter");
-                    }
-                    param->ptr = StringValueCStr(argv[argidx]);
-                } else if (type == T_NIL) {
-                    param->ptr = NULL;
-                } else {
-                    rb_raise(rb_eArgError, "Invalid String value");
-                }
-                ADJ(param, ADDRESS);
-                ++argidx;
-                break;
-            case NATIVE_POINTER:
-            case NATIVE_BUFFER_IN:
-            case NATIVE_BUFFER_OUT:
-            case NATIVE_BUFFER_INOUT:
-                if (type == T_DATA && rb_obj_is_kind_of(argv[argidx], rbffi_AbstractMemoryClass)) {
-                    param->ptr = ((AbstractMemory *) DATA_PTR(argv[argidx]))->address;
-                } else if (type == T_DATA && rb_obj_is_kind_of(argv[argidx], rbffi_StructClass)) {
-                    AbstractMemory* memory = ((Struct *) DATA_PTR(argv[argidx]))->pointer;
-                    param->ptr = memory != NULL ? memory->address : NULL;
-                } else if (type == T_STRING) {
-                    if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
-                        rb_raise(rb_eSecurityError, "Unsafe string parameter");
-                    }
-                    param->ptr = StringValuePtr(argv[argidx]);
-                } else if (type == T_NIL) {
-                    param->ptr = NULL;
-                } else if (rb_respond_to(argv[argidx], to_ptr)) {
-                    VALUE ptr = rb_funcall2(argv[argidx], to_ptr, 0, NULL);
-                    if (rb_obj_is_kind_of(ptr, rbffi_AbstractMemoryClass) && TYPE(ptr) == T_DATA) {
-                        param->ptr = ((AbstractMemory *) DATA_PTR(ptr))->address;
-                    } else {
-                        rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
-                    }
-
-                } else {
-                    rb_raise(rb_eArgError, ":pointer argument is not a valid pointer");
-                }
-                ADJ(param, ADDRESS);
-                ++argidx;
-                break;
-            case NATIVE_FUNCTION:
-            case NATIVE_CALLBACK:
-                if (callbackProc != Qnil) {
-                    param->ptr = callback_param(callbackProc, callbackParameters[cbidx++]);
-                } else {
-                    param->ptr = callback_param(argv[argidx], callbackParameters[cbidx++]);
-                    ++argidx;
-                }
-                ADJ(param, ADDRESS);
-                break;
-            default:
-                rb_raise(rb_eArgError, "Invalid parameter type: %d", paramTypes[i]);
-        }
-    }
-}
 static inline VALUE
 ffi_invoke(ffi_cif* cif, Invoker* invoker, void** ffiValues)
 {
@@ -720,7 +476,7 @@ invoker_call(int argc, VALUE* argv, VALUE self)
         ffiValues = ALLOCA_N(void *, argCount);
     }
 
-    ffi_arg_setup(argc, argv, invoker->paramCount, invoker->paramTypes, params, ffiValues,
+    rbffi_SetupCallParams(argc, argv, invoker->paramCount, invoker->paramTypes, params, ffiValues,
         invoker->callbackParameters, invoker->callbackCount, invoker->enums);
 
     return ffi_invoke(&invoker->cif, invoker, ffiValues);
@@ -740,7 +496,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* us
     FFIStorage params[MAX_FIXED_ARITY];
 
     if (invoker->paramCount > 0) {
-        ffi_arg_setup(invoker->paramCount, (VALUE *)&parameters[1],
+        rbffi_SetupCallParams(invoker->paramCount, (VALUE *)&parameters[1],
                 invoker->paramCount, invoker->paramTypes, params, ffiValues,
                 invoker->callbackParameters, invoker->callbackCount, invoker->enums);
     }
@@ -760,7 +516,7 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* u
     int argc = parameters[0].sint;
     VALUE* argv = *(VALUE **) &parameters[1];
 
-    ffi_arg_setup(argc, argv, invoker->paramCount, invoker->paramTypes, params, ffiValues,
+    rbffi_SetupCallParams(argc, argv, invoker->paramCount, invoker->paramTypes, params, ffiValues,
         invoker->callbackParameters, invoker->callbackCount, invoker->enums);
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
@@ -781,7 +537,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
         memcpy(&argv[i], parameters[i + 1], sizeof(argv[i]));
     }
     if (invoker->paramCount > 0) {
-        ffi_arg_setup(invoker->paramCount, argv, invoker->paramCount, invoker->paramTypes,
+        rbffi_SetupCallParams(invoker->paramCount, argv, invoker->paramCount, invoker->paramTypes,
                 params, ffiValues, invoker->callbackParameters, invoker->callbackCount,
                 invoker->enums);
     }
@@ -798,7 +554,7 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* use
     int argc = *(int *) parameters[0];
     VALUE* argv = *(VALUE **) parameters[1];
 
-    ffi_arg_setup(argc, argv, invoker->paramCount, invoker->paramTypes, params, 
+    rbffi_SetupCallParams(argc, argv, invoker->paramCount, invoker->paramTypes, params,
         ffiValues, invoker->callbackParameters, invoker->callbackCount,
         invoker->enums);
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
@@ -949,29 +705,19 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
         default:
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
-    ffi_arg_setup(paramCount, argv, invoker->paramCount, paramTypes, params, 
+    rbffi_SetupCallParams(paramCount, argv, invoker->paramCount, paramTypes, params,
         ffiValues, invoker->callbackParameters, invoker->callbackCount,
         invoker->enums);
     return ffi_invoke(&cif, invoker, ffiValues);
 }
 
-static void* 
-callback_param(VALUE proc, VALUE cbInfo)
-{
-    VALUE callback ;
-    if (proc == Qnil) {
-        return NULL ;
-    }
-    callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
-    return ((NativeCallback *) DATA_PTR(callback))->code;
-}
 
 void 
 rbffi_Invoker_Init(VALUE moduleFFI)
 {
     ffi_type* ffiValueType;
     int i;
-
+    
     rbffi_InvokerClass = classInvoker = rb_define_class_under(moduleFFI, "Invoker", rb_cObject);
     rb_global_variable(&rbffi_InvokerClass);
     rb_global_variable(&classInvoker);
@@ -993,9 +739,6 @@ rbffi_Invoker_Init(VALUE moduleFFI)
     rb_define_method(classVariadicInvoker, "initialize", variadic_invoker_initialize, 4);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     rb_define_alias(classVariadicInvoker, "call", "invoke");
-
-    to_ptr = rb_intern("to_ptr");
-    map_symbol_id = rb_intern("__map_symbol");
     
     ffiValueType = (sizeof (VALUE) == sizeof (long))
             ? &ffi_type_ulong : &ffi_type_uint64;
