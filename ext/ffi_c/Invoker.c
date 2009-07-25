@@ -204,6 +204,7 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
     }
     invoker->rbReturnType = returnType;
     Data_Get_Struct(returnType, Type, invoker->returnType);
+
     ffiReturnType = invoker->returnType->ffiType;
     if (ffiReturnType == NULL) {
         rb_raise(rb_eTypeError, "Invalid return type");
@@ -231,28 +232,29 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
 }
 
 static VALUE
-variadic_invoker_new(VALUE klass, VALUE function, VALUE returnType, VALUE convention, VALUE enums)
+variadic_invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes, VALUE returnType, VALUE options)
 {
     Invoker* invoker = NULL;
     VALUE retval = Qnil;
+    VALUE convention = Qnil;
+    VALUE fixed = Qnil;
+    int i;
 
-    Check_Type(convention, T_STRING);
     Check_Type(function, T_DATA);
+    Check_Type(options, T_HASH);
+    convention = rb_hash_aref(options, ID2SYM(rb_intern("convention")));
 
-    retval = Data_Make_Struct(klass, Invoker, invoker_mark, invoker_free, invoker);
-    invoker->enums = enums;
+    Data_Get_Struct(self, Invoker, invoker);
+    invoker->enums = rb_hash_aref(options, ID2SYM(rb_intern("enums")));
     invoker->address = function;
     invoker->function = rbffi_AbstractMemory_Cast(function, rbffi_PointerClass)->address;
 
 #if defined(_WIN32) || defined(__WIN32__)
-    invoker->abi = strcmp(StringValueCStr(convention), "stdcall") == 0 ? FFI_STDCALL : FFI_DEFAULT_ABI;
+    invoker->abi = (RTEST(convention) && strcmp(StringValueCStr(convention), "stdcall") == 0)
+            ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
-
-    if (!rb_obj_is_kind_of(returnType, rbffi_TypeClass)) {
-        rb_raise(rb_eTypeError, "Invalid return type");
-    }
 
     invoker->rbReturnType = rbffi_Type_Lookup(returnType);
     if (!RTEST(invoker->rbReturnType)) {
@@ -263,6 +265,28 @@ variadic_invoker_new(VALUE klass, VALUE function, VALUE returnType, VALUE conven
     Data_Get_Struct(returnType, Type, invoker->returnType);
 
     invoker->paramCount = -1;
+
+    fixed = rb_ary_new2(RARRAY_LEN(parameterTypes) - 1);
+    for (i = 0; i < RARRAY_LEN(parameterTypes); ++i) {
+        VALUE entry = rb_ary_entry(parameterTypes, i);
+        VALUE rbType = rbffi_Type_Lookup(entry);
+        Type* type;
+
+        if (!RTEST(rbType)) {
+            VALUE typeName = rb_funcall2(entry, rb_intern("inspect"), 0, NULL);
+            rb_raise(rb_eTypeError, "Invalid parameter type (%s)", RSTRING_PTR(typeName));
+        }
+        Data_Get_Struct(rbType, Type, type);
+        if (type->nativeType != NATIVE_VARARGS) {
+            rb_ary_push(fixed, entry);
+        }
+    }
+    /*
+     * @fixed and @type_map are used by the parameter mangling ruby code
+     */
+    rb_iv_set(self, "@fixed", fixed);
+    rb_iv_set(self, "@type_map", rb_hash_aref(options, ID2SYM(rb_intern("type_map"))));
+
     return retval;
 }
 
@@ -952,8 +976,10 @@ rbffi_Invoker_Init(VALUE moduleFFI)
     rb_define_method(classInvoker, "attach", invoker_attach, 2);
     classVariadicInvoker = rb_define_class_under(moduleFFI, "VariadicInvoker", rb_cObject);
     rb_global_variable(&classVariadicInvoker);
-    
-    rb_define_singleton_method(classVariadicInvoker, "__new", variadic_invoker_new, 4);
+
+    rb_define_alloc_func(classVariadicInvoker, invoker_allocate);
+
+    rb_define_method(classVariadicInvoker, "initialize", variadic_invoker_initialize, 4);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoker_call, 2);
     rb_define_alias(classVariadicInvoker, "call", "invoke");
 

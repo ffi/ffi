@@ -1,10 +1,5 @@
 module FFI
-  class VariadicInvoker
-    def VariadicInvoker.new(function, arg_types, ret_type, options)
-      invoker = self.__new(function, ret_type, options[:convention].to_s, options[:enums])
-      invoker.init(arg_types, options[:type_map])
-      invoker
-    end
+  class VariadicInvoker    
     def init(arg_types, type_map)
       @fixed = Array.new
       @type_map = type_map
