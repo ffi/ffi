@@ -49,6 +49,7 @@ struct Invoker {
     VALUE address;
     VALUE enums;
     void* function;
+    
     ffi_cif cif;
     int paramCount;
     ffi_type** ffiParamTypes;
@@ -542,21 +543,22 @@ getUnsignedInt32(VALUE value, int type)
 }
 
 static void
-ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTypes,
-        FFIStorage* paramStorage, void** ffiValues)
+ffi_arg_setup(int argc, VALUE* argv, int paramCount, NativeType* paramTypes,
+        FFIStorage* paramStorage, void** ffiValues,
+        VALUE* callbackParameters, int callbackCount, VALUE enums)
 {
     VALUE callbackProc = Qnil;
     FFIStorage* param = &paramStorage[0];
     int i, argidx, cbidx, argCount;
 
-    if (invoker->paramCount != -1 && invoker->paramCount != argc) {
-        if (argc == (invoker->paramCount - 1) && invoker->callbackCount == 1 && rb_block_given_p()) {
+    if (paramCount != -1 && paramCount != argc) {
+        if (argc == (paramCount - 1) && callbackCount == 1 && rb_block_given_p()) {
             callbackProc = rb_block_proc();
         } else {
-            rb_raise(rb_eArgError, "wrong number of arguments (%d for %d)", argc, invoker->paramCount);
+            rb_raise(rb_eArgError, "wrong number of arguments (%d for %d)", argc, paramCount);
         }
     }
-    argCount = invoker->paramCount != -1 ? invoker->paramCount : argc;
+    argCount = paramCount != -1 ? paramCount : argc;
     for (i = 0, argidx = 0, cbidx = 0; i < argCount; ++i) {
         int type = argidx < argc ? TYPE(argv[argidx]) : T_NONE;
         ffiValues[i] = param;
@@ -571,7 +573,7 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
                 break;
             case NATIVE_INT32:
             case NATIVE_ENUM:
-                param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int", invoker->enums);
+                param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int", enums);
                 ADJ(param, INT32);
                 break;
             case NATIVE_BOOL:
@@ -673,9 +675,9 @@ ffi_arg_setup(const Invoker* invoker, int argc, VALUE* argv, NativeType* paramTy
             case NATIVE_FUNCTION:
             case NATIVE_CALLBACK:
                 if (callbackProc != Qnil) {
-                    param->ptr = callback_param(callbackProc, invoker->callbackParameters[cbidx++]);
+                    param->ptr = callback_param(callbackProc, callbackParameters[cbidx++]);
                 } else {
-                    param->ptr = callback_param(argv[argidx], invoker->callbackParameters[cbidx++]);
+                    param->ptr = callback_param(argv[argidx], callbackParameters[cbidx++]);
                     ++argidx;
                 }
                 ADJ(param, ADDRESS);
@@ -718,7 +720,8 @@ invoker_call(int argc, VALUE* argv, VALUE self)
         ffiValues = ALLOCA_N(void *, argCount);
     }
 
-    ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
+    ffi_arg_setup(argc, argv, invoker->paramCount, invoker->paramTypes, params, ffiValues,
+        invoker->callbackParameters, invoker->callbackCount, invoker->enums);
 
     return ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
@@ -737,8 +740,9 @@ attached_method_invoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* us
     FFIStorage params[MAX_FIXED_ARITY];
 
     if (invoker->paramCount > 0) {
-        ffi_arg_setup(invoker, invoker->paramCount, (VALUE *)&parameters[1],
-                invoker->paramTypes, params, ffiValues);
+        ffi_arg_setup(invoker->paramCount, (VALUE *)&parameters[1],
+                invoker->paramCount, invoker->paramTypes, params, ffiValues,
+                invoker->callbackParameters, invoker->callbackCount, invoker->enums);
     }
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
@@ -756,7 +760,8 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, ffi_raw* parameters, void* u
     int argc = parameters[0].sint;
     VALUE* argv = *(VALUE **) &parameters[1];
 
-    ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
+    ffi_arg_setup(argc, argv, invoker->paramCount, invoker->paramTypes, params, ffiValues,
+        invoker->callbackParameters, invoker->callbackCount, invoker->enums);
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 
@@ -776,7 +781,9 @@ attached_method_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
         memcpy(&argv[i], parameters[i + 1], sizeof(argv[i]));
     }
     if (invoker->paramCount > 0) {
-        ffi_arg_setup(invoker, invoker->paramCount, argv, invoker->paramTypes, params, ffiValues);
+        ffi_arg_setup(invoker->paramCount, argv, invoker->paramCount, invoker->paramTypes,
+                params, ffiValues, invoker->callbackParameters, invoker->callbackCount,
+                invoker->enums);
     }
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
@@ -791,7 +798,9 @@ attached_method_vinvoke(ffi_cif* cif, void* retval, void** parameters, void* use
     int argc = *(int *) parameters[0];
     VALUE* argv = *(VALUE **) parameters[1];
 
-    ffi_arg_setup(invoker, argc, argv, invoker->paramTypes, params, ffiValues);
+    ffi_arg_setup(argc, argv, invoker->paramCount, invoker->paramTypes, params, 
+        ffiValues, invoker->callbackParameters, invoker->callbackCount,
+        invoker->enums);
     *((VALUE *) retval) = ffi_invoke(&invoker->cif, invoker, ffiValues);
 }
 #endif
@@ -940,7 +949,9 @@ variadic_invoker_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
         default:
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
-    ffi_arg_setup(invoker, paramCount, argv, paramTypes, params, ffiValues);
+    ffi_arg_setup(paramCount, argv, invoker->paramCount, paramTypes, params, 
+        ffiValues, invoker->callbackParameters, invoker->callbackCount,
+        invoker->enums);
     return ffi_invoke(&cif, invoker, ffiValues);
 }
 
