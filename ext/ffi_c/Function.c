@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <unistd.h>
 #include <errno.h>
 #include <ruby.h>
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
