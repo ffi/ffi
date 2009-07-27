@@ -8,12 +8,15 @@
         <itemPath>ext/ffi_c/AutoPointer.c</itemPath>
         <itemPath>ext/ffi_c/AutoPointer.h</itemPath>
         <itemPath>ext/ffi_c/Buffer.c</itemPath>
+        <itemPath>ext/ffi_c/Call.c</itemPath>
+        <itemPath>ext/ffi_c/Call.h</itemPath>
         <itemPath>ext/ffi_c/Callback.c</itemPath>
         <itemPath>ext/ffi_c/Callback.h</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.c</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.h</itemPath>
         <itemPath>ext/ffi_c/Function.c</itemPath>
         <itemPath>ext/ffi_c/Function.h</itemPath>
+        <itemPath>ext/ffi_c/FunctionInfo.c</itemPath>
         <itemPath>ext/ffi_c/Invoker.c</itemPath>
         <itemPath>ext/ffi_c/LastError.c</itemPath>
         <itemPath>ext/ffi_c/LastError.h</itemPath>
@@ -89,6 +92,7 @@
       <itemPath>Rakefile</itemPath>
       <itemPath>ruby-ffi-Makefile.mk</itemPath>
     </logicalFolder>
+    <itemPath>ext/ffi_c/VariadicInvoker.c</itemPath>
   </logicalFolder>
   <projectmakefile>ruby-ffi-Makefile.mk</projectmakefile>
   <confs>
