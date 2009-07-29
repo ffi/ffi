@@ -22,7 +22,7 @@ end
 
 Rake::ExtensionTask.new('ffi_c', spec) do |ext|
   ext.name = 'ffi_c'                # indicate the name of the extension.
-  ext.lib_dir = BUILD_DIR           # put binaries into this folder.
+  #ext.lib_dir = BUILD_DIR           # put binaries into this folder.
   ext.tmp_dir = BUILD_DIR           # temporary folder used during compilation.
   ext.cross_compile = true                # enable cross compilation (requires cross compile toolchain)
   ext.cross_platform = 'i386-mswin32'     # forces the Windows platform instead of the default one

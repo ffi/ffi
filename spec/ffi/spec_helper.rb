@@ -1,7 +1,11 @@
 require 'rubygems'
+require 'rbconfig'
 require 'spec'
 
-$:.unshift File.join(File.dirname(__FILE__), "..", "..", "lib"), File.join(File.dirname(__FILE__), "..", "..", "build", RUBY_VERSION) if ENV["MRI_FFI"]
+if ENV["MRI_FFI"]
+  $:.unshift File.join(File.dirname(__FILE__), "..", "..", "lib"),
+    File.join(File.dirname(__FILE__), "..", "..", "build", "#{Config::CONFIG['host_cpu''arch']}", "ffi_c", RUBY_VERSION)
+end
 require "ffi"
 
 module TestLibrary

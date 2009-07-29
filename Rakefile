@@ -1,9 +1,11 @@
 require 'rubygems'
+require 'rbconfig'
 
-USE_RAKE_COMPILER = (RUBY_VERSION =~ /1\.9.*/ || RUBY_PLATFORM =~ /java/) ? false : true
+USE_RAKE_COMPILER = (RUBY_PLATFORM =~ /java/) ? false : true
 if USE_RAKE_COMPILER
-  gem 'rake-compiler', '>=0.3.0'
+  gem 'rake-compiler', '>=0.6.0'
   require 'rake/extensiontask'
+  ENV['RUBY_CC_VERSION'] = '1.8.6:1.9.1'
 end
 
 require 'date'
@@ -24,7 +26,8 @@ end
 LIBEXT = Config::CONFIG['host_os'].downcase =~ /darwin/ ? "dylib" : "so"
 GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd/ ? "gmake" : "make"
 LIBTEST = "build/libtest.#{LIBEXT}"
-BUILD_DIR = "build/#{RUBY_VERSION}"
+BUILD_DIR = "build"
+BUILD_EXT_DIR = File.join(BUILD_DIR, "#{Config::CONFIG['arch']}", 'ffi_c', RUBY_VERSION)
 
 # Project general information
 PROJ.name = 'ffi'
@@ -55,7 +58,7 @@ PROJ.rdoc.opts << '-x' << 'ext'
 
 # Ruby
 PROJ.ruby_opts = []
-PROJ.ruby_opts << '-I' << "\"#{BUILD_DIR}\"" unless RUBY_PLATFORM == "java"
+PROJ.ruby_opts << '-I' << BUILD_EXT_DIR unless RUBY_PLATFORM == "java"
 
 #RSpec
 PROJ.spec.opts << '--color' << '-fs'
@@ -75,12 +78,12 @@ else
   desc "Run all specs"
   task :specs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -Ilib -I#{BUILD_DIR} -S spec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -Ilib -I#{BUILD_EXT_DIR} -S spec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -Ilib -I#{BUILD_DIR} -S spec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -Ilib -I#{BUILD_EXT_DIR} -S spec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
   end
 end
 
@@ -90,30 +93,31 @@ task :package => 'gem:package'
 desc "Install the gem locally"
 task :install => 'gem:install'
 
-unless USE_RAKE_COMPILER
-  file "#{BUILD_DIR}/Makefile" do
-    FileUtils.mkdir_p(BUILD_DIR) unless File.directory?(BUILD_DIR)
-    sh %{cd "#{BUILD_DIR}" && #{Gem.ruby} #{Dir.pwd}/ext/ffi_c/extconf.rb}
-  end
-  desc "Compile the native module"
-  task :compile => "#{BUILD_DIR}/Makefile" do
-    sh %{cd "#{BUILD_DIR}"; make}
-  end
-end
+
 desc "Clean all built files"
-task :clean do
-  FileUtils.rm_rf("build")
-  FileUtils.rm_rf("conftest.dSYM")
-  FileUtils.rm_f(Dir["pkg/*.gem"])
+task :distclean => :clobber do
+  FileUtils.rm_rf('build')
+  FileUtils.rm_rf(Dir['lib/**/ffi_c.so'])
+  FileUtils.rm_rf('lib/1.8')
+  FileUtils.rm_rf('lib/1.9')
+  FileUtils.rm_rf('conftest.dSYM')
+  FileUtils.rm_rf('pkg')
 end
+
+
+desc "Build the native test lib"
 task "build/libtest.#{LIBEXT}" do
   sh %{#{GMAKE} -f libtest/GNUmakefile}
 end
+
+
 desc "Build test helper lib"
 task :libtest => "build/libtest.#{LIBEXT}"
+
 desc "Test the extension"
-task :test => [ :specs, :rbxspecs ] do
-end
+task :test => [ :specs, :rbxspecs ]
+
+
 namespace :bench do
   ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
   bench_libs = "-Ilib -I#{BUILD_DIR}" unless RUBY_PLATFORM == "java"
