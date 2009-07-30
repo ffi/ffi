@@ -67,6 +67,7 @@ typedef struct Function_ {
 
 static void function_mark(Function *);
 static void function_free(Function *);
+static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 
 VALUE rbffi_FunctionClass;
 
@@ -104,9 +105,10 @@ function_free(Function *fn)
 static VALUE
 function_initialize(int argc, VALUE* argv, VALUE self)
 {
-    Function* fn = NULL;
+    
     VALUE rbReturnType = Qnil, rbParamTypes = Qnil, rbProc = Qnil, rbOptions = Qnil;
-    VALUE infoArgv[3], invokerArgv[6];
+    VALUE rbFunctionInfo = Qnil;
+    VALUE infoArgv[3];
     int nargs;
 
     nargs = rb_scan_args(argc, argv, "22", &rbReturnType, &rbParamTypes, &rbProc, &rbOptions);
@@ -130,18 +132,34 @@ function_initialize(int argc, VALUE* argv, VALUE self)
         //      Function.new(:int, [ :int ], addr, { :convention => :stdcall })
     }
     
-    if (!rb_obj_is_kind_of(rbProc, rbffi_PointerClass) && !rb_obj_is_kind_of(rbProc, rb_cProc)) {
-        rb_raise(rb_eTypeError, "wrong argument type.  Expected pointer or proc");
-    }
-
-    Data_Get_Struct(self, Function, fn);
-
     infoArgv[0] = rbReturnType;
     infoArgv[1] = rbParamTypes;
     infoArgv[2] = rbOptions;
-    fn->rbFunctionInfo = rb_class_new_instance(rbOptions != Qnil ? 3 : 2, infoArgv, rbffi_FunctionInfoClass);
+    rbFunctionInfo = rb_class_new_instance(rbOptions != Qnil ? 3 : 2, infoArgv, rbffi_FunctionInfoClass);
+
+    function_init(self, rbFunctionInfo, rbProc);
+    
+    return self;
+}
+
+VALUE
+rbffi_Function_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
+{
+    return function_init(function_allocate(rbffi_FunctionClass), rbFunctionInfo, rbProc);
+}
+
+static VALUE
+function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
+{
+    VALUE invokerArgv[6];
+    Function* fn = NULL;
+    
+    Data_Get_Struct(self, Function, fn);
+
+    fn->rbFunctionInfo = rbFunctionInfo;
 
     Data_Get_Struct(fn->rbFunctionInfo, FunctionInfo, fn->info);
+
     if (rb_obj_is_kind_of(rbProc, rbffi_PointerClass)) {
         AbstractMemory* memory;
         Data_Get_Struct(rbProc, AbstractMemory, memory);
@@ -149,7 +167,7 @@ function_initialize(int argc, VALUE* argv, VALUE self)
         fn->rbAddress = rbProc;
 
     } else if (rb_obj_is_kind_of(rbProc, rb_cProc)) {
-        
+
         fn->rbAddress = rbffi_NativeCallback_NewInstance(fn->rbFunctionInfo, rbProc);
         NativeCallback* cb;
         Data_Get_Struct(fn->rbAddress, NativeCallback, cb);
@@ -167,15 +185,12 @@ function_initialize(int argc, VALUE* argv, VALUE self)
     invokerArgv[0] = self;
     invokerArgv[1] = fn->info->rbParameterTypes;
     invokerArgv[2] = fn->info->rbReturnType;
-    invokerArgv[3] = Qnil;
-    invokerArgv[4] = Qnil;
-    if (rb_obj_is_kind_of(rbOptions, rb_cHash)) {
-        invokerArgv[3] = rb_hash_aref(rbOptions, ID2SYM(rb_intern("convention")));
-        invokerArgv[4] = rb_hash_aref(rbOptions, ID2SYM(rb_intern("enums")));
-    }
-    if (!RTEST(invokerArgv[3])) {
-        invokerArgv[3] = rb_str_new2("default");
-    }
+#ifdef _WIN32
+    invokerArgv[3] = (fn->info->abi == FFI_STDCALL) ? rb_str_new2("stdcall") : rb_str_new2("default");
+#else
+    invokerArgv[3] = rb_str_new2("default");
+#endif
+    invokerArgv[4] = fn->info->rbEnums;
 
     fn->rbInvoker = rb_class_new_instance(5, invokerArgv, rbffi_InvokerClass);
 

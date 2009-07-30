@@ -2,6 +2,7 @@
 #include "Pointer.h"
 #include "rbffi.h"
 #include "Callback.h"
+#include "Function.h"
 #include "Types.h"
 
 static ID id_find = 0;
@@ -44,18 +45,7 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
         
         case NATIVE_FUNCTION:
         case NATIVE_CALLBACK: {
-            FunctionInfo* cbInfo;
-            VALUE argv[6];
-            VALUE funcptr = rbffi_Pointer_NewInstance(*(void **) ptr);
-
-            Data_Get_Struct(rbType, FunctionInfo, cbInfo);
-            argv[0] = funcptr;
-            argv[1] = cbInfo->rbParameterTypes;
-            argv[2] = cbInfo->rbReturnType;
-            argv[3] = rb_str_new2("default");
-            argv[4] = Qnil;
-
-            return rb_class_new_instance(5, argv, rbffi_InvokerClass);
+            return rbffi_Function_NewInstance(rbType, rbffi_Pointer_NewInstance(*(void **) ptr));
         }
 
         default:
