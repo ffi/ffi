@@ -25,46 +25,29 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RBFFI_FUNCTION_H
-#define	RBFFI_FUNCTION_H
+#ifndef _METHODHANDLE_H
+#define	_METHODHANDLE_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#include <stdbool.h>
-#include "Type.h"
-#include <ffi.h>
+#include <ruby.h>
+#include "Function.h"
 
-typedef struct FunctionInfo_ {
-    Type type; // The native type of a FunctionInfo object
-    VALUE rbReturnType;
-    VALUE rbParameterTypes;
+    
+typedef struct MethodHandlePool MethodHandlePool;
+typedef struct MethodHandle MethodHandle;
 
-    Type* returnType;
-    Type** parameterTypes;
-    NativeType* nativeParameterTypes;
-    ffi_type* ffiReturnType;
-    ffi_type** ffiParameterTypes;
-    ffi_cif ffi_cif;
-    int parameterCount;
-    int flags;
-    ffi_abi abi;
-    int callbackCount;
-    VALUE* callbackParameters;
-    VALUE rbEnums;
-    bool ignoreErrno;
-} FunctionInfo;
 
-extern VALUE rbffi_FunctionInfoClass, rbffi_FunctionClass;
-
-void rbffi_Function_Init(VALUE moduleFFI);
-VALUE rbffi_Function_NewInstance(VALUE functionInfo, VALUE proc);
-void rbffi_FunctionInfo_Init(VALUE moduleFFI);
+MethodHandle* rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function);
+void rbffi_MethodHandle_Free(MethodHandle* handle);
+void* rbffi_MethodHandle_CodeAddress(MethodHandle* handle);
+void rbffi_MethodHandle_Init(VALUE module);
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* RBFFI_FUNCTION_H */
+#endif	/* _METHODHANDLE_H */
 

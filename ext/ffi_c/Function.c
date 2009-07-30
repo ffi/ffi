@@ -25,6 +25,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "MethodHandle.h"
+
+
 #include <sys/param.h>
 #include <sys/types.h>
 #ifndef _WIN32
@@ -59,12 +62,12 @@ typedef struct Function_ {
     AbstractMemory memory;
     FunctionInfo* info;
     void* address;
+    MethodHandle* methodHandle;
     bool autorelease;
     bool allocated;
 
     VALUE rbAddress;
     VALUE rbFunctionInfo;
-    VALUE rbInvoker;
 } Function;
 
 static void function_mark(Function *);
@@ -86,7 +89,6 @@ function_allocate(VALUE klass)
 
     fn->rbAddress = Qnil;
     fn->rbFunctionInfo = Qnil;
-    fn->rbInvoker = Qnil;
     fn->autorelease = true;
     fn->allocated = false;
 
@@ -98,13 +100,13 @@ function_mark(Function *fn)
 {
     rb_gc_mark(fn->rbAddress);
     rb_gc_mark(fn->rbFunctionInfo);
-    rb_gc_mark(fn->rbInvoker);
 }
 
 static void
 function_free(Function *fn)
 {
-
+    rbffi_MethodHandle_Free(fn->methodHandle);
+    free(fn);
 }
 
 static VALUE
@@ -156,7 +158,6 @@ rbffi_Function_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
 static VALUE
 function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 {
-    VALUE invokerArgv[6];
     Function* fn = NULL;
     
     Data_Get_Struct(self, Function, fn);
@@ -184,20 +185,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         rb_raise(rb_eTypeError, "wrong argument type.  Expected pointer or proc");
     }
 
-    //
-    // For now, just delegate to a standard invoker instance, until it is refactored
-    //
-    invokerArgv[0] = self;
-    invokerArgv[1] = fn->info->rbParameterTypes;
-    invokerArgv[2] = fn->info->rbReturnType;
-#ifdef _WIN32
-    invokerArgv[3] = (fn->info->abi == FFI_STDCALL) ? rb_str_new2("stdcall") : rb_str_new2("default");
-#else
-    invokerArgv[3] = rb_str_new2("default");
-#endif
-    invokerArgv[4] = fn->info->rbEnums;
-
-    fn->rbInvoker = rb_class_new_instance(5, invokerArgv, rbffi_InvokerClass);
+    fn->methodHandle = rbffi_MethodHandle_Alloc(fn->info, fn->memory.address);
 
     return self;
 }
@@ -234,13 +222,30 @@ function_call(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
-function_attach(int argc, VALUE* argv, VALUE self)
+function_attach(VALUE self, VALUE module, VALUE name)
 {
     Function* fn;
+    char var[1024];
 
     Data_Get_Struct(self, Function, fn);
 
-    return rb_funcall2(fn->rbInvoker, rb_intern("attach"), argc, argv);
+    if (fn->info->parameterCount == -1) {
+        rb_raise(rb_eRuntimeError, "Cannot attach variadic functions");
+    }
+    //
+    // Stash the Function in a module variable so it does not get garbage collected
+    //
+    snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
+    rb_cv_set(module, var, self);
+
+    rb_define_module_function(module, StringValueCStr(name),
+            rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
+
+    
+    rb_define_method(module, StringValueCStr(name),
+            rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
+
+    return self;
 }
 
 static VALUE
@@ -290,7 +295,7 @@ rbffi_Function_Init(VALUE moduleFFI)
 
     rb_define_method(rbffi_FunctionClass, "initialize", function_initialize, -1);
     rb_define_method(rbffi_FunctionClass, "call", function_call, -1);
-    rb_define_method(rbffi_FunctionClass, "attach", function_attach, -1);
+    rb_define_method(rbffi_FunctionClass, "attach", function_attach, 2);
     rb_define_method(rbffi_FunctionClass, "free", function_release, 0);
     rb_define_method(rbffi_FunctionClass, "autorelease=", function_set_autorelease, 1);
     rb_define_method(rbffi_FunctionClass, "autorelease", function_autorelease_p, 0);

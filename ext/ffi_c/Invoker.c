@@ -172,6 +172,7 @@ invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes,
     if (!rb_obj_is_kind_of(returnType, rbffi_TypeClass)) {
         rb_raise(rb_eTypeError, "Invalid return type");
     }
+    
     invoker->rbReturnType = returnType;
     Data_Get_Struct(returnType, Type, invoker->returnType);
 
