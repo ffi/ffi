@@ -265,6 +265,14 @@ callback_param(VALUE proc, VALUE cbInfo)
     if (proc == Qnil) {
         return NULL ;
     }
+
+    // Handle Function pointers here
+    if (rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
+        AbstractMemory* ptr;
+        Data_Get_Struct(proc, AbstractMemory, ptr);
+        return ptr->address;
+    }
+
     callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
     return ((NativeCallback *) DATA_PTR(callback))->code;
 }
