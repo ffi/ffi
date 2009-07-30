@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #ifndef _WIN32
 #  include <unistd.h>
+#  include <pthread.h>
 #endif
 #include <errno.h>
 #include <ruby.h>
