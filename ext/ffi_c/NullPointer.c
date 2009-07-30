@@ -22,6 +22,7 @@ nullptr_allocate(VALUE klass)
     p->address = 0;
     p->size = 0;
     p->ops = &rbffi_NullPointerOps;
+    p->access = 0;
 
     return retval;
 }

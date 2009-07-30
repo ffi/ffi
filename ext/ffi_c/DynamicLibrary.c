@@ -155,6 +155,7 @@ symbol_new(VALUE library, void* address, VALUE name)
 
     sym->memory.address = address;
     sym->memory.size = LONG_MAX;
+    sym->memory.access = MEM_RD | MEM_WR;
     sym->library = library;
     sym->name = name;
 

@@ -79,6 +79,9 @@ function_allocate(VALUE klass)
 
     obj = Data_Make_Struct(klass, Function, function_mark, function_free, fn);
 
+    fn->memory.access = MEM_RD;
+    fn->memory.ops = &rbffi_AbstractMemoryOps;
+
     fn->rbAddress = Qnil;
     fn->rbFunctionInfo = Qnil;
     fn->rbInvoker = Qnil;

@@ -22,6 +22,7 @@ memory_allocate(VALUE klass)
     VALUE obj;
     obj = Data_Make_Struct(klass, AbstractMemory, NULL, -1, memory);
     memory->ops = &rbffi_AbstractMemoryOps;
+    memory->access = MEM_RD | MEM_WR;
 
     return obj;
 }
@@ -33,6 +34,7 @@ memory_op_put_##name(AbstractMemory* memory, long off, VALUE value) \
 { \
     type tmp = (type) toNative(value); \
     checkBounds(memory, off, sizeof(type)); \
+    checkWrite(memory); \
     memcpy(memory->address + off, &tmp, sizeof(tmp)); \
 } \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
@@ -50,6 +52,7 @@ memory_op_get_##name(AbstractMemory* memory, long off) \
 { \
     type tmp; \
     checkBounds(memory, off, sizeof(type)); \
+    checkRead(memory); \
     memcpy(&tmp, memory->address + off, sizeof(tmp)); \
     return fromNative(tmp); \
 } \
@@ -72,6 +75,7 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     AbstractMemory* memory = MEMORY(self); \
     long i; \
     checkBounds(memory, off, count * sizeof(type)); \
+    checkWrite(memory); \
     for (i = 0; i < count; i++) { \
         type tmp = (type) toNative(RARRAY_PTR(ary)[i]); \
         memcpy(memory->address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
@@ -87,6 +91,7 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     AbstractMemory* memory = MEMORY(self); \
     long i; \
     checkBounds(memory, off, count * sizeof(type)); \
+    checkRead(memory); \
     VALUE retVal = rb_ary_new2(count); \
     for (i = 0; i < count; ++i) { \
         type tmp; \
@@ -133,7 +138,9 @@ memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
 {
     AbstractMemory* memory = MEMORY(self);
     long off = NUM2LONG(offset);
+
     checkBounds(memory, off, sizeof(void *));
+    checkWrite(memory);
 
     if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, id_call)) {
         VALUE callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
@@ -172,6 +179,8 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
     off = NUM2LONG(offset);
     len = nargs > 1 && length != Qnil ? NUM2LONG(length) : (ptr->size - off);
     checkBounds(ptr, off, len);
+    checkRead(ptr);
+
     end = memchr(ptr->address + off, 0, len);
     return rb_tainted_str_new((char *) ptr->address + off,
             (end != NULL ? end - ptr->address - off : len));
@@ -191,6 +200,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
     retVal = rb_ary_new2(count);
 
     Data_Get_Struct(self, AbstractMemory, ptr);
+    checkRead(ptr);
 
     if (countnum != Qnil) {
         int i;
@@ -227,6 +237,7 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
     len = RSTRING_LEN(str);
 
     checkBounds(ptr, off, len + 1);
+    checkWrite(ptr);
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
     }
@@ -244,6 +255,7 @@ memory_get_bytes(VALUE self, VALUE offset, VALUE length)
     off = NUM2LONG(offset);
     len = NUM2LONG(length);
     checkBounds(ptr, off, len);
+    checkRead(ptr);
     return rb_tainted_str_new((char *) ptr->address + off, len);
 }
 
@@ -267,6 +279,8 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
         rb_raise(rb_eRangeError, "index+length is greater than size of string");
     }
     checkBounds(ptr, off, len);
+    checkWrite(ptr);
+
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
     }
@@ -300,6 +314,7 @@ memory_op_get_strptr(AbstractMemory* ptr, long offset)
 
     if (ptr != NULL && ptr->address != NULL) {
         checkBounds(ptr, offset, sizeof(tmp));
+        checkRead(ptr);
         memcpy(&tmp, ptr->address + offset, sizeof(tmp));
     }
 

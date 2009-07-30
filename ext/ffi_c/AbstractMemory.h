@@ -11,6 +11,11 @@
 extern "C" {
 #endif
 
+
+#define MEM_RD   0x01
+#define MEM_WR   0x02
+#define MEM_CODE 0x04
+
 typedef struct AbstractMemory_ AbstractMemory;
 
 typedef struct {
@@ -36,6 +41,7 @@ typedef struct {
 struct AbstractMemory_ {
     char* address; // Use char* instead of void* to ensure adding to it works correctly
     long size;
+    int access;
     MemoryOps* ops;
 };
 
@@ -49,9 +55,26 @@ checkBounds(AbstractMemory* mem, long off, long len)
     }
 }
 
+static inline void
+checkRead(AbstractMemory* mem)
+{
+    if ((mem->access & MEM_RD) == 0) {
+        rb_raise(rb_eRuntimeError, "Reading from memory location %p not allowed", mem->address);
+    }
+}
+
+static inline void
+checkWrite(AbstractMemory* mem)
+{
+    if ((mem->access & MEM_WR) == 0) {
+        rb_raise(rb_eRuntimeError, "Writing to memory location %p not allowed", mem->address);
+    }
+}
+
 #define MEMORY(obj) rbffi_AbstractMemory_Cast((obj), rbffi_AbstractMemoryClass)
 #define MEMORY_PTR(obj) MEMORY((obj))->address
 #define MEMORY_LEN(obj) MEMORY((obj))->size
+
 
 extern void rbffi_AbstractMemory_Init(VALUE ffiModule);
 

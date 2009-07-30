@@ -38,6 +38,7 @@ memptr_allocate(VALUE klass)
     MemoryPointer* p;
     VALUE obj = Data_Make_Struct(klass, MemoryPointer, NULL, memptr_release, p);
     p->memory.ops = &rbffi_AbstractMemoryOps;
+    p->memory.access = MEM_RD | MEM_WR;
 
     return obj;
 }

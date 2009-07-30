@@ -30,6 +30,7 @@ rbffi_Pointer_NewInstance(void* addr)
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
     p->memory.ops = &rbffi_AbstractMemoryOps;
+    p->memory.access = MEM_RD | MEM_WR;
     p->parent = Qnil;
 
     return obj;
@@ -44,6 +45,7 @@ ptr_allocate(VALUE klass)
     obj = Data_Make_Struct(rbffi_PointerClass, Pointer, NULL, -1, p);
     p->parent = Qnil;
     p->memory.ops = &rbffi_AbstractMemoryOps;
+    p->memory.access = MEM_RD | MEM_WR;
 
     return obj;
 }
@@ -70,6 +72,7 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
     }
     if (p->memory.address == NULL) {
         p->memory.ops = &rbffi_NullPointerOps;
+        p->memory.access = 0;
     }
 
     p->memory.size = LONG_MAX;
@@ -94,6 +97,7 @@ ptr_plus(VALUE self, VALUE offset)
     p->memory.address = ptr->address + off;
     p->memory.size = ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off;
     p->memory.ops = &rbffi_AbstractMemoryOps;
+    p->memory.access = ptr->access;
     p->parent = self;
 
     return retval;

@@ -26,6 +26,7 @@ autoptr_allocate(VALUE klass)
     VALUE obj = Data_Make_Struct(klass, AutoPointer, autoptr_mark, -1, p);
     p->parent = Qnil;
     p->memory.ops = &rbffi_AbstractMemoryOps;
+    p->memory.access = MEM_RD | MEM_WR;
 
     return obj;
 }
