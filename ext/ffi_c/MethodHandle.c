@@ -63,6 +63,9 @@
 #ifndef roundup
 #  define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
 #endif
+#ifdef _WIN32
+  typedef char* caddr_t;
+#endif
 
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
 #  define pool_lock(p) pthread_mutex_lock(&(p)->mutex)
@@ -78,8 +81,12 @@
 #  define METHOD_PARAMS ffi_raw*
 #else
 #  define METHOD_CLOSURE ffi_closure
-#  define METHOD_PARAMS void*
+#  define METHOD_PARAMS void**
 #endif
+
+static void* allocatePage(void);
+static bool freePage(void *);
+static bool protectPage(void *);
 
 typedef void (*methodfn)(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 static void attached_method_invoke0(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
@@ -96,14 +103,12 @@ struct MethodHandle {
     MethodHandle* next;
 };
 
-#if !defined(_WIN32) && !defined(__WIN32__)
 struct MethodHandlePool {
-#ifdef HAVE_NATIVETHREAD
+#if defined (HAVE_NATIVETHREAD) && !defined(_WIN32)
     pthread_mutex_t mutex;
 #endif
     MethodHandle* list;
 };
-#endif /* _WIN32 */
 
 static ffi_type* methodHandleParamTypes[]= {
     &ffi_type_sint,
@@ -147,10 +152,10 @@ rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function)
 
     closureSize = roundup(sizeof(METHOD_CLOSURE), 8);
     nclosures = pageSize / closureSize;
-    page = mmap(NULL, pageSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (page == (caddr_t) -1) {
+    page = allocatePage();
+    if (page == NULL) {
         pool_unlock(pool);
-        rb_raise(rb_eRuntimeError, "mmap failed. errno=%d (%s)", errno, strerror(errno));
+        rb_raise(rb_eRuntimeError, "failed to allocate a page. errno=%d (%s)", errno, strerror(errno));
     }
 
     /* figure out which function to bounce the execution through */
@@ -197,11 +202,11 @@ error:
             list = list->next;
             free(method);
         }
-        munmap(page, pageSize);
+        freePage(page);
         pool_unlock(pool);
         rb_raise(rb_eRuntimeError, "%s", errmsg);
     }
-    mprotect(page, pageSize, PROT_READ | PROT_EXEC);
+    protectPage(page);
 
     /* take the first member of the list for this handle */
     method = list;
@@ -282,7 +287,7 @@ attached_method_fast_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters
     int argc = parameters[0].sint;
     VALUE* argv = *(VALUE **) &parameters[1];
 #else
-    int argc = *(ffi_sarg **) parameters[0];
+    int argc = *(ffi_sarg *) parameters[0];
     VALUE* argv = *(VALUE **) parameters[1];
 #endif
 
@@ -308,7 +313,7 @@ attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, voi
     int argc = parameters[0].sint;
     VALUE* argv = *(VALUE **) &parameters[1];
 #else
-    int argc = *(ffi_sarg **) parameters[0];
+    int argc = *(ffi_sarg *) parameters[0];
     VALUE* argv = *(VALUE **) parameters[1];
 #endif
 
@@ -331,6 +336,37 @@ getPageSize()
 #endif
 }
 
+static void*
+allocatePage(void)
+{
+#ifdef _WIN32
+    return VirtualAlloc(NULL, pageSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+#else
+    caddr_t page = mmap(NULL, pageSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    return (page != (caddr_t) -1) ? page : NULL;
+#endif
+}
+
+static bool
+freePage(void *addr)
+{
+#ifdef _WIN32
+    return VirtualFree(addr, 0, MEM_RELEASE);
+#else
+    munmap(addr, pageSize) == 0;
+#endif
+}
+
+static bool
+protectPage(void* page)
+{
+#ifdef _WIN32
+    DWORD oldProtect;
+    return VirtualProtect(page, pageSize, PAGE_EXECUTE_READ, &oldProtect);
+#else
+    return mprotect(page, pageSize, PROT_READ | PROT_EXEC) == 0;
+#endif
+}
 
 void
 rbffi_MethodHandle_Init(VALUE module)
