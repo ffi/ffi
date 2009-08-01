@@ -145,7 +145,7 @@ builtin_type_inspect(VALUE self)
     BuiltinType *type;
 
     Data_Get_Struct(self, BuiltinType, type);
-    snprintf(buf, sizeof(buf), "#<FFI::Type::Builtin:%ssize=%d alignment=%d>",
+    snprintf(buf, sizeof(buf), "#<FFI::Type::Builtin:%s size=%d alignment=%d>",
             type->name, type->type.size, type->type.alignment);
 
     return rb_str_new2(buf);
