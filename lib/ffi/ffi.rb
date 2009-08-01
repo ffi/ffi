@@ -88,7 +88,7 @@ module FFI
     if args.length > 0 && args[args.length - 1] == FFI::NativeType::VARARGS
       invoker = FFI::VariadicInvoker.new(function, args, find_type(native_ret_type), options)
     else
-      invoker = FFI::Invoker.new(function, args, find_type(native_ret_type), options[:convention].to_s, options[:enums])
+      invoker = FFI::Function.new(find_type(native_ret_type), args, function, options)
     end
     raise NotFoundError.new(name, library.name) unless invoker
     return invoker
