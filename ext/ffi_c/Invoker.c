@@ -141,20 +141,10 @@ static VALUE
 invoker_call(int argc, VALUE* argv, VALUE self)
 {
     Invoker* invoker;
-    FFIStorage* params = NULL;
-    void** ffiValues = NULL;
-
+    
     Data_Get_Struct(self, Invoker, invoker);
 
-    params = ALLOCA_N(FFIStorage, invoker->fnInfo->parameterCount);
-    ffiValues = ALLOCA_N(void *, invoker->fnInfo->parameterCount);
-    
-    rbffi_SetupCallParams(argc, argv, invoker->fnInfo->parameterCount, invoker->fnInfo->nativeParameterTypes,
-        params, ffiValues,
-        invoker->fnInfo->callbackParameters, invoker->fnInfo->callbackCount, invoker->fnInfo->rbEnums);
-
-    return ffi_invoke(&invoker->fnInfo->ffi_cif, invoker->function, invoker->fnInfo->returnType,
-        ffiValues, invoker->fnInfo->rbReturnType, invoker->fnInfo->rbEnums);
+    return rbffi_CallFunction(argc, argv, invoker->function, invoker->fnInfo);
 }
 
 

@@ -54,7 +54,6 @@
 typedef struct Function_ {
     AbstractMemory memory;
     FunctionInfo* info;
-    void* address;
     MethodHandle* methodHandle;
     bool autorelease;
     bool allocated;
@@ -187,31 +186,10 @@ static VALUE
 function_call(int argc, VALUE* argv, VALUE self)
 {
     Function* fn;
-    FFIStorage retval;
-    void** ffiValues;
-    FFIStorage* params;
 
     Data_Get_Struct(self, Function, fn);
 
-    ffiValues = ALLOCA_N(void *, fn->info->parameterCount);
-    params = ALLOCA_N(FFIStorage, fn->info->parameterCount);
-
-    rbffi_SetupCallParams(argc, argv,
-        fn->info->parameterCount, fn->info->nativeParameterTypes, params, ffiValues,
-        fn->info->callbackParameters, fn->info->callbackCount, fn->info->rbEnums);
-
-#ifdef USE_RAW
-    ffi_raw_call(&fn->info->ffi_cif, FFI_FN(fn->memory.address), &retval, (ffi_raw *) ffiValues[0]);
-#else
-    ffi_call(&fn->info->ffi_cif, FFI_FN(fn->memory.address), &retval, ffiValues);
-#endif
-
-    if (!fn->info->ignoreErrno) {
-        rbffi_save_errno();
-    }
-
-    return rbffi_NativeValue_ToRuby(fn->info->returnType, fn->info->rbReturnType, &retval,
-        fn->info->rbEnums);
+    return rbffi_CallFunction(argc, argv, fn->memory.address, fn->info);
 }
 
 static VALUE
