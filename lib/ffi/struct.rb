@@ -27,10 +27,10 @@ module FFI
         @off
       end
       def self.size
-        const_get(:SIZE)
+        const_get(:TYPE).size
       end
       def self.align
-        const_get(:ALIGN)
+        const_get(:TYPE).alignment
       end
     end
 
@@ -219,6 +219,10 @@ module FFI
           array << @type.new(0).get(ptr + index * @type.size)
         end
       end
+    end
+    
+    def self.by_value
+      ::FFI::StructByValue.new(self)
     end
 
     def self.size

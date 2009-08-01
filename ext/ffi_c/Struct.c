@@ -1,3 +1,32 @@
+/*
+ * Copyright (c) 2008, 2009, Wayne Meissner
+ * Copyright (c) 2009, Luc Heinrich <luc@honk-honk.com>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * * The name of the author or authors may not be used to endorse or promote
+ *   products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <stdint.h>
@@ -10,20 +39,6 @@
 #include "MemoryPointer.h"
 #include "Types.h"
 #include "Struct.h"
-
-typedef struct StructField {
-    unsigned int type;
-    unsigned int offset;
-    unsigned int size;
-    unsigned int align;
-} StructField;
-
-typedef struct StructLayout {
-    VALUE rbFields;
-    unsigned int fieldCount;
-    int size;
-    int align;
-} StructLayout;
 
 typedef struct StructLayoutBuilder {
     unsigned int offset;
@@ -59,7 +74,11 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     
     field->offset = NUM2UINT(offset);
     if (rb_const_defined(CLASS_OF(self), TYPE_ID)) {
-        field->type = NUM2UINT(rb_const_get(CLASS_OF(self), TYPE_ID));
+        VALUE rbType = rbffi_Type_Find(rb_const_get(CLASS_OF(self), TYPE_ID));
+        Type* type;
+
+        Data_Get_Struct(rbType, Type, type);
+        field->type = type->nativeType;
     } else {
         field->type = ~0;
     }
@@ -459,19 +478,19 @@ rbffi_Struct_Init(VALUE moduleFFI)
         klass = rb_define_class_under(StructLayoutBuilderClass, #name, StructFieldClass); \
         rb_define_const(klass, "ALIGN", INT2NUM((sizeof(s) - sizeof(T)))); \
         rb_define_const(klass, "SIZE", INT2NUM(sizeof(T))); \
-        rb_define_const(klass, "TYPE", INT2NUM(nativeType)); \
+        rb_define_const(klass, "TYPE", rb_const_get(moduleFFI, rb_intern("TYPE_"#nativeType))); \
     } while(0)
     
-    FIELD(Signed8, int8, NATIVE_INT8, char);
-    FIELD(Unsigned8, uint8, NATIVE_UINT8, unsigned char);
-    FIELD(Signed16, int16, NATIVE_INT16, short);
-    FIELD(Unsigned16, uint16, NATIVE_UINT16, unsigned short);
-    FIELD(Signed32, int32, NATIVE_INT32, int);
-    FIELD(Unsigned32, uint32, NATIVE_UINT32, unsigned int);
-    FIELD(Signed64, int64, NATIVE_INT64, long long);
-    FIELD(Unsigned64, uint64, NATIVE_UINT64, unsigned long long);
-    FIELD(FloatField, float32, NATIVE_FLOAT32, float);
-    FIELD(DoubleField, float64, NATIVE_FLOAT64, double);
-    FIELD(PointerField, pointer, NATIVE_POINTER, char *);
-    FIELD(StringField, string, NATIVE_STRING, char *);
+    FIELD(Signed8, int8, INT8, char);
+    FIELD(Unsigned8, uint8, UINT8, unsigned char);
+    FIELD(Signed16, int16, INT16, short);
+    FIELD(Unsigned16, uint16, UINT16, unsigned short);
+    FIELD(Signed32, int32, INT32, int);
+    FIELD(Unsigned32, uint32, UINT32, unsigned int);
+    FIELD(Signed64, int64, INT64, long long);
+    FIELD(Unsigned64, uint64, UINT64, unsigned long long);
+    FIELD(FloatField, float32, FLOAT32, float);
+    FIELD(DoubleField, float64, FLOAT64, double);
+    FIELD(PointerField, pointer, POINTER, char *);
+    FIELD(StringField, string, STRING, char *);
 }
