@@ -46,6 +46,7 @@ Init_ffi_c(void) {
     rbffi_Struct_Init(moduleFFI);
     rbffi_DynamicLibrary_Init(moduleFFI);
     rbffi_Invoker_Init(moduleFFI);
+    rbffi_Variadic_Init(moduleFFI);
     rbffi_Types_Init(moduleFFI);
 }
 
