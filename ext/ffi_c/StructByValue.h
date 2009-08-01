@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2009, Wayne Meissner
+ * Copyright (c) 2009, Wayne Meissner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,58 +25,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <ruby.h>
+#ifndef RBFFI_STRUCTBYVALUE_H
+#define	RBFFI_STRUCTBYVALUE_H
 
-#include <ffi.h>
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
-#include "rbffi.h"
-#include "AbstractMemory.h"
-#include "Pointer.h"
-#include "MemoryPointer.h"
-#include "AutoPointer.h"
-#include "Struct.h"
-#include "StructByValue.h"
-#include "Callback.h"
-#include "DynamicLibrary.h"
-#include "Platform.h"
-#include "Types.h"
-#include "LastError.h"
-#include "Function.h"
-#include "MethodHandle.h"
-#include "Call.h"
+#include "Type.h"
 
-void Init_ffi_c(void);
+typedef struct StructByValue_ {
+    Type type;
+    VALUE structClass;
+} StructByValue;
 
-VALUE rbffi_FFIModule = Qnil;
+void rbffi_StructByValue_Init(VALUE moduleFFI);
 
-static VALUE moduleFFI = Qnil;
-
-void
-Init_ffi_c(void) {
-    rbffi_FFIModule = moduleFFI = rb_define_module("FFI");
-    rb_global_variable(&moduleFFI);
-
-    // FFI::Type needs to be initialized before most other classes
-    rbffi_Type_Init(moduleFFI);
-    rbffi_LastError_Init(moduleFFI);
-    rbffi_Call_Init(moduleFFI);
-    rbffi_MethodHandle_Init(moduleFFI);
-    rbffi_Platform_Init(moduleFFI);
-    rbffi_AbstractMemory_Init(moduleFFI);
-    rbffi_Pointer_Init(moduleFFI);
-    rbffi_AutoPointer_Init(moduleFFI);
-    rbffi_NullPointer_Init(moduleFFI);
-    rbffi_Function_Init(moduleFFI);
-    rbffi_MemoryPointer_Init(moduleFFI);
-    rbffi_Buffer_Init(moduleFFI);
-    rbffi_Callback_Init(moduleFFI);
-    rbffi_StructByValue_Init(moduleFFI);
-    rbffi_Struct_Init(moduleFFI);
-    rbffi_DynamicLibrary_Init(moduleFFI);
-    rbffi_Invoker_Init(moduleFFI);
-    rbffi_Variadic_Init(moduleFFI);
-    rbffi_Types_Init(moduleFFI);
+#ifdef	__cplusplus
 }
+#endif
+
+#endif	/* RBFFI_STRUCTBYVALUE_H */
 

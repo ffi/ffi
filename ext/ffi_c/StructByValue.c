@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2009, Wayne Meissner
+ * Copyright (c) 2009, Wayne Meissner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,58 +25,66 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <errno.h>
 #include <ruby.h>
 
 #include <ffi.h>
-
 #include "rbffi.h"
-#include "AbstractMemory.h"
-#include "Pointer.h"
-#include "MemoryPointer.h"
-#include "AutoPointer.h"
-#include "Struct.h"
+
+#include "Type.h"
 #include "StructByValue.h"
-#include "Callback.h"
-#include "DynamicLibrary.h"
-#include "Platform.h"
-#include "Types.h"
-#include "LastError.h"
-#include "Function.h"
-#include "MethodHandle.h"
-#include "Call.h"
 
-void Init_ffi_c(void);
+static VALUE sbv_allocate(VALUE);
+static VALUE sbv_initialize(VALUE, VALUE);
+static void sbv_mark(StructByValue *);
 
-VALUE rbffi_FFIModule = Qnil;
+VALUE rbffi_StructByValueClass = Qnil;
 
-static VALUE moduleFFI = Qnil;
+static VALUE
+sbv_allocate(VALUE klass)
+{
+    StructByValue* sbv;
+
+    VALUE obj = Data_Make_Struct(klass, StructByValue, sbv_mark, -1, sbv);
+
+    sbv->structClass = Qnil;
+    sbv->type.nativeType = NATIVE_STRUCT;
+
+
+    return obj;
+}
+
+static VALUE
+sbv_initialize(VALUE self, VALUE structClass)
+{
+    StructByValue* sbv;
+    
+    Data_Get_Struct(self, StructByValue, sbv);
+
+    sbv->structClass = structClass;
+
+    return self;
+}
+
+static void
+sbv_mark(StructByValue *sbv)
+{
+    rb_gc_mark(sbv->structClass);
+}
 
 void
-Init_ffi_c(void) {
-    rbffi_FFIModule = moduleFFI = rb_define_module("FFI");
-    rb_global_variable(&moduleFFI);
+rbffi_StructByValue_Init(VALUE moduleFFI)
+{
+    rbffi_StructByValueClass = rb_define_class_under(moduleFFI, "StructByValue", rbffi_TypeClass);
+    rb_global_variable(&rbffi_StructByValueClass);
 
-    // FFI::Type needs to be initialized before most other classes
-    rbffi_Type_Init(moduleFFI);
-    rbffi_LastError_Init(moduleFFI);
-    rbffi_Call_Init(moduleFFI);
-    rbffi_MethodHandle_Init(moduleFFI);
-    rbffi_Platform_Init(moduleFFI);
-    rbffi_AbstractMemory_Init(moduleFFI);
-    rbffi_Pointer_Init(moduleFFI);
-    rbffi_AutoPointer_Init(moduleFFI);
-    rbffi_NullPointer_Init(moduleFFI);
-    rbffi_Function_Init(moduleFFI);
-    rbffi_MemoryPointer_Init(moduleFFI);
-    rbffi_Buffer_Init(moduleFFI);
-    rbffi_Callback_Init(moduleFFI);
-    rbffi_StructByValue_Init(moduleFFI);
-    rbffi_Struct_Init(moduleFFI);
-    rbffi_DynamicLibrary_Init(moduleFFI);
-    rbffi_Invoker_Init(moduleFFI);
-    rbffi_Variadic_Init(moduleFFI);
-    rbffi_Types_Init(moduleFFI);
+    rb_define_alloc_func(rbffi_StructByValueClass, sbv_allocate);
+    rb_define_method(rbffi_StructByValueClass, "initialize", sbv_initialize, 1);
+
 }
 
