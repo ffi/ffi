@@ -22,6 +22,8 @@
         <itemPath>ext/ffi_c/LastError.h</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.c</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.h</itemPath>
+        <itemPath>ext/ffi_c/MethodHandle.c</itemPath>
+        <itemPath>ext/ffi_c/MethodHandle.h</itemPath>
         <itemPath>ext/ffi_c/NullPointer.c</itemPath>
         <itemPath>ext/ffi_c/Platform.c</itemPath>
         <itemPath>ext/ffi_c/Platform.h</itemPath>
@@ -29,10 +31,13 @@
         <itemPath>ext/ffi_c/Pointer.h</itemPath>
         <itemPath>ext/ffi_c/Struct.c</itemPath>
         <itemPath>ext/ffi_c/Struct.h</itemPath>
+        <itemPath>ext/ffi_c/StructByValue.c</itemPath>
+        <itemPath>ext/ffi_c/StructByValue.h</itemPath>
         <itemPath>ext/ffi_c/Type.c</itemPath>
         <itemPath>ext/ffi_c/Type.h</itemPath>
         <itemPath>ext/ffi_c/Types.c</itemPath>
         <itemPath>ext/ffi_c/Types.h</itemPath>
+        <itemPath>ext/ffi_c/Variadic.c</itemPath>
         <itemPath>ext/ffi_c/compat.h</itemPath>
         <itemPath>ext/ffi_c/extconf.rb</itemPath>
         <itemPath>ext/ffi_c/ffi.c</itemPath>
@@ -92,7 +97,6 @@
       <itemPath>Rakefile</itemPath>
       <itemPath>ruby-ffi-Makefile.mk</itemPath>
     </logicalFolder>
-    <itemPath>ext/ffi_c/VariadicInvoker.c</itemPath>
   </logicalFolder>
   <projectmakefile>ruby-ffi-Makefile.mk</projectmakefile>
   <confs>

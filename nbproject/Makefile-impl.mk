@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=ruby-ffi
+PROJECTNAME=ruby-ffi-dev
 
 # Active Configuration
 DEFAULTCONF=Default
