@@ -136,3 +136,6 @@ end
 
 task 'spec:run' => TEST_DEPS
 task 'spec:specdoc' => TEST_DEPS
+
+task :default => :specs
+
