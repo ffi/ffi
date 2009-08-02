@@ -103,6 +103,13 @@ struct MethodHandle {
     MethodHandle* next;
 };
 
+struct BlockingCall {
+    void* function;
+    FunctionInfo* info;
+    void **ffiValues;
+    FFIStorage* retval;
+};
+
 struct MethodHandlePool {
 #if defined (HAVE_NATIVETHREAD) && !defined(_WIN32)
     pthread_mutex_t mutex;
@@ -240,15 +247,46 @@ rbffi_MethodHandle_CodeAddress(MethodHandle* handle)
     return handle->code;
 }
 
+static inline void
+call_function(ffi_cif* cif, void* function, FFIStorage* retval, void** ffiValues)
+{
+#ifdef USE_RAW
+    ffi_raw_call(cif, FFI_FN(function), retval, (ffi_raw *) ffiValues[0]);
+#else
+    ffi_call(cif, FFI_FN(function), retval, ffiValues);
+#endif
+}
+
+#if defined(HAVE_NATIVETHREAD)
+static VALUE
+call_blocking_function(void* data)
+{
+    BlockingCall* b = (BlockingCall *) data;
+
+    call_function(&b->info->ffi_cif, FFI_FN(b->function), b->retval, b->ffiValues);
+
+    return Qnil;
+}
+#endif
+
 static inline VALUE
 ffi_invoke(FunctionInfo* fnInfo, void* function, void** ffiValues)
 {
     FFIStorage retval;
 
-#ifdef USE_RAW
-    ffi_raw_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
+#if defined(HAVE_NATIVETHREAD)
+    if (unlikely(fnInfo->blocking)) {
+        BlockingCall bc;
+        bc.info = fnInfo;
+        bc.function = function;
+        bc.ffiValues = ffiValues;
+        bc.retval = &retval;
+        rb_thread_blocking_region(call_blocking_function, &bc, NULL, NULL);
+    } else {
+        call_function(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
+    }
 #else
-    ffi_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
+    call_function(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
 #endif
 
     if (!fnInfo->ignoreErrno) {
@@ -378,7 +416,7 @@ rbffi_MethodHandle_Init(VALUE module)
     pageSize = getPageSize();
 
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
-    for (i = 0; i < 4; ++i) {
+    for (i = 0; i < MAX_FIXED_ARITY; ++i) {
         pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
     }
     pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);

@@ -54,6 +54,7 @@ typedef struct FunctionInfo_ {
     VALUE* callbackParameters;
     VALUE rbEnums;
     bool ignoreErrno;
+    bool blocking;
 } FunctionInfo;
 
 extern VALUE rbffi_FunctionInfoClass, rbffi_FunctionClass;

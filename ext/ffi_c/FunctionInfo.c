@@ -92,13 +92,14 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
     FunctionInfo *fnInfo;
     ffi_status status;
     VALUE rbReturnType = Qnil, rbParamTypes = Qnil, rbOptions = Qnil;
-    VALUE rbEnums = Qnil, rbConvention = Qnil;
+    VALUE rbEnums = Qnil, rbConvention = Qnil, rbBlocking = Qnil;
     int i, nargs;
 
     nargs = rb_scan_args(argc, argv, "21", &rbReturnType, &rbParamTypes, &rbOptions);
     if (nargs >= 3 && rbOptions != Qnil) {
         rbConvention = rb_hash_aref(rbOptions, ID2SYM(rb_intern("convention")));
         rbEnums = rb_hash_aref(rbOptions, ID2SYM(rb_intern("enums")));
+        rbBlocking = rb_hash_aref(rbOptions, ID2SYM(rb_intern("blocking")));
     }
 
     Check_Type(rbParamTypes, T_ARRAY);
@@ -110,6 +111,7 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
     fnInfo->nativeParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->nativeParameterTypes));
     fnInfo->rbParameterTypes = rb_ary_new2(fnInfo->parameterCount);
     fnInfo->rbEnums = rbEnums;
+    fnInfo->blocking = RTEST(rbBlocking);
 
     for (i = 0; i < fnInfo->parameterCount; ++i) {
         VALUE entry = rb_ary_entry(rbParamTypes, i);
