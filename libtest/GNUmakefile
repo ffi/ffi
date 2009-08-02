@@ -1,7 +1,8 @@
 # -*- makefile -*-
 BUILD_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 OS ?= $(BUILD_OS)
-CPU = $(shell uname -m | sed -e 's/i[345678]86/i386/')
+CPU ?= $(shell uname -m)
+override CPU := $(shell echo $(CPU) | sed -e 's/i[345678]86/i386/')
 MODEL = 32 # Default to 32bit compiles
 PLATFORM = $(CPU)-$(OS)
 ifeq ($(OS), sunos)
