@@ -255,7 +255,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionInfo* fnInfo)
 #ifdef USE_RAW
     ffi_raw_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
 #else
-    ffi_call(&fn->info->ffi_cif, FFI_FN(function), &retval, ffiValues);
+    ffi_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
 #endif
 
     if (!fnInfo->ignoreErrno) {
