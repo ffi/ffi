@@ -107,7 +107,7 @@ end
 
 desc "Build the native test lib"
 task "build/libtest.#{LIBEXT}" do
-  sh %{#{GMAKE} -f libtest/GNUmakefile}
+  sh %{#{GMAKE} -f libtest/GNUmakefile CPU=#{Config::CONFIG['host_cpu']}}
 end
 
 
