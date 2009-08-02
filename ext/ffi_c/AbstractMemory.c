@@ -373,7 +373,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     if (sizeof(long) == 4) {
         ALIAS(long, int32);
     } else {
-        ALIAS(long, int32);
+        ALIAS(long, int64);
     }
 
     rb_define_method(classMemory, "put_float32", memory_put_float32, 2);
