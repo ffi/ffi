@@ -103,12 +103,12 @@ struct MethodHandle {
     MethodHandle* next;
 };
 
-struct BlockingCall {
+typedef struct BlockingCall_ {
     void* function;
     FunctionInfo* info;
     void **ffiValues;
     FFIStorage* retval;
-};
+} BlockingCall;
 
 struct MethodHandlePool {
 #if defined (HAVE_NATIVETHREAD) && !defined(_WIN32)
@@ -123,7 +123,7 @@ static ffi_type* methodHandleParamTypes[]= {
     &ffi_type_ulong,
 };
 
-static MethodHandlePool methodHandlePool[MAX_METHOD_FIXED_ARITY + 1], defaultMethodHandlePool;
+static MethodHandlePool defaultMethodHandlePool, zeroMethodHandlePool, fastMethodHandlePool;
 
 static int pageSize;
 
@@ -145,7 +145,14 @@ rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function)
         return NULL;
     }
 
-    pool = (arity >= 0 && arity <= MAX_METHOD_FIXED_ARITY) ? &methodHandlePool[arity] : &defaultMethodHandlePool;
+    if (arity == 0) {
+        pool = &zeroMethodHandlePool;
+    } else if (arity <= MAX_METHOD_FIXED_ARITY) {
+        pool = &fastMethodHandlePool;
+    } else {
+        pool = &defaultMethodHandlePool;
+    }
+
     pool_lock(pool);
     if (pool->list != NULL) {
         method = pool->list;
@@ -409,17 +416,12 @@ protectPage(void* page)
 void
 rbffi_MethodHandle_Init(VALUE module)
 {
-#if defined(USE_PTHREAD_LOCAL)
-    int i = 0;
-#endif
-
     pageSize = getPageSize();
 
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
-    for (i = 0; i < MAX_FIXED_ARITY; ++i) {
-        pthread_mutex_init(&methodHandlePool[i].mutex, NULL);
-    }
     pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);
+    pthread_mutex_init(&zeroMethodHandlePool.mutex, NULL);
+    pthread_mutex_init(&fastMethodHandlePool.mutex, NULL);
 #endif /* USE_PTHREAD_LOCAL */
 
 }
