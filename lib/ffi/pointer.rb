@@ -52,7 +52,7 @@ module FFI
 
     def read_string(len=nil)
       if len
-        get_string(0, len)
+        get_bytes(0, len)
       else
         get_string(0)
       end
