@@ -58,7 +58,7 @@ module FFI
       end
     end
     def read_string_length(len)
-      get_string(0, len)
+      get_bytes(0, len)
     end
     def read_string_to_null
       get_string(0)
