@@ -39,8 +39,9 @@ PROJ.rubyforge.name = 'ffi'
 PROJ.readme_file = 'README.rdoc'
 
 # Annoucement
-PROJ.ann.paragraphs
-PROJ.ann.email[:from] = 'wmeissner@gmail.com'
+PROJ.ann.paragraphs << 'FEATURES' << 'SYNOPSIS' << 'REQUIREMENTS' << 'DOWNLOAD/INSTALL' << 'CREDITS' << 'LICENSE'
+
+PROJ.ann.email[:from] = 'andrea.fazzi@alcacoop.it'
 PROJ.ann.email[:to] << 'dev@ruby-ffi.kenai.com' << 'users@ruby-ffi.kenai.com'
 PROJ.ann.email[:server] = 'smtp.gmail.com'
 

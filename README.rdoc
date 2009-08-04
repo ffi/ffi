@@ -4,15 +4,63 @@ ruby-ffi
 
 == DESCRIPTION:
 
-A Ruby foreign function interface
+The Ruby-FFI team is pleased to announce a new release of Ruby-FFI.
+
+Ruby-FFI is a ruby extension for programmatically loading dynamic
+libraries, binding functions within them, and calling those functions
+from Ruby code. Moreover, a Ruby-FFI extension works without changes
+on Ruby and JRuby.
 
 == FEATURES/PROBLEMS:
 
+* It has a very intuitive DSL
+* It supports all C native types
+* It supports C structs (also nested), enums and global variables
+* It supports callbacks
+* It has smart methods to handle memory management of pointers and structs
+
 == SYNOPSIS:
+
+  require 'ffi'
+
+  module MyLib
+    extend FFI::Library
+    attach_function :puts, [ :string ], :int
+  end
+
+  MyLib.puts 'Hello boys using libc!'
+
+For less minimalistic and more sane examples you may look at:
+
+* the samples/ folder
+* the examples on the Kenai {wiki}[http://kenai.com/projects/ruby-ffi/pages/Home]
 
 == REQUIREMENTS:
 
+* You need a sane building environment in order to compile the extension.
+
 == DOWNLOAD/INSTALL:
+
+From rubyforge:
+
+  [sudo] gem install ffi
+
+or from the mercurial repository on Kenai:
+
+  hg clone https://kenai.com/hg/ruby-ffi~mercurial ruby-ffi
+  cd ruby-ffi
+  rake gem:install
+
+== CREDITS:
+
+Special thanks to:
+
+Yehuda Katz
+Luc  Heinrich
+Andrea Fazzi
+Mike Dalessio
+Hongli Lai
+Evan Phoenix
 
 == LICENSE:
 
