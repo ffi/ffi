@@ -34,6 +34,7 @@ For less minimalistic and more sane examples you may look at:
 
 * the samples/ folder
 * the examples on the Kenai {wiki}[http://kenai.com/projects/ruby-ffi/pages/Home]
+* the projects using FFI listed on this {page}[http://kenai.com/projects/ruby-ffi/pages/ProjectsUsingFFI]
 
 == REQUIREMENTS:
 
