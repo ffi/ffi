@@ -49,10 +49,11 @@ extern "C" {
     } StructField;
 
     typedef struct StructLayout_ {
-        VALUE rbFields;
+        StructField** fields;
         unsigned int fieldCount;
         int size;
         int align;
+        VALUE rbFieldMap;
     } StructLayout;
 
     typedef struct Struct {
@@ -62,7 +63,7 @@ extern "C" {
         VALUE rbPointer;
     } Struct;
 
-    extern VALUE rbffi_StructClass;
+    extern VALUE rbffi_StructClass, rbffi_StructLayoutClass;
     
 #ifdef	__cplusplus
 }

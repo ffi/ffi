@@ -35,13 +35,18 @@
 
 #include <ffi.h>
 #include "rbffi.h"
+#include "compat.h"
 
 #include "Type.h"
 #include "StructByValue.h"
+#include "Struct.h"
+
+#define FFI_ALIGN(v, a)  (((((size_t) (v))-1) | ((a)-1))+1)
 
 static VALUE sbv_allocate(VALUE);
 static VALUE sbv_initialize(VALUE, VALUE);
 static void sbv_mark(StructByValue *);
+static void sbv_free(StructByValue *);
 
 VALUE rbffi_StructByValueClass = Qnil;
 
@@ -50,11 +55,17 @@ sbv_allocate(VALUE klass)
 {
     StructByValue* sbv;
 
-    VALUE obj = Data_Make_Struct(klass, StructByValue, sbv_mark, -1, sbv);
+    VALUE obj = Data_Make_Struct(klass, StructByValue, sbv_mark, sbv_free, sbv);
 
     sbv->structClass = Qnil;
     sbv->type.nativeType = NATIVE_STRUCT;
 
+    sbv->type.ffiType = ALLOC_N(ffi_type, 1);
+    if (sbv->type.ffiType == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate memory for ffi_type");
+    }
+    sbv->type.ffiType->size = 0;
+    sbv->type.ffiType->alignment = 0;
 
     return obj;
 }
@@ -63,10 +74,62 @@ static VALUE
 sbv_initialize(VALUE self, VALUE structClass)
 {
     StructByValue* sbv;
-    
-    Data_Get_Struct(self, StructByValue, sbv);
+    StructLayout* layout;
+    VALUE rbLayout;
+    int i;
 
+    Data_Get_Struct(self, StructByValue, sbv);
     sbv->structClass = structClass;
+
+    rbLayout = rb_cvar_get(structClass, rb_intern("@layout"));
+    if (!rb_obj_is_instance_of(rbLayout, rbffi_StructLayoutClass)) {
+        rb_raise(rb_eTypeError, "wrong type in @layout cvar (expected StructLayout)");
+    }
+    Data_Get_Struct(rbLayout, StructLayout, layout);
+
+    sbv->fieldCount = layout->fieldCount;
+
+    // ffiTypes is NULL terminated, so allocate 1 extra
+    sbv->ffiTypes = ALLOC_N(ffi_type *, layout->fieldCount + 1);
+    if (sbv->ffiTypes == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate memory for types array");
+    }
+
+    sbv->rbFields = ALLOC_N(VALUE, layout->fieldCount);
+    if (sbv->rbFields == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate memory for fields array");
+    }
+    
+    sbv->type.ffiType->size = 0;
+    sbv->type.ffiType->alignment = 0;
+
+    for (i = 0; i < sbv->fieldCount; ++i) {
+        StructField* f = layout->fields[i];
+        ffi_type* ftype = f->type->ffiType;
+        ffi_type* stype = sbv->type.ffiType;
+
+        if (ftype->type == NULL) {
+            rb_raise(rb_eRuntimeError, "type of field %d not supported for struct-by-value yet", i);
+        }
+
+        if (ftype->size == 0) {
+            rb_raise(rb_eTypeError, "type of field %d  has zero size", i);
+        }
+
+        sbv->ffiTypes[i] = ftype;
+        sbv->rbFields[i] = Qnil;
+        stype->size = MAX(stype->size, f->offset + ftype->size);
+        stype->alignment = MAX(stype->alignment, ftype->alignment);
+    }
+
+    if (sbv->type.ffiType->size == 0) {
+        rb_raise(rb_eRuntimeError, "Struct size is zero");
+    }
+
+    // Include tail padding
+    sbv->type.ffiType->size = FFI_ALIGN(sbv->type.ffiType->size, sbv->type.ffiType->alignment);
+    sbv->type.size = sbv->type.ffiType->size;
+    sbv->type.alignment = sbv->type.ffiType->alignment;
 
     return self;
 }
@@ -75,6 +138,16 @@ static void
 sbv_mark(StructByValue *sbv)
 {
     rb_gc_mark(sbv->structClass);
+    rb_gc_mark_locations(&sbv->rbFields[0], &sbv->rbFields[sbv->fieldCount]);
+}
+
+static void
+sbv_free(StructByValue *sbv)
+{
+    xfree(sbv->type.ffiType);
+    xfree(sbv->ffiTypes);
+    xfree(sbv->rbFields);
+    xfree(sbv);
 }
 
 void

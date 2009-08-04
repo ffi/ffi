@@ -46,11 +46,12 @@ typedef struct StructLayoutBuilder {
 
 static void struct_mark(Struct *);
 static void struct_layout_mark(StructLayout *);
+static void struct_layout_free(StructLayout *);
 static void struct_field_mark(StructField* f);
 static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, Type* type);
 
 VALUE rbffi_StructClass = Qnil;
-static VALUE StructLayoutClass = Qnil;
+VALUE rbffi_StructLayoutClass = Qnil;
 static VALUE StructFieldClass = Qnil, StructLayoutBuilderClass = Qnil;
 static ID id_pointer_ivar = 0, id_layout_ivar = 0, TYPE_ID;
 static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
@@ -183,7 +184,7 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
         rb_raise(rb_eRuntimeError, "No Struct layout configured");
     }
 
-    if (!rb_obj_is_kind_of(s->rbLayout, StructLayoutClass)) {
+    if (!rb_obj_is_kind_of(s->rbLayout, rbffi_StructLayoutClass)) {
         rb_raise(rb_eRuntimeError, "Invalid Struct layout");
     }
 
@@ -221,7 +222,7 @@ struct_field(Struct* s, VALUE fieldName)
         rb_raise(rb_eRuntimeError, "layout not set for Struct");
     }
 
-    rbField = rb_hash_aref(layout->rbFields, fieldName);
+    rbField = rb_hash_aref(layout->rbFieldMap, fieldName);
     if (rbField == Qnil) {
         VALUE str = rb_funcall2(fieldName, id_to_s, 0, NULL);
         rb_raise(rb_eArgError, "No such field '%s'", StringValuePtr(str));
@@ -347,7 +348,7 @@ struct_set_layout(VALUE self, VALUE layout)
     Struct* s;
     Data_Get_Struct(self, Struct, s);
 
-    if (!rb_obj_is_kind_of(layout, StructLayoutClass)) {
+    if (!rb_obj_is_kind_of(layout, rbffi_StructLayoutClass)) {
         rb_raise(rb_eArgError, "Invalid Struct layout");
     }
 
@@ -373,8 +374,8 @@ struct_layout_allocate(VALUE klass)
     StructLayout* layout;
     VALUE obj;
     
-    obj = Data_Make_Struct(klass, StructLayout, struct_layout_mark, -1, layout);
-    layout->rbFields = Qnil;
+    obj = Data_Make_Struct(klass, StructLayout, struct_layout_mark, struct_layout_free, layout);
+    layout->rbFieldMap = Qnil;
 
     return obj;
 }
@@ -386,23 +387,30 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
     int i;
 
     Data_Get_Struct(self, StructLayout, layout);
-    layout->rbFields = rb_hash_new();
+    layout->rbFieldMap = rb_hash_new();
     layout->size = NUM2INT(size);
     layout->align = NUM2INT(align);
-    
+    layout->fieldCount = RARRAY_LEN(field_names);
+    layout->fields = ALLOC_N(StructField*, layout->fieldCount);
+    if (layout->fields == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate memory for %d fields", layout->fieldCount);
+    }
+
     rb_iv_set(self, "@field_names", field_names);
     rb_iv_set(self, "@fields", fields);
     rb_iv_set(self, "@size", size);
     rb_iv_set(self, "@align", align);
 
-    for (i = 0; i < RARRAY_LEN(field_names); ++i) {
-        VALUE name = RARRAY_PTR(field_names)[i];
+    for (i = 0; i < layout->fieldCount; ++i) {
+        VALUE name = rb_ary_entry(field_names, i);
         VALUE field = rb_hash_aref(fields, name);
         if (TYPE(field) != T_DATA || !rb_obj_is_kind_of(field, StructFieldClass)) {
             rb_raise(rb_eArgError, "Invalid field");
         }
-        rb_hash_aset(layout->rbFields, name, field);
+        rb_hash_aset(layout->rbFieldMap, name, field);
+        Data_Get_Struct(field, StructField, layout->fields[i]);
     }
+
     return self;
 }
 
@@ -413,14 +421,21 @@ struct_layout_aref(VALUE self, VALUE field)
 
     Data_Get_Struct(self, StructLayout, layout);
 
-    return rb_hash_aref(layout->rbFields, field);
+    return rb_hash_aref(layout->rbFieldMap, field);
 }
 
 
 static void
 struct_layout_mark(StructLayout *layout)
 {
-    rb_gc_mark(layout->rbFields);
+    rb_gc_mark(layout->rbFieldMap);
+}
+
+static void
+struct_layout_free(StructLayout *layout)
+{
+    xfree(layout->fields);
+    xfree(layout);
 }
 
 void
@@ -430,8 +445,8 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rbffi_StructClass = StructClass = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
     rb_global_variable(&rbffi_StructClass);
 
-    StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", rb_cObject);
-    rb_global_variable(&StructLayoutClass);
+    rbffi_StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", rb_cObject);
+    rb_global_variable(&rbffi_StructLayoutClass);
 
     StructLayoutBuilderClass = rb_define_class_under(moduleFFI, "StructLayoutBuilder", rb_cObject);
     rb_global_variable(&StructLayoutBuilderClass);
@@ -464,9 +479,9 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructFieldClass, "put", struct_field_put, 2);
     rb_define_method(StructFieldClass, "get", struct_field_get, 1);
 
-    rb_define_alloc_func(StructLayoutClass, struct_layout_allocate);
-    rb_define_method(StructLayoutClass, "initialize", struct_layout_initialize, 4);
-    rb_define_method(StructLayoutClass, "[]", struct_layout_aref, 1);
+    rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
+    rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);
+    rb_define_method(rbffi_StructLayoutClass, "[]", struct_layout_aref, 1);
 
     id_pointer_ivar = rb_intern("@pointer");
     id_layout_ivar = rb_intern("@layout");

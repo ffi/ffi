@@ -37,6 +37,9 @@ extern "C" {
 typedef struct StructByValue_ {
     Type type;
     VALUE structClass;
+    int fieldCount;
+    ffi_type** ffiTypes;
+    VALUE* rbFields;
 } StructByValue;
 
 void rbffi_StructByValue_Init(VALUE moduleFFI);
