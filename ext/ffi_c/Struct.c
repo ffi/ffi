@@ -51,7 +51,7 @@ static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, int type);
 VALUE rbffi_StructClass = Qnil;
 static VALUE StructLayoutClass = Qnil;
 static VALUE StructFieldClass = Qnil, StructLayoutBuilderClass = Qnil;
-static ID pointer_var_id = 0, layout_var_id = 0, SIZE_ID, ALIGN_ID, TYPE_ID;
+static ID pointer_var_id = 0, layout_var_id = 0, TYPE_ID;
 static ID get_id = 0, put_id = 0, to_ptr = 0, to_s = 0, layout_id = 0;
 
 static VALUE
@@ -83,10 +83,6 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
         field->type = ~0;
     }
 
-#ifdef notyet
-    field->size = NUM2UINT(rb_const_get(klass, SIZE_ID));
-    field->align = NUM2UINT(rb_const_get(klass, ALIGN_ID));
-#endif
     rb_iv_set(self, "@off", offset);
     rb_iv_set(self, "@info", info);
 
@@ -469,15 +465,11 @@ rbffi_Struct_Init(VALUE moduleFFI)
     put_id = rb_intern("put");
     to_ptr = rb_intern("to_ptr");
     to_s = rb_intern("to_s");
-    SIZE_ID = rb_intern("SIZE");
-    ALIGN_ID = rb_intern("ALIGN");
     TYPE_ID = rb_intern("TYPE");
 #undef FIELD
 #define FIELD(name, typeName, nativeType, T) do { \
     typedef struct { char c; T v; } s; \
         klass = rb_define_class_under(StructLayoutBuilderClass, #name, StructFieldClass); \
-        rb_define_const(klass, "ALIGN", INT2NUM((sizeof(s) - sizeof(T)))); \
-        rb_define_const(klass, "SIZE", INT2NUM(sizeof(T))); \
         rb_define_const(klass, "TYPE", rb_const_get(moduleFFI, rb_intern("TYPE_"#nativeType))); \
     } while(0)
     
