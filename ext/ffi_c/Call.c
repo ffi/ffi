@@ -215,6 +215,9 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
                 ADJ(param, ADDRESS);
                 break;
 
+            case NATIVE_STRUCT:
+                ffiValues[i] = getPointer(argv[argidx++], type);
+                break;
 
             default:
                 rb_raise(rb_eArgError, "Invalid parameter type: %d", paramTypes[i]);
@@ -226,28 +229,25 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
 VALUE
 rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionInfo* fnInfo)
 {
-    FFIStorage retval;
+    void* retval;
     void** ffiValues;
     FFIStorage* params;
 
     ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
     params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
+    retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
 
     rbffi_SetupCallParams(argc, argv,
         fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
         fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
-#ifdef USE_RAW
-    ffi_raw_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
-#else
-    ffi_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
-#endif
+    ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
 
     if (!fnInfo->ignoreErrno) {
         rbffi_save_errno();
     }
 
-    return rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, &retval,
+    return rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval,
         fnInfo->rbEnums);
 }
 

@@ -41,6 +41,8 @@ typedef struct StructByValue_ {
 
 void rbffi_StructByValue_Init(VALUE moduleFFI);
 
+extern VALUE rbffi_StructByValueClass;
+
 #ifdef	__cplusplus
 }
 #endif

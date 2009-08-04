@@ -114,6 +114,7 @@ struct MethodHandlePool {
 #if defined (HAVE_NATIVETHREAD) && !defined(_WIN32)
     pthread_mutex_t mutex;
 #endif
+    void (*fn)(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
     MethodHandle* list;
 };
 
@@ -137,7 +138,6 @@ rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function)
     ffi_status ffiStatus;
     int nclosures, closureSize;
     int i, arity;
-    void (*fn)(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 
     arity = fnInfo->parameterCount;
     if (arity < 0) {
@@ -145,9 +145,9 @@ rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function)
         return NULL;
     }
 
-    if (arity == 0) {
+    if (arity == 0 && !fnInfo->blocking && !fnInfo->hasStruct) {
         pool = &zeroMethodHandlePool;
-    } else if (arity <= MAX_METHOD_FIXED_ARITY) {
+    } else if (arity <= MAX_METHOD_FIXED_ARITY && !fnInfo->blocking && !fnInfo->hasStruct) {
         pool = &fastMethodHandlePool;
     } else {
         pool = &defaultMethodHandlePool;
@@ -172,15 +172,6 @@ rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function)
         rb_raise(rb_eRuntimeError, "failed to allocate a page. errno=%d (%s)", errno, strerror(errno));
     }
 
-    /* figure out which function to bounce the execution through */
-    if (arity == 0) {
-        fn = attached_method_invoke0;
-    } else if (arity <= MAX_METHOD_FIXED_ARITY) {
-        fn = attached_method_fast_invoke;
-    } else {
-        fn = attached_method_invoke;
-    }
-
     for (i = 0; i < nclosures; ++i) {
         char errmsg[256];
         method = calloc(1, sizeof(MethodHandle));
@@ -201,9 +192,9 @@ rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function)
         }
 
 #ifdef USE_RAW
-        ffiStatus = ffi_prep_raw_closure(method->closure, &method->cif, fn, method);
+        ffiStatus = ffi_prep_raw_closure(method->closure, &method->cif, pool->fn, method);
 #else
-        ffiStatus = ffi_prep_closure(method->closure, &method->cif, fn, method);
+        ffiStatus = ffi_prep_closure(method->closure, &method->cif, pool->fn, method);
 #endif
         if (ffiStatus != FFI_OK) {
             snprintf(errmsg, sizeof(errmsg), "ffi_prep_closure failed.  status=%#x", ffiStatus);
@@ -254,15 +245,6 @@ rbffi_MethodHandle_CodeAddress(MethodHandle* handle)
     return handle->code;
 }
 
-static inline void
-call_function(ffi_cif* cif, void* function, FFIStorage* retval, void** ffiValues)
-{
-#ifdef USE_RAW
-    ffi_raw_call(cif, FFI_FN(function), retval, (ffi_raw *) ffiValues[0]);
-#else
-    ffi_call(cif, FFI_FN(function), retval, ffiValues);
-#endif
-}
 
 #if defined(HAVE_NATIVETHREAD)
 static VALUE
@@ -270,7 +252,7 @@ call_blocking_function(void* data)
 {
     BlockingCall* b = (BlockingCall *) data;
 
-    call_function(&b->info->ffi_cif, FFI_FN(b->function), b->retval, b->ffiValues);
+    ffi_call(&b->info->ffi_cif, FFI_FN(b->function), b->retval, b->ffiValues);
 
     return Qnil;
 }
@@ -281,19 +263,10 @@ ffi_invoke(FunctionInfo* fnInfo, void* function, void** ffiValues)
 {
     FFIStorage retval;
 
-#if defined(HAVE_NATIVETHREAD)
-    if (unlikely(fnInfo->blocking)) {
-        BlockingCall bc;
-        bc.info = fnInfo;
-        bc.function = function;
-        bc.ffiValues = ffiValues;
-        bc.retval = &retval;
-        rb_thread_blocking_region(call_blocking_function, &bc, NULL, NULL);
-    } else {
-        call_function(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
-    }
+#ifdef USE_RAW
+    ffi_raw_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
 #else
-    call_function(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
+    ffi_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
 #endif
 
     if (!fnInfo->ignoreErrno) {
@@ -347,12 +320,13 @@ attached_method_fast_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters
  * attached_method_vinvoke is used functions with more than 3 parameters
  */
 static void
-attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data)
+attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, void* user_data)
 {
     MethodHandle* handle =  (MethodHandle *) user_data;
     FunctionInfo* fnInfo = handle->info;
     void** ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
     FFIStorage* params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
+    void* retval;
 
 #ifdef USE_RAW
     int argc = parameters[0].sint;
@@ -362,11 +336,33 @@ attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, voi
     VALUE* argv = *(VALUE **) parameters[1];
 #endif
 
+    retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
+    
     rbffi_SetupCallParams(argc, argv,
         fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
         fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
-    *((VALUE *) retval) = ffi_invoke(fnInfo, handle->function, ffiValues);
+#if defined(HAVE_NATIVETHREAD)
+    if (unlikely(fnInfo->blocking)) {
+        BlockingCall bc;
+        bc.info = fnInfo;
+        bc.function = handle->function;
+        bc.ffiValues = ffiValues;
+        bc.retval = retval;
+        rb_thread_blocking_region(call_blocking_function, &bc, NULL, NULL);
+    } else {
+        ffi_call(&fnInfo->ffi_cif, FFI_FN(handle->function), retval, ffiValues);
+    }
+#else
+    ffi_call(&fnInfo->ffi_cif, FFI_FN(handle->function), retval, ffiValues);
+#endif
+
+    if (!fnInfo->ignoreErrno) {
+        rbffi_save_errno();
+    }
+
+    *((VALUE *) mretval) = rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval,
+        fnInfo->rbEnums);
 }
 
 static int
@@ -423,6 +419,8 @@ rbffi_MethodHandle_Init(VALUE module)
     pthread_mutex_init(&zeroMethodHandlePool.mutex, NULL);
     pthread_mutex_init(&fastMethodHandlePool.mutex, NULL);
 #endif /* USE_PTHREAD_LOCAL */
-
+    defaultMethodHandlePool.fn = attached_method_invoke;
+    zeroMethodHandlePool.fn = attached_method_invoke0;
+    fastMethodHandlePool.fn = attached_method_fast_invoke;
 }
 

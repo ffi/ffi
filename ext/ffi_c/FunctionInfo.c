@@ -40,6 +40,7 @@
 #include "AbstractMemory.h"
 #include "Types.h"
 #include "Type.h"
+#include "StructByValue.h"
 #include "Function.h"
 
 
@@ -112,6 +113,7 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
     fnInfo->rbParameterTypes = rb_ary_new2(fnInfo->parameterCount);
     fnInfo->rbEnums = rbEnums;
     fnInfo->blocking = RTEST(rbBlocking);
+    fnInfo->hasStruct = false;
 
     for (i = 0; i < fnInfo->parameterCount; ++i) {
         VALUE entry = rb_ary_entry(rbParamTypes, i);
@@ -127,6 +129,10 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
             fnInfo->callbackParameters[fnInfo->callbackCount++] = type;
         }
 
+        if (rb_obj_is_kind_of(type, rbffi_StructByValueClass)) {
+            fnInfo->hasStruct = true;
+        }
+
         rb_ary_push(fnInfo->rbParameterTypes, type);
         Data_Get_Struct(type, Type, fnInfo->parameterTypes[i]);
         fnInfo->ffiParameterTypes[i] = fnInfo->parameterTypes[i]->ffiType;
@@ -137,6 +143,10 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
     if (!RTEST(fnInfo->rbReturnType)) {
         VALUE typeName = rb_funcall2(rbReturnType, rb_intern("inspect"), 0, NULL);
         rb_raise(rb_eTypeError, "Invalid return type (%s)", RSTRING_PTR(typeName));
+    }
+    
+    if (rb_obj_is_kind_of(fnInfo->rbReturnType, rbffi_StructByValueClass)) {
+        fnInfo->hasStruct = true;
     }
 
     Data_Get_Struct(fnInfo->rbReturnType, Type, fnInfo->returnType);
