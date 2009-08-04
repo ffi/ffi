@@ -51,8 +51,8 @@ static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, int type);
 VALUE rbffi_StructClass = Qnil;
 static VALUE StructLayoutClass = Qnil;
 static VALUE StructFieldClass = Qnil, StructLayoutBuilderClass = Qnil;
-static ID pointer_var_id = 0, layout_var_id = 0, TYPE_ID;
-static ID get_id = 0, put_id = 0, to_ptr = 0, to_s = 0, layout_id = 0;
+static ID id_pointer_ivar = 0, id_layout_ivar = 0, TYPE_ID;
+static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
 
 static VALUE
 struct_field_allocate(VALUE klass)
@@ -166,9 +166,9 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 
     /* Call up into ruby code to adjust the layout */
     if (nargs > 1) {
-        s->rbLayout = rb_funcall2(CLASS_OF(self), layout_id, RARRAY_LEN(rest), RARRAY_PTR(rest));
-    } else if (rb_cvar_defined(klass, layout_var_id)) {
-        s->rbLayout = rb_cvar_get(klass, layout_var_id);
+        s->rbLayout = rb_funcall2(CLASS_OF(self), id_layout, RARRAY_LEN(rest), RARRAY_PTR(rest));
+    } else if (rb_cvar_defined(klass, id_layout_ivar)) {
+        s->rbLayout = rb_cvar_get(klass, id_layout_ivar);
     } else {
         rb_raise(rb_eRuntimeError, "No Struct layout configured");
     }
@@ -213,7 +213,7 @@ struct_field(Struct* s, VALUE fieldName)
 
     rbField = rb_hash_aref(layout->rbFields, fieldName);
     if (rbField == Qnil) {
-        VALUE str = rb_funcall2(fieldName, to_s, 0, NULL);
+        VALUE str = rb_funcall2(fieldName, id_to_s, 0, NULL);
         rb_raise(rb_eArgError, "No such field '%s'", StringValuePtr(str));
     }
 
@@ -274,7 +274,7 @@ struct_get_field(VALUE self, VALUE fieldName)
     }
     
     /* call up to the ruby code to fetch the value */
-    return rb_funcall2(rbField, get_id, 1, &s->rbPointer);
+    return rb_funcall2(rbField, id_get, 1, &s->rbPointer);
 }
 
 static VALUE
@@ -299,7 +299,7 @@ struct_put_field(VALUE self, VALUE fieldName, VALUE value)
     /* call up to the ruby code to set the value */
     argv[0] = s->rbPointer;
     argv[1] = value;
-    rb_funcall2(rbField, put_id, 2, argv);
+    rb_funcall2(rbField, id_put, 2, argv);
     
     return self;
 }
@@ -316,7 +316,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
     Data_Get_Struct(self, Struct, s);
     s->pointer = MEMORY(pointer);
     s->rbPointer = pointer;
-    rb_ivar_set(self, pointer_var_id, pointer);
+    rb_ivar_set(self, id_pointer_ivar, pointer);
 
     return self;
 }
@@ -342,7 +342,7 @@ struct_set_layout(VALUE self, VALUE layout)
     }
 
     Data_Get_Struct(layout, StructLayout, s->layout);
-    rb_ivar_set(self, layout_var_id, layout);
+    rb_ivar_set(self, id_layout_ivar, layout);
 
     return self;
 }
@@ -458,13 +458,13 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructLayoutClass, "initialize", struct_layout_initialize, 4);
     rb_define_method(StructLayoutClass, "[]", struct_layout_aref, 1);
 
-    pointer_var_id = rb_intern("@pointer");
-    layout_var_id = rb_intern("@layout");
-    layout_id = rb_intern("layout");
-    get_id = rb_intern("get");
-    put_id = rb_intern("put");
-    to_ptr = rb_intern("to_ptr");
-    to_s = rb_intern("to_s");
+    id_pointer_ivar = rb_intern("@pointer");
+    id_layout_ivar = rb_intern("@layout");
+    id_layout = rb_intern("layout");
+    id_get = rb_intern("get");
+    id_put = rb_intern("put");
+    id_to_ptr = rb_intern("to_ptr");
+    id_to_s = rb_intern("to_s");
     TYPE_ID = rb_intern("TYPE");
 #undef FIELD
 #define FIELD(name, typeName, nativeType, T) do { \
