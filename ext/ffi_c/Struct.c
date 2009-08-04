@@ -46,7 +46,8 @@ typedef struct StructLayoutBuilder {
 
 static void struct_mark(Struct *);
 static void struct_layout_mark(StructLayout *);
-static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, int type);
+static void struct_field_mark(StructField* f);
+static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, Type* type);
 
 VALUE rbffi_StructClass = Qnil;
 static VALUE StructLayoutClass = Qnil;
@@ -58,7 +59,18 @@ static VALUE
 struct_field_allocate(VALUE klass)
 {
     StructField* field;
-    return Data_Make_Struct(klass, StructField, NULL, -1, field);
+    VALUE obj;
+    
+    obj = Data_Make_Struct(klass, StructField, struct_field_mark, -1, field);
+    field->rbType = Qnil;
+
+    return obj;
+}
+
+static void
+struct_field_mark(StructField* f)
+{
+    rb_gc_mark(f->rbType);
 }
 
 static VALUE
@@ -74,13 +86,11 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     
     field->offset = NUM2UINT(offset);
     if (rb_const_defined(CLASS_OF(self), TYPE_ID)) {
-        VALUE rbType = rbffi_Type_Find(rb_const_get(CLASS_OF(self), TYPE_ID));
-        Type* type;
-
-        Data_Get_Struct(rbType, Type, type);
-        field->type = type->nativeType;
+        field->rbType = rbffi_Type_Find(rb_const_get(CLASS_OF(self), TYPE_ID));
+        Data_Get_Struct(field->rbType, Type, field->type);
     } else {
-        field->type = ~0;
+        field->rbType = Qnil;
+        field->type = NULL;
     }
 
     rb_iv_set(self, "@off", offset);
@@ -221,12 +231,12 @@ struct_field(Struct* s, VALUE fieldName)
 }
 
 static inline MemoryOp*
-ptr_get_op(AbstractMemory* ptr, int type)
+ptr_get_op(AbstractMemory* ptr, Type* type)
 {
-    if (ptr == NULL || ptr->ops == NULL) {
+    if (ptr == NULL || ptr->ops == NULL || type == NULL) {
         return NULL;
     }
-    switch (type) {
+    switch (type->nativeType) {
         case NATIVE_INT8:
             return ptr->ops->int8;
         case NATIVE_UINT8:

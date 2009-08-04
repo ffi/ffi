@@ -31,6 +31,7 @@
 #define	RBFFI_STRUCT_H
 
 #include "AbstractMemory.h"
+#include "Type.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -39,10 +40,12 @@ extern "C" {
     extern void rbffi_Struct_Init(VALUE ffiModule);
 
     typedef struct StructField_ {
-        unsigned int type;
+        Type* type;
         unsigned int offset;
         unsigned int size;
         unsigned int align;
+
+        VALUE rbType;
     } StructField;
 
     typedef struct StructLayout_ {
