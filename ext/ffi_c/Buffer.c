@@ -121,6 +121,12 @@ buffer_type_size(VALUE self)
 }
 
 static VALUE
+buffer_size(VALUE self)
+{
+    return INT2NUM(BUFFER(self)->memory.size);
+}
+
+static VALUE
 buffer_inspect(VALUE self)
 {
     char tmp[100];
@@ -165,6 +171,9 @@ rbffi_Buffer_Init(VALUE moduleFFI)
     
     rb_define_method(BufferClass, "initialize", buffer_initialize, -1);
     rb_define_method(BufferClass, "inspect", buffer_inspect, 0);
+    rb_define_method(BufferClass, "size", buffer_size, 0);
+    rb_define_alias(BufferClass, "length", "size");
+    rb_define_alias(BufferClass, "total", "size");
     rb_define_method(BufferClass, "type_size", buffer_type_size, 0);
     rb_define_method(BufferClass, "[]", buffer_aref, 1);
     rb_define_method(BufferClass, "+", buffer_plus, 1);

@@ -194,3 +194,9 @@ describe "Buffer#put_pointer" do
     p2.get_uint(0).should == 0xdeadbeef
   end
 end
+describe "Buffer#size" do
+  it "should return size" do
+    buf = FFI::Buffer.new 14
+    buf.size.should == 14
+  end
+end
