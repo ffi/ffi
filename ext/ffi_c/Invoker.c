@@ -79,7 +79,6 @@ static VALUE invoker_initialize(VALUE self, VALUE function, VALUE parameterTypes
 static void invoker_mark(Invoker *);
 static void invoker_free(Invoker *);
 static VALUE invoker_call(int argc, VALUE* argv, VALUE self);
-static 
 VALUE rbffi_InvokerClass = Qnil;
 static VALUE classInvoker = Qnil;
 
