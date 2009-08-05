@@ -58,11 +58,13 @@ or from the mercurial repository on Kenai:
 Special thanks to:
 
 Yehuda Katz
-Luc  Heinrich
+Luc Heinrich
 Andrea Fazzi
 Mike Dalessio
 Hongli Lai
 Evan Phoenix
+Aman Gupta
+Beoran
 
 == LICENSE:
 
