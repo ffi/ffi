@@ -324,7 +324,7 @@ freePage(void *addr)
 #ifdef _WIN32
     return VirtualFree(addr, 0, MEM_RELEASE);
 #else
-    munmap(addr, pageSize) == 0;
+    return munmap(addr, pageSize) == 0;
 #endif
 }
 
