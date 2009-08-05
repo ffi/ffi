@@ -102,13 +102,6 @@ struct MethodHandle {
     MethodHandle* next;
 };
 
-typedef struct BlockingCall_ {
-    void* function;
-    FunctionInfo* info;
-    void **ffiValues;
-    FFIStorage* retval;
-} BlockingCall;
-
 struct MethodHandlePool {
 #if defined (HAVE_NATIVETHREAD) && !defined(_WIN32)
     pthread_mutex_t mutex;
@@ -117,7 +110,7 @@ struct MethodHandlePool {
     MethodHandle* list;
 };
 
-static ffi_type* methodHandleParamTypes[]= {
+static ffi_type* methodHandleParamTypes[] = {
     &ffi_type_sint,
     &ffi_type_pointer,
     &ffi_type_ulong,
@@ -242,20 +235,6 @@ rbffi_MethodHandle_CodeAddress(MethodHandle* handle)
     return handle->code;
 }
 
-
-#if defined(HAVE_NATIVETHREAD)
-static VALUE
-call_blocking_function(void* data)
-{
-    BlockingCall* b = (BlockingCall *) data;
-
-    ffi_call(&b->info->ffi_cif, FFI_FN(b->function), b->retval, b->ffiValues);
-
-    return Qnil;
-}
-
-#endif
-
 /*
  * attached_method_invoke is used as the <= MAX_METHOD_FIXED_ARITY argument fixed-arity fast path
  */
@@ -297,17 +276,14 @@ attached_method_fast_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameter
 }
 
 /*
- * attached_method_vinvoke is used functions with more than 3 parameters
+ * attached_method_vinvoke is used functions with more than 6 parameters, or
+ * with struct param or return values
  */
 static void
 attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, void* user_data)
 {
     MethodHandle* handle =  (MethodHandle *) user_data;
-    FunctionInfo* fnInfo = handle->info;
-    void** ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
-    FFIStorage* params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
-    void* retval;
-
+    
 #ifdef USE_RAW
     int argc = parameters[0].sint;
     VALUE* argv = *(VALUE **) &parameters[1];
@@ -316,33 +292,7 @@ attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, vo
     VALUE* argv = *(VALUE **) parameters[1];
 #endif
 
-    retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
-    
-    rbffi_SetupCallParams(argc, argv,
-        fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
-        fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
-
-#if defined(HAVE_NATIVETHREAD)
-    if (unlikely(fnInfo->blocking)) {
-        BlockingCall bc;
-        bc.info = fnInfo;
-        bc.function = handle->function;
-        bc.ffiValues = ffiValues;
-        bc.retval = retval;
-        rb_thread_blocking_region(call_blocking_function, &bc, NULL, NULL);
-    } else {
-        ffi_call(&fnInfo->ffi_cif, FFI_FN(handle->function), retval, ffiValues);
-    }
-#else
-    ffi_call(&fnInfo->ffi_cif, FFI_FN(handle->function), retval, ffiValues);
-#endif
-
-    if (!fnInfo->ignoreErrno) {
-        rbffi_save_errno();
-    }
-
-    *((VALUE *) mretval) = rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval,
-        fnInfo->rbEnums);
+    *(VALUE *) mretval = rbffi_CallFunction(argc, argv, handle->function, handle->info);
 }
 
 static int

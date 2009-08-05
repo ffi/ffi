@@ -109,7 +109,7 @@ sbv_initialize(VALUE self, VALUE structClass)
         ffi_type* ftype = f->type->ffiType;
         ffi_type* stype = sbv->type.ffiType;
 
-        if (ftype->type == NULL) {
+        if (ftype == NULL) {
             rb_raise(rb_eRuntimeError, "type of field %d not supported for struct-by-value yet", i);
         }
 

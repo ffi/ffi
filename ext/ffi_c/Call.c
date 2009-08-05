@@ -35,7 +35,10 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <ruby.h>
-
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#  include <signal.h>
+#  include <pthread.h>
+#endif
 #include <ffi.h>
 #include "rbffi.h"
 #include "compat.h"
@@ -226,6 +229,26 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
 }
 
 
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+
+typedef struct BlockingCall_ {
+    void* function;
+    FunctionInfo* info;
+    void **ffiValues;
+    FFIStorage* retval;
+} BlockingCall;
+
+static VALUE
+call_blocking_function(void* data)
+{
+    BlockingCall* b = (BlockingCall *) data;
+
+    ffi_call(&b->info->ffi_cif, FFI_FN(b->function), b->retval, b->ffiValues);
+
+    return Qnil;
+}
+#endif
+
 VALUE
 rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionInfo* fnInfo)
 {
@@ -241,7 +264,22 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionInfo* fnInfo)
         fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
         fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+    if (unlikely(fnInfo->blocking)) {
+        BlockingCall bc;
+
+        bc.info = fnInfo;
+        bc.function = function;
+        bc.ffiValues = ffiValues;
+        bc.retval = retval;
+
+        rb_thread_blocking_region(call_blocking_function, &bc, (void *) -1, NULL);
+    } else {
+        ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
+    }
+#else
     ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
+#endif
 
     if (!fnInfo->ignoreErrno) {
         rbffi_save_errno();
