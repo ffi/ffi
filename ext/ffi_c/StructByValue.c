@@ -66,6 +66,7 @@ sbv_allocate(VALUE klass)
     }
     sbv->type.ffiType->size = 0;
     sbv->type.ffiType->alignment = 0;
+    sbv->type.ffiType->type = FFI_TYPE_STRUCT;
 
     return obj;
 }
@@ -130,6 +131,7 @@ sbv_initialize(VALUE self, VALUE structClass)
     sbv->type.ffiType->size = FFI_ALIGN(sbv->type.ffiType->size, sbv->type.ffiType->alignment);
     sbv->type.size = sbv->type.ffiType->size;
     sbv->type.alignment = sbv->type.ffiType->alignment;
+    sbv->type.ffiType->elements = sbv->ffiTypes;
 
     return self;
 }
