@@ -130,20 +130,24 @@ enum_allocate(VALUE klass)
 int
 rbffi_Type_GetIntValue(VALUE type)
 {
-    if (rb_obj_is_kind_of(type, rbffi_TypeClass)) {
-        Type* t;
-        Data_Get_Struct(type, Type, t);
-        return t->nativeType;
-    } else {
-        rb_raise(rb_eArgError, "Invalid type argument");
+    Type* t;
+
+    if (!rb_obj_is_kind_of(type, rbffi_TypeClass)) {
+        rb_raise(rb_eTypeError, "wrong type.  Expected (FFI::Type)");
     }
+
+    Data_Get_Struct(type, Type, t);
+
+    return t->nativeType;
 }
 
 static VALUE
 builtin_type_new(VALUE klass, int nativeType, ffi_type* ffiType, const char* name)
 {
     BuiltinType* type;
-    VALUE obj = Data_Make_Struct(klass, BuiltinType, NULL, builtin_type_free, type);
+    VALUE obj = Qnil;
+
+    obj = Data_Make_Struct(klass, BuiltinType, NULL, builtin_type_free, type);
     
     type->name = strdup(name);
     type->type.nativeType = nativeType;
