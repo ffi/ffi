@@ -1,4 +1,4 @@
-== 0.4.0 / 2009-08-04
+== 0.4.0 / 2009-08-05
 
 * Major improvements
   * Add support for boolean types
