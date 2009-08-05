@@ -2,6 +2,7 @@
 require 'mkmf'
 require 'rbconfig'
 dir_config("ffi_c")
+
 #IS_MAC = Config::CONFIG['host_os'] =~ /^darwin/
 #if IS_MAC
 #  $CPPFLAGS << " -DMACOSX"
@@ -12,6 +13,8 @@ $defs.push("-DHAVE_FFI_CLOSURE_ALLOC") if have_closure_alloc
 libffi_ok = have_closure_alloc
 $defs << "-DHAVE_LIBFFI" if libffi_ok
 $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
+
+have_func('rb_thread_blocking_region')
 
 create_makefile("ffi_c")
 create_header("extconf.h")

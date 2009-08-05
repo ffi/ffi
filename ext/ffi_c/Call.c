@@ -35,14 +35,14 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <ruby.h>
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION) && !defined(_WIN32)
 #  include <signal.h>
 #  include <pthread.h>
 #endif
 #include <ffi.h>
+#include "extconf.h"
 #include "rbffi.h"
 #include "compat.h"
-
 #include "AbstractMemory.h"
 #include "Pointer.h"
 #include "Struct.h"
@@ -229,7 +229,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
 }
 
 
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION)
 
 typedef struct BlockingCall_ {
     void* function;
@@ -264,7 +264,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionInfo* fnInfo)
         fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
         fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION)
     if (unlikely(fnInfo->blocking)) {
         BlockingCall bc;
 
