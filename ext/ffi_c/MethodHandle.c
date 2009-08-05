@@ -89,7 +89,6 @@ static bool freePage(void *);
 static bool protectPage(void *);
 
 typedef void (*methodfn)(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
-static void attached_method_invoke0(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 static void attached_method_fast_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 static void attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 
@@ -124,7 +123,7 @@ static ffi_type* methodHandleParamTypes[]= {
     &ffi_type_ulong,
 };
 
-static MethodHandlePool defaultMethodHandlePool, zeroMethodHandlePool, fastMethodHandlePool;
+static MethodHandlePool defaultMethodHandlePool, fastMethodHandlePool;
 
 static int pageSize;
 
@@ -145,9 +144,7 @@ rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function)
         return NULL;
     }
 
-    if (arity == 0 && !fnInfo->blocking && !fnInfo->hasStruct) {
-        pool = &zeroMethodHandlePool;
-    } else if (arity <= MAX_METHOD_FIXED_ARITY && !fnInfo->blocking && !fnInfo->hasStruct) {
+    if (arity <= MAX_METHOD_FIXED_ARITY && !fnInfo->blocking && !fnInfo->hasStruct) {
         pool = &fastMethodHandlePool;
     } else {
         pool = &defaultMethodHandlePool;
@@ -256,64 +253,47 @@ call_blocking_function(void* data)
 
     return Qnil;
 }
+
 #endif
 
-static inline VALUE
-ffi_invoke(FunctionInfo* fnInfo, void* function, void** ffiValues)
+/*
+ * attached_method_invoke is used as the <= MAX_METHOD_FIXED_ARITY argument fixed-arity fast path
+ */
+static void
+attached_method_fast_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, void* user_data)
 {
-    FFIStorage retval;
+    MethodHandle* handle =  (MethodHandle *) user_data;
+    FunctionInfo* fnInfo = handle->info;
+    void* ffiValues[MAX_METHOD_FIXED_ARITY];
+    FFIStorage params[MAX_METHOD_FIXED_ARITY], retval;
+
+
+    if (fnInfo->parameterCount > 0) {
+#ifdef USE_RAW
+        int argc = parameters[0].sint;
+        VALUE* argv = *(VALUE **) & parameters[1];
+#else
+        int argc = *(ffi_sarg *) parameters[0];
+        VALUE* argv = *(VALUE **) parameters[1];
+#endif
+
+        rbffi_SetupCallParams(argc, argv,
+                fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
+                fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
+    }
 
 #ifdef USE_RAW
-    ffi_raw_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, (ffi_raw *) ffiValues[0]);
+    ffi_raw_call(&fnInfo->ffi_cif, FFI_FN(handle->function), &retval, (ffi_raw *) ffiValues[0]);
 #else
-    ffi_call(&fnInfo->ffi_cif, FFI_FN(function), &retval, ffiValues);
+    ffi_call(&fnInfo->ffi_cif, FFI_FN(handle->function), &retval, ffiValues);
 #endif
 
     if (!fnInfo->ignoreErrno) {
         rbffi_save_errno();
     }
 
-    return rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, &retval,
-        fnInfo->rbEnums);
-}
-
-/*
- * attached_method_invoke0 is used for functions with no arguments
- */
-static void
-attached_method_invoke0(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data)
-{
-    MethodHandle* handle =  (MethodHandle *) user_data;
-    FFIStorage params[1];
-    void* ffiValues[] = { &params[0] };
-
-    *((VALUE *) retval) = ffi_invoke(handle->info, handle->function, ffiValues);
-}
-
-/*
- * attached_method_invoke is used as the <= MAX_METHOD_FIXED_ARITY argument fixed-arity fast path
- */
-static void
-attached_method_fast_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data)
-{
-    MethodHandle* handle =  (MethodHandle *) user_data;
-    FunctionInfo* fnInfo = handle->info;
-    void* ffiValues[MAX_METHOD_FIXED_ARITY];
-    FFIStorage params[MAX_METHOD_FIXED_ARITY];
-
-#ifdef USE_RAW
-    int argc = parameters[0].sint;
-    VALUE* argv = *(VALUE **) &parameters[1];
-#else
-    int argc = *(ffi_sarg *) parameters[0];
-    VALUE* argv = *(VALUE **) parameters[1];
-#endif
-
-    rbffi_SetupCallParams(argc, argv,
-            fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
-            fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
-
-    *((VALUE *) retval) = ffi_invoke(fnInfo, handle->function, ffiValues);
+    *((VALUE *) mretval) = rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType,
+        &retval, fnInfo->rbEnums);
 }
 
 /*
@@ -416,11 +396,9 @@ rbffi_MethodHandle_Init(VALUE module)
 
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
     pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);
-    pthread_mutex_init(&zeroMethodHandlePool.mutex, NULL);
     pthread_mutex_init(&fastMethodHandlePool.mutex, NULL);
 #endif /* USE_PTHREAD_LOCAL */
     defaultMethodHandlePool.fn = attached_method_invoke;
-    zeroMethodHandlePool.fn = attached_method_invoke0;
     fastMethodHandlePool.fn = attached_method_fast_invoke;
 }
 
