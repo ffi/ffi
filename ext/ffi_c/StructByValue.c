@@ -129,8 +129,6 @@ sbv_initialize(VALUE self, VALUE structClass)
 
     // Include tail padding
     sbv->type.ffiType->size = FFI_ALIGN(sbv->type.ffiType->size, sbv->type.ffiType->alignment);
-    sbv->type.size = sbv->type.ffiType->size;
-    sbv->type.alignment = sbv->type.ffiType->alignment;
     sbv->type.ffiType->elements = sbv->ffiTypes;
 
     return self;

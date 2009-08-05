@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2009, Wayne Meissner
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * * The name of the author or authors may not be used to endorse or promote
+ *   products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <ruby.h>
@@ -28,9 +55,8 @@ type_allocate(VALUE klass)
     VALUE obj = Data_Make_Struct(klass, Type, NULL, -1, type);
 
     type->nativeType = -1;
-    type->size = 0;
-    type->alignment = 1;
-
+    type->ffiType = &ffi_type_void;
+    
     return obj;
 }
 
@@ -47,8 +73,7 @@ type_initialize(VALUE self, VALUE value)
     } else if (rb_obj_is_kind_of(value, rbffi_TypeClass)) {
         Data_Get_Struct(value, Type, other);
         type->nativeType = other->nativeType;
-        type->size = other->size;
-        type->alignment = other->alignment;
+        type->ffiType = other->ffiType;
     } else {
         rb_raise(rb_eArgError, "wrong type");
     }
@@ -63,7 +88,7 @@ type_size(VALUE self)
 
     Data_Get_Struct(self, Type, type);
 
-    return INT2FIX(type->size);
+    return INT2FIX(type->ffiType->size);
 }
 
 static VALUE
@@ -73,7 +98,7 @@ type_alignment(VALUE self)
 
     Data_Get_Struct(self, Type, type);
 
-    return INT2FIX(type->alignment);
+    return INT2FIX(type->ffiType->alignment);
 }
 
 static VALUE
@@ -84,7 +109,7 @@ type_inspect(VALUE self)
 
     Data_Get_Struct(self, Type, type);
     snprintf(buf, sizeof(buf), "#<FFI::Type:%p size=%d alignment=%d>", 
-            type, type->size, type->alignment);
+            type, (int) type->ffiType->size, (int) type->ffiType->alignment);
 
     return rb_str_new2(buf);
 }
@@ -98,8 +123,6 @@ enum_allocate(VALUE klass)
     obj = Data_Make_Struct(klass, Type, NULL, -1, type);
     type->nativeType = NATIVE_ENUM;
     type->ffiType = &ffi_type_sint;
-    type->size = ffi_type_sint.size;
-    type->alignment = ffi_type_sint.alignment;
 
     return obj;
 }
@@ -125,8 +148,6 @@ builtin_type_new(VALUE klass, int nativeType, ffi_type* ffiType, const char* nam
     type->name = strdup(name);
     type->type.nativeType = nativeType;
     type->type.ffiType = ffiType;
-    type->type.size = ffiType->size;
-    type->type.alignment = ffiType->alignment;
 
     return obj;
 }
@@ -146,7 +167,7 @@ builtin_type_inspect(VALUE self)
 
     Data_Get_Struct(self, BuiltinType, type);
     snprintf(buf, sizeof(buf), "#<FFI::Type::Builtin:%s size=%d alignment=%d>",
-            type->name, type->type.size, type->type.alignment);
+            type->name, (int) type->type.ffiType->size, type->type.ffiType->alignment);
 
     return rb_str_new2(buf);
 }

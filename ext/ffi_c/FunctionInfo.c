@@ -56,8 +56,6 @@ fninfo_allocate(VALUE klass)
     VALUE obj = Data_Make_Struct(klass, FunctionInfo, fninfo_mark, fninfo_free, fnInfo);
 
     fnInfo->type.ffiType = &ffi_type_pointer;
-    fnInfo->type.size = ffi_type_pointer.size;
-    fnInfo->type.alignment = ffi_type_pointer.alignment;
     fnInfo->type.nativeType = NATIVE_FUNCTION;
     fnInfo->rbReturnType = Qnil;
     fnInfo->rbParameterTypes = Qnil;

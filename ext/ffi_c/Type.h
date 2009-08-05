@@ -42,8 +42,6 @@ typedef struct Type_ Type;
 struct Type_ {
     NativeType nativeType;
     ffi_type* ffiType;
-    int size;
-    int alignment;
 };
 
 extern VALUE rbffi_TypeClass;
