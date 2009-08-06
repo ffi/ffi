@@ -60,10 +60,7 @@ sbv_allocate(VALUE klass)
     sbv->structClass = Qnil;
     sbv->type.nativeType = NATIVE_STRUCT;
 
-    sbv->type.ffiType = ALLOC_N(ffi_type, 1);
-    if (sbv->type.ffiType == NULL) {
-        rb_raise(rb_eNoMemError, "failed to allocate memory for ffi_type");
-    }
+    sbv->type.ffiType = xcalloc(1, sizeof(*sbv->type.ffiType));
     sbv->type.ffiType->size = 0;
     sbv->type.ffiType->alignment = 0;
     sbv->type.ffiType->type = FFI_TYPE_STRUCT;
@@ -91,16 +88,8 @@ sbv_initialize(VALUE self, VALUE structClass)
     sbv->fieldCount = layout->fieldCount;
 
     // ffiTypes is NULL terminated, so allocate 1 extra
-    sbv->ffiTypes = ALLOC_N(ffi_type *, layout->fieldCount + 1);
-    if (sbv->ffiTypes == NULL) {
-        rb_raise(rb_eNoMemError, "failed to allocate memory for types array");
-    }
-
-    sbv->rbFields = ALLOC_N(VALUE, layout->fieldCount);
-    if (sbv->rbFields == NULL) {
-        rb_raise(rb_eNoMemError, "failed to allocate memory for fields array");
-    }
-    
+    sbv->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
+    sbv->rbFields = xcalloc(layout->fieldCount, sizeof(VALUE));
     sbv->type.ffiType->size = 0;
     sbv->type.ffiType->alignment = 0;
 

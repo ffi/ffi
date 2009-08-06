@@ -52,6 +52,28 @@ typedef struct StructLayoutBuilder {
     bool isUnion;
 } StructLayoutBuilder;
 
+typedef struct AggregateType_ {
+    Type base;
+} AggregateType;
+
+typedef struct InlineArray_ {
+    VALUE rbMemory;
+    VALUE rbField;
+
+    AbstractMemory* memory;
+    StructField* field;
+    MemoryOp *op;
+    Type* componentType;
+} InlineArray;
+
+typedef struct ArrayType_ {
+    Type base;
+    int length;
+    ffi_type** ffiTypes;
+    VALUE rbComponentType;
+} ArrayType;
+
+
 static void struct_mark(Struct *);
 static void struct_layout_mark(StructLayout *);
 static void struct_layout_free(StructLayout *);
@@ -59,13 +81,19 @@ static void struct_field_mark(StructField* );
 static void struct_layout_builder_mark(StructLayoutBuilder *);
 static void struct_layout_builder_free(StructLayoutBuilder *);
 
+static void array_type_mark(ArrayType *);
+static void array_type_free(ArrayType *);
+
+static void inline_array_mark(InlineArray *);
+
 static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, Type* type);
 static inline int align(int offset, int align);
 
 VALUE rbffi_StructClass = Qnil;
 VALUE rbffi_StructLayoutClass = Qnil;
 static VALUE StructFieldClass = Qnil, StructLayoutBuilderClass = Qnil;
-static VALUE FunctionFieldClass = Qnil;
+static VALUE FunctionFieldClass = Qnil, ArrayFieldClass = Qnil;
+static VALUE ArrayTypeClass = Qnil, InlineArrayClass = Qnil;
 static ID id_pointer_ivar = 0, id_layout_ivar = 0, TYPE_ID;
 static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
 
@@ -213,6 +241,31 @@ function_field_put(VALUE self, VALUE pointer, VALUE proc)
     return self;
 }
 
+static VALUE
+array_field_get(VALUE self, VALUE pointer)
+{
+    StructField* f;
+    ArrayType* array;
+    MemoryOp* op;
+    Type* componentType;
+    AbstractMemory* memory = MEMORY(pointer);
+    VALUE argv[2];
+    
+    Data_Get_Struct(self, StructField, f);
+    Data_Get_Struct(f->rbType, ArrayType, array);
+    Data_Get_Struct(array->rbComponentType, Type, componentType);
+    op = ptr_get_op(memory, componentType);
+    if (op == NULL) {
+        VALUE name = rb_class_name(CLASS_OF(self));
+        rb_raise(rb_eArgError, "get not supported for %s", StringValueCStr(name));
+        return Qnil;
+    }
+
+    argv[0] = pointer;
+    argv[1] = self;
+
+    return rb_class_new_instance(2, argv, InlineArrayClass);
+}
 
 static inline char*
 memory_address(VALUE self)
@@ -672,6 +725,96 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
+static VALUE
+array_type_allocate(VALUE klass)
+{
+    ArrayType* array;
+    VALUE obj;
+    
+    obj = Data_Make_Struct(klass, ArrayType, array_type_mark, array_type_free, array);
+
+    array->base.nativeType = NATIVE_STRUCT;
+    array->base.ffiType = xcalloc(1, sizeof(*array->base.ffiType));
+    array->base.ffiType->type = FFI_TYPE_STRUCT;
+    array->base.ffiType->size = 0;
+    array->base.ffiType->alignment = 0;
+
+    array->rbComponentType = Qnil;
+
+    return obj;
+}
+
+static VALUE
+array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
+{
+    ArrayType* array;
+    Type* componentType;
+    int i, length;
+
+    Data_Get_Struct(rbComponentType, Type, componentType);
+    Data_Get_Struct(self, ArrayType, array);
+
+    length = NUM2UINT(rbLength);
+    array->rbComponentType = rbComponentType;
+    array->ffiTypes = xcalloc(length + 1, sizeof(*array->ffiTypes));
+    array->base.ffiType->size = componentType->ffiType->size * length;
+    array->base.ffiType->alignment = componentType->ffiType->alignment;
+    array->length = length;
+
+    for (i = 0; i < length; ++i) {
+        array->ffiTypes[i] = componentType->ffiType;
+    }
+
+    return self;
+}
+
+static void
+array_type_mark(ArrayType *array)
+{
+    rb_gc_mark(array->rbComponentType);
+}
+
+static void
+array_type_free(ArrayType *array)
+{
+    xfree(array->base.ffiType);
+    xfree(array->ffiTypes);
+    xfree(array);
+}
+
+static VALUE
+struct_layout_builder_add_array(int argc, VALUE* argv, VALUE self)
+{
+    StructLayoutBuilder* builder;
+    VALUE rbName = Qnil, rbType = Qnil, rbLength = Qnil, rbOffset = Qnil, rbField;
+    VALUE fargv[2], aargv[2];
+    unsigned int size, alignment, offset;
+    int nargs;
+
+    nargs = rb_scan_args(argc, argv, "31", &rbName, &rbType, &rbLength, &rbOffset);
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+
+    alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
+    size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL)) * NUM2UINT(rbLength);
+
+    if (rbOffset != Qnil) {
+        offset = NUM2UINT(rbOffset);
+    } else {
+        offset = builder->isUnion ? 0 : align(builder->size, alignment);
+    }
+
+    aargv[0] = rbType;
+    aargv[1] = rbLength;
+    fargv[0] = UINT2NUM(offset);
+    fargv[1] = rb_class_new_instance(2, aargv, ArrayTypeClass);
+    rbField = rb_class_new_instance(2, fargv, ArrayFieldClass);
+
+    store_field(builder, rbName, rbField, offset, size, alignment);
+
+    return self;
+}
+
 static inline int
 align(int offset, int align)
 {
@@ -694,6 +837,141 @@ struct_layout_builder_build(VALUE self)
     return rb_class_new_instance(4, argv, rbffi_StructLayoutClass);
 }
 
+static VALUE
+inline_array_allocate(VALUE klass)
+{
+    InlineArray* array;
+    VALUE obj;
+
+    obj = Data_Make_Struct(klass, InlineArray, inline_array_mark, -1, array);
+    array->rbField = Qnil;
+    array->rbMemory = Qnil;
+
+    return obj;
+}
+
+static void
+inline_array_mark(InlineArray* array)
+{
+    rb_gc_mark(array->rbField);
+    rb_gc_mark(array->rbMemory);
+}
+
+static VALUE
+inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
+{
+    InlineArray* array;
+    ArrayType* arrayType;
+
+    Data_Get_Struct(self, InlineArray, array);
+    array->rbMemory = rbMemory;
+    array->rbField = rbField;
+
+    Data_Get_Struct(rbMemory, AbstractMemory, array->memory);
+    Data_Get_Struct(rbField, StructField, array->field);
+    Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+    Data_Get_Struct(arrayType->rbComponentType, Type, array->componentType);
+    
+    array->op = ptr_get_op(array->memory, array->componentType);
+    if (array->op == NULL) {
+        rb_raise(rb_eRuntimeError, "invalid memory ops");
+    }
+
+    return self;
+}
+
+static VALUE
+inline_array_size(VALUE self)
+{
+    InlineArray* array;
+
+    Data_Get_Struct(self, InlineArray, array);
+
+    return UINT2NUM(array->field->type->ffiType->size);
+}
+
+static int
+inline_array_offset(InlineArray* array, unsigned int index)
+{
+    return array->field->offset + (index * array->componentType->ffiType->size);
+}
+
+static VALUE
+inline_array_aref(VALUE self, VALUE rbIndex)
+{
+    InlineArray* array;
+
+    Data_Get_Struct(self, InlineArray, array);
+
+    return array->op->get(array->memory, inline_array_offset(array, NUM2UINT(rbIndex)));
+}
+
+static VALUE
+inline_array_aset(VALUE self, VALUE rbIndex, VALUE rbValue)
+{
+    InlineArray* array;
+
+    Data_Get_Struct(self, InlineArray, array);
+
+    array->op->put(array->memory, inline_array_offset(array, NUM2UINT(rbIndex)),
+        rbValue);
+
+    return rbValue;
+}
+
+static VALUE
+inline_array_each(VALUE self)
+{
+    InlineArray* array;
+    ArrayType* arrayType;
+    
+    int i;
+
+    Data_Get_Struct(self, InlineArray, array);
+    Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+
+    for (i = 0; i < arrayType->length; ++i) {
+    int offset = inline_array_offset(array, i);
+        rb_yield(array->op->get(array->memory, offset));
+    }
+
+    return self;
+}
+
+static VALUE
+inline_array_to_a(VALUE self)
+{
+    InlineArray* array;
+    ArrayType* arrayType;
+    VALUE obj;
+    int i;
+
+    Data_Get_Struct(self, InlineArray, array);
+    Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+    obj = rb_ary_new2(arrayType->length);
+
+    
+    for (i = 0; i < arrayType->length; ++i) {
+        int offset = inline_array_offset(array, i);
+        rb_ary_push(obj, array->op->get(array->memory, offset));
+    }
+
+    return obj;
+}
+
+static VALUE
+inline_array_to_ptr(VALUE self)
+{
+    InlineArray* array;
+    VALUE rbOffset;
+
+    Data_Get_Struct(self, InlineArray, array);
+
+    rbOffset = UINT2NUM(array->field->offset);
+    return rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
+}
+
+
 void
 rbffi_Struct_Init(VALUE moduleFFI)
 {
@@ -712,6 +990,15 @@ rbffi_Struct_Init(VALUE moduleFFI)
 
     FunctionFieldClass = rb_define_class_under(StructLayoutBuilderClass, "FunctionField", StructFieldClass);
     rb_global_variable(&FunctionFieldClass);
+
+    ArrayFieldClass = rb_define_class_under(StructLayoutBuilderClass, "ArrayField", StructFieldClass);
+    rb_global_variable(&ArrayFieldClass);
+
+    ArrayTypeClass = rb_define_class_under(rbffi_StructLayoutClass, "ArrayType", rbffi_TypeClass);
+    rb_global_variable(&ArrayTypeClass);
+
+    InlineArrayClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineArray", rb_cObject);
+    rb_global_variable(&InlineArrayClass);
 
     rb_define_alloc_func(StructClass, struct_allocate);
     rb_define_method(StructClass, "initialize", struct_initialize, -1);
@@ -743,6 +1030,11 @@ rbffi_Struct_Init(VALUE moduleFFI)
     // FIXME: hack for the ruby code
     rb_define_const(FunctionFieldClass, "TYPE", rb_const_get(moduleFFI, rb_intern("TYPE_POINTER")));
 
+    rb_define_method(ArrayFieldClass, "get", array_field_get, 1);
+
+    rb_define_alloc_func(ArrayTypeClass, array_type_allocate);
+    rb_define_method(ArrayTypeClass, "initialize", array_type_initialize, 2);
+
     rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
     rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);
     rb_define_method(rbffi_StructLayoutClass, "[]", struct_layout_aref, 1);
@@ -758,6 +1050,17 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructLayoutBuilderClass, "union=", struct_layout_builder_set_union, 1);
     rb_define_method(StructLayoutBuilderClass, "union?", struct_layout_builder_union_p, 0);
     rb_define_method(StructLayoutBuilderClass, "add_field", struct_layout_builder_add_field, -1);
+    rb_define_method(StructLayoutBuilderClass, "add_array", struct_layout_builder_add_array, -1);
+
+    rb_include_module(InlineArrayClass, rb_mEnumerable);
+    rb_define_alloc_func(InlineArrayClass, inline_array_allocate);
+    rb_define_method(InlineArrayClass, "initialize", inline_array_initialize, 2);
+    rb_define_method(InlineArrayClass, "[]", inline_array_aref, 1);
+    rb_define_method(InlineArrayClass, "[]=", inline_array_aset, 2);
+    rb_define_method(InlineArrayClass, "each", inline_array_each, 0);
+    rb_define_method(InlineArrayClass, "size", inline_array_size, 0);
+    rb_define_method(InlineArrayClass, "to_a", inline_array_to_a, 0);
+    rb_define_method(InlineArrayClass, "to_ptr", inline_array_to_ptr, 0);
 
     id_pointer_ivar = rb_intern("@pointer");
     id_layout_ivar = rb_intern("@layout");

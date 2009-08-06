@@ -58,85 +58,8 @@ module FFI
       self.module_eval(code)
     end
 
-    def self.array_field_class_from(type, num)
-      klass_name = type.name.split('::').last
-      code = <<-code
-      class ArrayField_#{klass_name}_#{num} < Field
-        @info = #{type}
-        @num = #{num}
-          class << self
-            attr_reader :info, :num
-            def size
-              #{type.size} * #{num}
-            end
-            def align
-              #{type.align}
-            end
-          end
-        def get(ptr)
-          @array ? @array : get_array_data(ptr)
-        end
-        private
-        def get_array_data(ptr)
-          @array = FFI::Struct::Array.new(ptr + @off, self.class.info, self.class.num)
-        end
-      end
-      ArrayField_#{klass_name}_#{num}
-      code
-      self.module_eval(code)
-    end
-
-    def native_field_class_from(type)
-      case type
-      when :char, NativeType::INT8
-        Signed8
-      when :uchar, NativeType::UINT8
-        Unsigned8      
-      when :short, NativeType::INT16
-        Signed16
-      when :ushort, NativeType::UINT16
-        Unsigned16
-      when :long, NativeType::LONG
-        FFI::Platform::LONG_SIZE == 32 ? Signed32 : Signed64
-      when :ulong, NativeType::ULONG
-        FFI::Platform::LONG_SIZE == 32 ? Unsigned32 : Unsigned64
-      when :int, NativeType::INT32
-        Signed32
-      when :uint, NativeType::UINT32
-        Unsigned32
-      when :long_long, NativeType::INT64
-        Signed64
-      when :ulong_long, NativeType::UINT64
-        Unsigned64
-      when :float, NativeType::FLOAT32
-        FloatField
-      when :double, NativeType::FLOAT64
-        DoubleField
-      when :pointer, NativeType::POINTER
-        PointerField
-      when :string, NativeType::STRING
-        StringField
-      end
-    end
-
-    def callback_field_class_from(type)
-      return FunctionField, type if type.is_a?(FFI::CallbackInfo)
-    end
-
     def struct_field_class_from(type)
       self.class.struct_field_class_from(type) if type.is_a?(Class) and type < FFI::Struct
-    end
-
-    def array_field_class_from(type)
-      self.class.array_field_class_from(field_class_from(type[0]), type[1]) if type.is_a?(Array)
-    end
-
-    def field_class_from(type)
-      field_class = native_field_class_from(type) ||
-        callback_field_class_from(type) ||
-        array_field_class_from(type) ||
-        struct_field_class_from(type)
-      field_class or raise ArgumentError, "Unknown type: #{type}"
     end
 
     def add_struct(name, type, offset = nil)
@@ -145,14 +68,7 @@ module FFI
       field = field_class.new(off, info)
       add_field(name, field, off)
     end
-
-    def add_array(name, type, len, offset = nil)
-      field_class, info = self.class.array_field_class_from(field_class_from(type), len)
-      off = calc_alignment_of(field_class, offset)
-      field = field_class.new(off, info)
-      add_field(name, field, off)
-    end
-
+    
     def align(offset, align)
       align + ((offset - 1) & ~(align - 1))
     end
