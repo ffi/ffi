@@ -3,10 +3,10 @@ require 'ffi/struct'
 module FFI
   class UnionLayoutBuilder < FFI::StructLayoutBuilder
     private
-    def calc_alignment_of(field_class, offset); 0; end
-    def calc_current_size(offset, size)
-      @size = size if size > @size
+    def initialize
+      self.union = true
     end
+    def calc_alignment_of(field_class, offset); 0; end
   end
   class Union < FFI::Struct
     private

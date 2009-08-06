@@ -23,6 +23,7 @@ module FFI
       def align
         self.class.align
       end
+      alias_method :alignment, :align
       def offset
         @off
       end
@@ -103,13 +104,6 @@ module FFI
       end
     end
 
-    def initialize
-      @field_names = []
-      @fields = {}
-      @size = 0
-      @min_align = 1
-    end
-
     def native_field_class_from(type)
       case type
       when :char, NativeType::INT8
@@ -166,14 +160,8 @@ module FFI
     def add_field(name, type, offset = nil)
       field_class, info = field_class_from(type)
       off = calc_alignment_of(field_class, offset)
-      calc_current_size(off, field_class.size)
-      @field_names << name
-      @fields[name] = field_class.new(off, info)
-      @min_align = field_class.align if field_class.align > @min_align
-    end
-
-    def build
-      StructLayout.new(@field_names, @fields, align(@size, @min_align), @min_align)
+      field = field_class.new(off, info)
+      _add_field(name, field, off)
     end
 
     def align(offset, align)
@@ -182,10 +170,7 @@ module FFI
 
     private
     def calc_alignment_of(field_class, offset)
-      offset ? offset.to_i : align(@size, field_class.align)
-    end
-    def calc_current_size(offset, size)
-      @size = offset + size
+      offset ? offset.to_i : align(size, field_class.align)
     end
   end
 

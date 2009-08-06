@@ -41,14 +41,22 @@
 #include "Struct.h"
 
 typedef struct StructLayoutBuilder {
-    unsigned int offset;
+    VALUE rbFieldNames;
+    VALUE rbFieldMap;
+    unsigned int size;
+    unsigned int alignment;
+    bool isUnion;
 } StructLayoutBuilder;
 
 static void struct_mark(Struct *);
 static void struct_layout_mark(StructLayout *);
 static void struct_layout_free(StructLayout *);
-static void struct_field_mark(StructField* f);
+static void struct_field_mark(StructField* );
+static void struct_layout_builder_mark(StructLayoutBuilder *);
+static void struct_layout_builder_free(StructLayoutBuilder *);
+
 static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, Type* type);
+static inline int align(int offset, int align);
 
 VALUE rbffi_StructClass = Qnil;
 VALUE rbffi_StructLayoutClass = Qnil;
@@ -438,6 +446,170 @@ struct_layout_free(StructLayout *layout)
     xfree(layout);
 }
 
+static VALUE
+struct_layout_builder_allocate(VALUE klass)
+{
+    StructLayoutBuilder* builder;
+    VALUE obj;
+
+    obj = Data_Make_Struct(klass, StructLayoutBuilder, struct_layout_builder_mark, struct_layout_builder_free, builder);
+
+    builder->size = 0;
+    builder->alignment = 1;
+    builder->isUnion = false;
+    builder->rbFieldNames = rb_ary_new();
+    builder->rbFieldMap = rb_hash_new();
+
+    return obj;
+}
+
+static void
+struct_layout_builder_mark(StructLayoutBuilder* builder)
+{
+    rb_gc_mark(builder->rbFieldNames);
+    rb_gc_mark(builder->rbFieldMap);
+}
+
+static void
+struct_layout_builder_free(StructLayoutBuilder* builder)
+{
+    xfree(builder);
+}
+
+static VALUE
+struct_layout_builder_initialize(VALUE self)
+{
+    StructLayoutBuilder* builder;
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+
+    return self;
+}
+
+static VALUE
+struct_layout_builder_get_size(VALUE self)
+{
+    StructLayoutBuilder* builder;
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+
+    return UINT2NUM(builder->size);
+}
+
+static VALUE
+struct_layout_builder_set_size(VALUE self, VALUE rbSize)
+{
+    StructLayoutBuilder* builder;
+    unsigned int size = NUM2UINT(rbSize);
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+    builder->size = MAX(size, builder->size);
+
+    return UINT2NUM(builder->size);
+}
+
+static VALUE
+struct_layout_builder_get_alignment(VALUE self)
+{
+    StructLayoutBuilder* builder;
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+
+    return UINT2NUM(builder->alignment);
+}
+
+static VALUE
+struct_layout_builder_set_alignment(VALUE self, VALUE rbAlign)
+{
+    StructLayoutBuilder* builder;
+    unsigned int align = NUM2UINT(rbAlign);
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+    builder->size = MAX(align, builder->alignment);
+
+    return UINT2NUM(builder->alignment);
+}
+
+static VALUE
+struct_layout_builder_set_union(VALUE self, VALUE rbUnion)
+{
+    StructLayoutBuilder* builder;
+
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+    builder->isUnion = RTEST(rbUnion);
+
+    return rbUnion;
+}
+
+static VALUE
+struct_layout_builder_union_p(VALUE self)
+{
+    StructLayoutBuilder* builder;
+
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+
+
+    return builder->isUnion ? Qtrue : Qfalse;
+}
+
+static VALUE
+struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
+{
+    StructLayoutBuilder* builder;
+    VALUE rbName = Qnil, rbType = Qnil, rbOffset = Qnil;
+    unsigned int size, alignment, offset;
+    int nargs;
+
+    nargs = rb_scan_args(argc, argv, "21", &rbName, &rbType, &rbOffset);
+    alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
+    size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL));
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+
+    rb_ary_push(builder->rbFieldNames, rbName);
+    rb_hash_aset(builder->rbFieldMap, rbName, rbType);
+
+    builder->alignment = MAX(builder->alignment, alignment);
+
+    if (rbOffset != Qnil) {
+        offset = NUM2UINT(rbOffset);
+    } else {
+        offset = align(builder->size, alignment);
+    }
+
+    if (builder->isUnion) {
+        builder->size = MAX(builder->size, size);
+    } else {
+        builder->size = MAX(builder->size, offset + size);
+    }
+
+    return self;
+}
+
+static inline int
+align(int offset, int align)
+{
+    return align + ((offset - 1) & ~(align - 1));
+}
+
+static VALUE
+struct_layout_builder_build(VALUE self)
+{
+    StructLayoutBuilder* builder;
+    VALUE argv[4];
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+
+    argv[0] = builder->rbFieldNames;
+    argv[1] = builder->rbFieldMap;
+    argv[2] = UINT2NUM(align(builder->size, builder->alignment)); // tail padding
+    argv[3] = UINT2NUM(builder->alignment);
+
+    return rb_class_new_instance(4, argv, rbffi_StructLayoutClass);
+}
+
 void
 rbffi_Struct_Init(VALUE moduleFFI)
 {
@@ -482,6 +654,18 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
     rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);
     rb_define_method(rbffi_StructLayoutClass, "[]", struct_layout_aref, 1);
+
+    rb_define_alloc_func(StructLayoutBuilderClass, struct_layout_builder_allocate);
+    rb_define_method(StructLayoutBuilderClass, "initialize", struct_layout_builder_initialize, 0);
+    rb_define_method(StructLayoutBuilderClass, "build", struct_layout_builder_build, 0);
+
+    rb_define_method(StructLayoutBuilderClass, "alignment", struct_layout_builder_get_alignment, 0);
+    rb_define_method(StructLayoutBuilderClass, "alignment=", struct_layout_builder_set_alignment, 1);
+    rb_define_method(StructLayoutBuilderClass, "size", struct_layout_builder_get_size, 0);
+    rb_define_method(StructLayoutBuilderClass, "size=", struct_layout_builder_set_size, 1);
+    rb_define_method(StructLayoutBuilderClass, "union=", struct_layout_builder_set_union, 1);
+    rb_define_method(StructLayoutBuilderClass, "union?", struct_layout_builder_union_p, 0);
+    rb_define_method(StructLayoutBuilderClass, "_add_field", struct_layout_builder_add_field, -1);
 
     id_pointer_ivar = rb_intern("@pointer");
     id_layout_ivar = rb_intern("@layout");
