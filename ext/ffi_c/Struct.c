@@ -618,26 +618,43 @@ static VALUE
 struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
 {
     StructLayoutBuilder* builder;
-    VALUE rbName = Qnil, rbType = Qnil, rbOffset = Qnil;
+    VALUE rbName = Qnil, rbType = Qnil, rbOffset = Qnil, rbField = Qnil;
     unsigned int size, alignment, offset;
     int nargs;
 
     nargs = rb_scan_args(argc, argv, "21", &rbName, &rbType, &rbOffset);
-    alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
-    size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL));
-
+    
     Data_Get_Struct(self, StructLayoutBuilder, builder);
 
-    rb_ary_push(builder->rbFieldNames, rbName);
-    rb_hash_aset(builder->rbFieldMap, rbName, rbType);
-
-    builder->alignment = MAX(builder->alignment, alignment);
+    alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
+    size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL));
 
     if (rbOffset != Qnil) {
         offset = NUM2UINT(rbOffset);
     } else {
-        offset = align(builder->size, alignment);
+        offset = builder->isUnion ? 0 : align(builder->size, alignment);
     }
+
+    //
+    // If a primitive type was passed in as the type arg, try and convert
+    //
+    if (!rb_obj_is_kind_of(rbType, StructFieldClass)) {
+        VALUE fargv[2];
+        fargv[0] = UINT2NUM(offset);
+        fargv[1] = rbType;
+        if (rb_obj_is_kind_of(rbType, rbffi_FunctionInfoClass)) {
+            rbField = rb_class_new_instance(2, fargv, FunctionFieldClass);
+        } else {
+            rbField = rb_class_new_instance(2, fargv, StructFieldClass);
+        }
+    } else {
+        rbField = rbType;
+    }
+
+    rb_ary_push(builder->rbFieldNames, rbName);
+    rb_hash_aset(builder->rbFieldMap, rbName, rbField);
+
+    builder->alignment = MAX(builder->alignment, alignment);
 
     if (builder->isUnion) {
         builder->size = MAX(builder->size, size);

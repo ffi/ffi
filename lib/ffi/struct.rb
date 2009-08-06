@@ -140,10 +140,7 @@ module FFI
     end
 
     def add_field(name, type, offset = nil)
-      field_class, info = field_class_from(type)
-      off = calc_alignment_of(field_class, offset)
-      field = field_class.new(off, info)
-      _add_field(name, field, off)
+      _add_field(name, type, offset)
     end
 
     def add_struct(name, type, offset = nil)
@@ -154,7 +151,7 @@ module FFI
     end
 
     def add_array(name, type, len, offset = nil)
-      field_class, info = self.class.array_field_class_from(field_class_from(type, len))
+      field_class, info = self.class.array_field_class_from(field_class_from(type), len)
       off = calc_alignment_of(field_class, offset)
       field = field_class.new(off, info)
       _add_field(name, field, off)
@@ -330,7 +327,7 @@ module FFI
         end
         if type.kind_of?(Class) && type < Struct
           builder.add_struct(name, type, offset)
-        elsif type.kind_of?(Array)
+        elsif type.kind_of?(::Array)
           builder.add_array(name, find_type(type[0], mod), type[1], offset)
         else
           builder.add_field(name, find_type(type, mod), offset)
