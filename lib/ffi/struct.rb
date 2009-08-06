@@ -146,6 +146,20 @@ module FFI
       _add_field(name, field, off)
     end
 
+    def add_struct(name, type, offset = nil)
+      field_class, info = self.class.struct_field_class_from(type)
+      off = calc_alignment_of(field_class, offset)
+      field = field_class.new(off, info)
+      _add_field(name, field, off)
+    end
+
+    def add_array(name, type, len, offset = nil)
+      field_class, info = self.class.array_field_class_from(field_class_from(type, len))
+      off = calc_alignment_of(field_class, offset)
+      field = field_class.new(off, info)
+      _add_field(name, field, off)
+    end
+
     def align(offset, align)
       align + ((offset - 1) & ~(align - 1))
     end
@@ -288,7 +302,13 @@ module FFI
       builder = self.builder
       mod = enclosing_module
       spec[0].each do |name,type|
-        builder.add_field(name, find_type(type, mod))
+        if type.kind_of?(Class) && type < Struct
+          builder.add_struct(name, type)
+        elsif type.kind_of?(Array)
+          builder.add_array(name, find_type(type[0], mod), type[1])
+        else
+          builder.add_field(name, find_type(type, mod))
+        end
       end
       builder.build
     end
@@ -300,15 +320,21 @@ module FFI
       while i < spec.size
         name, type = spec[i, 2]
         i += 2
-        code = find_type(type, mod) 
+        
         # If the next param is a Fixnum, it specifies the offset
         if spec[i].kind_of?(Fixnum)
           offset = spec[i]
           i += 1
-          builder.add_field(name, code, offset)
         else
-          builder.add_field(name, code)
+          offset = nil
         end
+        if type.kind_of?(Class) && type < Struct
+          builder.add_struct(name, type, offset)
+        elsif type.kind_of?(Array)
+          builder.add_array(name, find_type(type[0], mod), type[1], offset)
+        else
+          builder.add_field(name, find_type(type, mod), offset)
+        end 
       end
       builder.build
     end
