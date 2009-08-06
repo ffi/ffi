@@ -139,22 +139,18 @@ module FFI
       field_class or raise ArgumentError, "Unknown type: #{type}"
     end
 
-    def add_field(name, type, offset = nil)
-      _add_field(name, type, offset)
-    end
-
     def add_struct(name, type, offset = nil)
       field_class, info = self.class.struct_field_class_from(type)
       off = calc_alignment_of(field_class, offset)
       field = field_class.new(off, info)
-      _add_field(name, field, off)
+      add_field(name, field, off)
     end
 
     def add_array(name, type, len, offset = nil)
       field_class, info = self.class.array_field_class_from(field_class_from(type), len)
       off = calc_alignment_of(field_class, offset)
       field = field_class.new(off, info)
-      _add_field(name, field, off)
+      add_field(name, field, off)
     end
 
     def align(offset, align)

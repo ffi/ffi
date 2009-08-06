@@ -750,7 +750,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructLayoutBuilderClass, "size=", struct_layout_builder_set_size, 1);
     rb_define_method(StructLayoutBuilderClass, "union=", struct_layout_builder_set_union, 1);
     rb_define_method(StructLayoutBuilderClass, "union?", struct_layout_builder_union_p, 0);
-    rb_define_method(StructLayoutBuilderClass, "_add_field", struct_layout_builder_add_field, -1);
+    rb_define_method(StructLayoutBuilderClass, "add_field", struct_layout_builder_add_field, -1);
 
     id_pointer_ivar = rb_intern("@pointer");
     id_layout_ivar = rb_intern("@layout");
