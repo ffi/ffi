@@ -1,3 +1,11 @@
+== 0.5.0 /
+
+* Major improvements
+  * New Function class
+* Minor improvements
+  * Add support for pass simple structs by value
+* Bug fixes
+
 == 0.4.0 / 2009-08-05
 
 * Major improvements
