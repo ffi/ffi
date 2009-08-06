@@ -86,24 +86,6 @@ module FFI
       self.module_eval(code)
     end
 
-    class CallbackField < Field
-      def self.size
-        FFI::Type::POINTER.size
-      end
-
-      def self.align
-        FFI::Type::POINTER.alignment
-      end
-
-      def put(ptr, proc)
-        ptr.put_callback(@off, proc, @info)
-      end
-
-      def get(ptr)
-        raise ArgumentError, "Cannot get callback fields"
-      end
-    end
-
     def native_field_class_from(type)
       case type
       when :char, NativeType::INT8
@@ -138,7 +120,7 @@ module FFI
     end
 
     def callback_field_class_from(type)
-      return CallbackField, type if type.is_a?(FFI::CallbackInfo)
+      return FunctionField, type if type.is_a?(FFI::CallbackInfo)
     end
 
     def struct_field_class_from(type)

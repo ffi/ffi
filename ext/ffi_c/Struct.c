@@ -28,6 +28,8 @@
  */
 
 #include <sys/types.h>
+
+#include "Function.h"
 #include <sys/param.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -37,6 +39,8 @@
 #include "AbstractMemory.h"
 #include "Pointer.h"
 #include "MemoryPointer.h"
+#include "Function.h"
+#include "Callback.h"
 #include "Types.h"
 #include "Struct.h"
 
@@ -61,6 +65,7 @@ static inline int align(int offset, int align);
 VALUE rbffi_StructClass = Qnil;
 VALUE rbffi_StructLayoutClass = Qnil;
 static VALUE StructFieldClass = Qnil, StructLayoutBuilderClass = Qnil;
+static VALUE FunctionFieldClass = Qnil;
 static ID id_pointer_ivar = 0, id_layout_ivar = 0, TYPE_ID;
 static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
 
@@ -94,7 +99,12 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     nargs = rb_scan_args(argc, argv, "11", &offset, &info);
     
     field->offset = NUM2UINT(offset);
-    if (rb_const_defined(CLASS_OF(self), TYPE_ID)) {
+
+    if (rb_obj_is_kind_of(info, rbffi_TypeClass)) {
+        field->rbType = info;
+        Data_Get_Struct(field->rbType, Type, field->type);
+        
+    } else if (rb_const_defined(CLASS_OF(self), TYPE_ID)) {
         field->rbType = rbffi_Type_Find(rb_const_get(CLASS_OF(self), TYPE_ID));
         Data_Get_Struct(field->rbType, Type, field->type);
     } else {
@@ -153,6 +163,56 @@ struct_field_put(VALUE self, VALUE pointer, VALUE value)
 
     return self;
 }
+
+static VALUE
+function_field_get(VALUE self, VALUE pointer)
+{
+    StructField* f;
+    MemoryOp* op;
+    AbstractMemory* memory = MEMORY(pointer);
+    
+    Data_Get_Struct(self, StructField, f);
+    op = memory->ops->pointer;
+    if (op == NULL) {
+        VALUE name = rb_class_name(CLASS_OF(self));
+        rb_raise(rb_eArgError, "get not supported for %s", StringValueCStr(name));
+        return Qnil;
+    }
+
+    return rbffi_Function_NewInstance(f->rbType, (*op->get)(memory, f->offset));
+}
+
+static VALUE
+function_field_put(VALUE self, VALUE pointer, VALUE proc)
+{
+    StructField* f;
+    MemoryOp* op;
+    AbstractMemory* memory = MEMORY(pointer);
+    VALUE value = Qnil;
+
+    Data_Get_Struct(self, StructField, f);
+    op = memory->ops->pointer;
+    if (op == NULL) {
+        VALUE name = rb_class_name(CLASS_OF(self));
+        rb_raise(rb_eArgError, "put not supported for %s", StringValueCStr(name));
+        return self;
+    }
+
+    if (NIL_P(proc) || rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
+        value = proc;
+    } else if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, rb_intern("call"))) {
+        VALUE callback = rbffi_NativeCallback_ForProc(proc, f->rbType);
+        void* code = ((NativeCallback *) DATA_PTR(callback))->code;
+        value = rbffi_Pointer_NewInstance(code);
+    } else {
+        rb_raise(rb_eTypeError, "wrong type (expected Proc or Function)");
+    }
+
+    (*op->put)(memory, f->offset, value);
+
+    return self;
+}
+
 
 static inline char*
 memory_address(VALUE self)
@@ -626,6 +686,9 @@ rbffi_Struct_Init(VALUE moduleFFI)
     StructFieldClass = rb_define_class_under(StructLayoutBuilderClass, "Field", rb_cObject);
     rb_global_variable(&StructFieldClass);
 
+    FunctionFieldClass = rb_define_class_under(StructLayoutBuilderClass, "FunctionField", StructFieldClass);
+    rb_global_variable(&FunctionFieldClass);
+
     rb_define_alloc_func(StructClass, struct_allocate);
     rb_define_method(StructClass, "initialize", struct_initialize, -1);
     
@@ -650,6 +713,11 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructFieldClass, "offset", struct_field_offset, 0);
     rb_define_method(StructFieldClass, "put", struct_field_put, 2);
     rb_define_method(StructFieldClass, "get", struct_field_get, 1);
+
+    rb_define_method(FunctionFieldClass, "put", function_field_put, 2);
+    rb_define_method(FunctionFieldClass, "get", function_field_get, 1);
+    // FIXME: hack for the ruby code
+    rb_define_const(FunctionFieldClass, "TYPE", rb_const_get(moduleFFI, rb_intern("TYPE_POINTER")));
 
     rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
     rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);
