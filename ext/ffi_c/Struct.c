@@ -614,6 +614,22 @@ struct_layout_builder_union_p(VALUE self)
     return builder->isUnion ? Qtrue : Qfalse;
 }
 
+static void
+store_field(StructLayoutBuilder* builder, VALUE rbName, VALUE rbField, 
+    unsigned int offset, unsigned int size, unsigned int alignment)
+{
+    rb_ary_push(builder->rbFieldNames, rbName);
+    rb_hash_aset(builder->rbFieldMap, rbName, rbField);
+
+    builder->alignment = MAX(builder->alignment, alignment);
+
+    if (builder->isUnion) {
+        builder->size = MAX(builder->size, size);
+    } else {
+        builder->size = MAX(builder->size, offset + size);
+    }
+}
+
 static VALUE
 struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
 {
@@ -651,17 +667,8 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
         rbField = rbType;
     }
 
-    rb_ary_push(builder->rbFieldNames, rbName);
-    rb_hash_aset(builder->rbFieldMap, rbName, rbField);
-
-    builder->alignment = MAX(builder->alignment, alignment);
-
-    if (builder->isUnion) {
-        builder->size = MAX(builder->size, size);
-    } else {
-        builder->size = MAX(builder->size, offset + size);
-    }
-
+    store_field(builder, rbName, rbField, offset, size, alignment);
+    
     return self;
 }
 
