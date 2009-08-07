@@ -232,7 +232,7 @@ function_set_autorelease(VALUE self, VALUE autorelease)
 }
 
 static VALUE
-function_autorelease_p(VALUE self, VALUE autorelease)
+function_autorelease_p(VALUE self)
 {
     Function* fn;
 
@@ -270,5 +270,6 @@ rbffi_Function_Init(VALUE moduleFFI)
     rb_define_method(rbffi_FunctionClass, "free", function_release, 0);
     rb_define_method(rbffi_FunctionClass, "autorelease=", function_set_autorelease, 1);
     rb_define_method(rbffi_FunctionClass, "autorelease", function_autorelease_p, 0);
+    rb_define_method(rbffi_FunctionClass, "autorelease?", function_autorelease_p, 0);
 }
 
