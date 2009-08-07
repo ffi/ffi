@@ -71,6 +71,7 @@ typedef struct ArrayType_ {
     Type base;
     int length;
     ffi_type** ffiTypes;
+    Type* componentType;
     VALUE rbComponentType;
 } ArrayType;
 
@@ -245,14 +246,13 @@ array_field_get(VALUE self, VALUE pointer)
     StructField* f;
     ArrayType* array;
     MemoryOp* op;
-    Type* componentType;
     AbstractMemory* memory = MEMORY(pointer);
     VALUE argv[2];
     
     Data_Get_Struct(self, StructField, f);
     Data_Get_Struct(f->rbType, ArrayType, array);
-    Data_Get_Struct(array->rbComponentType, Type, componentType);
-    op = ptr_get_op(memory, componentType);
+
+    op = ptr_get_op(memory, array->componentType);
     if (op == NULL) {
         VALUE name = rb_class_name(array->rbComponentType);
         rb_raise(rb_eArgError, "get not supported for %s", StringValueCStr(name));
@@ -805,19 +805,19 @@ array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
 {
     ArrayType* array;
     Type* componentType;
-    int i, length;
+    int i;
 
     Data_Get_Struct(rbComponentType, Type, componentType);
     Data_Get_Struct(self, ArrayType, array);
 
-    length = NUM2UINT(rbLength);
+    array->length = NUM2UINT(rbLength);
+    Data_Get_Struct(rbComponentType, Type, array->componentType);
     array->rbComponentType = rbComponentType;
-    array->ffiTypes = xcalloc(length + 1, sizeof(*array->ffiTypes));
-    array->base.ffiType->size = componentType->ffiType->size * length;
+    array->ffiTypes = xcalloc(array->length + 1, sizeof(*array->ffiTypes));
+    array->base.ffiType->size = componentType->ffiType->size * array->length;
     array->base.ffiType->alignment = componentType->ffiType->alignment;
-    array->length = length;
 
-    for (i = 0; i < length; ++i) {
+    for (i = 0; i < array->length; ++i) {
         array->ffiTypes[i] = componentType->ffiType;
     }
 
