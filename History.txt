@@ -2,8 +2,15 @@
 
 * Major improvements
   * New Function class
+  * Structs can be passed and returned by value
+
 * Minor improvements
-  * Add support for pass simple structs by value
+  * Callback fields in structs can now be both read and written
+  * Lots of refactoring
+
+* Experimental features
+  * blocking functions (i.e. native code that blocks the thread) support
+
 * Bug fixes
 
 == 0.4.0 / 2009-08-05
