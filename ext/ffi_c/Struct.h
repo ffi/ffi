@@ -49,10 +49,14 @@ extern "C" {
     } StructField;
 
     typedef struct StructLayout_ {
+        Type base;
         StructField** fields;
         unsigned int fieldCount;
         int size;
         int align;
+        ffi_type** ffiTypes;
+        VALUE* rbTypes;
+        VALUE rbFieldNames;
         VALUE rbFieldMap;
     } StructLayout;
 

@@ -46,6 +46,8 @@
 #include "StructByValue.h"
 #include "ArrayType.h"
 
+#define FFI_ALIGN(v, a)  (((((size_t) (v))-1) | ((a)-1))+1)
+
 typedef struct StructLayoutBuilder {
     VALUE rbFieldNames;
     VALUE rbFieldMap;
@@ -502,6 +504,10 @@ struct_layout_allocate(VALUE klass)
     
     obj = Data_Make_Struct(klass, StructLayout, struct_layout_mark, struct_layout_free, layout);
     layout->rbFieldMap = Qnil;
+    layout->rbFieldNames = Qnil;
+    layout->base.ffiType = xcalloc(1, sizeof(*layout->base.ffiType));
+    layout->base.ffiType->size = 0;
+    layout->base.ffiType->alignment = 0;
 
     return obj;
 }
@@ -510,32 +516,57 @@ static VALUE
 struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size, VALUE align)
 {
     StructLayout* layout;
+    ffi_type* ltype;
     int i;
 
     Data_Get_Struct(self, StructLayout, layout);
     layout->rbFieldMap = rb_hash_new();
+    layout->rbFieldNames = rb_ary_dup(field_names);
     layout->size = NUM2INT(size);
     layout->align = NUM2INT(align);
     layout->fieldCount = RARRAY_LEN(field_names);
-    layout->fields = ALLOC_N(StructField*, layout->fieldCount);
-    if (layout->fields == NULL) {
-        rb_raise(rb_eNoMemError, "failed to allocate memory for %d fields", layout->fieldCount);
-    }
+    layout->fields = xcalloc(layout->fieldCount, sizeof(StructField *));
+    layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
+    layout->rbTypes = ALLOC_N(VALUE, layout->fieldCount);
+    layout->base.ffiType->elements = layout->ffiTypes;
+    layout->base.ffiType->size = 0;
+    layout->base.ffiType->alignment = 0;
 
-    rb_iv_set(self, "@field_names", field_names);
-    rb_iv_set(self, "@fields", fields);
+    rb_iv_set(self, "@field_names", layout->rbFieldNames);
+    rb_iv_set(self, "@fields", layout->rbFieldMap);
     rb_iv_set(self, "@size", size);
     rb_iv_set(self, "@align", align);
 
+    ltype = layout->base.ffiType;
     for (i = 0; i < layout->fieldCount; ++i) {
-        VALUE name = rb_ary_entry(field_names, i);
-        VALUE field = rb_hash_aref(fields, name);
-        if (TYPE(field) != T_DATA || !rb_obj_is_kind_of(field, StructFieldClass)) {
-            rb_raise(rb_eArgError, "Invalid field");
+        VALUE rbName = rb_ary_entry(field_names, i);
+        VALUE rbField = rb_hash_aref(fields, rbName);
+        StructField* field;
+        ffi_type* ftype;
+        
+
+        if (!rb_obj_is_kind_of(rbField, StructFieldClass)) {
+            rb_raise(rb_eTypeError, "wrong type for field %d.", i);
         }
-        rb_hash_aset(layout->rbFieldMap, name, field);
-        Data_Get_Struct(field, StructField, layout->fields[i]);
+
+        rb_hash_aset(layout->rbFieldMap, rbName, rbField);
+        Data_Get_Struct(rbField, StructField, field = layout->fields[i]);
+        
+
+        if (field->type == NULL || field->type->ffiType == NULL) {
+            rb_raise(rb_eRuntimeError, "type of field %d not supported", i);
+        }
+        ftype = field->type->ffiType;
+        if (ftype->size == 0) {
+            rb_raise(rb_eTypeError, "type of field %d  has zero size", i);
+        }
+        layout->ffiTypes[i] = ftype;
+        layout->rbTypes[i] = field->rbType;
+        ltype->size = MAX(ltype->size, field->offset + ftype->size);
+        ltype->alignment = MAX(ltype->alignment, ftype->alignment);
     }
+    // Include tail padding
+    ltype->size = FFI_ALIGN(ltype->size, ltype->alignment);
 
     return self;
 }
@@ -555,11 +586,16 @@ static void
 struct_layout_mark(StructLayout *layout)
 {
     rb_gc_mark(layout->rbFieldMap);
+    rb_gc_mark(layout->rbFieldNames);
+    if (layout->rbTypes != NULL) {
+        rb_gc_mark_locations(&layout->rbTypes[0], &layout->rbTypes[layout->fieldCount]);
+    }
 }
 
 static void
 struct_layout_free(StructLayout *layout)
 {
+    xfree(layout->ffiTypes);
     xfree(layout->fields);
     xfree(layout);
 }
@@ -965,7 +1001,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rbffi_StructClass = StructClass = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
     rb_global_variable(&rbffi_StructClass);
 
-    rbffi_StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", rb_cObject);
+    rbffi_StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", rbffi_TypeClass);
     rb_global_variable(&rbffi_StructLayoutClass);
 
     StructLayoutBuilderClass = rb_define_class_under(moduleFFI, "StructLayoutBuilder", rb_cObject);
