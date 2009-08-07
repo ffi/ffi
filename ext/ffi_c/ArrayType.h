@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2008, 2009, Wayne Meissner
+ * Copyright (c) 2009, Wayne Meissner
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,60 +26,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <stdio.h>
+#ifndef RBFFI_ARRAYTYPE_H
+#define	RBFFI_ARRAYTYPE_H
+
 #include <ruby.h>
-
 #include <ffi.h>
+#include "Type.h"
 
-#include "rbffi.h"
-#include "AbstractMemory.h"
-#include "Pointer.h"
-#include "MemoryPointer.h"
-#include "AutoPointer.h"
-#include "Struct.h"
-#include "StructByValue.h"
-#include "Callback.h"
-#include "DynamicLibrary.h"
-#include "Platform.h"
-#include "Types.h"
-#include "LastError.h"
-#include "Function.h"
-#include "MethodHandle.h"
-#include "Call.h"
-#include "ArrayType.h"
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
-void Init_ffi_c(void);
 
-VALUE rbffi_FFIModule = Qnil;
+typedef struct ArrayType_ {
+    Type base;
+    int length;
+    ffi_type** ffiTypes;
+    Type* componentType;
+    VALUE rbComponentType;
+} ArrayType;
 
-static VALUE moduleFFI = Qnil;
+extern void rbffi_ArrayType_Init(VALUE moduleFFI);
+extern VALUE rbffi_ArrayTypeClass;
 
-void
-Init_ffi_c(void) {
-    rbffi_FFIModule = moduleFFI = rb_define_module("FFI");
-    rb_global_variable(&moduleFFI);
 
-    // FFI::Type needs to be initialized before most other classes
-    rbffi_Type_Init(moduleFFI);
-    rbffi_ArrayType_Init(moduleFFI);
-    rbffi_LastError_Init(moduleFFI);
-    rbffi_Call_Init(moduleFFI);
-    rbffi_MethodHandle_Init(moduleFFI);
-    rbffi_Platform_Init(moduleFFI);
-    rbffi_AbstractMemory_Init(moduleFFI);
-    rbffi_Pointer_Init(moduleFFI);
-    rbffi_AutoPointer_Init(moduleFFI);
-    rbffi_NullPointer_Init(moduleFFI);
-    rbffi_Function_Init(moduleFFI);
-    rbffi_MemoryPointer_Init(moduleFFI);
-    rbffi_Buffer_Init(moduleFFI);
-    rbffi_Callback_Init(moduleFFI);
-    rbffi_StructByValue_Init(moduleFFI);
-    rbffi_Struct_Init(moduleFFI);
-    rbffi_DynamicLibrary_Init(moduleFFI);
-    rbffi_Invoker_Init(moduleFFI);
-    rbffi_Variadic_Init(moduleFFI);
-    rbffi_Types_Init(moduleFFI);
+#ifdef	__cplusplus
 }
+#endif
+
+#endif	/* RBFFI_ARRAYTYPE_H */
 

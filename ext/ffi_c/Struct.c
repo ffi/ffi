@@ -44,6 +44,7 @@
 #include "Types.h"
 #include "Struct.h"
 #include "StructByValue.h"
+#include "ArrayType.h"
 
 typedef struct StructLayoutBuilder {
     VALUE rbFieldNames;
@@ -67,14 +68,6 @@ typedef struct InlineArray_ {
     Type* componentType;
 } InlineArray;
 
-typedef struct ArrayType_ {
-    Type base;
-    int length;
-    ffi_type** ffiTypes;
-    Type* componentType;
-    VALUE rbComponentType;
-} ArrayType;
-
 
 static void struct_mark(Struct *);
 static void struct_layout_mark(StructLayout *);
@@ -83,8 +76,6 @@ static void struct_field_mark(StructField* );
 static void struct_layout_builder_mark(StructLayoutBuilder *);
 static void struct_layout_builder_free(StructLayoutBuilder *);
 
-static void array_type_mark(ArrayType *);
-static void array_type_free(ArrayType *);
 
 static void inline_array_mark(InlineArray *);
 
@@ -95,7 +86,7 @@ VALUE rbffi_StructClass = Qnil;
 VALUE rbffi_StructLayoutClass = Qnil;
 static VALUE StructFieldClass = Qnil, StructLayoutBuilderClass = Qnil;
 static VALUE FunctionFieldClass = Qnil, ArrayFieldClass = Qnil, InlineStructFieldClass = Qnil;
-static VALUE ArrayTypeClass = Qnil, InlineArrayClass = Qnil;
+static VALUE InlineArrayClass = Qnil;
 static ID id_pointer_ivar = 0, id_layout_ivar = 0;
 static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
 
@@ -735,7 +726,7 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
             rbField = rb_class_new_instance(2, fargv, FunctionFieldClass);
         } else if (rb_obj_is_kind_of(rbType, rbffi_StructByValueClass)) {
             rbField = rb_class_new_instance(2, fargv, FunctionFieldClass);
-        } else if (rb_obj_is_kind_of(rbType, ArrayTypeClass)) {
+        } else if (rb_obj_is_kind_of(rbType, rbffi_ArrayTypeClass)) {
             rbField = rb_class_new_instance(2, fargv, InlineArrayClass);
         } else {
             rbField = rb_class_new_instance(2, fargv, StructFieldClass);
@@ -782,63 +773,6 @@ struct_layout_builder_add_struct(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
-array_type_allocate(VALUE klass)
-{
-    ArrayType* array;
-    VALUE obj;
-    
-    obj = Data_Make_Struct(klass, ArrayType, array_type_mark, array_type_free, array);
-
-    array->base.nativeType = NATIVE_ARRAY;
-    array->base.ffiType = xcalloc(1, sizeof(*array->base.ffiType));
-    array->base.ffiType->type = FFI_TYPE_STRUCT;
-    array->base.ffiType->size = 0;
-    array->base.ffiType->alignment = 0;
-
-    array->rbComponentType = Qnil;
-
-    return obj;
-}
-
-static VALUE
-array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
-{
-    ArrayType* array;
-    Type* componentType;
-    int i;
-
-    Data_Get_Struct(rbComponentType, Type, componentType);
-    Data_Get_Struct(self, ArrayType, array);
-
-    array->length = NUM2UINT(rbLength);
-    Data_Get_Struct(rbComponentType, Type, array->componentType);
-    array->rbComponentType = rbComponentType;
-    array->ffiTypes = xcalloc(array->length + 1, sizeof(*array->ffiTypes));
-    array->base.ffiType->size = componentType->ffiType->size * array->length;
-    array->base.ffiType->alignment = componentType->ffiType->alignment;
-
-    for (i = 0; i < array->length; ++i) {
-        array->ffiTypes[i] = componentType->ffiType;
-    }
-
-    return self;
-}
-
-static void
-array_type_mark(ArrayType *array)
-{
-    rb_gc_mark(array->rbComponentType);
-}
-
-static void
-array_type_free(ArrayType *array)
-{
-    xfree(array->base.ffiType);
-    xfree(array->ffiTypes);
-    xfree(array);
-}
-
-static VALUE
 struct_layout_builder_add_array(int argc, VALUE* argv, VALUE self)
 {
     StructLayoutBuilder* builder;
@@ -859,7 +793,7 @@ struct_layout_builder_add_array(int argc, VALUE* argv, VALUE self)
     aargv[0] = rbType;
     aargv[1] = rbLength;
     fargv[0] = UINT2NUM(offset);
-    fargv[1] = rb_class_new_instance(2, aargv, ArrayTypeClass);
+    fargv[1] = rb_class_new_instance(2, aargv, rbffi_ArrayTypeClass);
     rbField = rb_class_new_instance(2, fargv, ArrayFieldClass);
 
     store_field(builder, rbName, rbField, offset, size, alignment);
@@ -1049,9 +983,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
     ArrayFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineArrayField", StructFieldClass);
     rb_global_variable(&ArrayFieldClass);
 
-    ArrayTypeClass = rb_define_class_under(rbffi_StructLayoutClass, "ArrayType", rbffi_TypeClass);
-    rb_global_variable(&ArrayTypeClass);
-
+    
     InlineArrayClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineArray", rb_cObject);
     rb_global_variable(&InlineArrayClass);
 
@@ -1088,9 +1020,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(ArrayFieldClass, "get", array_field_get, 1);
     rb_define_method(InlineStructFieldClass, "get", inline_struct_field_get, 1);
 
-    rb_define_alloc_func(ArrayTypeClass, array_type_allocate);
-    rb_define_method(ArrayTypeClass, "initialize", array_type_initialize, 2);
-
+    
     rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
     rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);
     rb_define_method(rbffi_StructLayoutClass, "[]", struct_layout_aref, 1);
