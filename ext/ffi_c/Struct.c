@@ -975,7 +975,7 @@ inline_array_to_ptr(VALUE self)
 void
 rbffi_Struct_Init(VALUE moduleFFI)
 {
-    VALUE klass, StructClass;
+    VALUE StructClass;
     rbffi_StructClass = StructClass = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
     rb_global_variable(&rbffi_StructClass);
 
@@ -1027,8 +1027,6 @@ rbffi_Struct_Init(VALUE moduleFFI)
 
     rb_define_method(FunctionFieldClass, "put", function_field_put, 2);
     rb_define_method(FunctionFieldClass, "get", function_field_get, 1);
-    // FIXME: hack for the ruby code
-    rb_define_const(FunctionFieldClass, "TYPE", rb_const_get(moduleFFI, rb_intern("TYPE_POINTER")));
 
     rb_define_method(ArrayFieldClass, "get", array_field_get, 1);
 
@@ -1070,23 +1068,4 @@ rbffi_Struct_Init(VALUE moduleFFI)
     id_to_ptr = rb_intern("to_ptr");
     id_to_s = rb_intern("to_s");
     TYPE_ID = rb_intern("TYPE");
-#undef FIELD
-#define FIELD(name, typeName, nativeType, T) do { \
-    typedef struct { char c; T v; } s; \
-        klass = rb_define_class_under(StructLayoutBuilderClass, #name, StructFieldClass); \
-        rb_define_const(klass, "TYPE", rb_const_get(moduleFFI, rb_intern("TYPE_"#nativeType))); \
-    } while(0)
-    
-    FIELD(Signed8, int8, INT8, char);
-    FIELD(Unsigned8, uint8, UINT8, unsigned char);
-    FIELD(Signed16, int16, INT16, short);
-    FIELD(Unsigned16, uint16, UINT16, unsigned short);
-    FIELD(Signed32, int32, INT32, int);
-    FIELD(Unsigned32, uint32, UINT32, unsigned int);
-    FIELD(Signed64, int64, INT64, long long);
-    FIELD(Unsigned64, uint64, UINT64, unsigned long long);
-    FIELD(FloatField, float32, FLOAT32, float);
-    FIELD(DoubleField, float64, FLOAT64, double);
-    FIELD(PointerField, pointer, POINTER, char *);
-    FIELD(StringField, string, STRING, char *);
 }
