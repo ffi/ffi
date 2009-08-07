@@ -379,6 +379,59 @@ describe FFI::Struct, ' with a nested struct field'  do
   end
 end
 
+describe FFI::Struct, ' by value'  do
+  module LibTest
+    extend FFI::Library
+    ffi_lib TestLibrary::PATH
+
+    class S8S32 < FFI::Struct
+      layout :s8, :char, :s32, :int
+    end
+    attach_function :struct_return_s8s32, [ ], S8S32.by_value
+    attach_function :struct_s8s32_set, [ :char, :int ], S8S32.by_value
+    attach_function :struct_s8s32_get_s8, [ S8S32.by_value ], :char
+    attach_function :struct_s8s32_get_s32, [ S8S32.by_value ], :int
+    attach_function :struct_s8s32_s32_ret_s32, [ S8S32.by_value, :int ], :int
+    attach_function :struct_s8s32_s64_ret_s64, [ S8S32.by_value, :long_long ], :long_long
+  end
+
+  it 'return using pre-set values' do
+    s = LibTest.struct_return_s8s32
+    s[:s8].should == 0x7f
+    s[:s32].should == 0x12345678
+  end
+
+  it 'return using passed in values' do
+    s = LibTest.struct_s8s32_set(123, 456789)
+    s[:s8].should == 123
+    s[:s32].should == 456789
+  end
+
+  it 'parameter' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+    LibTest.struct_s8s32_get_s8(s).should == 0x12
+    LibTest.struct_s8s32_get_s32(s).should == 0x34567890
+  end
+
+  it 'parameter with following s32' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+    
+    LibTest.struct_s8s32_s32_ret_s32(s, 0x1eefdead).should == 0x1eefdead
+  end
+
+  it 'parameter with following s64' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+
+    LibTest.struct_s8s32_s64_ret_s64(s, 0xdeadcafebabe).should == 0xdeadcafebabe
+  end
+end
+
 describe FFI::Struct, ' with an array field'  do
   module LibTest
     extend FFI::Library
