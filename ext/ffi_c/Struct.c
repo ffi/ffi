@@ -1037,16 +1037,16 @@ rbffi_Struct_Init(VALUE moduleFFI)
     StructLayoutBuilderClass = rb_define_class_under(moduleFFI, "StructLayoutBuilder", rb_cObject);
     rb_global_variable(&StructLayoutBuilderClass);
 
-    StructFieldClass = rb_define_class_under(StructLayoutBuilderClass, "Field", rb_cObject);
+    StructFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Field", rb_cObject);
     rb_global_variable(&StructFieldClass);
 
-    FunctionFieldClass = rb_define_class_under(StructLayoutBuilderClass, "FunctionField", StructFieldClass);
+    FunctionFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "FunctionField", StructFieldClass);
     rb_global_variable(&FunctionFieldClass);
 
-    InlineStructFieldClass = rb_define_class_under(StructLayoutBuilderClass, "InlineStructField", StructFieldClass);
+    InlineStructFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineStructField", StructFieldClass);
     rb_global_variable(&InlineStructFieldClass);
 
-    ArrayFieldClass = rb_define_class_under(StructLayoutBuilderClass, "ArrayField", StructFieldClass);
+    ArrayFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineArrayField", StructFieldClass);
     rb_global_variable(&ArrayFieldClass);
 
     ArrayTypeClass = rb_define_class_under(rbffi_StructLayoutClass, "ArrayType", rbffi_TypeClass);
