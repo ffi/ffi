@@ -256,7 +256,7 @@ array_field_get(VALUE self, VALUE pointer)
     Data_Get_Struct(array->rbComponentType, Type, componentType);
     op = ptr_get_op(memory, componentType);
     if (op == NULL) {
-        VALUE name = rb_class_name(CLASS_OF(self));
+        VALUE name = rb_class_name(array->rbComponentType);
         rb_raise(rb_eArgError, "get not supported for %s", StringValueCStr(name));
         return Qnil;
     }
