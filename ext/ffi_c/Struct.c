@@ -403,7 +403,7 @@ ptr_get_op(AbstractMemory* ptr, Type* type)
 }
 
 static VALUE
-struct_get_field(VALUE self, VALUE fieldName)
+struct_aref(VALUE self, VALUE fieldName)
 {
     Struct* s;
     VALUE rbField;
@@ -424,7 +424,7 @@ struct_get_field(VALUE self, VALUE fieldName)
 }
 
 static VALUE
-struct_put_field(VALUE self, VALUE fieldName, VALUE value)
+struct_aset(VALUE self, VALUE fieldName, VALUE value)
 {
     Struct* s;
     VALUE rbField;
@@ -1073,8 +1073,8 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructClass, "layout", struct_get_layout, 0);
     rb_define_private_method(StructClass, "layout=", struct_set_layout, 1);
 
-    rb_define_method(StructClass, "[]", struct_get_field, 1);
-    rb_define_method(StructClass, "[]=", struct_put_field, 2);
+    rb_define_method(StructClass, "[]", struct_aref, 1);
+    rb_define_method(StructClass, "[]=", struct_aset, 2);
     
     rb_define_alloc_func(StructFieldClass, struct_field_allocate);
     rb_define_method(StructFieldClass, "initialize", struct_field_initialize, -1);
