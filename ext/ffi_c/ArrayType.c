@@ -68,6 +68,7 @@ array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
     Data_Get_Struct(rbComponentType, Type, array->componentType);
     
     array->ffiTypes = xcalloc(array->length + 1, sizeof(*array->ffiTypes));
+    array->base.ffiType->elements = array->ffiTypes;
     array->base.ffiType->size = array->componentType->ffiType->size * array->length;
     array->base.ffiType->alignment = array->componentType->ffiType->alignment;
 
