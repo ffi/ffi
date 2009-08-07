@@ -221,9 +221,7 @@ function_field_put(VALUE self, VALUE pointer, VALUE proc)
     if (NIL_P(proc) || rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
         value = proc;
     } else if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, rb_intern("call"))) {
-        VALUE callback = rbffi_NativeCallback_ForProc(proc, f->rbType);
-        void* code = ((NativeCallback *) DATA_PTR(callback))->code;
-        value = rbffi_Pointer_NewInstance(code);
+        value = rbffi_NativeCallback_ForProc(proc, f->rbType);
     } else {
         rb_raise(rb_eTypeError, "wrong type (expected Proc or Function)");
     }

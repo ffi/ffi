@@ -175,12 +175,16 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
 
         case NATIVE_FUNCTION:
         case NATIVE_CALLBACK:
-            if (rb_obj_is_kind_of(rbReturnValue, rb_cProc) || rb_respond_to(rbReturnValue, id_call)) {
+            if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
+
+                *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
+
+            } else if (rb_obj_is_kind_of(rbReturnValue, rb_cProc) || rb_respond_to(rbReturnValue, id_call)) {
                 VALUE callback;
 
                 callback = rbffi_NativeCallback_ForProc(rbReturnValue, cbInfo->rbReturnType);
                 
-                *((void **) retval) = ((NativeCallback *) DATA_PTR(callback))->code;
+                *((void **) retval) = ((AbstractMemory *) DATA_PTR(callback))->address;
             } else {
                 *((void **) retval) = NULL;
             }

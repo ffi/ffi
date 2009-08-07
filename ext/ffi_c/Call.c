@@ -418,7 +418,7 @@ callback_param(VALUE proc, VALUE cbInfo)
 
     callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
 
-    return ((NativeCallback *) DATA_PTR(callback))->code;
+    return ((AbstractMemory *) DATA_PTR(callback))->address;
 }
 
 
