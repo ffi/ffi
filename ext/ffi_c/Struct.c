@@ -508,6 +508,7 @@ struct_layout_allocate(VALUE klass)
     layout->base.ffiType = xcalloc(1, sizeof(*layout->base.ffiType));
     layout->base.ffiType->size = 0;
     layout->base.ffiType->alignment = 0;
+    layout->base.ffiType->type = FFI_TYPE_STRUCT;
 
     return obj;
 }
@@ -530,7 +531,7 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
     layout->rbTypes = ALLOC_N(VALUE, layout->fieldCount);
     layout->base.ffiType->elements = layout->ffiTypes;
     layout->base.ffiType->size = 0;
-    layout->base.ffiType->alignment = 0;
+    layout->base.ffiType->alignment = 1;
 
     rb_iv_set(self, "@field_names", layout->rbFieldNames);
     rb_iv_set(self, "@fields", layout->rbFieldMap);
@@ -565,6 +566,11 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
         ltype->size = MAX(ltype->size, field->offset + ftype->size);
         ltype->alignment = MAX(ltype->alignment, ftype->alignment);
     }
+
+    if (ltype->size == 0) {
+        rb_raise(rb_eRuntimeError, "Struct size is zero");
+    }
+
     // Include tail padding
     ltype->size = FFI_ALIGN(ltype->size, ltype->alignment);
 

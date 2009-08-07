@@ -28,18 +28,17 @@
 #ifndef RBFFI_STRUCTBYVALUE_H
 #define	RBFFI_STRUCTBYVALUE_H
 
+#include <ruby.h>
+#include "Type.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#include "Type.h"
-
 typedef struct StructByValue_ {
-    Type type;
+    Type base;
     VALUE structClass;
-    int fieldCount;
-    ffi_type** ffiTypes;
-    VALUE* rbFields;
+    VALUE rbStructLayout;
 } StructByValue;
 
 void rbffi_StructByValue_Init(VALUE moduleFFI);
