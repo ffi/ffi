@@ -789,7 +789,7 @@ array_type_allocate(VALUE klass)
     
     obj = Data_Make_Struct(klass, ArrayType, array_type_mark, array_type_free, array);
 
-    array->base.nativeType = NATIVE_STRUCT;
+    array->base.nativeType = NATIVE_ARRAY;
     array->base.ffiType = xcalloc(1, sizeof(*array->base.ffiType));
     array->base.ffiType->type = FFI_TYPE_STRUCT;
     array->base.ffiType->size = 0;

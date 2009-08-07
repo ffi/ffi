@@ -67,6 +67,8 @@ typedef enum {
     NATIVE_ENUM,
     /** Struct-by-value param or result */
     NATIVE_STRUCT,
+    /** An array type definition */
+    NATIVE_ARRAY,
 } NativeType;
 
 #include <ffi.h>
