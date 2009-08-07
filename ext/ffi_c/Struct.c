@@ -40,7 +40,6 @@
 #include "Pointer.h"
 #include "MemoryPointer.h"
 #include "Function.h"
-#include "Callback.h"
 #include "Types.h"
 #include "Struct.h"
 #include "StructByValue.h"
@@ -221,7 +220,7 @@ function_field_put(VALUE self, VALUE pointer, VALUE proc)
     if (NIL_P(proc) || rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
         value = proc;
     } else if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, rb_intern("call"))) {
-        value = rbffi_NativeCallback_ForProc(proc, f->rbType);
+        value = rbffi_Function_ForProc(f->rbType, proc);
     } else {
         rb_raise(rb_eTypeError, "wrong type (expected Proc or Function)");
     }

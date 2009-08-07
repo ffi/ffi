@@ -47,7 +47,6 @@
 #include "Pointer.h"
 #include "Struct.h"
 #include "Function.h"
-#include "Callback.h"
 #include "Type.h"
 #include "LastError.h"
 #include "Call.h"
@@ -416,7 +415,8 @@ callback_param(VALUE proc, VALUE cbInfo)
         return ptr->address;
     }
 
-    callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
+    //callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
+    callback = rbffi_Function_ForProc(cbInfo, proc);
 
     return ((AbstractMemory *) DATA_PTR(callback))->address;
 }

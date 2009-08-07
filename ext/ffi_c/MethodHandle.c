@@ -222,11 +222,13 @@ error:
 void
 rbffi_MethodHandle_Free(MethodHandle* method)
 {
-    MethodHandlePool* pool = method->pool;
-    pool_lock(pool);
-    method->next = pool->list;
-    pool->list = method;
-    pool_unlock(pool);
+    if (method != NULL) {
+        MethodHandlePool* pool = method->pool;
+        pool_lock(pool);
+        method->next = pool->list;
+        pool->list = method;
+        pool_unlock(pool);
+    }
 }
 
 void*

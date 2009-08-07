@@ -62,6 +62,7 @@ extern VALUE rbffi_FunctionTypeClass, rbffi_FunctionClass;
 
 void rbffi_Function_Init(VALUE moduleFFI);
 VALUE rbffi_Function_NewInstance(VALUE functionInfo, VALUE proc);
+VALUE rbffi_Function_ForProc(VALUE cbInfo, VALUE proc);
 void rbffi_FunctionInfo_Init(VALUE moduleFFI);
 
 #ifdef	__cplusplus

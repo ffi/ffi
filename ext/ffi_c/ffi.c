@@ -38,7 +38,6 @@
 #include "AutoPointer.h"
 #include "Struct.h"
 #include "StructByValue.h"
-#include "Callback.h"
 #include "DynamicLibrary.h"
 #include "Platform.h"
 #include "Types.h"
@@ -73,7 +72,6 @@ Init_ffi_c(void) {
     rbffi_Function_Init(moduleFFI);
     rbffi_MemoryPointer_Init(moduleFFI);
     rbffi_Buffer_Init(moduleFFI);
-    rbffi_Callback_Init(moduleFFI);
     rbffi_StructByValue_Init(moduleFFI);
     rbffi_Struct_Init(moduleFFI);
     rbffi_DynamicLibrary_Init(moduleFFI);

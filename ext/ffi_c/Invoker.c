@@ -47,7 +47,6 @@
 #include "AbstractMemory.h"
 #include "Pointer.h"
 #include "Function.h"
-#include "Callback.h"
 #include "Types.h"
 #include "Type.h"
 #include "LastError.h"

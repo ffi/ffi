@@ -30,7 +30,6 @@
 #include <ruby.h>
 #include "Pointer.h"
 #include "rbffi.h"
-#include "Callback.h"
 #include "Function.h"
 #include "StructByValue.h"
 #include "Types.h"

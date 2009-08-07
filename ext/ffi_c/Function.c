@@ -30,7 +30,9 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
-
+#ifndef _WIN32
+# include <sys/mman.h>
+#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -44,29 +46,37 @@
 #include "Pointer.h"
 #include "Struct.h"
 #include "Platform.h"
-#include "Callback.h"
 #include "Type.h"
 #include "LastError.h"
 #include "Call.h"
 #include "Function.h"
 
+#if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
+static void* ffi_closure_alloc(size_t size, void** code);
+static void ffi_closure_free(void* ptr);
+ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
+        void (*fun)(ffi_cif*, void*, void**, void*),
+        void* user_data, void* code);
+#endif /* HAVE_FFI_CLOSURE_ALLOC */
 
 typedef struct Function_ {
     AbstractMemory memory;
     FunctionType* info;
     MethodHandle* methodHandle;
     bool autorelease;
-    bool allocated;
-
-    VALUE rbAddress;
+    ffi_closure* ffiClosure;
+    VALUE rbProc;
     VALUE rbFunctionInfo;
 } Function;
 
 static void function_mark(Function *);
 static void function_free(Function *);
 static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
+static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 
-VALUE rbffi_FunctionClass;
+VALUE rbffi_FunctionClass = Qnil;
+
+static ID id_call = 0, id_cbtable = 0;
 
 static VALUE
 function_allocate(VALUE klass)
@@ -79,10 +89,9 @@ function_allocate(VALUE klass)
     fn->memory.access = MEM_RD;
     fn->memory.ops = &rbffi_AbstractMemoryOps;
 
-    fn->rbAddress = Qnil;
+    fn->rbProc = Qnil;
     fn->rbFunctionInfo = Qnil;
     fn->autorelease = true;
-    fn->allocated = false;
 
     return obj;
 }
@@ -90,15 +99,22 @@ function_allocate(VALUE klass)
 static void
 function_mark(Function *fn)
 {
-    rb_gc_mark(fn->rbAddress);
+    rb_gc_mark(fn->rbProc);
     rb_gc_mark(fn->rbFunctionInfo);
 }
 
 static void
 function_free(Function *fn)
 {
-    rbffi_MethodHandle_Free(fn->methodHandle);
-    free(fn);
+    if (fn->methodHandle != NULL) {
+        rbffi_MethodHandle_Free(fn->methodHandle);
+    }
+
+    if (fn->ffiClosure != NULL && fn->autorelease) {
+        ffi_closure_free(fn->ffiClosure);
+    }
+
+    xfree(fn);
 }
 
 static VALUE
@@ -147,6 +163,27 @@ rbffi_Function_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
     return function_init(function_allocate(rbffi_FunctionClass), rbFunctionInfo, rbProc);
 }
 
+VALUE
+rbffi_Function_ForProc(VALUE rbFunctionInfo, VALUE proc)
+{
+    VALUE callback;
+    VALUE cbTable = RTEST(rb_ivar_defined(proc, id_cbtable)) ? rb_ivar_get(proc, id_cbtable) : Qnil;
+
+    if (cbTable == Qnil) {
+        cbTable = rb_hash_new();
+        rb_ivar_set(proc, id_cbtable, cbTable);
+    }
+
+    callback = rb_hash_aref(cbTable, rbFunctionInfo);
+    if (callback != Qnil) {
+        return callback;
+    }
+
+    callback = rbffi_Function_NewInstance(rbFunctionInfo, proc);
+    rb_hash_aset(cbTable, rbFunctionInfo, callback);
+    return callback;
+}
+
 static VALUE
 function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 {
@@ -162,21 +199,29 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         AbstractMemory* memory;
         Data_Get_Struct(rbProc, AbstractMemory, memory);
         fn->memory = *memory;
-        fn->rbAddress = rbProc;
 
-    } else if (rb_obj_is_kind_of(rbProc, rb_cProc)) {
+    } else if (rb_obj_is_kind_of(rbProc, rb_cProc) || rb_respond_to(rbProc, id_call)) {
+        void* code;
+        ffi_status status;
+        fn->ffiClosure = ffi_closure_alloc(sizeof(*fn->ffiClosure), &code);
+        if (fn->ffiClosure == NULL) {
+            rb_raise(rb_eNoMemError, "Failed to allocate libffi closure");
+        }
 
-        fn->rbAddress = rbffi_NativeCallback_NewInstance(fn->rbFunctionInfo, rbProc);
-        NativeCallback* cb;
-        Data_Get_Struct(fn->rbAddress, NativeCallback, cb);
-        fn->memory.address = cb->code;
-        fn->memory.size = LONG_MAX;
-        fn->allocated = true;
+        status = ffi_prep_closure_loc(fn->ffiClosure, &fn->info->ffi_cif,
+                callback_invoke, fn, code);
+        if (status != FFI_OK) {
+            rb_raise(rb_eArgError, "ffi_prep_closure_loc failed");
+        }
+
+        fn->memory.address = code;
+        fn->memory.size = sizeof(*fn->ffiClosure);
+        fn->autorelease = true;
 
     } else {
         rb_raise(rb_eTypeError, "wrong argument type.  Expected pointer or proc");
     }
-
+    fn->rbProc = rbProc;
     fn->methodHandle = rbffi_MethodHandle_Alloc(fn->info, fn->memory.address);
 
     return self;
@@ -248,12 +293,182 @@ function_release(VALUE self)
 
     Data_Get_Struct(self, Function, fn);
 
-    if (!fn->allocated) {
+    if (fn->ffiClosure == NULL) {
         rb_raise(rb_eRuntimeError, "cannot free function which was not allocated");
     }
-
+    
+    ffi_closure_free(fn->ffiClosure);
+    fn->ffiClosure = NULL;
+    
     return self;
 }
+
+static void
+callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
+{
+    Function* fn = (Function *) user_data;
+    FunctionType *cbInfo = fn->info;
+    VALUE* rbParams;
+    VALUE rbReturnValue;
+    int i;
+
+    rbParams = ALLOCA_N(VALUE, cbInfo->parameterCount);
+    for (i = 0; i < cbInfo->parameterCount; ++i) {
+        VALUE param;
+        switch (cbInfo->parameterTypes[i]->nativeType) {
+            case NATIVE_INT8:
+                param = INT2NUM(*(int8_t *) parameters[i]);
+                break;
+            case NATIVE_UINT8:
+                param = UINT2NUM(*(uint8_t *) parameters[i]);
+                break;
+            case NATIVE_INT16:
+                param = INT2NUM(*(int16_t *) parameters[i]);
+                break;
+            case NATIVE_UINT16:
+                param = UINT2NUM(*(uint16_t *) parameters[i]);
+                break;
+            case NATIVE_INT32:
+                param = INT2NUM(*(int32_t *) parameters[i]);
+                break;
+            case NATIVE_UINT32:
+                param = UINT2NUM(*(uint32_t *) parameters[i]);
+                break;
+            case NATIVE_INT64:
+                param = LL2NUM(*(int64_t *) parameters[i]);
+                break;
+            case NATIVE_UINT64:
+                param = ULL2NUM(*(uint64_t *) parameters[i]);
+                break;
+            case NATIVE_FLOAT32:
+                param = rb_float_new(*(float *) parameters[i]);
+                break;
+            case NATIVE_FLOAT64:
+                param = rb_float_new(*(double *) parameters[i]);
+                break;
+            case NATIVE_STRING:
+                param = rb_tainted_str_new2(*(char **) parameters[i]);
+                break;
+            case NATIVE_POINTER:
+                param = rbffi_Pointer_NewInstance(*(void **) parameters[i]);
+                break;
+            case NATIVE_BOOL:
+                param = (*(void **) parameters[i]) ? Qtrue : Qfalse;
+                break;
+
+            case NATIVE_FUNCTION:
+            case NATIVE_CALLBACK:
+                param = rbffi_NativeValue_ToRuby(cbInfo->parameterTypes[i],
+                     rb_ary_entry(cbInfo->rbParameterTypes, i), parameters[i], Qnil);
+                break;
+            default:
+                param = Qnil;
+                break;
+        }
+        rbParams[i] = param;
+    }
+    rbReturnValue = rb_funcall2(fn->rbProc, id_call, cbInfo->parameterCount, rbParams);
+    if (rbReturnValue == Qnil || TYPE(rbReturnValue) == T_NIL) {
+        memset(retval, 0, cbInfo->ffiReturnType->size);
+    } else switch (cbInfo->returnType->nativeType) {
+        case NATIVE_INT8:
+        case NATIVE_INT16:
+        case NATIVE_INT32:
+            *((ffi_sarg *) retval) = NUM2INT(rbReturnValue);
+            break;
+        case NATIVE_UINT8:
+        case NATIVE_UINT16:
+        case NATIVE_UINT32:
+            *((ffi_arg *) retval) = NUM2UINT(rbReturnValue);
+            break;
+        case NATIVE_INT64:
+            *((int64_t *) retval) = NUM2LL(rbReturnValue);
+            break;
+        case NATIVE_UINT64:
+            *((uint64_t *) retval) = NUM2ULL(rbReturnValue);
+            break;
+        case NATIVE_FLOAT32:
+            *((float *) retval) = (float) NUM2DBL(rbReturnValue);
+            break;
+        case NATIVE_FLOAT64:
+            *((double *) retval) = NUM2DBL(rbReturnValue);
+            break;
+        case NATIVE_POINTER:
+            if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
+                *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
+            } else {
+                // Default to returning NULL if not a value pointer object.  handles nil case as well
+                *((void **) retval) = NULL;
+            }
+            break;
+        case NATIVE_BOOL:
+            *((ffi_sarg *) retval) = TYPE(rbReturnValue) == T_TRUE ? 1 : 0;
+            break;
+
+        case NATIVE_FUNCTION:
+        case NATIVE_CALLBACK:
+            if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
+
+                *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
+
+            } else if (rb_obj_is_kind_of(rbReturnValue, rb_cProc) || rb_respond_to(rbReturnValue, id_call)) {
+                VALUE function;
+
+                function = rbffi_Function_ForProc(cbInfo->rbReturnType, rbReturnValue);
+
+                *((void **) retval) = ((AbstractMemory *) DATA_PTR(function))->address;
+            } else {
+                *((void **) retval) = NULL;
+            }
+            break;
+
+        default:
+            *((ffi_arg *) retval) = 0;
+            break;
+    }
+}
+
+
+#if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
+/*
+ * versions of ffi_closure_alloc, ffi_closure_free and ffi_prep_closure_loc for older
+ * system libffi versions.
+ */
+static void*
+ffi_closure_alloc(size_t size, void** code)
+{
+    void* closure;
+    closure = mmap(NULL, size, PROT_READ | PROT_WRITE,
+             MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (closure == (void *) -1) {
+        return NULL;
+    }
+    memset(closure, 0, size);
+    *code = closure;
+    return closure;
+}
+
+static void
+ffi_closure_free(void* ptr)
+{
+    if (ptr != NULL && ptr != (void *) -1) {
+        munmap(ptr, sizeof(ffi_closure));
+    }
+}
+
+ffi_status
+ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
+        void (*fun)(ffi_cif*, void*, void**, void*),
+        void* user_data, void* code)
+{
+    ffi_status retval = ffi_prep_closure(closure, cif, fun, user_data);
+    if (retval == FFI_OK) {
+        mprotect(closure, sizeof(ffi_closure), PROT_READ | PROT_EXEC);
+    }
+    return retval;
+}
+
+#endif /* HAVE_FFI_CLOSURE_ALLOC */
 
 void
 rbffi_Function_Init(VALUE moduleFFI)
@@ -271,5 +486,8 @@ rbffi_Function_Init(VALUE moduleFFI)
     rb_define_method(rbffi_FunctionClass, "autorelease=", function_set_autorelease, 1);
     rb_define_method(rbffi_FunctionClass, "autorelease", function_autorelease_p, 0);
     rb_define_method(rbffi_FunctionClass, "autorelease?", function_autorelease_p, 0);
+
+    id_call = rb_intern("call");
+    id_cbtable = rb_intern("@__ffi_callback_table__");
 }
 

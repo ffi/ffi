@@ -1,3 +1,31 @@
+/*
+ * Copyright (c) 2008, 2009, Wayne Meissner
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * * The name of the author or authors may not be used to endorse or promote
+ *   products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <stdint.h>
@@ -7,7 +35,7 @@
 #include "compat.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
-#include "Callback.h"
+#include "Function.h"
 
 
 static inline char* memory_address(VALUE self);
@@ -138,17 +166,22 @@ memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
 {
     AbstractMemory* memory = MEMORY(self);
     long off = NUM2LONG(offset);
-
+    void* address = NULL;
     checkBounds(memory, off, sizeof(void *));
     checkWrite(memory);
 
-    if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, id_call)) {
-        VALUE callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
-        void* code = ((NativeCallback *) DATA_PTR(callback))->code;
-        memcpy(memory->address + off, &code, sizeof(code));
+    if (rb_obj_is_kind_of(proc, rbffi_FunctionClass) && TYPE(proc) == T_DATA) {
+        address = ((AbstractMemory *) DATA_PTR(proc))->address;
+    } else if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, id_call)) {
+        VALUE callback = rbffi_Function_ForProc(cbInfo, proc);
+        address = ((AbstractMemory *) DATA_PTR(callback))->address;
+    } else if (NIL_P(proc)) {
+        address = NULL;
     } else {
         rb_raise(rb_eArgError, "parameter is not a proc");
     }
+
+    memcpy(memory->address + off, &address, sizeof(address));
 
     return self;
 }
