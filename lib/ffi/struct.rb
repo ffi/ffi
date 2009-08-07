@@ -80,37 +80,7 @@ module FFI
   end
 
   class Struct
-    class Array
-      include Enumerable
 
-      def initialize(ptr, type, num)
-        @pointer, @type, @num = ptr, type, num
-      end
-
-      def to_ptr
-        @pointer 
-      end
-
-      def to_a
-        get_array_data(@pointer)
-      end
-
-      def size
-        @num * @type.size
-      end
-
-      def each(&blk)
-        to_a.each(&blk)
-      end
-
-      private
-      def get_array_data(ptr)
-        (0..@num - 1).inject([]) do |array, index| 
-          array << @type.new(0).get(ptr + index * @type.size)
-        end
-      end
-    end
-    
     def self.by_value
       ::FFI::StructByValue.new(self)
     end
