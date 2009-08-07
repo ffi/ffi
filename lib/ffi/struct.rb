@@ -15,70 +15,7 @@ module FFI
     end
   end
 
-  class StructLayoutBuilder
-    class Field
-      def size
-        self.class.size
-      end
-      def align
-        self.class.align
-      end
-      alias_method :alignment, :align
-      def offset
-        @off
-      end
-      def self.size
-        const_get(:TYPE).size
-      end
-      def self.align
-        const_get(:TYPE).alignment
-      end
-    end
-
-    def self.struct_field_class_from(type)
-      klass_name = type.name.split('::').last
-      code = <<-code
-      class StructField_#{klass_name} < Field
-        @info = #{type}
-          class << self
-            attr_reader :info
-            def size
-              #{type.size}
-            end
-            def align
-              #{type.align}
-            end
-          end
-        def get(ptr)
-          self.class.info.new(ptr + @off)
-        end
-      end
-      StructField_#{klass_name}
-      code
-      self.module_eval(code)
-    end
-
-    def struct_field_class_from(type)
-      self.class.struct_field_class_from(type) if type.is_a?(Class) and type < FFI::Struct
-    end
-
-    def add_struct(name, type, offset = nil)
-      field_class, info = self.class.struct_field_class_from(type)
-      off = calc_alignment_of(field_class, offset)
-      field = field_class.new(off, info)
-      add_field(name, field, off)
-    end
-    
-    def align(offset, align)
-      align + ((offset - 1) & ~(align - 1))
-    end
-
-    private
-    def calc_alignment_of(field_class, offset)
-      offset ? offset.to_i : align(size, field_class.align)
-    end
-  end
-
+  
   class Struct
 
     def self.by_value

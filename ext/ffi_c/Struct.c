@@ -43,6 +43,7 @@
 #include "Callback.h"
 #include "Types.h"
 #include "Struct.h"
+#include "StructByValue.h"
 
 typedef struct StructLayoutBuilder {
     VALUE rbFieldNames;
@@ -92,9 +93,9 @@ static inline int align(int offset, int align);
 VALUE rbffi_StructClass = Qnil;
 VALUE rbffi_StructLayoutClass = Qnil;
 static VALUE StructFieldClass = Qnil, StructLayoutBuilderClass = Qnil;
-static VALUE FunctionFieldClass = Qnil, ArrayFieldClass = Qnil;
+static VALUE FunctionFieldClass = Qnil, ArrayFieldClass = Qnil, InlineStructFieldClass = Qnil;
 static VALUE ArrayTypeClass = Qnil, InlineArrayClass = Qnil;
-static ID id_pointer_ivar = 0, id_layout_ivar = 0, TYPE_ID;
+static ID id_pointer_ivar = 0, id_layout_ivar = 0;
 static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
 
 static VALUE
@@ -132,9 +133,6 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
         field->rbType = info;
         Data_Get_Struct(field->rbType, Type, field->type);
         
-    } else if (rb_const_defined(CLASS_OF(self), TYPE_ID)) {
-        field->rbType = rbffi_Type_Find(rb_const_get(CLASS_OF(self), TYPE_ID));
-        Data_Get_Struct(field->rbType, Type, field->type);
     } else {
         field->rbType = Qnil;
         field->type = NULL;
@@ -265,6 +263,22 @@ array_field_get(VALUE self, VALUE pointer)
     argv[1] = self;
 
     return rb_class_new_instance(2, argv, InlineArrayClass);
+}
+
+static VALUE
+inline_struct_field_get(VALUE self, VALUE pointer)
+{
+    StructField* f;
+    StructByValue* sbv;
+    VALUE rbPointer = Qnil, rbOffset = Qnil;
+
+    Data_Get_Struct(self, StructField, f);
+    Data_Get_Struct(f->rbType, StructByValue, sbv);
+
+    rbOffset = UINT2NUM(f->offset);
+    rbPointer = rb_funcall2(pointer, rb_intern("+"), 1, &rbOffset);
+    
+    return rb_class_new_instance(1, &rbPointer, sbv->structClass);
 }
 
 static inline char*
@@ -683,6 +697,16 @@ store_field(StructLayoutBuilder* builder, VALUE rbName, VALUE rbField,
     }
 }
 
+static int
+calculate_offset(StructLayoutBuilder* builder, int alignment, VALUE rbOffset)
+{
+    if (rbOffset != Qnil) {
+        return NUM2UINT(rbOffset);
+    } else {
+        return builder->isUnion ? 0 : align(builder->size, alignment);
+    }
+}
+
 static VALUE
 struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
 {
@@ -698,11 +722,7 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
     alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
     size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL));
 
-    if (rbOffset != Qnil) {
-        offset = NUM2UINT(rbOffset);
-    } else {
-        offset = builder->isUnion ? 0 : align(builder->size, alignment);
-    }
+    offset = calculate_offset(builder, alignment, rbOffset);
 
     //
     // If a primitive type was passed in as the type arg, try and convert
@@ -713,6 +733,10 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
         fargv[1] = rbType;
         if (rb_obj_is_kind_of(rbType, rbffi_FunctionInfoClass)) {
             rbField = rb_class_new_instance(2, fargv, FunctionFieldClass);
+        } else if (rb_obj_is_kind_of(rbType, rbffi_StructByValueClass)) {
+            rbField = rb_class_new_instance(2, fargv, FunctionFieldClass);
+        } else if (rb_obj_is_kind_of(rbType, ArrayTypeClass)) {
+            rbField = rb_class_new_instance(2, fargv, InlineArrayClass);
         } else {
             rbField = rb_class_new_instance(2, fargv, StructFieldClass);
         }
@@ -722,6 +746,38 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
 
     store_field(builder, rbName, rbField, offset, size, alignment);
     
+    return self;
+}
+
+static VALUE
+struct_layout_builder_add_struct(int argc, VALUE* argv, VALUE self)
+{
+    StructLayoutBuilder* builder;
+    VALUE rbName = Qnil, rbType = Qnil, rbOffset = Qnil, rbField = Qnil, rbStructClass = Qnil;
+    VALUE fargv[2];
+    unsigned int size, alignment, offset;
+    int nargs;
+
+    nargs = rb_scan_args(argc, argv, "21", &rbName, &rbStructClass, &rbOffset);
+
+    if (!rb_obj_is_instance_of(rbStructClass, rb_cClass) || !rb_class_inherited(rbStructClass, rbffi_StructClass)) {
+        rb_raise(rb_eTypeError, "wrong argument type.  Expected subclass of FFI::Struct");
+    }
+
+    rbType = rb_class_new_instance(1, &rbStructClass, rbffi_StructByValueClass);
+
+    alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
+    size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL));
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+
+    offset = calculate_offset(builder, alignment, rbOffset);
+
+    fargv[0] = UINT2NUM(offset);
+    fargv[1] = rbType;
+    rbField = rb_class_new_instance(2, fargv, InlineStructFieldClass);
+    store_field(builder, rbName, rbField, offset, size, alignment);
+
     return self;
 }
 
@@ -798,11 +854,7 @@ struct_layout_builder_add_array(int argc, VALUE* argv, VALUE self)
     alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
     size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL)) * NUM2UINT(rbLength);
 
-    if (rbOffset != Qnil) {
-        offset = NUM2UINT(rbOffset);
-    } else {
-        offset = builder->isUnion ? 0 : align(builder->size, alignment);
-    }
+    offset = calculate_offset(builder, alignment, rbOffset);
 
     aargv[0] = rbType;
     aargv[1] = rbLength;
@@ -991,6 +1043,9 @@ rbffi_Struct_Init(VALUE moduleFFI)
     FunctionFieldClass = rb_define_class_under(StructLayoutBuilderClass, "FunctionField", StructFieldClass);
     rb_global_variable(&FunctionFieldClass);
 
+    InlineStructFieldClass = rb_define_class_under(StructLayoutBuilderClass, "InlineStructField", StructFieldClass);
+    rb_global_variable(&InlineStructFieldClass);
+
     ArrayFieldClass = rb_define_class_under(StructLayoutBuilderClass, "ArrayField", StructFieldClass);
     rb_global_variable(&ArrayFieldClass);
 
@@ -999,6 +1054,8 @@ rbffi_Struct_Init(VALUE moduleFFI)
 
     InlineArrayClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineArray", rb_cObject);
     rb_global_variable(&InlineArrayClass);
+
+
 
     rb_define_alloc_func(StructClass, struct_allocate);
     rb_define_method(StructClass, "initialize", struct_initialize, -1);
@@ -1029,6 +1086,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(FunctionFieldClass, "get", function_field_get, 1);
 
     rb_define_method(ArrayFieldClass, "get", array_field_get, 1);
+    rb_define_method(InlineStructFieldClass, "get", inline_struct_field_get, 1);
 
     rb_define_alloc_func(ArrayTypeClass, array_type_allocate);
     rb_define_method(ArrayTypeClass, "initialize", array_type_initialize, 2);
@@ -1049,6 +1107,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructLayoutBuilderClass, "union?", struct_layout_builder_union_p, 0);
     rb_define_method(StructLayoutBuilderClass, "add_field", struct_layout_builder_add_field, -1);
     rb_define_method(StructLayoutBuilderClass, "add_array", struct_layout_builder_add_array, -1);
+    rb_define_method(StructLayoutBuilderClass, "add_struct", struct_layout_builder_add_struct, -1);
 
     rb_include_module(InlineArrayClass, rb_mEnumerable);
     rb_define_alloc_func(InlineArrayClass, inline_array_allocate);
@@ -1067,5 +1126,4 @@ rbffi_Struct_Init(VALUE moduleFFI)
     id_put = rb_intern("put");
     id_to_ptr = rb_intern("to_ptr");
     id_to_s = rb_intern("to_s");
-    TYPE_ID = rb_intern("TYPE");
 }
