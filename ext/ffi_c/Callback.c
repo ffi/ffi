@@ -1,3 +1,31 @@
+/*
+ * Copyright (c) 2009, Wayne Meissner
+ * Copyright (c) 2009, Aman Gupta
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * * The name of the author or authors may not be used to endorse or promote
+ *   products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/param.h>
 #include <sys/types.h>
 #ifndef _WIN32
@@ -25,7 +53,7 @@ ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
 #endif /* HAVE_FFI_CLOSURE_ALLOC */
 
 static VALUE NativeCallbackClass = Qnil;
-static ID id_call = Qnil, id_cbtable = Qnil;
+static ID id_call = 0, id_cbtable = 0;
 
 static void
 native_callback_free(NativeCallback* cb)
@@ -167,12 +195,15 @@ native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user
 static VALUE
 native_callback_allocate(VALUE klass)
 {
-    NativeCallback* closure;
+    NativeCallback* cb;
     VALUE obj;
 
-    obj = Data_Make_Struct(klass, NativeCallback, native_callback_mark, native_callback_free, closure);
-    closure->rbFunctionInfo = Qnil;
-    closure->rbProc = Qnil;
+    obj = Data_Make_Struct(klass, NativeCallback, native_callback_mark, native_callback_free, cb);
+    cb->rbFunctionInfo = Qnil;
+    cb->rbProc = Qnil;
+    cb->base.address = NULL;
+    cb->base.access = 0;
+    cb->base.ops = NULL;
     
     return obj;
 }
@@ -186,6 +217,7 @@ rbffi_NativeCallback_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
     ffi_status status;
 
     Data_Get_Struct(rbFunctionInfo, FunctionType, cbInfo);
+
     obj = Data_Make_Struct(NativeCallbackClass, NativeCallback, native_callback_mark, native_callback_free, closure);
     closure->cbInfo = cbInfo;
     closure->rbProc = rbProc;
@@ -202,6 +234,10 @@ rbffi_NativeCallback_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
         rb_raise(rb_eArgError, "ffi_prep_closure_loc failed");
     }
 
+    closure->base.address = closure->code;
+    closure->base.size = LONG_MAX;
+    closure->base.access = MEM_RD | MEM_CODE;
+    
     return obj;
 }
 
@@ -244,7 +280,9 @@ ffi_closure_alloc(size_t size, void** code)
 static void
 ffi_closure_free(void* ptr)
 {
-    munmap(ptr, sizeof(ffi_closure));
+    if (ptr != NULL && ptr != (void *) -1) {
+        munmap(ptr, sizeof(ffi_closure));
+    }
 }
 
 ffi_status
@@ -264,7 +302,7 @@ ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
 void
 rbffi_Callback_Init(VALUE moduleFFI)
 {
-    NativeCallbackClass = rb_define_class_under(moduleFFI, "NativeCallback", rb_cObject);
+    NativeCallbackClass = rb_define_class_under(moduleFFI, "NativeCallback", rbffi_PointerClass);
     rb_global_variable(&NativeCallbackClass);
     rb_define_alloc_func(NativeCallbackClass, native_callback_allocate);
     id_call = rb_intern("call");
