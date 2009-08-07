@@ -233,7 +233,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
 
 typedef struct BlockingCall_ {
     void* function;
-    FunctionInfo* info;
+    FunctionType* info;
     void **ffiValues;
     FFIStorage* retval;
 } BlockingCall;
@@ -250,7 +250,7 @@ call_blocking_function(void* data)
 #endif
 
 VALUE
-rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionInfo* fnInfo)
+rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
 {
     void* retval;
     void** ffiValues;

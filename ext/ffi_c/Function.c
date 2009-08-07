@@ -53,7 +53,7 @@
 
 typedef struct Function_ {
     AbstractMemory memory;
-    FunctionInfo* info;
+    FunctionType* info;
     MethodHandle* methodHandle;
     bool autorelease;
     bool allocated;
@@ -134,7 +134,7 @@ function_initialize(int argc, VALUE* argv, VALUE self)
     infoArgv[0] = rbReturnType;
     infoArgv[1] = rbParamTypes;
     infoArgv[2] = rbOptions;
-    rbFunctionInfo = rb_class_new_instance(rbOptions != Qnil ? 3 : 2, infoArgv, rbffi_FunctionInfoClass);
+    rbFunctionInfo = rb_class_new_instance(rbOptions != Qnil ? 3 : 2, infoArgv, rbffi_FunctionTypeClass);
 
     function_init(self, rbFunctionInfo, rbProc);
     
@@ -156,7 +156,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
     fn->rbFunctionInfo = rbFunctionInfo;
 
-    Data_Get_Struct(fn->rbFunctionInfo, FunctionInfo, fn->info);
+    Data_Get_Struct(fn->rbFunctionInfo, FunctionType, fn->info);
 
     if (rb_obj_is_kind_of(rbProc, rbffi_PointerClass)) {
         AbstractMemory* memory;

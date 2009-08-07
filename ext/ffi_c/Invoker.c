@@ -70,7 +70,7 @@ typedef struct Invoker_ {
     
     void* function;
     MethodHandle* methodHandle;
-    FunctionInfo* fnInfo;
+    FunctionType* fnInfo;
 } Invoker;
 
 static VALUE invoker_allocate(VALUE klass);
@@ -112,8 +112,8 @@ invoker_initialize(VALUE self, VALUE rbFunction, VALUE rbParamTypes,
     infoArgv[2] = rbOptions = rb_hash_new();
     rb_hash_aset(rbOptions, ID2SYM(rb_intern("enums")), enums);
     rb_hash_aset(rbOptions, ID2SYM(rb_intern("convention")), convention);
-    invoker->rbFunctionInfo = rb_class_new_instance(3, infoArgv, rbffi_FunctionInfoClass);
-    Data_Get_Struct(invoker->rbFunctionInfo, FunctionInfo, invoker->fnInfo);
+    invoker->rbFunctionInfo = rb_class_new_instance(3, infoArgv, rbffi_FunctionTypeClass);
+    Data_Get_Struct(invoker->rbFunctionInfo, FunctionType, invoker->fnInfo);
     
     invoker->methodHandle = rbffi_MethodHandle_Alloc(invoker->fnInfo, invoker->function);
     

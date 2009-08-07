@@ -722,7 +722,7 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
         VALUE fargv[2];
         fargv[0] = UINT2NUM(offset);
         fargv[1] = rbType;
-        if (rb_obj_is_kind_of(rbType, rbffi_FunctionInfoClass)) {
+        if (rb_obj_is_kind_of(rbType, rbffi_FunctionTypeClass)) {
             rbField = rb_class_new_instance(2, fargv, FunctionFieldClass);
         } else if (rb_obj_is_kind_of(rbType, rbffi_StructByValueClass)) {
             rbField = rb_class_new_instance(2, fargv, FunctionFieldClass);

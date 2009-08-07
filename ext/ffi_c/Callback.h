@@ -15,7 +15,7 @@ typedef struct {
     ffi_closure* ffi_closure;
     ffi_cif ffi_cif;
     int flags;
-    FunctionInfo* cbInfo;
+    FunctionType* cbInfo;
     VALUE rbFunctionInfo;
     VALUE rbProc;
 } NativeCallback;

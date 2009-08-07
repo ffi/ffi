@@ -93,7 +93,7 @@ static void attached_method_fast_invoke(ffi_cif* cif, void* retval, METHOD_PARAM
 static void attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 
 struct MethodHandle {
-    FunctionInfo* info;
+    FunctionType* info;
     void* function;
     METHOD_CLOSURE* closure;
     void* code;
@@ -122,7 +122,7 @@ static int pageSize;
 
 
 MethodHandle*
-rbffi_MethodHandle_Alloc(FunctionInfo* fnInfo, void* function)
+rbffi_MethodHandle_Alloc(FunctionType* fnInfo, void* function)
 {
     MethodHandle* method, *list = NULL;
     MethodHandlePool* pool;
@@ -242,7 +242,7 @@ static void
 attached_method_fast_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, void* user_data)
 {
     MethodHandle* handle =  (MethodHandle *) user_data;
-    FunctionInfo* fnInfo = handle->info;
+    FunctionType* fnInfo = handle->info;
     void* ffiValues[MAX_METHOD_FIXED_ARITY];
     FFIStorage params[MAX_METHOD_FIXED_ARITY], retval;
 

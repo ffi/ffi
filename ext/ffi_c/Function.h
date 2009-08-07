@@ -56,9 +56,9 @@ typedef struct FunctionInfo_ {
     bool ignoreErrno;
     bool blocking;
     bool hasStruct;
-} FunctionInfo;
+} FunctionType;
 
-extern VALUE rbffi_FunctionInfoClass, rbffi_FunctionClass;
+extern VALUE rbffi_FunctionTypeClass, rbffi_FunctionClass;
 
 void rbffi_Function_Init(VALUE moduleFFI);
 VALUE rbffi_Function_NewInstance(VALUE functionInfo, VALUE proc);

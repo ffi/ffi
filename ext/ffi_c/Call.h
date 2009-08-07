@@ -67,7 +67,7 @@ void rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* pa
         FFIStorage* paramStorage, void** ffiValues,
         VALUE* callbackParameters, int callbackCount, VALUE enums);
 
-VALUE rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionInfo* fnInfo);
+VALUE rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
 
 #ifdef	__cplusplus
 }

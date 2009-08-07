@@ -47,7 +47,7 @@ static void
 native_callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
     NativeCallback* cb = (NativeCallback *) user_data;
-    FunctionInfo *cbInfo = cb->cbInfo;
+    FunctionType *cbInfo = cb->cbInfo;
     VALUE* rbParams;
     VALUE rbReturnValue;
     int i;
@@ -181,11 +181,11 @@ VALUE
 rbffi_NativeCallback_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
 {
     NativeCallback* closure = NULL;
-    FunctionInfo* cbInfo;
+    FunctionType* cbInfo;
     VALUE obj;
     ffi_status status;
 
-    Data_Get_Struct(rbFunctionInfo, FunctionInfo, cbInfo);
+    Data_Get_Struct(rbFunctionInfo, FunctionType, cbInfo);
     obj = Data_Make_Struct(NativeCallbackClass, NativeCallback, native_callback_mark, native_callback_free, closure);
     closure->cbInfo = cbInfo;
     closure->rbProc = rbProc;

@@ -43,17 +43,18 @@
 #include "StructByValue.h"
 #include "Function.h"
 
+static VALUE fntype_allocate(VALUE klass);
+static VALUE fntype_initialize(int argc, VALUE* argv, VALUE self);
+static void fntype_mark(FunctionType*);
+static void fntype_free(FunctionType *);
 
-static void fninfo_mark(FunctionInfo*);
-static void fninfo_free(FunctionInfo *);
-
-VALUE rbffi_FunctionInfoClass = Qnil;
+VALUE rbffi_FunctionTypeClass = Qnil;
 
 static VALUE
-fninfo_allocate(VALUE klass)
+fntype_allocate(VALUE klass)
 {
-    FunctionInfo* fnInfo;
-    VALUE obj = Data_Make_Struct(klass, FunctionInfo, fninfo_mark, fninfo_free, fnInfo);
+    FunctionType* fnInfo;
+    VALUE obj = Data_Make_Struct(klass, FunctionType, fntype_mark, fntype_free, fnInfo);
 
     fnInfo->type.ffiType = &ffi_type_pointer;
     fnInfo->type.nativeType = NATIVE_FUNCTION;
@@ -65,7 +66,7 @@ fninfo_allocate(VALUE klass)
 }
 
 static void
-fninfo_mark(FunctionInfo* fnInfo)
+fntype_mark(FunctionType* fnInfo)
 {
     rb_gc_mark(fnInfo->rbReturnType);
     rb_gc_mark(fnInfo->rbParameterTypes);
@@ -76,7 +77,7 @@ fninfo_mark(FunctionInfo* fnInfo)
 }
 
 static void
-fninfo_free(FunctionInfo* fnInfo)
+fntype_free(FunctionType* fnInfo)
 {
     xfree(fnInfo->parameterTypes);
     xfree(fnInfo->ffiParameterTypes);
@@ -86,9 +87,9 @@ fninfo_free(FunctionInfo* fnInfo)
 }
 
 static VALUE
-fninfo_initialize(int argc, VALUE* argv, VALUE self)
+fntype_initialize(int argc, VALUE* argv, VALUE self)
 {
-    FunctionInfo *fnInfo;
+    FunctionType *fnInfo;
     ffi_status status;
     VALUE rbReturnType = Qnil, rbParamTypes = Qnil, rbOptions = Qnil;
     VALUE rbEnums = Qnil, rbConvention = Qnil, rbBlocking = Qnil;
@@ -103,7 +104,7 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
 
     Check_Type(rbParamTypes, T_ARRAY);
 
-    Data_Get_Struct(self, FunctionInfo, fnInfo);
+    Data_Get_Struct(self, FunctionType, fnInfo);
     fnInfo->parameterCount = RARRAY_LEN(rbParamTypes);
     fnInfo->parameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->parameterTypes));
     fnInfo->ffiParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(ffi_type *));
@@ -122,7 +123,7 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
             rb_raise(rb_eTypeError, "Invalid parameter type (%s)", RSTRING_PTR(typeName));
         }
 
-        if (rb_obj_is_kind_of(type, rbffi_FunctionInfoClass)) {
+        if (rb_obj_is_kind_of(type, rbffi_FunctionTypeClass)) {
             REALLOC_N(fnInfo->callbackParameters, VALUE, fnInfo->callbackCount + 1);
             fnInfo->callbackParameters[fnInfo->callbackCount++] = type;
         }
@@ -177,12 +178,14 @@ fninfo_initialize(int argc, VALUE* argv, VALUE self)
 void
 rbffi_FunctionInfo_Init(VALUE moduleFFI)
 {
-    rbffi_FunctionInfoClass = rb_define_class_under(moduleFFI, "FunctionInfo", rbffi_TypeClass);
-    rb_global_variable(&rbffi_FunctionInfoClass);
-    rb_define_const(moduleFFI, "CallbackInfo", rbffi_FunctionInfoClass);
+    rbffi_FunctionTypeClass = rb_define_class_under(moduleFFI, "FunctionType", rbffi_TypeClass);
+    rb_global_variable(&rbffi_FunctionTypeClass);
+    rb_define_const(moduleFFI, "CallbackInfo", rbffi_FunctionTypeClass);
+    rb_define_const(moduleFFI, "FunctionInfo", rbffi_FunctionTypeClass);
+    rb_define_const(rbffi_TypeClass, "Function", rbffi_FunctionTypeClass);
 
-    rb_define_alloc_func(rbffi_FunctionInfoClass, fninfo_allocate);
-    rb_define_method(rbffi_FunctionInfoClass, "initialize", fninfo_initialize, -1);
+    rb_define_alloc_func(rbffi_FunctionTypeClass, fntype_allocate);
+    rb_define_method(rbffi_FunctionTypeClass, "initialize", fntype_initialize, -1);
 
 }
 
