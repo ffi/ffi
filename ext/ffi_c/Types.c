@@ -34,6 +34,8 @@
 #include "Function.h"
 #include "StructByValue.h"
 #include "Types.h"
+#include "Struct.h"
+#include "MemoryPointer.h"
 
 static ID id_find = 0;
 
@@ -78,10 +80,14 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
             return rbffi_Function_NewInstance(rbType, rbffi_Pointer_NewInstance(*(void **) ptr));
         }
         case NATIVE_STRUCT: {
-            VALUE memory = rbffi_Pointer_NewInstance((void *) ptr);
             StructByValue* sbv = (StructByValue *)type;
+            AbstractMemory* mem;
+            VALUE rbMemory = rbffi_MemoryPointer_NewInstance(1, sbv->base.ffiType->size, false);
 
-            return rb_class_new_instance(1, &memory, sbv->structClass);
+            Data_Get_Struct(rbMemory, AbstractMemory, mem);
+            memcpy(mem->address, ptr, sbv->base.ffiType->size);
+
+            return rb_class_new_instance(1, &rbMemory, sbv->structClass);
         }
 
         default:
