@@ -127,7 +127,9 @@ static void
 sbv_mark(StructByValue *sbv)
 {
     rb_gc_mark(sbv->structClass);
-    rb_gc_mark_locations(&sbv->rbFields[0], &sbv->rbFields[sbv->fieldCount]);
+    if (sbv->rbFields != NULL) {
+        rb_gc_mark_locations(&sbv->rbFields[0], &sbv->rbFields[sbv->fieldCount]);
+    }
 }
 
 static void
