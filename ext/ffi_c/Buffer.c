@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2008, 2009, Wayne Meissner
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * * The name of the author or authors may not be used to endorse or promote
+ *   products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
@@ -8,8 +35,8 @@
 typedef struct Buffer {
     AbstractMemory memory;
     char* storage; /* start of malloc area */
-    int type_size;
-    VALUE parent;
+    int typeSize;
+    VALUE rbParent;
 } Buffer;
 
 static VALUE buffer_allocate(VALUE klass);
@@ -19,7 +46,6 @@ static void buffer_mark(Buffer* ptr);
 static VALUE buffer_free(VALUE self);
 
 static VALUE BufferClass = Qnil;
-#define BUFFER(obj)  ((Buffer *) rbffi_AbstractMemory_Cast((obj), BufferClass))
 
 static VALUE
 buffer_allocate(VALUE klass)
@@ -28,7 +54,7 @@ buffer_allocate(VALUE klass)
     VALUE obj;
 
     obj = Data_Make_Struct(klass, Buffer, NULL, buffer_release, buffer);
-    buffer->parent = Qnil;
+    buffer->rbParent = Qnil;
     buffer->memory.ops = &rbffi_AbstractMemoryOps;
     buffer->memory.access = MEM_RD | MEM_WR;
 
@@ -49,15 +75,15 @@ buffer_release(Buffer* ptr)
 static VALUE
 buffer_initialize(int argc, VALUE* argv, VALUE self)
 {
-    VALUE size = Qnil, count = Qnil, clear = Qnil;
+    VALUE rbSize = Qnil, rbCount = Qnil, rbClear = Qnil;
     Buffer* p;
     int nargs;
 
     Data_Get_Struct(self, Buffer, p);
 
-    nargs = rb_scan_args(argc, argv, "12", &size, &count, &clear);
-    p->type_size = rbffi_type_size(size);
-    p->memory.size = p->type_size * (nargs > 1 ? NUM2LONG(count) : 1);
+    nargs = rb_scan_args(argc, argv, "12", &rbSize, &rbCount, &rbClear);
+    p->typeSize = rbffi_type_size(rbSize);
+    p->memory.size = p->typeSize * (nargs > 1 ? NUM2LONG(rbCount) : 1);
 
     p->storage = malloc(p->memory.size + 7);
     if (p->storage == NULL) {
@@ -67,7 +93,7 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (void *) (((uintptr_t) p->storage + 0x7) & (uintptr_t) ~0x7UL);
     
-    if (nargs > 2 && (RTEST(clear) || clear == Qnil) && p->memory.size > 0) {
+    if (nargs > 2 && (RTEST(rbClear) || rbClear == Qnil) && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
 
@@ -85,32 +111,34 @@ buffer_alloc_inout(int argc, VALUE* argv, VALUE klass)
 }
 
 static VALUE
-buffer_plus(VALUE self, VALUE offset)
+buffer_plus(VALUE self, VALUE rbOffset)
 {
-    Buffer* ptr = BUFFER(self);
-    Buffer* p;
-    VALUE retval;
-    long off = NUM2LONG(offset);
+    Buffer* ptr;
+    Buffer* result;
+    VALUE obj = Qnil;
+    long offset = NUM2LONG(rbOffset);
 
-    checkBounds(&ptr->memory, off, 1);
+    Data_Get_Struct(self, Buffer, ptr);
+    checkBounds(&ptr->memory, offset, 1);
 
-    retval = Data_Make_Struct(BufferClass, Buffer, buffer_mark, -1, p);
-    p->memory.address = ptr->memory.address + off;
-    p->memory.size = ptr->memory.size - off;
-    p->memory.ops = ptr->memory.ops;
-    p->memory.access = ptr->memory.access;
-    p->parent = self;
+    obj = Data_Make_Struct(BufferClass, Buffer, buffer_mark, -1, result);
+    result->memory.address = ptr->memory.address + offset;
+    result->memory.size = ptr->memory.size - offset;
+    result->memory.ops = ptr->memory.ops;
+    result->memory.access = ptr->memory.access;
+    result->rbParent = Qnil;
 
-    return retval;
+    return obj;
 }
 
 static VALUE
-buffer_aref(VALUE self, VALUE offset)
+buffer_aref(VALUE self, VALUE rbOffset)
 {
     Buffer* ptr;
 
     Data_Get_Struct(self, Buffer, ptr);
-    return buffer_plus(self, INT2FIX(ptr->type_size * NUM2INT(offset)));
+
+    return buffer_plus(self, UINT2NUM(ptr->typeSize * NUM2UINT(rbOffset)));
 }
 
 static VALUE
@@ -119,21 +147,29 @@ buffer_type_size(VALUE self)
     Buffer* ptr;
 
     Data_Get_Struct(self, Buffer, ptr);
-    return INT2NUM(ptr->type_size);
+
+    return INT2NUM(ptr->typeSize);
 }
 
 static VALUE
 buffer_size(VALUE self)
 {
-    return INT2NUM(BUFFER(self)->memory.size);
+    Buffer* ptr;
+
+    Data_Get_Struct(self, Buffer, ptr);
+
+    return INT2NUM(ptr->memory.size);
 }
 
 static VALUE
 buffer_inspect(VALUE self)
 {
     char tmp[100];
+    Buffer* ptr;
 
-    snprintf(tmp, sizeof(tmp), "#<Buffer size=%ld>", BUFFER(self)->memory.size);
+    Data_Get_Struct(self, Buffer, ptr);
+
+    snprintf(tmp, sizeof(tmp), "#<FFI:Buffer:%p address=%p size=%ld>", ptr, ptr->memory.address, ptr->memory.size);
     
     return rb_str_new2(tmp);
 }
@@ -156,7 +192,7 @@ buffer_free(VALUE self)
 static void
 buffer_mark(Buffer* ptr)
 {
-    rb_gc_mark(ptr->parent);
+    rb_gc_mark(ptr->rbParent);
 }
 
 void
@@ -170,6 +206,9 @@ rbffi_Buffer_Init(VALUE moduleFFI)
     rb_define_singleton_method(BufferClass, "alloc_inout", buffer_alloc_inout, -1);
     rb_define_singleton_method(BufferClass, "alloc_out", buffer_alloc_inout, -1);
     rb_define_singleton_method(BufferClass, "alloc_in", buffer_alloc_inout, -1);
+    rb_define_alias(rb_singleton_class(BufferClass), "new_in", "alloc_in");
+    rb_define_alias(rb_singleton_class(BufferClass), "new_out", "alloc_out");
+    rb_define_alias(rb_singleton_class(BufferClass), "new_inout", "alloc_inout");
     
     rb_define_method(BufferClass, "initialize", buffer_initialize, -1);
     rb_define_method(BufferClass, "inspect", buffer_inspect, 0);
