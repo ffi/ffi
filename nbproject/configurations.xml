@@ -5,6 +5,8 @@
       <logicalFolder name="ext" displayName="ext" projectFiles="true">
         <itemPath>ext/ffi_c/AbstractMemory.c</itemPath>
         <itemPath>ext/ffi_c/AbstractMemory.h</itemPath>
+        <itemPath>ext/ffi_c/ArrayType.c</itemPath>
+        <itemPath>ext/ffi_c/ArrayType.h</itemPath>
         <itemPath>ext/ffi_c/AutoPointer.c</itemPath>
         <itemPath>ext/ffi_c/AutoPointer.h</itemPath>
         <itemPath>ext/ffi_c/Buffer.c</itemPath>

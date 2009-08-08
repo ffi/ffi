@@ -13,7 +13,7 @@ TMPDIR=build/${CND_CONF}/${CND_PLATFORM}/tmp-packaging
 TMPDIRNAME=tmp-packaging
 OUTPUT_PATH=MissingOutputInProject
 OUTPUT_BASENAME=MissingOutputInProject
-PACKAGE_TOP_DIR=ruby-ffi-dev/
+PACKAGE_TOP_DIR=ruby-ffi.git/
 
 # Functions
 function checkReturnCode
@@ -58,15 +58,15 @@ mkdir -p ${TMPDIR}
 
 # Copy files and create directories and links
 cd "${TOP}"
-makeDirectory ${TMPDIR}/ruby-ffi-dev/bin
+makeDirectory ${TMPDIR}/ruby-ffi.git/bin
 copyFileToTmpDir "${OUTPUT_PATH}" "${TMPDIR}/${PACKAGE_TOP_DIR}bin/${OUTPUT_BASENAME}" 0755
 
 
 # Generate tar file
 cd "${TOP}"
-rm -f ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package/ruby-ffi-dev.tar
+rm -f ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package/ruby-ffi.git.tar
 cd ${TMPDIR}
-tar -vcf ../../../../${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package/ruby-ffi-dev.tar *
+tar -vcf ../../../../${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/package/ruby-ffi.git.tar *
 checkReturnCode
 
 # Cleanup

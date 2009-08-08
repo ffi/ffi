@@ -12,5 +12,5 @@ CND_ARTIFACT_DIR_Default=
 CND_ARTIFACT_NAME_Default=
 CND_ARTIFACT_PATH_Default=
 CND_PACKAGE_DIR_Default=dist/Default/GNU-Solaris-x86/package
-CND_PACKAGE_NAME_Default=ruby-ffi-dev.tar
-CND_PACKAGE_PATH_Default=dist/Default/GNU-Solaris-x86/package/ruby-ffi-dev.tar
+CND_PACKAGE_NAME_Default=ruby-ffi.git.tar
+CND_PACKAGE_PATH_Default=dist/Default/GNU-Solaris-x86/package/ruby-ffi.git.tar
