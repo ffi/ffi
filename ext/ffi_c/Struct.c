@@ -163,7 +163,7 @@ struct_field_alignment(VALUE self)
 }
 
 static VALUE
-struct_field_type(VALUE self)
+struct_field_ffi_type(VALUE self)
 {
     StructField* field;
     Data_Get_Struct(self, StructField, field);
@@ -1106,7 +1106,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructFieldClass, "size", struct_field_size, 0);
     rb_define_method(StructFieldClass, "alignment", struct_field_alignment, 0);
     rb_define_method(StructFieldClass, "name", struct_field_name, 0);
-    rb_define_method(StructFieldClass, "type", struct_field_type, 0);
+    rb_define_method(StructFieldClass, "ffi_type", struct_field_ffi_type, 0);
     rb_define_method(StructFieldClass, "put", struct_field_put, 2);
     rb_define_method(StructFieldClass, "get", struct_field_get, 1);
 
