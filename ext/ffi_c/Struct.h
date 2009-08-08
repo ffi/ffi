@@ -42,10 +42,9 @@ extern "C" {
     typedef struct StructField_ {
         Type* type;
         unsigned int offset;
-        unsigned int size;
-        unsigned int align;
 
         VALUE rbType;
+        VALUE rbName;
     } StructField;
 
     typedef struct StructLayout_ {
@@ -58,6 +57,7 @@ extern "C" {
         VALUE* rbTypes;
         VALUE rbFieldNames;
         VALUE rbFieldMap;
+        VALUE rbFields;
     } StructLayout;
 
     typedef struct Struct {
