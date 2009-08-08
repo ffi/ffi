@@ -1,6 +1,6 @@
 ruby-ffi
     by Wayne Meissner
-    http://kenai.com/projects/ruby-ffi
+    http://wiki.github.com/ffi/ffi
 
 == DESCRIPTION:
 
