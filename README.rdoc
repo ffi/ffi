@@ -45,7 +45,7 @@ From rubyforge:
 
   [sudo] gem install ffi
 
-or from the mercurial repository on Kenai:
+or from the git repository on github:
 
   git clone git://github.com/ffi/ffi.git
   cd ffi
