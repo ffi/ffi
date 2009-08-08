@@ -8,7 +8,7 @@ Ruby-FFI is a ruby extension for programmatically loading dynamic
 libraries, binding functions within them, and calling those functions
 from Ruby code. Moreover, a Ruby-FFI extension works without changes
 on Ruby and JRuby. Discover why should you write your next extension
-using Ruby-FFI {here}[http://kenai.com/projects/ruby-ffi/pages/WhyUseFFI].
+using Ruby-FFI here[http://kenai.com/projects/ruby-ffi/pages/WhyUseFFI].
 
 == FEATURES/PROBLEMS:
 
@@ -32,8 +32,8 @@ using Ruby-FFI {here}[http://kenai.com/projects/ruby-ffi/pages/WhyUseFFI].
 For less minimalistic and more sane examples you may look at:
 
 * the samples/ folder
-* the examples on the Kenai {wiki}[http://kenai.com/projects/ruby-ffi/pages/Home]
-* the projects using FFI listed on this {page}[http://kenai.com/projects/ruby-ffi/pages/ProjectsUsingFFI]
+* the examples on the Kenai wiki[http://kenai.com/projects/ruby-ffi/pages/Home]
+* the projects using FFI listed on this page[http://kenai.com/projects/ruby-ffi/pages/ProjectsUsingFFI]
 
 == REQUIREMENTS:
 
@@ -47,8 +47,8 @@ From rubyforge:
 
 or from the mercurial repository on Kenai:
 
-  hg clone https://kenai.com/hg/ruby-ffi~mercurial ruby-ffi
-  cd ruby-ffi
+  git clone git://github.com/ffi/ffi.git
+  cd ffi
   rake gem:install
 
 == CREDITS:
