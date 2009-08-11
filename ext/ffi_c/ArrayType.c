@@ -55,6 +55,21 @@ array_type_s_allocate(VALUE klass)
     return obj;
 }
 
+static void
+array_type_mark(ArrayType *array)
+{
+    rb_gc_mark(array->rbComponentType);
+}
+
+static void
+array_type_free(ArrayType *array)
+{
+    xfree(array->base.ffiType);
+    xfree(array->ffiTypes);
+    xfree(array);
+}
+
+
 static VALUE
 array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
 {
@@ -79,28 +94,36 @@ array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
     return self;
 }
 
-static void
-array_type_mark(ArrayType *array)
+static VALUE
+array_type_length(VALUE self)
 {
-    rb_gc_mark(array->rbComponentType);
+    ArrayType* array;
+
+    Data_Get_Struct(self, ArrayType, array);
+
+    return UINT2NUM(array->length);
 }
 
-static void
-array_type_free(ArrayType *array)
+static VALUE
+array_type_element_type(VALUE self)
 {
-    xfree(array->base.ffiType);
-    xfree(array->ffiTypes);
-    xfree(array);
-}
+    ArrayType* array;
 
+    Data_Get_Struct(self, ArrayType, array);
+
+    return array->rbComponentType;
+}
 
 void
 rbffi_ArrayType_Init(VALUE moduleFFI)
 {
     rbffi_ArrayTypeClass = rb_define_class_under(moduleFFI, "ArrayType", rbffi_TypeClass);
     rb_global_variable(&rbffi_ArrayTypeClass);
+    rb_define_const(rbffi_TypeClass, "Array", rbffi_ArrayTypeClass);
 
     rb_define_alloc_func(rbffi_ArrayTypeClass, array_type_s_allocate);
     rb_define_method(rbffi_ArrayTypeClass, "initialize", array_type_initialize, 2);
+    rb_define_method(rbffi_ArrayTypeClass, "length", array_type_length, 0);
+    rb_define_method(rbffi_ArrayTypeClass, "elem_type", array_type_element_type, 0);
 }
 
