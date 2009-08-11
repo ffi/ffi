@@ -1,3 +1,31 @@
+/*
+ * Copyright (c) 2008, 2009, Wayne Meissner
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * * The name of the author or authors may not be used to endorse or promote
+ *   products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
@@ -31,6 +59,7 @@ rbffi_Pointer_NewInstance(void* addr)
     p->memory.size = LONG_MAX;
     p->memory.ops = &rbffi_AbstractMemoryOps;
     p->memory.access = MEM_RD | MEM_WR;
+    p->memory.typeSize = 1;
     p->parent = Qnil;
 
     return obj;
@@ -42,7 +71,7 @@ ptr_allocate(VALUE klass)
     Pointer* p;
     VALUE obj;
 
-    obj = Data_Make_Struct(rbffi_PointerClass, Pointer, NULL, -1, p);
+    obj = Data_Make_Struct(klass, Pointer, NULL, -1, p);
     p->parent = Qnil;
     p->memory.ops = &rbffi_AbstractMemoryOps;
     p->memory.access = MEM_RD | MEM_WR;
@@ -61,11 +90,11 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
     switch (rb_scan_args(argc, argv, "11", &type, &address)) {
         case 1:
             p->memory.address = (void*)(uintptr_t) NUM2LL(type);
-            // FIXME set type_size to 1
+            p->memory.typeSize = 1;
             break;
         case 2:
             p->memory.address = (void*)(uintptr_t) NUM2LL(address);
-            // FIXME set type_size to rbffi_type_size(type)
+            p->memory.typeSize = rbffi_type_size(type);
             break;
         default:
             rb_raise(rb_eArgError, "Invalid arguments");
@@ -98,6 +127,7 @@ ptr_plus(VALUE self, VALUE offset)
     p->memory.size = ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off;
     p->memory.ops = &rbffi_AbstractMemoryOps;
     p->memory.access = ptr->access;
+    p->memory.typeSize = ptr->typeSize;
     p->parent = self;
 
     return retval;
@@ -110,7 +140,7 @@ ptr_inspect(VALUE self)
     char tmp[100];
 
     Data_Get_Struct(self, Pointer, ptr);
-    snprintf(tmp, sizeof(tmp), "#<Native Pointer address=%p>", ptr->memory.address);
+    snprintf(tmp, sizeof(tmp), "#<FFI::Pointer address=%p>", ptr->memory.address);
 
     return rb_str_new2(tmp);
 }
