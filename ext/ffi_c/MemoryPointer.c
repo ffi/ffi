@@ -95,7 +95,7 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
 
     msize = size * count;
 
-    p->storage = malloc(msize + 7);
+    p->storage = xmalloc(msize + 7);
     if (p->storage == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", msize);
     }
@@ -158,7 +158,7 @@ static void
 memptr_release(MemoryPointer* ptr)
 {
     if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
-        free(ptr->storage);
+        xfree(ptr->storage);
         ptr->storage = NULL;
     }
     xfree(ptr);

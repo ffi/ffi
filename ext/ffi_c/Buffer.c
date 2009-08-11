@@ -64,7 +64,7 @@ static void
 buffer_release(Buffer* ptr)
 {
     if (ptr->storage != NULL) {
-        free(ptr->storage);
+        xfree(ptr->storage);
         ptr->storage = NULL;
     }
     
@@ -84,7 +84,7 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     p->memory.typeSize = rbffi_type_size(rbSize);
     p->memory.size = p->memory.typeSize * (nargs > 1 ? NUM2LONG(rbCount) : 1);
 
-    p->storage = malloc(p->memory.size + 7);
+    p->storage = xmalloc(p->memory.size + 7);
     if (p->storage == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", p->memory.size);
     }
