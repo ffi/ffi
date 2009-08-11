@@ -2,16 +2,13 @@ require 'ffi/platform'
 module FFI
 
   class StructLayout
-    attr_reader :size, :align
 
-    def members
-      @field_names
-    end
     def offsets
-      @fields.map { |name, field| [name, field.offset] }.sort { |a, b| a[1] <=> b[1] }
+      members.map { |m| [ m, self[m].offset ] }
     end
+
     def offset_of(field_name)
-      @fields[field_name].offset
+      self[field_name].offset
     end
   end
 
@@ -23,7 +20,7 @@ module FFI
     end
 
     def self.size
-      @size
+      @layout.size
     end
 
     def self.members
@@ -31,7 +28,7 @@ module FFI
     end
 
     def self.align
-      @layout.align
+      @layout.alignment
     end
 
     def self.offsets

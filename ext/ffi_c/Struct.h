@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
     extern void rbffi_Struct_Init(VALUE ffiModule);
+    extern void rbffi_StructLayout_Init(VALUE ffiModule);
 
     typedef struct StructField_ {
         Type* type;
@@ -54,7 +55,6 @@ extern "C" {
         int size;
         int align;
         ffi_type** ffiTypes;
-        VALUE* rbTypes;
         VALUE rbFieldNames;
         VALUE rbFieldMap;
         VALUE rbFields;
@@ -68,7 +68,10 @@ extern "C" {
     } Struct;
 
     extern VALUE rbffi_StructClass, rbffi_StructLayoutClass;
-    
+    extern VALUE rbffi_StructLayoutFieldClass, rbffi_StructLayoutFunctionFieldClass;
+    extern VALUE rbffi_StructLayoutArrayFieldClass, rbffi_StructLayoutStructFieldClass;
+    extern VALUE rbffi_StructInlineArrayClass;
+
 #ifdef	__cplusplus
 }
 #endif
