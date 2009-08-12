@@ -64,6 +64,8 @@ PROJ.ruby_opts << '-I' << BUILD_EXT_DIR unless RUBY_PLATFORM == "java"
 #RSpec
 PROJ.spec.opts << '--color' << '-fs'
 
+depend_on 'rake'
+
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
   desc "Run all specs"
