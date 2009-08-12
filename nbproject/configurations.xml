@@ -12,8 +12,6 @@
         <itemPath>ext/ffi_c/Buffer.c</itemPath>
         <itemPath>ext/ffi_c/Call.c</itemPath>
         <itemPath>ext/ffi_c/Call.h</itemPath>
-        <itemPath>ext/ffi_c/Callback.c</itemPath>
-        <itemPath>ext/ffi_c/Callback.h</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.c</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.h</itemPath>
         <itemPath>ext/ffi_c/Function.c</itemPath>
@@ -35,6 +33,7 @@
         <itemPath>ext/ffi_c/Struct.h</itemPath>
         <itemPath>ext/ffi_c/StructByValue.c</itemPath>
         <itemPath>ext/ffi_c/StructByValue.h</itemPath>
+        <itemPath>ext/ffi_c/StructLayout.c</itemPath>
         <itemPath>ext/ffi_c/Type.c</itemPath>
         <itemPath>ext/ffi_c/Type.h</itemPath>
         <itemPath>ext/ffi_c/Types.c</itemPath>
