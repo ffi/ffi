@@ -221,8 +221,8 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
     } else {
         rb_raise(rb_eTypeError, "wrong argument type.  Expected pointer or proc");
     }
+
     fn->rbProc = rbProc;
-    fn->methodHandle = rbffi_MethodHandle_Alloc(fn->info, fn->memory.address);
 
     return self;
 }
@@ -248,6 +248,11 @@ function_attach(VALUE self, VALUE module, VALUE name)
     if (fn->info->parameterCount == -1) {
         rb_raise(rb_eRuntimeError, "Cannot attach variadic functions");
     }
+
+    if (fn->methodHandle == NULL) {
+        fn->methodHandle = rbffi_MethodHandle_Alloc(fn->info, fn->memory.address);
+    }
+
     //
     // Stash the Function in a module variable so it does not get garbage collected
     //
