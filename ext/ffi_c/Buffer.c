@@ -35,7 +35,6 @@
 typedef struct Buffer {
     AbstractMemory memory;
     char* storage; /* start of malloc area */
-    int typeSize;
     VALUE rbParent;
 } Buffer;
 
@@ -65,7 +64,7 @@ static void
 buffer_release(Buffer* ptr)
 {
     if (ptr->storage != NULL) {
-        free(ptr->storage);
+        xfree(ptr->storage);
         ptr->storage = NULL;
     }
     
@@ -82,10 +81,10 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     Data_Get_Struct(self, Buffer, p);
 
     nargs = rb_scan_args(argc, argv, "12", &rbSize, &rbCount, &rbClear);
-    p->typeSize = rbffi_type_size(rbSize);
-    p->memory.size = p->typeSize * (nargs > 1 ? NUM2LONG(rbCount) : 1);
+    p->memory.typeSize = rbffi_type_size(rbSize);
+    p->memory.size = p->memory.typeSize * (nargs > 1 ? NUM2LONG(rbCount) : 1);
 
-    p->storage = malloc(p->memory.size + 7);
+    p->storage = xmalloc(p->memory.size + 7);
     if (p->storage == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", p->memory.size);
     }
@@ -126,39 +125,10 @@ buffer_plus(VALUE self, VALUE rbOffset)
     result->memory.size = ptr->memory.size - offset;
     result->memory.ops = ptr->memory.ops;
     result->memory.access = ptr->memory.access;
-    result->rbParent = Qnil;
+    result->memory.typeSize = ptr->memory.typeSize;
+    result->rbParent = self;
 
     return obj;
-}
-
-static VALUE
-buffer_aref(VALUE self, VALUE rbOffset)
-{
-    Buffer* ptr;
-
-    Data_Get_Struct(self, Buffer, ptr);
-
-    return buffer_plus(self, UINT2NUM(ptr->typeSize * NUM2UINT(rbOffset)));
-}
-
-static VALUE
-buffer_type_size(VALUE self)
-{
-    Buffer* ptr;
-
-    Data_Get_Struct(self, Buffer, ptr);
-
-    return INT2NUM(ptr->typeSize);
-}
-
-static VALUE
-buffer_size(VALUE self)
-{
-    Buffer* ptr;
-
-    Data_Get_Struct(self, Buffer, ptr);
-
-    return INT2NUM(ptr->memory.size);
 }
 
 static VALUE
@@ -212,10 +182,6 @@ rbffi_Buffer_Init(VALUE moduleFFI)
     
     rb_define_method(BufferClass, "initialize", buffer_initialize, -1);
     rb_define_method(BufferClass, "inspect", buffer_inspect, 0);
-    rb_define_method(BufferClass, "size", buffer_size, 0);
-    rb_define_alias(BufferClass, "length", "size");
-    rb_define_alias(BufferClass, "total", "size");
-    rb_define_method(BufferClass, "type_size", buffer_type_size, 0);
-    rb_define_method(BufferClass, "[]", buffer_aref, 1);
+    rb_define_alias(BufferClass, "length", "total");
     rb_define_method(BufferClass, "+", buffer_plus, 1);
 }

@@ -175,6 +175,26 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
+static VALUE
+fntype_result_type(VALUE self)
+{
+    FunctionType* ft;
+
+    Data_Get_Struct(self, FunctionType, ft);
+
+    return ft->rbReturnType;
+}
+
+static VALUE
+fntype_param_types(VALUE self)
+{
+    FunctionType* ft;
+
+    Data_Get_Struct(self, FunctionType, ft);
+
+    return rb_ary_dup(ft->rbParameterTypes);
+}
+
 void
 rbffi_FunctionInfo_Init(VALUE moduleFFI)
 {
@@ -186,6 +206,8 @@ rbffi_FunctionInfo_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(rbffi_FunctionTypeClass, fntype_allocate);
     rb_define_method(rbffi_FunctionTypeClass, "initialize", fntype_initialize, -1);
+    rb_define_method(rbffi_FunctionTypeClass, "result_type", fntype_result_type, 0);
+    rb_define_method(rbffi_FunctionTypeClass, "param_types", fntype_param_types, 0);
 
 }
 

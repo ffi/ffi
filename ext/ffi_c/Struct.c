@@ -67,242 +67,18 @@ typedef struct InlineArray_ {
 
 
 static void struct_mark(Struct *);
-static void struct_layout_mark(StructLayout *);
-static void struct_layout_free(StructLayout *);
-static void struct_field_mark(StructField* );
 static void struct_layout_builder_mark(StructLayoutBuilder *);
 static void struct_layout_builder_free(StructLayoutBuilder *);
-
-
 static void inline_array_mark(InlineArray *);
 
-static inline MemoryOp* ptr_get_op(AbstractMemory* ptr, Type* type);
 static inline int align(int offset, int align);
 
 VALUE rbffi_StructClass = Qnil;
-VALUE rbffi_StructLayoutClass = Qnil;
-static VALUE StructFieldClass = Qnil, StructLayoutBuilderClass = Qnil;
-static VALUE FunctionFieldClass = Qnil, ArrayFieldClass = Qnil, InlineStructFieldClass = Qnil;
-static VALUE InlineArrayClass = Qnil;
+static VALUE StructLayoutBuilderClass = Qnil;
+
+VALUE rbffi_StructInlineArrayClass = Qnil;
 static ID id_pointer_ivar = 0, id_layout_ivar = 0;
 static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
-
-static VALUE
-struct_field_allocate(VALUE klass)
-{
-    StructField* field;
-    VALUE obj;
-    
-    obj = Data_Make_Struct(klass, StructField, struct_field_mark, -1, field);
-    field->rbType = Qnil;
-    field->rbName = Qnil;
-
-    return obj;
-}
-
-static void
-struct_field_mark(StructField* f)
-{
-    rb_gc_mark(f->rbType);
-    rb_gc_mark(f->rbName);
-}
-
-static VALUE
-struct_field_initialize(int argc, VALUE* argv, VALUE self)
-{
-    VALUE rbOffset = Qnil, rbName = Qnil, rbType = Qnil;
-    StructField* field;
-    int nargs;
-
-    Data_Get_Struct(self, StructField, field);
-
-    nargs = rb_scan_args(argc, argv, "3", &rbName, &rbOffset, &rbType);
-
-    if (TYPE(rbName) != T_SYMBOL && TYPE(rbName) != T_STRING) {
-        rb_raise(rb_eTypeError, "wrong argument type %s (expected Symbol/String)",
-                rb_obj_classname(rbName));
-    }
-
-    Check_Type(rbOffset, T_FIXNUM);
-    
-    if (!rb_obj_is_kind_of(rbType, rbffi_TypeClass)) {
-        rb_raise(rb_eTypeError, "wrong argument type %s (expected FFI::Type)",
-                rb_obj_classname(rbType));
-    }
-
-    field->offset = NUM2UINT(rbOffset);
-    field->rbName = (TYPE(rbName) == T_SYMBOL) ? rbName : rb_str_intern(rbName);
-    field->rbType = rbType;
-    Data_Get_Struct(field->rbType, Type, field->type);
-
-    return self;
-}
-
-static VALUE
-struct_field_offset(VALUE self)
-{
-    StructField* field;
-    Data_Get_Struct(self, StructField, field);
-    return UINT2NUM(field->offset);
-}
-
-static VALUE
-struct_field_size(VALUE self)
-{
-    StructField* field;
-    Data_Get_Struct(self, StructField, field);
-    return UINT2NUM(field->type->ffiType->size);
-}
-
-static VALUE
-struct_field_alignment(VALUE self)
-{
-    StructField* field;
-    Data_Get_Struct(self, StructField, field);
-    return UINT2NUM(field->type->ffiType->alignment);
-}
-
-static VALUE
-struct_field_ffi_type(VALUE self)
-{
-    StructField* field;
-    Data_Get_Struct(self, StructField, field);
-    return field->rbType;
-}
-
-static VALUE
-struct_field_name(VALUE self)
-{
-    StructField* field;
-    Data_Get_Struct(self, StructField, field);
-    return field->rbName;
-}
-
-static VALUE
-struct_field_get(VALUE self, VALUE pointer)
-{
-    StructField* f;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
-
-    Data_Get_Struct(self, StructField, f);
-    op = ptr_get_op(memory, f->type);
-    if (op == NULL) {
-        VALUE name = rb_class_name(CLASS_OF(self));
-        rb_raise(rb_eArgError, "get not supported for %s", StringValueCStr(name));
-        return Qnil;
-    }
-
-    return (*op->get)(memory, f->offset);
-}
-
-static VALUE
-struct_field_put(VALUE self, VALUE pointer, VALUE value)
-{
-    StructField* f;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
-
-    Data_Get_Struct(self, StructField, f);
-    op = ptr_get_op(memory, f->type);
-    if (op == NULL) {
-        VALUE name = rb_class_name(CLASS_OF(self));
-        rb_raise(rb_eArgError, "put not supported for %s", StringValueCStr(name));
-        return self;
-    }
-    
-    (*op->put)(memory, f->offset, value);
-
-    return self;
-}
-
-static VALUE
-function_field_get(VALUE self, VALUE pointer)
-{
-    StructField* f;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
-    
-    Data_Get_Struct(self, StructField, f);
-    op = memory->ops->pointer;
-    if (op == NULL) {
-        VALUE name = rb_class_name(CLASS_OF(self));
-        rb_raise(rb_eArgError, "get not supported for %s", StringValueCStr(name));
-        return Qnil;
-    }
-
-    return rbffi_Function_NewInstance(f->rbType, (*op->get)(memory, f->offset));
-}
-
-static VALUE
-function_field_put(VALUE self, VALUE pointer, VALUE proc)
-{
-    StructField* f;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
-    VALUE value = Qnil;
-
-    Data_Get_Struct(self, StructField, f);
-    op = memory->ops->pointer;
-    if (op == NULL) {
-        VALUE name = rb_class_name(CLASS_OF(self));
-        rb_raise(rb_eArgError, "put not supported for %s", StringValueCStr(name));
-        return self;
-    }
-
-    if (NIL_P(proc) || rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
-        value = proc;
-    } else if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, rb_intern("call"))) {
-        value = rbffi_Function_ForProc(f->rbType, proc);
-    } else {
-        rb_raise(rb_eTypeError, "wrong type (expected Proc or Function)");
-    }
-
-    (*op->put)(memory, f->offset, value);
-
-    return self;
-}
-
-static VALUE
-array_field_get(VALUE self, VALUE pointer)
-{
-    StructField* f;
-    ArrayType* array;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
-    VALUE argv[2];
-    
-    Data_Get_Struct(self, StructField, f);
-    Data_Get_Struct(f->rbType, ArrayType, array);
-
-    op = ptr_get_op(memory, array->componentType);
-    if (op == NULL) {
-        VALUE name = rb_class_name(array->rbComponentType);
-        rb_raise(rb_eArgError, "get not supported for %s", StringValueCStr(name));
-        return Qnil;
-    }
-
-    argv[0] = pointer;
-    argv[1] = self;
-
-    return rb_class_new_instance(2, argv, InlineArrayClass);
-}
-
-static VALUE
-inline_struct_field_get(VALUE self, VALUE pointer)
-{
-    StructField* f;
-    StructByValue* sbv;
-    VALUE rbPointer = Qnil, rbOffset = Qnil;
-
-    Data_Get_Struct(self, StructField, f);
-    Data_Get_Struct(f->rbType, StructByValue, sbv);
-
-    rbOffset = UINT2NUM(f->offset);
-    rbPointer = rb_funcall2(pointer, rb_intern("+"), 1, &rbOffset);
-    
-    return rb_class_new_instance(1, &rbPointer, sbv->structClass);
-}
 
 static inline char*
 memory_address(VALUE self)
@@ -389,42 +165,6 @@ struct_field(Struct* s, VALUE fieldName)
     return rbField;
 }
 
-static inline MemoryOp*
-ptr_get_op(AbstractMemory* ptr, Type* type)
-{
-    if (ptr == NULL || ptr->ops == NULL || type == NULL) {
-        return NULL;
-    }
-    switch (type->nativeType) {
-        case NATIVE_INT8:
-            return ptr->ops->int8;
-        case NATIVE_UINT8:
-            return ptr->ops->uint8;
-        case NATIVE_INT16:
-            return ptr->ops->int16;
-        case NATIVE_UINT16:
-            return ptr->ops->uint16;
-        case NATIVE_INT32:
-            return ptr->ops->int32;
-        case NATIVE_UINT32:
-            return ptr->ops->uint32;
-        case NATIVE_INT64:
-            return ptr->ops->int64;
-        case NATIVE_UINT64:
-            return ptr->ops->uint64;
-        case NATIVE_FLOAT32:
-            return ptr->ops->float32;
-        case NATIVE_FLOAT64:
-            return ptr->ops->float64;
-        case NATIVE_POINTER:
-            return ptr->ops->pointer;
-        case NATIVE_STRING:
-            return ptr->ops->strptr;
-        default:
-            return NULL;
-    }
-}
-
 static VALUE
 struct_aref(VALUE self, VALUE fieldName)
 {
@@ -437,7 +177,7 @@ struct_aref(VALUE self, VALUE fieldName)
     rbField = struct_field(s, fieldName);
     f = (StructField *) DATA_PTR(rbField);
 
-    op = ptr_get_op(s->pointer, f->type);
+    op = memory_get_op(s->pointer, f->type);
     if (op != NULL) {
         return (*op->get)(s->pointer, f->offset);
     }
@@ -459,7 +199,7 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
     rbField = struct_field(s, fieldName);
     f = (StructField *) DATA_PTR(rbField);
 
-    op = ptr_get_op(s->pointer, f->type);
+    op = memory_get_op(s->pointer, f->type);
     if (op != NULL) {
         (*op->put)(s->pointer, f->offset, value);
         return self;
@@ -524,131 +264,6 @@ struct_get_layout(VALUE self)
     Data_Get_Struct(self, Struct, s);
 
     return s->rbLayout;
-}
-
-static VALUE
-struct_layout_allocate(VALUE klass)
-{
-    StructLayout* layout;
-    VALUE obj;
-    
-    obj = Data_Make_Struct(klass, StructLayout, struct_layout_mark, struct_layout_free, layout);
-    layout->rbFieldMap = Qnil;
-    layout->rbFieldNames = Qnil;
-    layout->rbFields = Qnil;
-    layout->base.ffiType = xcalloc(1, sizeof(*layout->base.ffiType));
-    layout->base.ffiType->size = 0;
-    layout->base.ffiType->alignment = 0;
-    layout->base.ffiType->type = FFI_TYPE_STRUCT;
-
-    return obj;
-}
-
-static VALUE
-struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size, VALUE align)
-{
-    StructLayout* layout;
-    ffi_type* ltype;
-    int i;
-
-    Data_Get_Struct(self, StructLayout, layout);
-    layout->rbFieldMap = rb_hash_new();
-    layout->rbFieldNames = rb_ary_dup(field_names);
-    layout->size = NUM2INT(size);
-    layout->align = NUM2INT(align);
-    layout->fieldCount = RARRAY_LEN(field_names);
-    layout->fields = xcalloc(layout->fieldCount, sizeof(StructField *));
-    layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
-    layout->rbTypes = ALLOC_N(VALUE, layout->fieldCount);
-    layout->rbFields = rb_ary_new2(layout->fieldCount);
-    layout->base.ffiType->elements = layout->ffiTypes;
-    layout->base.ffiType->size = 0;
-    layout->base.ffiType->alignment = 1;
-
-    rb_iv_set(self, "@field_names", layout->rbFieldNames);
-    rb_iv_set(self, "@fields", layout->rbFieldMap);
-    rb_iv_set(self, "@size", size);
-    rb_iv_set(self, "@align", align);
-
-    ltype = layout->base.ffiType;
-    for (i = 0; i < layout->fieldCount; ++i) {
-        VALUE rbName = rb_ary_entry(field_names, i);
-        VALUE rbField = rb_hash_aref(fields, rbName);
-        StructField* field;
-        ffi_type* ftype;
-        
-
-        if (!rb_obj_is_kind_of(rbField, StructFieldClass)) {
-            rb_raise(rb_eTypeError, "wrong type for field %d.", i);
-        }
-
-        rb_hash_aset(layout->rbFieldMap, rbName, rbField);
-        Data_Get_Struct(rbField, StructField, field = layout->fields[i]);
-        
-
-        if (field->type == NULL || field->type->ffiType == NULL) {
-            rb_raise(rb_eRuntimeError, "type of field %d not supported", i);
-        }
-        ftype = field->type->ffiType;
-        if (ftype->size == 0) {
-            rb_raise(rb_eTypeError, "type of field %d  has zero size", i);
-        }
-        layout->ffiTypes[i] = ftype;
-        layout->rbTypes[i] = field->rbType;
-        rb_ary_push(layout->rbFields, rbField);
-        ltype->size = MAX(ltype->size, field->offset + ftype->size);
-        ltype->alignment = MAX(ltype->alignment, ftype->alignment);
-    }
-
-    if (ltype->size == 0) {
-        rb_raise(rb_eRuntimeError, "Struct size is zero");
-    }
-
-    // Include tail padding
-    ltype->size = FFI_ALIGN(ltype->size, ltype->alignment);
-
-    return self;
-}
-
-static VALUE
-struct_layout_aref(VALUE self, VALUE field)
-{
-    StructLayout* layout;
-
-    Data_Get_Struct(self, StructLayout, layout);
-
-    return rb_hash_aref(layout->rbFieldMap, field);
-}
-
-static VALUE
-struct_layout_fields(VALUE self, VALUE field)
-{
-    StructLayout* layout;
-
-    Data_Get_Struct(self, StructLayout, layout);
-
-    return rb_ary_dup(layout->rbFields);
-}
-
-
-static void
-struct_layout_mark(StructLayout *layout)
-{
-    rb_gc_mark(layout->rbFieldMap);
-    rb_gc_mark(layout->rbFieldNames);
-    rb_gc_mark(layout->rbFields);
-    if (layout->rbTypes != NULL) {
-        rb_gc_mark_locations(&layout->rbTypes[0], &layout->rbTypes[layout->fieldCount]);
-    }
-}
-
-static void
-struct_layout_free(StructLayout *layout)
-{
-    xfree(layout->ffiTypes);
-    xfree(layout->base.ffiType);
-    xfree(layout->fields);
-    xfree(layout);
 }
 
 static VALUE
@@ -805,19 +420,19 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
     //
     // If a primitive type was passed in as the type arg, try and convert
     //
-    if (!rb_obj_is_kind_of(rbType, StructFieldClass)) {
+    if (!rb_obj_is_kind_of(rbType, rbffi_StructLayoutFieldClass)) {
         VALUE fargv[3], rbFieldClass;
         fargv[0] = rbName;
         fargv[1] = UINT2NUM(offset);
         fargv[2] = rbType;
         if (rb_obj_is_kind_of(rbType, rbffi_FunctionTypeClass)) {
-            rbFieldClass = FunctionFieldClass;
+            rbFieldClass = rbffi_StructLayoutFunctionFieldClass;
         } else if (rb_obj_is_kind_of(rbType, rbffi_StructByValueClass)) {
-            rbFieldClass = InlineStructFieldClass;
+            rbFieldClass = rbffi_StructLayoutStructFieldClass;
         } else if (rb_obj_is_kind_of(rbType, rbffi_ArrayTypeClass)) {
-            rbFieldClass = ArrayFieldClass;
+            rbFieldClass = rbffi_StructLayoutArrayFieldClass;
         } else {
-            rbFieldClass = StructFieldClass;
+            rbFieldClass = rbffi_StructLayoutFieldClass;
         }
 
         rbField = rb_class_new_instance(3, fargv, rbFieldClass);
@@ -857,7 +472,7 @@ struct_layout_builder_add_struct(int argc, VALUE* argv, VALUE self)
     fargv[0] = rbName;
     fargv[1] = UINT2NUM(offset);
     fargv[2] = rbType;
-    rbField = rb_class_new_instance(3, fargv, InlineStructFieldClass);
+    rbField = rb_class_new_instance(3, fargv, rbffi_StructLayoutStructFieldClass);
     store_field(builder, rbName, rbField, offset, size, alignment);
 
     return self;
@@ -886,7 +501,7 @@ struct_layout_builder_add_array(int argc, VALUE* argv, VALUE self)
     fargv[0] = rbName;
     fargv[1] = UINT2NUM(offset);
     fargv[2] = rb_class_new_instance(2, aargv, rbffi_ArrayTypeClass);
-    rbField = rb_class_new_instance(3, fargv, ArrayFieldClass);
+    rbField = rb_class_new_instance(3, fargv, rbffi_StructLayoutArrayFieldClass);
 
     store_field(builder, rbName, rbField, offset, size, alignment);
 
@@ -950,7 +565,7 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
     Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
     Data_Get_Struct(arrayType->rbComponentType, Type, array->componentType);
     
-    array->op = ptr_get_op(array->memory, array->componentType);
+    array->op = memory_get_op(array->memory, array->componentType);
     if (array->op == NULL) {
         rb_raise(rb_eRuntimeError, "invalid memory ops");
     }
@@ -1054,30 +669,18 @@ void
 rbffi_Struct_Init(VALUE moduleFFI)
 {
     VALUE StructClass;
+
+    rbffi_StructLayout_Init(moduleFFI);
+
     rbffi_StructClass = StructClass = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
     rb_global_variable(&rbffi_StructClass);
 
-    rbffi_StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", rbffi_TypeClass);
-    rb_global_variable(&rbffi_StructLayoutClass);
 
     StructLayoutBuilderClass = rb_define_class_under(moduleFFI, "StructLayoutBuilder", rb_cObject);
     rb_global_variable(&StructLayoutBuilderClass);
 
-    StructFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Field", rb_cObject);
-    rb_global_variable(&StructFieldClass);
-
-    FunctionFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "FunctionField", StructFieldClass);
-    rb_global_variable(&FunctionFieldClass);
-
-    InlineStructFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineStructField", StructFieldClass);
-    rb_global_variable(&InlineStructFieldClass);
-
-    ArrayFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineArrayField", StructFieldClass);
-    rb_global_variable(&ArrayFieldClass);
-
-    
-    InlineArrayClass = rb_define_class_under(rbffi_StructLayoutClass, "InlineArray", rb_cObject);
-    rb_global_variable(&InlineArrayClass);
+    rbffi_StructInlineArrayClass = rb_define_class_under(rbffi_StructClass, "InlineArray", rb_cObject);
+    rb_global_variable(&rbffi_StructInlineArrayClass);
 
 
 
@@ -1100,27 +703,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructClass, "[]", struct_aref, 1);
     rb_define_method(StructClass, "[]=", struct_aset, 2);
     
-    rb_define_alloc_func(StructFieldClass, struct_field_allocate);
-    rb_define_method(StructFieldClass, "initialize", struct_field_initialize, -1);
-    rb_define_method(StructFieldClass, "offset", struct_field_offset, 0);
-    rb_define_method(StructFieldClass, "size", struct_field_size, 0);
-    rb_define_method(StructFieldClass, "alignment", struct_field_alignment, 0);
-    rb_define_method(StructFieldClass, "name", struct_field_name, 0);
-    rb_define_method(StructFieldClass, "ffi_type", struct_field_ffi_type, 0);
-    rb_define_method(StructFieldClass, "put", struct_field_put, 2);
-    rb_define_method(StructFieldClass, "get", struct_field_get, 1);
-
-    rb_define_method(FunctionFieldClass, "put", function_field_put, 2);
-    rb_define_method(FunctionFieldClass, "get", function_field_get, 1);
-
-    rb_define_method(ArrayFieldClass, "get", array_field_get, 1);
-    rb_define_method(InlineStructFieldClass, "get", inline_struct_field_get, 1);
-
     
-    rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
-    rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);
-    rb_define_method(rbffi_StructLayoutClass, "[]", struct_layout_aref, 1);
-    rb_define_method(rbffi_StructLayoutClass, "fields", struct_layout_fields, 0);
 
     rb_define_alloc_func(StructLayoutBuilderClass, struct_layout_builder_allocate);
     rb_define_method(StructLayoutBuilderClass, "initialize", struct_layout_builder_initialize, 0);
@@ -1136,15 +719,15 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(StructLayoutBuilderClass, "add_array", struct_layout_builder_add_array, -1);
     rb_define_method(StructLayoutBuilderClass, "add_struct", struct_layout_builder_add_struct, -1);
 
-    rb_include_module(InlineArrayClass, rb_mEnumerable);
-    rb_define_alloc_func(InlineArrayClass, inline_array_allocate);
-    rb_define_method(InlineArrayClass, "initialize", inline_array_initialize, 2);
-    rb_define_method(InlineArrayClass, "[]", inline_array_aref, 1);
-    rb_define_method(InlineArrayClass, "[]=", inline_array_aset, 2);
-    rb_define_method(InlineArrayClass, "each", inline_array_each, 0);
-    rb_define_method(InlineArrayClass, "size", inline_array_size, 0);
-    rb_define_method(InlineArrayClass, "to_a", inline_array_to_a, 0);
-    rb_define_method(InlineArrayClass, "to_ptr", inline_array_to_ptr, 0);
+    rb_include_module(rbffi_StructInlineArrayClass, rb_mEnumerable);
+    rb_define_alloc_func(rbffi_StructInlineArrayClass, inline_array_allocate);
+    rb_define_method(rbffi_StructInlineArrayClass, "initialize", inline_array_initialize, 2);
+    rb_define_method(rbffi_StructInlineArrayClass, "[]", inline_array_aref, 1);
+    rb_define_method(rbffi_StructInlineArrayClass, "[]=", inline_array_aset, 2);
+    rb_define_method(rbffi_StructInlineArrayClass, "each", inline_array_each, 0);
+    rb_define_method(rbffi_StructInlineArrayClass, "size", inline_array_size, 0);
+    rb_define_method(rbffi_StructInlineArrayClass, "to_a", inline_array_to_a, 0);
+    rb_define_method(rbffi_StructInlineArrayClass, "to_ptr", inline_array_to_ptr, 0);
 
     id_pointer_ivar = rb_intern("@pointer");
     id_layout_ivar = rb_intern("@layout");

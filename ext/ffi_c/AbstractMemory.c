@@ -40,8 +40,7 @@
 
 static inline char* memory_address(VALUE self);
 VALUE rbffi_AbstractMemoryClass = Qnil;
-static ID id_to_ptr = 0;
-static ID id_call = 0;
+static ID id_to_ptr = 0, id_plus = 0, id_call = 0;
 
 static VALUE
 memory_allocate(VALUE klass)
@@ -197,7 +196,11 @@ memory_clear(VALUE self)
 static VALUE
 memory_size(VALUE self) 
 {
-    return LONG2FIX((MEMORY(self))->size);
+    AbstractMemory* ptr;
+
+    Data_Get_Struct(self, AbstractMemory, ptr);
+
+    return LONG2NUM(ptr->size);
 }
 
 static VALUE
@@ -319,6 +322,29 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     }
     memcpy(ptr->address + off, RSTRING_PTR(str) + idx, len);
     return self;
+}
+
+static VALUE
+memory_type_size(VALUE self)
+{
+    AbstractMemory* ptr;
+
+    Data_Get_Struct(self, AbstractMemory, ptr);
+
+    return INT2NUM(ptr->typeSize);
+}
+
+static VALUE
+memory_aref(VALUE self, VALUE idx)
+{
+    AbstractMemory* ptr;
+    VALUE rbOffset = Qnil;
+
+    Data_Get_Struct(self, AbstractMemory, ptr);
+
+    rbOffset = ULONG2NUM(NUM2ULONG(idx) * ptr->typeSize);
+
+    return rb_funcall2(self, rb_intern("+"), 1, &rbOffset);
 }
 
 static inline char*
@@ -453,8 +479,12 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
 
     rb_define_method(classMemory, "clear", memory_clear, 0);
     rb_define_method(classMemory, "total", memory_size, 0);
+    rb_define_alias(classMemory, "size", "total");
+    rb_define_method(classMemory, "type_size", memory_type_size, 0);
+    rb_define_method(classMemory, "[]", memory_aref, 1);
 
     id_to_ptr = rb_intern("to_ptr");
     id_call = rb_intern("call");
+    id_plus = rb_intern("+");
 }
 
