@@ -83,29 +83,38 @@ static VALUE
 ptr_initialize(int argc, VALUE* argv, VALUE self)
 {
     Pointer* p;
-    VALUE type, address;
-
+    VALUE rbType, rbAddress;
+    int typeSize = 1;
     Data_Get_Struct(self, Pointer, p);
 
-    switch (rb_scan_args(argc, argv, "11", &type, &address)) {
+    switch (rb_scan_args(argc, argv, "11", &rbType, &rbAddress)) {
         case 1:
-            p->memory.address = (void*)(uintptr_t) NUM2LL(type);
-            p->memory.typeSize = 1;
+            rbAddress = rbType;
+            typeSize = 1;
             break;
         case 2:
-            p->memory.address = (void*)(uintptr_t) NUM2LL(address);
-            p->memory.typeSize = rbffi_type_size(type);
+            typeSize = rbffi_type_size(rbType);
             break;
         default:
             rb_raise(rb_eArgError, "Invalid arguments");
     }
-    if (p->memory.address == NULL) {
-        p->memory.ops = &rbffi_NullPointerOps;
-        p->memory.access = 0;
+
+    if (rb_obj_is_kind_of(rbAddress, rbffi_PointerClass)) {
+        Pointer* orig;
+        p->parent = rbAddress;
+        Data_Get_Struct(rbAddress, Pointer, orig);
+        p->memory = orig->memory;
+        p->memory.typeSize = typeSize;
+
+    } else {
+        p->memory.address = (void*)(uintptr_t) NUM2LL(rbAddress);
+        p->memory.size = LONG_MAX;
+        if (p->memory.address == NULL) {
+            p->memory.ops = &rbffi_NullPointerOps;
+            p->memory.access = 0;
+        }
     }
 
-    p->memory.size = LONG_MAX;
-    
     return self;
 }
 
