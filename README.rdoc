@@ -32,7 +32,7 @@ using Ruby-FFI here[http://kenai.com/projects/ruby-ffi/pages/WhyUseFFI].
 For less minimalistic and more sane examples you may look at:
 
 * the samples/ folder
-* the examples on the Kenai wiki[http://kenai.com/projects/ruby-ffi/pages/Home]
+* the examples on the wiki[http://wiki.github.com/ffi/ffi]
 * the projects using FFI listed on this page[http://kenai.com/projects/ruby-ffi/pages/ProjectsUsingFFI]
 
 == REQUIREMENTS:
