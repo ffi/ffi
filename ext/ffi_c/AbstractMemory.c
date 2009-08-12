@@ -40,6 +40,7 @@
 
 static inline char* memory_address(VALUE self);
 VALUE rbffi_AbstractMemoryClass = Qnil;
+static VALUE NullPointerErrorClass = Qnil;
 static ID id_to_ptr = 0, id_plus = 0, id_call = 0;
 
 static VALUE
@@ -60,8 +61,8 @@ static void \
 memory_op_put_##name(AbstractMemory* memory, long off, VALUE value) \
 { \
     type tmp = (type) toNative(value); \
-    checkBounds(memory, off, sizeof(type)); \
     checkWrite(memory); \
+    checkBounds(memory, off, sizeof(type)); \
     memcpy(memory->address + off, &tmp, sizeof(tmp)); \
 } \
 static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
@@ -78,8 +79,8 @@ static VALUE \
 memory_op_get_##name(AbstractMemory* memory, long off) \
 { \
     type tmp; \
-    checkBounds(memory, off, sizeof(type)); \
     checkRead(memory); \
+    checkBounds(memory, off, sizeof(type)); \
     memcpy(&tmp, memory->address + off, sizeof(tmp)); \
     return fromNative(tmp); \
 } \
@@ -101,8 +102,8 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     long off = NUM2LONG(offset); \
     AbstractMemory* memory = MEMORY(self); \
     long i; \
-    checkBounds(memory, off, count * sizeof(type)); \
     checkWrite(memory); \
+    checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
         type tmp = (type) toNative(RARRAY_PTR(ary)[i]); \
         memcpy(memory->address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
@@ -117,8 +118,8 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     long off = NUM2LONG(offset); \
     AbstractMemory* memory = MEMORY(self); \
     long i; \
-    checkBounds(memory, off, count * sizeof(type)); \
     checkRead(memory); \
+    checkBounds(memory, off, count * sizeof(type)); \
     VALUE retVal = rb_ary_new2(count); \
     for (i = 0; i < count; ++i) { \
         type tmp; \
@@ -166,8 +167,9 @@ memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
     AbstractMemory* memory = MEMORY(self);
     long off = NUM2LONG(offset);
     void* address = NULL;
-    checkBounds(memory, off, sizeof(void *));
+
     checkWrite(memory);
+    checkBounds(memory, off, sizeof(void *));
 
     if (rb_obj_is_kind_of(proc, rbffi_FunctionClass) && TYPE(proc) == T_DATA) {
         address = ((AbstractMemory *) DATA_PTR(proc))->address;
@@ -214,8 +216,8 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
 
     off = NUM2LONG(offset);
     len = nargs > 1 && length != Qnil ? NUM2LONG(length) : (ptr->size - off);
-    checkBounds(ptr, off, len);
     checkRead(ptr);
+    checkBounds(ptr, off, len);
 
     end = memchr(ptr->address + off, 0, len);
     return rb_tainted_str_new((char *) ptr->address + off,
@@ -272,13 +274,16 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
     off = NUM2LONG(offset);
     len = RSTRING_LEN(str);
 
-    checkBounds(ptr, off, len + 1);
     checkWrite(ptr);
+    checkBounds(ptr, off, len + 1);
+    
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
     }
+
     memcpy(ptr->address + off, RSTRING_PTR(str), len);
     *((char *) ptr->address + off + len) = '\0';
+
     return self;
 }
 
@@ -290,8 +295,10 @@ memory_get_bytes(VALUE self, VALUE offset, VALUE length)
     
     off = NUM2LONG(offset);
     len = NUM2LONG(length);
-    checkBounds(ptr, off, len);
+
     checkRead(ptr);
+    checkBounds(ptr, off, len);
+    
     return rb_tainted_str_new((char *) ptr->address + off, len);
 }
 
@@ -314,13 +321,15 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     if ((idx + len) > RSTRING_LEN(str)) {
         rb_raise(rb_eRangeError, "index+length is greater than size of string");
     }
-    checkBounds(ptr, off, len);
+
     checkWrite(ptr);
+    checkBounds(ptr, off, len);
 
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
     }
     memcpy(ptr->address + off, RSTRING_PTR(str) + idx, len);
+
     return self;
 }
 
@@ -344,7 +353,7 @@ memory_aref(VALUE self, VALUE idx)
 
     rbOffset = ULONG2NUM(NUM2ULONG(idx) * ptr->typeSize);
 
-    return rb_funcall2(self, rb_intern("+"), 1, &rbOffset);
+    return rb_funcall2(self, id_plus, 1, &rbOffset);
 }
 
 static inline char*
@@ -366,14 +375,27 @@ rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass)
     return NULL;
 }
 
+void
+rbffi_AbstractMemory_Error(AbstractMemory *mem, int op)
+{
+    VALUE rbErrorClass = mem->address == NULL ? NullPointerErrorClass : rb_eRuntimeError;
+    if (op == MEM_RD) {
+        rb_raise(rbErrorClass, "invalid memory read at address=%p", mem->address);
+    } else if (op == MEM_WR) {
+        rb_raise(rbErrorClass, "invalid memory write at address=%p", mem->address);
+    } else {
+        rb_raise(rbErrorClass, "invalid memory access at address=%p", mem->address);
+    }
+}
+
 static VALUE
 memory_op_get_strptr(AbstractMemory* ptr, long offset)
 {
     void* tmp = NULL;
 
     if (ptr != NULL && ptr->address != NULL) {
-        checkBounds(ptr, offset, sizeof(tmp));
         checkRead(ptr);
+        checkBounds(ptr, offset, sizeof(tmp));
         memcpy(&tmp, ptr->address + offset, sizeof(tmp));
     }
 
@@ -411,8 +433,12 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     VALUE classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
     rbffi_AbstractMemoryClass = classMemory;
     rb_global_variable(&rbffi_AbstractMemoryClass);
-
     rb_define_alloc_func(classMemory, memory_allocate);
+
+    NullPointerErrorClass = rb_define_class_under(moduleFFI, "NullPointerError", rb_eRuntimeError);
+    rb_global_variable(&NullPointerErrorClass);
+
+
 #undef INT
 #define INT(type) \
     rb_define_method(classMemory, "put_" #type, memory_put_##type, 2); \

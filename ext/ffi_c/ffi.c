@@ -68,7 +68,6 @@ Init_ffi_c(void) {
     rbffi_AbstractMemory_Init(moduleFFI);
     rbffi_Pointer_Init(moduleFFI);
     rbffi_AutoPointer_Init(moduleFFI);
-    rbffi_NullPointer_Init(moduleFFI);
     rbffi_Function_Init(moduleFFI);
     rbffi_MemoryPointer_Init(moduleFFI);
     rbffi_Buffer_Init(moduleFFI);

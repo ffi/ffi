@@ -75,11 +75,16 @@ struct AbstractMemory_ {
     MemoryOps* ops;
 };
 
+extern void rbffi_AbstractMemory_Init(VALUE ffiModule);
+
+extern AbstractMemory* rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass);
+
+extern void rbffi_AbstractMemory_Error(AbstractMemory *, int op);
 
 static inline void
 checkBounds(AbstractMemory* mem, long off, long len)
 {
-    if ((off | len | (off + len) | (mem->size - (off + len))) < 0) {
+    if (unlikely((off | len | (off + len) | (mem->size - (off + len))) < 0)) {
         rb_raise(rb_eIndexError, "Memory access offset=%ld size=%ld is out of bounds",
                 off, len);
     }
@@ -88,16 +93,16 @@ checkBounds(AbstractMemory* mem, long off, long len)
 static inline void
 checkRead(AbstractMemory* mem)
 {
-    if ((mem->access & MEM_RD) == 0) {
-        rb_raise(rb_eRuntimeError, "Reading from memory location %p not allowed", mem->address);
+    if (unlikely((mem->access & MEM_RD) == 0)) {
+        rbffi_AbstractMemory_Error(mem, MEM_RD);
     }
 }
 
 static inline void
 checkWrite(AbstractMemory* mem)
 {
-    if ((mem->access & MEM_WR) == 0) {
-        rb_raise(rb_eRuntimeError, "Writing to memory location %p not allowed", mem->address);
+    if (unlikely((mem->access & MEM_WR) == 0)) {
+        rbffi_AbstractMemory_Error(mem, MEM_WR);
     }
 }
 
@@ -142,9 +147,6 @@ memory_get_op(AbstractMemory* ptr, Type* type)
 #define MEMORY_LEN(obj) MEMORY((obj))->size
 
 
-extern void rbffi_AbstractMemory_Init(VALUE ffiModule);
-
-extern AbstractMemory* rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass);
 
 extern VALUE rbffi_AbstractMemoryClass;
 extern MemoryOps rbffi_AbstractMemoryOps;

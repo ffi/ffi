@@ -41,7 +41,9 @@ typedef struct Pointer {
 
 #define POINTER(obj) rbffi_AbstractMemory_Cast((obj), rbffi_PointerClass)
 
-VALUE rbffi_PointerClass;
+VALUE rbffi_PointerClass = Qnil;
+VALUE rbffi_NullPointerSingleton = Qnil;
+
 static void ptr_mark(Pointer* ptr);
 
 VALUE
@@ -58,7 +60,7 @@ rbffi_Pointer_NewInstance(void* addr)
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
     p->memory.ops = &rbffi_AbstractMemoryOps;
-    p->memory.access = MEM_RD | MEM_WR;
+    p->memory.access = (addr == NULL) ? 0 : (MEM_RD | MEM_WR);
     p->memory.typeSize = 1;
     p->parent = Qnil;
 
@@ -83,8 +85,9 @@ static VALUE
 ptr_initialize(int argc, VALUE* argv, VALUE self)
 {
     Pointer* p;
-    VALUE rbType, rbAddress;
+    VALUE rbType = Qnil, rbAddress = Qnil;
     int typeSize = 1;
+
     Data_Get_Struct(self, Pointer, p);
 
     switch (rb_scan_args(argc, argv, "11", &rbType, &rbAddress)) {
@@ -101,19 +104,21 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
 
     if (rb_obj_is_kind_of(rbAddress, rbffi_PointerClass)) {
         Pointer* orig;
+
         p->parent = rbAddress;
         Data_Get_Struct(rbAddress, Pointer, orig);
         p->memory = orig->memory;
-        p->memory.typeSize = typeSize;
 
     } else {
+
         p->memory.address = (void*)(uintptr_t) NUM2LL(rbAddress);
         p->memory.size = LONG_MAX;
         if (p->memory.address == NULL) {
-            p->memory.ops = &rbffi_NullPointerOps;
             p->memory.access = 0;
         }
     }
+
+    p->memory.typeSize = typeSize;
 
     return self;
 }
@@ -193,6 +198,8 @@ ptr_mark(Pointer* ptr)
 void
 rbffi_Pointer_Init(VALUE moduleFFI)
 {
+    VALUE rbNullAddress = ULL2NUM(0);
+
     rbffi_PointerClass = rb_define_class_under(moduleFFI, "Pointer", rbffi_AbstractMemoryClass);
     rb_global_variable(&rbffi_PointerClass);
 
@@ -204,4 +211,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_method(rbffi_PointerClass, "address", ptr_address, 0);
     rb_define_alias(rbffi_PointerClass, "to_i", "address");
     rb_define_method(rbffi_PointerClass, "==", ptr_equals, 1);
+
+    rbffi_NullPointerSingleton = rb_class_new_instance(1, &rbNullAddress, rbffi_PointerClass);
+    rb_define_const(rbffi_PointerClass, "NULL", rbffi_NullPointerSingleton);
 }
