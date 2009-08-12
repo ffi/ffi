@@ -12,6 +12,7 @@
   * blocking functions (i.e. native code that blocks the thread) support
 
 * Bug fixes
+  * Fix RUBY-FFI_43 (rake gem dependency)
 
 == 0.4.0 / 2009-08-05
 
