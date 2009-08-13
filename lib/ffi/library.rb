@@ -69,7 +69,7 @@ module FFI::Library
     invokers = []
     ffi_libraries.each do |lib|
       begin
-        invokers << FFI.create_invoker(lib, cname.to_s, arg_types, ret_type, find_type(ret_type), options)
+        invokers << FFI.create_invoker(lib, cname.to_s, arg_types, find_type(ret_type), options)
       rescue LoadError => ex
       end if invokers.empty?
     end
