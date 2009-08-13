@@ -5,6 +5,8 @@
   * Structs can be passed and returned by value
 
 * Minor improvements
+  * Add automagic deducing of library name from module name. 
+    Idea and prototype implementation from Matt Hulse
   * Callback fields in structs can now be both read and written
   * Lots of refactoring
 
