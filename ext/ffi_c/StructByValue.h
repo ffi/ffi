@@ -37,7 +37,7 @@ extern "C" {
 
 typedef struct StructByValue_ {
     Type base;
-    VALUE structClass;
+    VALUE rbStructClass;
     VALUE rbStructLayout;
 } StructByValue;
 

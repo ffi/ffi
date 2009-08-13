@@ -267,7 +267,7 @@ inline_struct_field_get(VALUE self, VALUE pointer)
     rbOffset = UINT2NUM(f->offset);
     rbPointer = rb_funcall2(pointer, rb_intern("+"), 1, &rbOffset);
 
-    return rb_class_new_instance(1, &rbPointer, sbv->structClass);
+    return rb_class_new_instance(1, &rbPointer, sbv->rbStructClass);
 }
 
 static VALUE

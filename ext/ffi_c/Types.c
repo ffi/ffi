@@ -86,7 +86,7 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
             Data_Get_Struct(rbMemory, AbstractMemory, mem);
             memcpy(mem->address, ptr, sbv->base.ffiType->size);
 
-            return rb_class_new_instance(1, &rbMemory, sbv->structClass);
+            return rb_class_new_instance(1, &rbMemory, sbv->rbStructClass);
         }
 
         default:

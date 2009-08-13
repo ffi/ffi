@@ -57,7 +57,8 @@ sbv_allocate(VALUE klass)
 
     VALUE obj = Data_Make_Struct(klass, StructByValue, sbv_mark, sbv_free, sbv);
 
-    sbv->structClass = Qnil;
+    sbv->rbStructClass = Qnil;
+    sbv->rbStructLayout = Qnil;
     sbv->base.nativeType = NATIVE_STRUCT;
 
     sbv->base.ffiType = xcalloc(1, sizeof(*sbv->base.ffiType));
@@ -69,20 +70,20 @@ sbv_allocate(VALUE klass)
 }
 
 static VALUE
-sbv_initialize(VALUE self, VALUE structClass)
+sbv_initialize(VALUE self, VALUE rbStructClass)
 {
     StructByValue* sbv = NULL;
     StructLayout* layout = NULL;
     VALUE rbLayout = Qnil;
 
-    rbLayout = rb_cvar_get(structClass, rb_intern("@layout"));
+    rbLayout = rb_cvar_get(rbStructClass, rb_intern("@layout"));
     if (!rb_obj_is_instance_of(rbLayout, rbffi_StructLayoutClass)) {
         rb_raise(rb_eTypeError, "wrong type in @layout cvar (expected FFI::StructLayout)");
     }
 
     Data_Get_Struct(rbLayout, StructLayout, layout);
     Data_Get_Struct(self, StructByValue, sbv);
-    sbv->structClass = structClass;
+    sbv->rbStructClass = rbStructClass;
     sbv->rbStructLayout = rbLayout;
 
     // We can just use everything from the ffi_type directly
@@ -94,7 +95,7 @@ sbv_initialize(VALUE self, VALUE structClass)
 static void
 sbv_mark(StructByValue *sbv)
 {
-    rb_gc_mark(sbv->structClass);
+    rb_gc_mark(sbv->rbStructClass);
     rb_gc_mark(sbv->rbStructLayout);
 }
 
@@ -105,14 +106,35 @@ sbv_free(StructByValue *sbv)
     xfree(sbv);
 }
 
+
+static VALUE
+sbv_layout(VALUE self)
+{
+    StructByValue* sbv;
+
+    Data_Get_Struct(self, StructByValue, sbv);
+    return sbv->rbStructLayout;
+}
+
+static VALUE
+sbv_struct_class(VALUE self)
+{
+    StructByValue* sbv;
+
+    Data_Get_Struct(self, StructByValue, sbv);
+
+    return sbv->rbStructClass;
+}
+
 void
 rbffi_StructByValue_Init(VALUE moduleFFI)
 {
     rbffi_StructByValueClass = rb_define_class_under(moduleFFI, "StructByValue", rbffi_TypeClass);
     rb_global_variable(&rbffi_StructByValueClass);
+    rb_define_const(rbffi_TypeClass, "Struct", rbffi_StructByValueClass);
 
     rb_define_alloc_func(rbffi_StructByValueClass, sbv_allocate);
     rb_define_method(rbffi_StructByValueClass, "initialize", sbv_initialize, 1);
-
+    rb_define_method(rbffi_StructByValueClass, "layout", sbv_layout, 0);
+    rb_define_method(rbffi_StructByValueClass, "struct_class", sbv_struct_class, 0);
 }
-
