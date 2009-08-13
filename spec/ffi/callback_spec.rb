@@ -157,7 +157,7 @@ describe "Callback" do
   it "returning :uint (0xffffffff)" do
     LibTest.testCallbackVrU32 { 0xffffffff }.should == 0xffffffff
   end
-  it "Callback returning :uint (-1)" do
+  it "returning :uint (-1)" do
     LibTest.testCallbackVrU32 { -1 }.should == 0xffffffff
   end
   it "returning :long (0)" do
@@ -337,7 +337,7 @@ describe "Callback" do
   end
 
 end
-describe "primitive argument" do
+describe "Callback with " do
   #
   # Test callbacks that take an argument, returning void
   #
@@ -355,6 +355,8 @@ describe "primitive argument" do
 
     callback :cbLrV, [ :long ], :void
     callback :cbULrV, [ :ulong ], :void
+    callback :cbArV, [ :string ], :void
+    callback :cbPrV, [ :pointer], :void
 
     callback :cbS64rV, [ :long_long ], :void
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbS8rV, :char ], :void
@@ -369,6 +371,8 @@ describe "primitive argument" do
     attach_function :testCallbackULrV, :testClosureULrV, [ :cbULrV, :ulong ], :void
 
     attach_function :testCallbackLLrV, :testClosureLLrV, [ :cbS64rV, :long_long ], :void
+    attach_function :testCallbackArV, :testClosurePrV, [ :cbArV, :string ], :void
+    attach_function :testCallbackPrV, :testClosurePrV, [ :cbPrV, :pointer], :void
   end
   it ":char (0) argument" do
     v = 0xdeadbeef
@@ -556,5 +560,25 @@ describe "primitive argument" do
     LibTest.testCallbackLLrV(-1) { |i| v = i }
     v.should == -1
   end
-  
+  it ":string argument" do
+    v = nil
+    LibTest.testCallbackArV("Hello, World") { |i| v = i }
+    v.should == "Hello, World"
+  end
+  it ":string (nil) argument" do
+    v = "Hello, World"
+    LibTest.testCallbackArV(nil) { |i| v = i }
+    v.should be_nil
+  end
+  it ":pointer argument" do
+    v = nil
+    magic = FFI::Pointer.new(0xdeadbeef)
+    LibTest.testCallbackPrV(magic) { |i| v = i }
+    v.should == magic
+  end
+  it ":pointer (nil) argument" do
+    v = "Hello, World"
+    LibTest.testCallbackPrV(nil) { |i| v = i }
+    v.should == FFI::Pointer::NULL
+  end
 end # unless true

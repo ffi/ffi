@@ -111,6 +111,11 @@ void testOptionalClosureBrV(void (*closure)(char), char a1)
     }
 }
 
+void testClosurePrV(void (*closure)(const void *), const void *a1)
+{
+    (*closure)(a1);
+}
+
 struct s8f32s32 {
     char s8;
     float f32;
