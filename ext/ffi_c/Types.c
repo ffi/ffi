@@ -66,7 +66,7 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
         case NATIVE_FLOAT64:
             return rb_float_new(*(double *) ptr);
         case NATIVE_STRING:
-            return (*(char **)ptr) ? rb_tainted_str_new2(*(char **) ptr) : Qnil;
+            return (*(void **) ptr != NULL) ? rb_tainted_str_new2(*(char **) ptr) : Qnil;
         case NATIVE_POINTER:
             return rbffi_Pointer_NewInstance(*(void **) ptr);
         case NATIVE_BOOL:

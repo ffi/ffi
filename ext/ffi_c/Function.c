@@ -352,7 +352,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
                 param = rb_float_new(*(double *) parameters[i]);
                 break;
             case NATIVE_STRING:
-                param = rb_tainted_str_new2(*(char **) parameters[i]);
+                param = (*(void **) parameters[i] != NULL) ? rb_tainted_str_new2(*(char **) parameters[i]) : Qnil;
                 break;
             case NATIVE_POINTER:
                 param = rbffi_Pointer_NewInstance(*(void **) parameters[i]);
