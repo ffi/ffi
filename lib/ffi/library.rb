@@ -28,6 +28,22 @@ module FFI::Library
   def ffi_convention(convention)
     @ffi_convention = convention
   end
+
+  def ffi_libraries
+    unless defined?(@ffi_libs) or self.name.nil?
+      libs = []
+      # Try the exact name (e.g. User32) and all lower case (e.g. LibC -> libc)
+      [ self.name, self.name.downcase ].each do |name|
+        begin
+          libs << FFI::DynamicLibrary.open(name, FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_GLOBAL)
+        rescue Exception
+        end
+      end
+      @ffi_libs = libs unless libs.empty?
+    end
+    defined?(@ffi_libs) ? @ffi_libs : [ DEFAULT ]
+  end
+
   ##
   # Attach C function +name+ to this module.
   #
@@ -51,15 +67,14 @@ module FFI::Library
 
     # Try to locate the function in any of the libraries
     invokers = []
-    libraries = defined?(@ffi_libs) ? @ffi_libs : [ DEFAULT ]
-    libraries.each do |lib|
+    ffi_libraries.each do |lib|
       begin
         invokers << FFI.create_invoker(lib, cname.to_s, arg_types, ret_type, find_type(ret_type), options)
       rescue LoadError => ex
       end if invokers.empty?
     end
     invoker = invokers.compact.shift
-    raise FFI::NotFoundError.new(cname.to_s, libraries.map { |lib| lib.name }) unless invoker
+    raise FFI::NotFoundError.new(cname.to_s, ffi_libraries.map { |lib| lib.name }) unless invoker
 
     # Setup the parameter list for the module function as (a1, a2)
     arity = arg_types.length
@@ -91,9 +106,8 @@ module FFI::Library
   end
   def attach_variable(mname, a1, a2 = nil)
     cname, type = a2 ? [ a1, a2 ] : [ mname.to_s, a1 ]
-    libraries = defined?(@ffi_libs) ? @ffi_libs : [ DEFAULT ]
     address = nil
-    libraries.each do |lib|
+    ffi_libraries.each do |lib|
       begin
         address = lib.find_variable(cname.to_s)
         break unless address.nil?
@@ -101,7 +115,7 @@ module FFI::Library
       end
     end
 
-    raise FFI::NotFoundError.new(cname, libraries) if address.nil? || address.null?
+    raise FFI::NotFoundError.new(cname, ffi_libraries) if address.nil? || address.null?
     s = FFI::Struct.new(address, :gvar, find_type(type))
     
     #
