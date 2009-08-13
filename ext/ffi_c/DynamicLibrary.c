@@ -155,7 +155,9 @@ symbol_new(VALUE library, void* address, VALUE name)
 
     sym->memory.address = address;
     sym->memory.size = LONG_MAX;
+    sym->memory.typeSize = 1;
     sym->memory.access = MEM_RD | MEM_WR;
+    sym->memory.ops = &rbffi_AbstractMemoryOps;
     sym->library = library;
     sym->name = name;
 

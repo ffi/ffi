@@ -162,32 +162,6 @@ get_pointer_value(VALUE value)
 NUM_OP(pointer, void *, get_pointer_value, rbffi_Pointer_NewInstance);
 
 static VALUE
-memory_put_callback(VALUE self, VALUE offset, VALUE proc, VALUE cbInfo)
-{
-    AbstractMemory* memory = MEMORY(self);
-    long off = NUM2LONG(offset);
-    void* address = NULL;
-
-    checkWrite(memory);
-    checkBounds(memory, off, sizeof(void *));
-
-    if (rb_obj_is_kind_of(proc, rbffi_FunctionClass) && TYPE(proc) == T_DATA) {
-        address = ((AbstractMemory *) DATA_PTR(proc))->address;
-    } else if (rb_obj_is_kind_of(proc, rb_cProc) || rb_respond_to(proc, id_call)) {
-        VALUE callback = rbffi_Function_ForProc(cbInfo, proc);
-        address = ((AbstractMemory *) DATA_PTR(callback))->address;
-    } else if (NIL_P(proc)) {
-        address = NULL;
-    } else {
-        rb_raise(rb_eArgError, "parameter is not a proc");
-    }
-
-    memcpy(memory->address + off, &address, sizeof(address));
-
-    return self;
-}
-
-static VALUE
 memory_clear(VALUE self)
 {
     AbstractMemory* ptr = MEMORY(self);
@@ -496,7 +470,6 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
     rb_define_method(classMemory, "put_array_of_pointer", memory_put_array_of_pointer, 2);
     rb_define_method(classMemory, "get_array_of_pointer", memory_get_array_of_pointer, 2);
-    rb_define_method(classMemory, "put_callback", memory_put_callback, 3);
     rb_define_method(classMemory, "get_string", memory_get_string, -1);
     rb_define_method(classMemory, "put_string", memory_put_string, 2);
     rb_define_method(classMemory, "get_bytes", memory_get_bytes, 2);

@@ -100,62 +100,23 @@ module FFI::Library
       rescue LoadError
       end
     end
-    raise FFI::NotFoundError.new(cname, libraries) if address.nil?
-    case ffi_type = find_type(type)
-    when :pointer, FFI::NativeType::POINTER
-      op = :pointer
-    when :char, FFI::NativeType::INT8
-      op = :int8
-    when :uchar, FFI::NativeType::UINT8
-      op = :uint8
-    when :short, FFI::NativeType::INT16
-      op = :int16
-    when :ushort, FFI::NativeType::UINT16
-      op = :uint16
-    when :int, FFI::NativeType::INT32
-      op = :int32
-    when :uint, FFI::NativeType::UINT32
-      op = :uint32
-    when :long, FFI::NativeType::LONG
-      op = :long
-    when :ulong, FFI::NativeType::ULONG
-      op = :ulong
-    when :long_long, FFI::NativeType::INT64
-      op = :int64
-    when :ulong_long, FFI::NativeType::UINT64
-      op = :uint64
-    else
-      if ffi_type.is_a?(FFI::CallbackInfo)
-        op = :callback
-      else
-        raise TypeError, "Cannot access library variable of type #{type}"
-      end
-    end
+
+    raise FFI::NotFoundError.new(cname, libraries) if address.nil? || address.null?
+    s = FFI::Struct.new(address, :gvar, find_type(type))
+    
     #
     # Attach to this module as mname/mname=
     #
-    if op == :callback
-      self.module_eval <<-code
-        @@ffi_gvar_#{mname} = address
-        @@ffi_gvar_#{mname}_cbinfo = ffi_type
-        def self.#{mname}
-          raise ArgError, "Cannot get callback fields"
-        end
-        def self.#{mname}=(value)
-          @@ffi_gvar_#{mname}.put_callback(0, value, @@ffi_gvar_#{mname}_cbinfo)
-        end
-        code
-    else
-      self.module_eval <<-code
-        @@ffi_gvar_#{mname} = address
-        def self.#{mname}
-          @@ffi_gvar_#{mname}.get_#{op.to_s}(0)
-        end
-        def self.#{mname}=(value)
-          @@ffi_gvar_#{mname}.put_#{op.to_s}(0, value)
-        end
-        code
-    end
+    self.module_eval <<-code
+      @@ffi_gvar_#{mname} = s
+      def self.#{mname}
+        @@ffi_gvar_#{mname}[:gvar]
+      end
+      def self.#{mname}=(value)
+        @@ffi_gvar_#{mname}[:gvar] = value
+      end
+    code
+    
     address
   end
 
