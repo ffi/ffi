@@ -17,14 +17,12 @@
         <itemPath>ext/ffi_c/Function.c</itemPath>
         <itemPath>ext/ffi_c/Function.h</itemPath>
         <itemPath>ext/ffi_c/FunctionInfo.c</itemPath>
-        <itemPath>ext/ffi_c/Invoker.c</itemPath>
         <itemPath>ext/ffi_c/LastError.c</itemPath>
         <itemPath>ext/ffi_c/LastError.h</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.c</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.h</itemPath>
         <itemPath>ext/ffi_c/MethodHandle.c</itemPath>
         <itemPath>ext/ffi_c/MethodHandle.h</itemPath>
-        <itemPath>ext/ffi_c/NullPointer.c</itemPath>
         <itemPath>ext/ffi_c/Platform.c</itemPath>
         <itemPath>ext/ffi_c/Platform.h</itemPath>
         <itemPath>ext/ffi_c/Pointer.c</itemPath>
