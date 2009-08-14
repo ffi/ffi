@@ -38,6 +38,6 @@ puts "Benchmark Invoker.call [ :int  ], :void performance, #{ITER}x calls"
 invoker = FFI.create_invoker(LIBTEST_PATH, 'bench_s32_v', [ :int ], :void)
 10.times {
   puts Benchmark.measure {
-    ITER.times { invoker.call1(1) }
+    ITER.times { invoker.call(1) }
   }
 }
