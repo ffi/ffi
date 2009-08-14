@@ -65,5 +65,8 @@
 #ifndef MAX
 #  define MAX(a, b) ((a) < (b) ? (b) : (a))
 #endif
+#ifndef MIN
+#  define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 #endif /* RBFFI_COMPAT_H */

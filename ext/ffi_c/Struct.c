@@ -653,15 +653,44 @@ inline_array_to_a(VALUE self)
 }
 
 static VALUE
+inline_array_to_s(VALUE self)
+{
+    InlineArray* array;
+    ArrayType* arrayType;
+    VALUE argv[2];
+
+    Data_Get_Struct(self, InlineArray, array);
+    Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+
+    if (arrayType->componentType->nativeType != NATIVE_INT8 && arrayType->componentType->nativeType != NATIVE_UINT8) {
+        rb_raise(rb_eNoMethodError, "to_s not defined for this array type");
+        return Qnil;
+    }
+
+    argv[0] = UINT2NUM(array->field->offset);
+    argv[1] = UINT2NUM(arrayType->length);
+
+    return rb_funcall2(array->rbMemory, rb_intern("get_string"), 2, argv);
+}
+
+
+static VALUE
 inline_array_to_ptr(VALUE self)
 {
     InlineArray* array;
-    VALUE rbOffset;
+    AbstractMemory* ptr;
+    VALUE rbOffset, rbPointer;
 
     Data_Get_Struct(self, InlineArray, array);
 
     rbOffset = UINT2NUM(array->field->offset);
-    return rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
+    rbPointer = rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
+    Data_Get_Struct(rbPointer, AbstractMemory, ptr);
+    
+    // Restrict the size of the pointer so ops like ptr.get_string(0) are bounds checked
+    ptr->size = MIN(ptr->size, array->field->type->ffiType->size);
+
+    return rbPointer;
 }
 
 
@@ -727,6 +756,8 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructInlineArrayClass, "each", inline_array_each, 0);
     rb_define_method(rbffi_StructInlineArrayClass, "size", inline_array_size, 0);
     rb_define_method(rbffi_StructInlineArrayClass, "to_a", inline_array_to_a, 0);
+    rb_define_method(rbffi_StructInlineArrayClass, "to_s", inline_array_to_s, 0);
+    rb_define_alias(rbffi_StructInlineArrayClass, "to_str", "to_s");
     rb_define_method(rbffi_StructInlineArrayClass, "to_ptr", inline_array_to_ptr, 0);
 
     id_pointer_ivar = rb_intern("@pointer");
