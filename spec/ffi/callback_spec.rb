@@ -233,6 +233,7 @@ describe "Callback" do
     it 'could be anonymous' do
       module LibTest
         extend FFI::Library
+        ffi_lib TestLibrary::PATH
         attach_function :testCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
       end
       LibTest.testCallbackVrS8 { 0 }.should == 0
@@ -244,6 +245,7 @@ describe "Callback" do
     it "should not blow up when a callback is defined that returns a callback" do
       module LibTest
         extend FFI::Library
+        ffi_lib TestLibrary::PATH
         callback :cb_return_type_1, [ :short ], :short
         callback :cb_lookup_1, [ :short ], :cb_return_type_1
         attach_function :testReturnsCallback_1, :testReturnsClosure, [ :cb_lookup_1, :short ], :cb_return_type_1
@@ -253,6 +255,7 @@ describe "Callback" do
     it "should return a callback" do
       module LibTest
         extend FFI::Library
+        ffi_lib TestLibrary::PATH
         callback :cb_return_type, [ :int ], :int
         callback :cb_lookup, [ ], :cb_return_type
         attach_function :testReturnsCallback, :testReturnsClosure, [ :cb_lookup, :int ], :int
@@ -279,6 +282,7 @@ describe "Callback" do
     it "should return a method callback" do
       module LibTest
         extend FFI::Library
+        ffi_lib TestLibrary::PATH
         callback :cb_return_type, [ :int ], :int
         callback :cb_lookup, [ ], :cb_return_type
         attach_function :testReturnsCallback, :testReturnsClosure, [ :cb_lookup, :int ], :int
@@ -298,6 +302,7 @@ describe "Callback" do
     it 'should not blow up when a callback takes a callback as argument' do
       module LibTest
         extend FFI::Library
+        ffi_lib TestLibrary::PATH
         callback :cb_argument, [ :int ], :int
         callback :cb_with_cb_argument, [ :cb_argument, :int ], :int
         attach_function :testCallbackAsArgument, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
@@ -306,6 +311,7 @@ describe "Callback" do
     it 'should be able to use the callback argument' do
       module LibTest
         extend FFI::Library
+        ffi_lib TestLibrary::PATH
         callback :cb_argument, [ :int ], :int
         callback :cb_with_cb_argument, [ :cb_argument, :int ], :int
         attach_function :testCallbackAsArgument, :testArgumentClosure, [ :cb_with_cb_argument, :cb_argument, :int ], :int
@@ -328,6 +334,7 @@ describe "Callback" do
     it 'function returns callable object' do
       module LibTest
         extend FFI::Library
+        ffi_lib TestLibrary::PATH
         callback :funcptr, [ :int ], :int
         attach_function :testReturnsFunctionPointer, [  ], :funcptr
       end
