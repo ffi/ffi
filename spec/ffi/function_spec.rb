@@ -34,10 +34,14 @@ describe FFI::Function do
     Foo.add(10, 10).should == 20
   end
   it 'can be used to extend an object' do
+    fp = FFI::Function.new(:int, [:int, :int], LibTest.testAddPointer)
     foo = Object.new
     class << foo
-      FFI::Function.new(:int, [:int, :int], LibTest.testAddPointer).attach(self, 'add')
+      def singleton_class
+        class << self; self; end
+      end
     end
+    fp.attach(foo.singleton_class, 'add')
     foo.add(10, 10).should == 20    
   end
 end
