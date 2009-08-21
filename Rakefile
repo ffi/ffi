@@ -33,7 +33,7 @@ BUILD_EXT_DIR = File.join(BUILD_DIR, "#{Config::CONFIG['arch']}", 'ffi_c', RUBY_
 PROJ.name = 'ffi'
 PROJ.authors = 'Wayne Meissner'
 PROJ.email = 'wmeissner@gmail.com'
-PROJ.url = 'http://kenai.com/projects/ruby-ffi'
+PROJ.url = 'http://wiki.github.com/ffi/ffi'
 PROJ.version = '0.5.0'
 PROJ.rubyforge.name = 'ffi'
 PROJ.readme_file = 'README.rdoc'
@@ -42,7 +42,7 @@ PROJ.readme_file = 'README.rdoc'
 PROJ.ann.paragraphs << 'FEATURES' << 'SYNOPSIS' << 'REQUIREMENTS' << 'DOWNLOAD/INSTALL' << 'CREDITS' << 'LICENSE'
 
 PROJ.ann.email[:from] = 'andrea.fazzi@alcacoop.it'
-PROJ.ann.email[:to] << 'dev@ruby-ffi.kenai.com' << 'users@ruby-ffi.kenai.com'
+PROJ.ann.email[:to] << 'ruby-ffi@groups.google.com'
 PROJ.ann.email[:server] = 'smtp.gmail.com'
 
 # Gem specifications

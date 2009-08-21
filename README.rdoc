@@ -8,7 +8,7 @@ Ruby-FFI is a ruby extension for programmatically loading dynamic
 libraries, binding functions within them, and calling those functions
 from Ruby code. Moreover, a Ruby-FFI extension works without changes
 on Ruby and JRuby. Discover why should you write your next extension
-using Ruby-FFI here[http://kenai.com/projects/ruby-ffi/pages/WhyUseFFI].
+using Ruby-FFI here[http://wiki.github.com/ffi/ffi/why-use-ffi].
 
 == FEATURES/PROBLEMS:
 
@@ -33,7 +33,7 @@ For less minimalistic and more sane examples you may look at:
 
 * the samples/ folder
 * the examples on the wiki[http://wiki.github.com/ffi/ffi]
-* the projects using FFI listed on this page[http://kenai.com/projects/ruby-ffi/pages/ProjectsUsingFFI]
+* the projects using FFI listed on this page[http://wiki.github.com/ffi/ffi/projects-using-ffi]
 
 == REQUIREMENTS:
 
