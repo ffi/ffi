@@ -57,4 +57,17 @@ describe FFI::Function do
       threads.each { |t| t.join }
     end
   end
+  it 'autorelease flag is set to true by default' do
+    fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
+    fp.autorelease?.should be_true
+  end
+  it 'can explicity free itself' do
+    fp = FFI::Function.new(:int, []) { }
+    fp.free
+    lambda { fp.free }.should raise_error RuntimeError
+  end
+  it 'can\'t explicity free itself if not previously allocated' do
+    fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
+    lambda { fp.free }.should raise_error RuntimeError
+  end
 end
