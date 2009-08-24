@@ -25,6 +25,8 @@ puts "Benchmark [ :int ], :void performance, #{ITER}x calls"
     ITER.times { LibTest.ffi_bench(0) }
   }
 }
+
+
 unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
 puts "Benchmark DL void bench(int) performance, #{ITER}x calls"
 10.times {
@@ -41,3 +43,14 @@ invoker = FFI.create_invoker(LIBTEST_PATH, 'bench_s32_v', [ :int ], :void)
     ITER.times { invoker.call(1) }
   }
 }
+
+f = FFI::Function.new(:void, [ :int ], invoker, { :ignore_errno => true, :convention => :default })
+puts "Benchmark [ :int ], :void no-errno performance, #{ITER}x calls"
+module NoErrno ;end
+f.attach(NoErrno, "ffi_bench")
+10.times {
+  puts Benchmark.measure {
+    ITER.times { NoErrno.ffi_bench(0) }
+  }
+}
+
