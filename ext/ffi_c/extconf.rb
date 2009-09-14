@@ -3,14 +3,10 @@ require 'mkmf'
 require 'rbconfig'
 dir_config("ffi_c")
 
-#IS_MAC = Config::CONFIG['host_os'] =~ /^darwin/
-#if IS_MAC
-#  $CPPFLAGS << " -DMACOSX"
-#  find_header("ffi.h", "/usr/include/ffi")
-#end
+IS_MAC = Config::CONFIG['host_os'] =~ /^darwin/
 have_closure_alloc = have_library("ffi", "ffi_closure_alloc", [ "ffi.h" ])
 $defs.push("-DHAVE_FFI_CLOSURE_ALLOC") if have_closure_alloc
-libffi_ok = have_closure_alloc
+libffi_ok = have_closure_alloc && !IS_MAC
 $defs << "-DHAVE_LIBFFI" if libffi_ok
 $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 
@@ -22,7 +18,7 @@ File.open("Makefile", "a") do |mf|
   mf.puts "CPPFLAGS += -Werror -Wunused -Wformat -Wimplicit -Wreturn-type"
   unless libffi_ok 
     mf.puts "LIBFFI_HOST=--host=#{Config::CONFIG['host_alias']}" if Config::CONFIG.has_key?("host_alias")
-    mf.puts "FFI_MMAP_EXEC=-DFFI_MMAP_EXEC_WRIT=#{Config::CONFIG['host_os'] =~ /win/ ? 0 : 1}"
+    mf.puts "FFI_MMAP_EXEC=-DFFI_MMAP_EXEC_WRIT=#{Config::CONFIG['host_os'] =~ /(win32|mingw)/ ? 0 : 1}"
     if Config::CONFIG['host_os'].downcase =~ /darwin/
       mf.puts "include ${srcdir}/libffi.darwin.mk"
     elsif Config::CONFIG['host_os'].downcase =~ /bsd/
