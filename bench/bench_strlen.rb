@@ -1,21 +1,18 @@
-require 'benchmark'
-require 'ffi'
-iter = 100000
+require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 str = "test"
-
 module LibC
   extend FFI::Library
   attach_function :strlen, [ :string ], :int
 end
 
 if LibC.strlen("test") != 4
-  raise ArgumentError, "jruby FFI.strlen returned incorrect value"
+  raise ArgumentError, "FFI.strlen returned incorrect value"
 end
 
-puts "Benchmark jruby FFI api strlen(3) performance, #{iter}x"
+puts "Benchmark FFI api strlen(3) performance, #{ITER}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { LibC.strlen(str) }
+    ITER.times { LibC.strlen(str) }
   }
 }
 
