@@ -47,9 +47,9 @@ build_ffi = \
 
 $(LIBFFI):
 	@for arch in $(ARCHES); do $(call build_ffi,$$arch);done	
-	# Assemble into a FAT (i386, ppc) library
+	# Assemble into a FAT (x86_64, i386, ppc) library
 	@mkdir -p $(BUILD_DIR)/libffi/.libs
-	env MACOSX_DEPLOYMENT_TARGET=10.4 /usr/bin/libtool -static -o $@ \
+	/usr/bin/libtool -static -o $@ \
 	    $(foreach arch, $(ARCHES),$(BUILD_DIR)/libffi-$(arch)/.libs/libffi_convenience.a)
 	@mkdir -p $(LIBFFI_BUILD_DIR)/include
 	$(RM) $(LIBFFI_BUILD_DIR)/include/ffi.h

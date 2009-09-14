@@ -335,13 +335,16 @@ attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, vo
 asm(
     ".text\n\t"
     ".globl ffi_trampoline\n\t"
-    ".type   ffi_trampoline, @function\n\t"
+    ".globl _ffi_trampoline\n\t"
     "ffi_trampoline:\n\t"
+    "_ffi_trampoline:\n\t"
     "movabsq $0xfee1deadcafebabe, %rcx\n\t"
     "movabsq $0xfee1deadcafebabe, %r11\n\t"
     "jmp *%r11\n\t"
     ".globl ffi_trampoline_end\n\t"
     "ffi_trampoline_end:\n\t"
+    ".globl _ffi_trampoline_end\n\t"
+    "_ffi_trampoline_end:\n\t"
 );
 
 extern void ffi_trampoline(int argc, VALUE* argv, VALUE self);
