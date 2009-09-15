@@ -79,6 +79,16 @@ static inline unsigned int getUnsignedInt32(VALUE value, int type);
 static inline void* getPointer(VALUE value, int type);
 static inline char* getString(VALUE value, int type);
 
+
+#ifdef BYPASS_FFI
+static long rbffi_GetLongValue(VALUE value, NativeType type, VALUE enums);
+static VALUE rbffi_InvokeVrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+static VALUE rbffi_InvokeLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+static VALUE rbffi_InvokeLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+static VALUE rbffi_InvokeLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+#endif
+
+
 static ID id_to_ptr, id_map_symbol;
 
 void
@@ -298,7 +308,7 @@ getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* type
         if (value == Qnil) {
             rb_raise(rb_eTypeError, "Expected a valid enum constant");
         }
-    
+
     } else if (type != T_FIXNUM && type != T_BIGNUM) {
         rb_raise(rb_eTypeError, "Expected an Integer parameter");
     }
@@ -399,6 +409,287 @@ getString(VALUE value, int type)
 
     rb_raise(rb_eArgError, "Invalid String value");
 }
+
+
+Invoker
+rbffi_GetInvoker(FunctionType *fnInfo)
+{
+#if defined(BYPASS_FFI) && defined(__i386__) || defined(__x86_64__)
+    int i;
+    bool fastLong = fnInfo->abi == FFI_DEFAULT_ABI && !fnInfo->blocking && !fnInfo->hasStruct;
+
+    switch (fnInfo->returnType->nativeType) {
+        case NATIVE_VOID:
+        case NATIVE_BOOL:
+        case NATIVE_INT8:
+        case NATIVE_UINT8:
+        case NATIVE_INT16:
+        case NATIVE_UINT16:
+        case NATIVE_INT32:
+        case NATIVE_UINT32:
+#ifdef __x86_64__
+        case NATIVE_INT64:
+        case NATIVE_UINT64:
+#endif
+        case NATIVE_STRING:
+        case NATIVE_POINTER:
+            break;
+        default:
+            fastLong = false;
+            break;
+    }
+
+    for (i = 0; fastLong && i < fnInfo->parameterCount; ++i) {
+        switch (fnInfo->nativeParameterTypes[i]) {
+            case NATIVE_BOOL:
+            case NATIVE_INT8:
+            case NATIVE_UINT8:
+            case NATIVE_INT16:
+            case NATIVE_UINT16:
+            case NATIVE_INT32:
+            case NATIVE_UINT32:
+#ifdef __x86_64__
+            case NATIVE_INT64:
+            case NATIVE_UINT64:
+#endif
+            case NATIVE_STRING:
+            case NATIVE_POINTER:
+            case NATIVE_BUFFER_IN:
+            case NATIVE_BUFFER_OUT:
+            case NATIVE_BUFFER_INOUT:
+                break;
+            default:
+                fastLong = false;
+                break;
+        }
+    }
+
+    if (fastLong) {
+        switch (fnInfo->parameterCount) {
+            case 0:
+                return rbffi_InvokeVrL;
+            case 1:
+                return rbffi_InvokeLrL;
+            case 2:
+                return rbffi_InvokeLLrL;
+            case 3:
+                return rbffi_InvokeLLLrL;
+            default:
+                break;
+        }
+    }
+#endif
+
+    return rbffi_CallFunction;
+}
+
+#ifdef BYPASS_FFI
+typedef long L;
+
+static long
+rbffi_GetLongValue(VALUE value, NativeType nativeType, VALUE enums)
+{
+    int type = TYPE(value);
+    switch (nativeType) {
+        case NATIVE_INT8:
+            return getSignedInt(value, type, -128, 127, "char", enums);
+
+        case NATIVE_INT16:
+            return getSignedInt(value, type, -0x8000, 0x7fff, "short", enums);
+
+        case NATIVE_INT32:
+        case NATIVE_ENUM:
+            return getSignedInt(value, type, -0x80000000, 0x7fffffff, "int", enums);
+
+        case NATIVE_BOOL:
+            if (type != T_TRUE && type != T_FALSE) {
+                rb_raise(rb_eTypeError, "Expected a Boolean parameter");
+            }
+            return RTEST(value) ? 1 : 0;
+
+        case NATIVE_UINT8:
+            return getUnsignedInt(value, type, 0xff, "unsigned char");
+
+        case NATIVE_UINT16:
+            return getUnsignedInt(value, type, 0xffff, "unsigned short");
+
+        case NATIVE_UINT32:
+            /* Special handling/checking for unsigned 32 bit integers */
+            return getUnsignedInt32(value, type);
+
+#ifdef __x86_64__
+        case NATIVE_INT64:
+            if (type != T_FIXNUM && type != T_BIGNUM) {
+                rb_raise(rb_eTypeError, "Expected an Integer parameter");
+            }
+            return NUM2LL(value);
+
+        case NATIVE_UINT64:
+            if (type != T_FIXNUM && type != T_BIGNUM) {
+                rb_raise(rb_eTypeError, "Expected an Integer parameter");
+            }
+            return NUM2ULL(value);
+#endif
+        case NATIVE_STRING:
+            return (intptr_t) getString(value, type);
+
+        case NATIVE_POINTER:
+        case NATIVE_BUFFER_IN:
+        case NATIVE_BUFFER_OUT:
+        case NATIVE_BUFFER_INOUT:
+            return (intptr_t) getPointer(value, type);
+
+        default:
+            rb_raise(rb_eTypeError, "unsupported integer type %d", nativeType);
+            return 0;
+    }
+}
+
+static inline void
+checkArity(int argc, int arity) {
+    if (unlikely(argc != arity)) {
+        rb_raise(rb_eArgError, "wrong number of arguments (%d for %d)", argc, arity);
+    }
+}
+
+static inline bool
+isLongValue(VALUE value)
+{
+    int type = TYPE(value);
+
+    return type == T_FIXNUM || type == T_BIGNUM
+            || type == T_STRING || type == T_NIL
+            || (type == T_DATA && rb_obj_is_kind_of(value, rbffi_AbstractMemoryClass))
+            || (type == T_DATA && rb_obj_is_kind_of(value, rbffi_StructClass))
+            || rb_respond_to(value, id_to_ptr);
+}
+
+static VALUE
+returnL(FunctionType* fnInfo, L* result)
+{
+    if (unlikely(!fnInfo->ignoreErrno)) {
+        rbffi_save_errno();
+    }
+
+    /*
+     * This needs to do custom boxing of the return value, since a function
+     * may only fill out the lower 8, 16 or 32 bits of %al, %ah, %eax, %rax, and
+     * the upper part will be garbage.  This will truncate the value again, then
+     * sign extend it.
+     */
+    switch (fnInfo->returnType->nativeType) {
+        case NATIVE_VOID:
+            return Qnil;
+
+        case NATIVE_INT8:
+          return INT2NUM(*(signed char *) result);
+
+        case NATIVE_INT16:
+          return INT2NUM(*(signed short *) result);
+
+        case NATIVE_INT32:
+          return INT2NUM(*(signed int *) result);
+
+        case NATIVE_UINT8:
+          return UINT2NUM(*(unsigned char *) result);
+
+        case NATIVE_UINT16:
+          return UINT2NUM(*(unsigned short *) result);
+
+        case NATIVE_UINT32:
+          return UINT2NUM(*(unsigned int *) result);
+
+#ifdef __x86_64__
+        case NATIVE_INT64:
+            return LL2NUM(*(signed long long *) result);
+
+        case NATIVE_UINT64:
+            return ULL2NUM(*(unsigned long long *) result);
+#endif /* __x86_64__ */
+
+        case NATIVE_STRING:
+            return *(void **) result != 0 ? rb_tainted_str_new2(*(char **) result) : Qnil;
+
+        case NATIVE_POINTER:
+            return rbffi_Pointer_NewInstance(*(void **) result);
+
+        case NATIVE_BOOL:
+            return *(char *) result != 0 ? Qtrue : Qfalse;
+
+        default:
+            rb_raise(rb_eRuntimeError, "invalid return type: %d", fnInfo->returnType->nativeType);
+            return Qnil;
+    }
+}
+
+static VALUE
+rbffi_InvokeVrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
+{
+    L (*fn)(void) = (L (*)(void)) function;
+    L result;
+
+    checkArity(argc, 0);
+
+    result = (*fn)();
+
+    return returnL(fnInfo, &result);
+}
+
+static VALUE
+rbffi_InvokeLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
+{
+    L (*fn)(L) = (L (*)(L)) function;
+    L result;
+
+    checkArity(argc, 1);
+
+    if (unlikely(!isLongValue(argv[0]))) {
+        return rbffi_CallFunction(argc, argv, function, fnInfo);
+    }
+
+    result = (*fn)(rbffi_GetLongValue(argv[0], fnInfo->nativeParameterTypes[0], fnInfo->rbEnums));
+
+    return returnL(fnInfo, &result);
+}
+
+static VALUE
+rbffi_InvokeLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
+{
+    L (*fn)(L, L) = (L (*)(L, L)) function;
+    L result;
+
+    checkArity(argc, 2);
+
+    if (unlikely(!isLongValue(argv[0])) || unlikely(!isLongValue(argv[1]))) {
+        return rbffi_CallFunction(argc, argv, function, fnInfo);
+    }
+
+    result = (*fn)(rbffi_GetLongValue(argv[0], fnInfo->nativeParameterTypes[0], fnInfo->rbEnums),
+                rbffi_GetLongValue(argv[1], fnInfo->nativeParameterTypes[1], fnInfo->rbEnums));
+
+    return returnL(fnInfo, &result);
+}
+
+static VALUE
+rbffi_InvokeLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
+{
+    L (*fn)(L, L, L) = (L (*)(L, L, L)) function;
+    L result;
+
+    checkArity(argc, 3);
+
+    if (unlikely(!isLongValue(argv[0])) || unlikely(!isLongValue(argv[1])) || unlikely(!isLongValue(argv[2]))) {
+        return rbffi_CallFunction(argc, argv, function, fnInfo);
+    }
+    
+    result = (*fn)(rbffi_GetLongValue(argv[0], fnInfo->nativeParameterTypes[0], fnInfo->rbEnums),
+                rbffi_GetLongValue(argv[1], fnInfo->nativeParameterTypes[1], fnInfo->rbEnums),
+                rbffi_GetLongValue(argv[2], fnInfo->nativeParameterTypes[2], fnInfo->rbEnums));
+
+    return returnL(fnInfo, &result);
+}
+
+#endif /* BYPASS_FFI */
 
 static void*
 callback_param(VALUE proc, VALUE cbInfo)

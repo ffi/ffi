@@ -135,7 +135,7 @@ rbffi_MethodHandle_Alloc(FunctionType* fnInfo, void* function)
         return NULL;
     }
 
-    if (arity <= MAX_METHOD_FIXED_ARITY && !fnInfo->blocking && !fnInfo->hasStruct) {
+    if (arity <= MAX_METHOD_FIXED_ARITY && !fnInfo->blocking && !fnInfo->hasStruct && fnInfo->invoke == rbffi_CallFunction) {
         pool = &fastMethodHandlePool;
     } else {
         pool = &defaultMethodHandlePool;
@@ -318,7 +318,7 @@ attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, vo
     VALUE* argv = *(VALUE **) parameters[1];
 #endif
 
-    *(VALUE *) mretval = rbffi_CallFunction(argc, argv, handle->function, handle->info);
+    *(VALUE *) mretval = (*handle->info->invoke)(argc, argv, handle->function, handle->info);
 }
 
 #if defined(__x86_64__) && defined(CUSTOM_TRAMPOLINE)
@@ -385,7 +385,7 @@ x86_64_offsets(int* ctxOffset, int* fnOffset)
 static VALUE
 x86_64_trampoline(int argc, VALUE* argv, VALUE self, MethodHandle* handle)
 {
-    return rbffi_CallFunction(argc, argv, handle->function, handle->info);
+    return (*handle->info->invoke)(argc, argv, handle->function, handle->info);
 }
 
 static ffi_status

@@ -221,7 +221,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
     } else {
         rb_raise(rb_eTypeError, "wrong argument type.  Expected pointer or proc");
     }
-
+    
     fn->rbProc = rbProc;
 
     return self;
@@ -234,7 +234,7 @@ function_call(int argc, VALUE* argv, VALUE self)
 
     Data_Get_Struct(self, Function, fn);
 
-    return rbffi_CallFunction(argc, argv, fn->memory.address, fn->info);
+    return (*fn->info->invoke)(argc, argv, fn->memory.address, fn->info);
 }
 
 static VALUE

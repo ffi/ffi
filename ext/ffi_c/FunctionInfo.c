@@ -61,6 +61,7 @@ fntype_allocate(VALUE klass)
     fnInfo->rbReturnType = Qnil;
     fnInfo->rbParameterTypes = Qnil;
     fnInfo->rbEnums = Qnil;
+    fnInfo->invoke = rbffi_CallFunction;
 
     return obj;
 }
@@ -171,6 +172,8 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
         default:
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
+
+    fnInfo->invoke = rbffi_GetInvoker(fnInfo);
 
     return self;
 }

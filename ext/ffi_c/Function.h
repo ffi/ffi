@@ -33,10 +33,14 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
-#include "Type.h"
 #include <ffi.h>
 
-typedef struct FunctionInfo_ {
+typedef struct FunctionType_ FunctionType;
+
+#include "Type.h"
+#include "Call.h"
+
+struct FunctionType_ {
     Type type; // The native type of a FunctionInfo object
     VALUE rbReturnType;
     VALUE rbParameterTypes;
@@ -47,6 +51,7 @@ typedef struct FunctionInfo_ {
     ffi_type* ffiReturnType;
     ffi_type** ffiParameterTypes;
     ffi_cif ffi_cif;
+    Invoker invoke;
     int parameterCount;
     int flags;
     ffi_abi abi;
@@ -56,7 +61,7 @@ typedef struct FunctionInfo_ {
     bool ignoreErrno;
     bool blocking;
     bool hasStruct;
-} FunctionType;
+};
 
 extern VALUE rbffi_FunctionTypeClass, rbffi_FunctionClass;
 

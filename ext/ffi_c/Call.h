@@ -39,7 +39,9 @@ extern "C" {
 #  define USE_RAW
 #endif
 
-#define MAX_FIXED_ARITY (3)
+#if (defined(__i386__) || defined(__x86_64__)) && !(defined(_WIN32) || defined(__WIN32__))
+#  define BYPASS_FFI 1
+#endif
     
 typedef union {
 #ifdef USE_RAW
@@ -61,13 +63,20 @@ typedef union {
 } FFIStorage;
 
 
-void rbffi_Call_Init(VALUE moduleFFI);
+extern void rbffi_Call_Init(VALUE moduleFFI);
 
-void rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTypes,
+extern void rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTypes,
         FFIStorage* paramStorage, void** ffiValues,
         VALUE* callbackParameters, int callbackCount, VALUE enums);
 
-VALUE rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+extern VALUE rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+
+typedef VALUE (*Invoker)(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+
+Invoker rbffi_GetInvoker(FunctionType* fnInfo);
+
+extern VALUE rbffi_GetEnumValue(VALUE enums, VALUE value);
+extern int rbffi_GetSignedIntValue(VALUE value, int type, int minValue, int maxValue, const char* typeName, VALUE enums);
 
 #ifdef	__cplusplus
 }
