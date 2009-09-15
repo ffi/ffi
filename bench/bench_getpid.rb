@@ -1,7 +1,6 @@
-require 'benchmark'
-require 'ffi'
+require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 
-iter = ARGV[0] ? ARGV[0].to_i : 100_000
+iter = ITER
 
 module Posix
   extend FFI::Library

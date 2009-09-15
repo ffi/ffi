@@ -4,6 +4,7 @@ module LibTest
   extend FFI::Library
   ffi_lib LIBTEST_PATH
   attach_function :ffi_bench, :bench_s32_v, [ :int ], :void
+  def self.rb_bench(i0); nil; end
 end
 unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
   require 'dl'
@@ -51,6 +52,13 @@ f.attach(NoErrno, "ffi_bench")
 10.times {
   puts Benchmark.measure {
     ITER.times { NoErrno.ffi_bench(0) }
+  }
+}
+
+puts "Benchmark ruby method(1 arg)  performance, #{ITER}x calls"
+10.times {
+  puts Benchmark.measure {
+    ITER.times { LibTest.rb_bench(0) }
   }
 }
 
