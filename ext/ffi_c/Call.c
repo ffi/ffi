@@ -414,7 +414,7 @@ getString(VALUE value, int type)
 Invoker
 rbffi_GetInvoker(FunctionType *fnInfo)
 {
-#if defined(BYPASS_FFI) && defined(__i386__) || defined(__x86_64__)
+#if defined(BYPASS_FFI) && (defined(__i386__) || defined(__x86_64__))
     int i;
     bool fastLong = fnInfo->abi == FFI_DEFAULT_ABI && !fnInfo->blocking && !fnInfo->hasStruct;
 
@@ -483,7 +483,7 @@ rbffi_GetInvoker(FunctionType *fnInfo)
     return rbffi_CallFunction;
 }
 
-#ifdef BYPASS_FFI
+#if defined(BYPASS_FFI) && (defined(__i386__) || defined(__x86_64__))
 typedef long L;
 
 static long
