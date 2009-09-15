@@ -340,7 +340,7 @@ asm(
     "_ffi_trampoline:\n\t"
     "movabsq $0xfee1deadcafebabe, %rcx\n\t"
     "movabsq $0xfee1deadcafebabe, %r11\n\t"
-    "jmp *%r11\n\t"
+    "jmpq *%r11\n\t"
     ".globl ffi_trampoline_end\n\t"
     "ffi_trampoline_end:\n\t"
     ".globl _ffi_trampoline_end\n\t"
