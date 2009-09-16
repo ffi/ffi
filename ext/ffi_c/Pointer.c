@@ -102,20 +102,27 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
             rb_raise(rb_eArgError, "Invalid arguments");
     }
 
-    if (rb_obj_is_kind_of(rbAddress, rbffi_PointerClass)) {
-        Pointer* orig;
+    switch (TYPE(rbAddress)) {
+        case T_FIXNUM:
+        case T_BIGNUM:
+            p->memory.address = (void*) (uintptr_t) NUM2LL(rbAddress);
+            p->memory.size = LONG_MAX;
+            if (p->memory.address == NULL) {
+                p->memory.access = 0;
+            }
+            break;
 
-        p->parent = rbAddress;
-        Data_Get_Struct(rbAddress, Pointer, orig);
-        p->memory = orig->memory;
+        default:
+            if (rb_obj_is_kind_of(rbAddress, rbffi_PointerClass)) {
+                Pointer* orig;
 
-    } else {
-
-        p->memory.address = (void*)(uintptr_t) NUM2LL(rbAddress);
-        p->memory.size = LONG_MAX;
-        if (p->memory.address == NULL) {
-            p->memory.access = 0;
-        }
+                p->parent = rbAddress;
+                Data_Get_Struct(rbAddress, Pointer, orig);
+                p->memory = orig->memory;
+            } else {
+                rb_raise(rb_eTypeError, "wrong argument type, expected Integer or FFI::Pointer");
+            }
+            break;
     }
 
     p->memory.typeSize = typeSize;
