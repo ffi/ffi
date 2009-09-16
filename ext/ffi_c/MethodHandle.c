@@ -135,7 +135,7 @@ rbffi_MethodHandle_Alloc(FunctionType* fnInfo, void* function)
         return NULL;
     }
 
-    if (arity <= MAX_METHOD_FIXED_ARITY && !fnInfo->blocking && !fnInfo->hasStruct && fnInfo->invoke == rbffi_CallFunction) {
+    if (false && arity <= MAX_METHOD_FIXED_ARITY && !fnInfo->blocking && !fnInfo->hasStruct && fnInfo->invoke == rbffi_CallFunction) {
         pool = &fastMethodHandlePool;
     } else {
         pool = &defaultMethodHandlePool;
@@ -321,7 +321,14 @@ attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, vo
     *(VALUE *) mretval = (*handle->info->invoke)(argc, argv, handle->function, handle->info);
 }
 
-#if defined(__x86_64__) && defined(CUSTOM_TRAMPOLINE)
+#if defined(CUSTOM_TRAMPOLINE)
+#if defined(__x86_64__)
+
+static VALUE custom_trampoline(int argc, VALUE* argv, VALUE self, MethodHandle*);
+
+#define TRAMPOLINE_CTX_MAGIC (0xfee1deadcafebabe)
+#define TRAMPOLINE_FUN_MAGIC (0xfeedfacebeeff00d)
+
 /*
  * This is a hand-coded trampoline to speedup entry from ruby to the FFI translation
  * layer for x86_64 arches.
@@ -347,45 +354,86 @@ asm(
     "_ffi_trampoline_end:\n\t"
 );
 
+static VALUE
+custom_trampoline(int argc, VALUE* argv, VALUE self, MethodHandle* handle)
+{
+    return (*handle->info->invoke)(argc, argv, handle->function, handle->info);
+}
+
+#elif defined(__i386__) && 0
+
+static VALUE custom_trampoline(caddr_t args, MethodHandle*);
+#define TRAMPOLINE_CTX_MAGIC (0xfee1dead)
+#define TRAMPOLINE_FUN_MAGIC (0xbeefcafe)
+
+/*
+ * This is a hand-coded trampoline to speedup entry from ruby to the FFI translation
+ * layer for i386 arches.
+ *
+ * This does not make a discernable difference vs a raw closure, so for now,
+ * it is not enabled.
+ */
+asm(
+    ".text\n\t"
+    ".globl ffi_trampoline\n\t"
+    ".globl _ffi_trampoline\n\t"
+    "ffi_trampoline:\n\t"
+    "_ffi_trampoline:\n\t"
+    "subl    $12, %esp\n\t"
+    "leal    16(%esp), %eax\n\t"
+    "movl    %eax, (%esp)\n\t"
+    "movl    $0xfee1dead, 4(%esp)\n\t"
+    "movl    $0xbeefcafe, %eax\n\t"
+    "call    *%eax\n\t"
+    "addl    $12, %esp\n\t"
+    "ret\n\t"
+    ".globl ffi_trampoline_end\n\t"
+    "ffi_trampoline_end:\n\t"
+    ".globl _ffi_trampoline_end\n\t"
+    "_ffi_trampoline_end:\n\t"
+);
+
+static VALUE
+custom_trampoline(caddr_t args, MethodHandle* handle)
+{
+    return (*handle->info->invoke)(*(int *) args, *(VALUE **) (args + 4), handle->function, handle->info);
+}
+
+#endif /* __x86_64__ else __i386__ */
+
 extern void ffi_trampoline(int argc, VALUE* argv, VALUE self);
 extern void ffi_trampoline_end(void);
+static int trampoline_offsets(int *, int *);
 
-#define X86_64_MAGIC (0xfee1deadcafebabe)
-static int x86_64_offsets(int *, int *);
-static VALUE x86_64_trampoline(int argc, VALUE* argv, VALUE self, MethodHandle*);
-static int x86_64_ctx_offset, x86_64_tramp_offset;
+static int trampoline_ctx_offset, trampoline_func_offset;
 
 static int
-x86_64_offset(int off) {
+trampoline_offset(int off, const long value)
+{
     caddr_t ptr;
     for (ptr = (caddr_t) &ffi_trampoline + off; ptr < (caddr_t) &ffi_trampoline_end; ++ptr) {
-        if (*(long *) ptr == X86_64_MAGIC) {
+        if (*(long *) ptr == value) {
             return ptr - (caddr_t) &ffi_trampoline;
         }
     }
+
     return -1;
 }
 
 static int
-x86_64_offsets(int* ctxOffset, int* fnOffset)
+trampoline_offsets(int* ctxOffset, int* fnOffset)
 {
-    *ctxOffset = x86_64_offset(0);
+    *ctxOffset = trampoline_offset(0, TRAMPOLINE_CTX_MAGIC);
     if (*ctxOffset == -1) {
         return -1;
     }
 
-    *fnOffset = x86_64_offset(*ctxOffset + 8);
+    *fnOffset = trampoline_offset(0, TRAMPOLINE_FUN_MAGIC);
     if (*fnOffset == -1) {
         return -1;
     }
 
     return 0;
-}
-
-static VALUE
-x86_64_trampoline(int argc, VALUE* argv, VALUE self, MethodHandle* handle)
-{
-    return (*handle->info->invoke)(argc, argv, handle->function, handle->info);
 }
 
 static ffi_status
@@ -395,8 +443,8 @@ prep_trampoline(MethodHandle* method, char* errmsg, size_t errmsgsize)
 
     memcpy(ptr, &ffi_trampoline, trampoline_size());
     // Patch the context and function addresses into the stub code
-    *(long *)(ptr + x86_64_ctx_offset) = (long) method;
-    *(long *)(ptr + x86_64_tramp_offset) = (long) x86_64_trampoline;
+    *(intptr_t *)(ptr + trampoline_ctx_offset) = (intptr_t) method;
+    *(intptr_t *)(ptr + trampoline_func_offset) = (intptr_t) custom_trampoline;
 
     return FFI_OK;
 }
@@ -407,7 +455,7 @@ trampoline_size(void)
     return (caddr_t) &ffi_trampoline_end - (caddr_t) &ffi_trampoline;
 }
 
-#endif
+#endif /* CUSTOM_TRAMPOLINE */
 
 static int
 getPageSize()
@@ -465,9 +513,9 @@ rbffi_MethodHandle_Init(VALUE module)
     defaultMethodHandlePool.fn = attached_method_invoke;
     fastMethodHandlePool.fn = attached_method_fast_invoke;
 
-#if defined(__x86_64__) && defined(CUSTOM_TRAMPOLINE)
-    if (x86_64_offsets(&x86_64_ctx_offset, &x86_64_tramp_offset) != 0) {
-        rb_raise(rb_eFatal, "Could not locate offsets in x86_64 trampoline code");
+#if defined(CUSTOM_TRAMPOLINE)
+    if (trampoline_offsets(&trampoline_ctx_offset, &trampoline_func_offset) != 0) {
+        rb_raise(rb_eFatal, "Could not locate offsets in trampoline code");
     }
 #endif
 }
