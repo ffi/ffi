@@ -5,11 +5,13 @@ describe FFI::Struct, ' with inline callback functions' do
     module CallbackMember
       extend FFI::Library
       ffi_lib TestLibrary::PATH
+      callback :dummy_cb, [ :int ], :int
       class TestStruct < FFI::Struct
         layout \
           :add, callback([ :int, :int ], :int),
-          :sub, callback([ :int, :int ], :int)
-        end
+          :sub, callback([ :int, :int ], :int),
+          :cb_with_cb_parameter, callback([ :dummy_cb, :int ], :int)
+      end
       attach_function :struct_call_add_cb, [TestStruct, :int, :int], :int
       attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int
     end
@@ -22,7 +24,7 @@ describe FFI::Struct, ' with inline callback functions' do
         layout \
           :add, callback([ :int, :int ], :int),
           :sub, callback([ :int, :int ], :int)
-        end
+      end
       attach_function :struct_call_add_cb, [TestStruct, :int, :int], :int
       attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int
     end
@@ -46,7 +48,7 @@ describe FFI::Struct, ' with inline callback functions' do
         layout \
           :add, callback([ :int, :int ], :int),
           :sub, callback([ :int, :int ], :int)
-        end
+      end
       attach_function :struct_call_add_cb, [TestStruct, :int, :int], :int
       attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int
     end
