@@ -81,11 +81,14 @@ static inline char* getString(VALUE value, int type);
 
 
 #ifdef BYPASS_FFI
-static long rbffi_GetLongValue(VALUE value, NativeType type, VALUE enums);
+static long rbffi_GetLongValue(int idx, VALUE* argv, FunctionType* fnInfo);
 static VALUE rbffi_InvokeVrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
 static VALUE rbffi_InvokeLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
 static VALUE rbffi_InvokeLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
 static VALUE rbffi_InvokeLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+static VALUE rbffi_InvokeLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+static VALUE rbffi_InvokeLLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+static VALUE rbffi_InvokeLLLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
 #endif
 
 
@@ -474,6 +477,13 @@ rbffi_GetInvoker(FunctionType *fnInfo)
                 return rbffi_InvokeLLrL;
             case 3:
                 return rbffi_InvokeLLLrL;
+            case 4:
+                return rbffi_InvokeLLLLrL;
+            case 5:
+                return rbffi_InvokeLLLLLrL;
+            case 6:
+                return rbffi_InvokeLLLLLLrL;
+
             default:
                 break;
         }
@@ -487,19 +497,22 @@ rbffi_GetInvoker(FunctionType *fnInfo)
 typedef long L;
 
 static long
-rbffi_GetLongValue(VALUE value, NativeType nativeType, VALUE enums)
+rbffi_GetLongValue(int idx, VALUE* argv, FunctionType* fnInfo)
 {
+    VALUE value = argv[idx];
+    NativeType nativeType = fnInfo->nativeParameterTypes[idx];
     int type = TYPE(value);
+
     switch (nativeType) {
         case NATIVE_INT8:
-            return getSignedInt(value, type, -128, 127, "char", enums);
+            return getSignedInt(value, type, -128, 127, "char", fnInfo->rbEnums);
 
         case NATIVE_INT16:
-            return getSignedInt(value, type, -0x8000, 0x7fff, "short", enums);
+            return getSignedInt(value, type, -0x8000, 0x7fff, "short", fnInfo->rbEnums);
 
         case NATIVE_INT32:
         case NATIVE_ENUM:
-            return getSignedInt(value, type, -0x80000000, 0x7fffffff, "int", enums);
+            return getSignedInt(value, type, -0x80000000, 0x7fffffff, "int", fnInfo->rbEnums);
 
         case NATIVE_BOOL:
             if (type != T_TRUE && type != T_FALSE) {
@@ -635,6 +648,36 @@ rbffi_InvokeVrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     return returnL(fnInfo, &result);
 }
 
+static bool
+checkArgs(int argc, VALUE* argv, FunctionType* fnInfo)
+{
+    int i;
+
+    checkArity(argc, fnInfo->parameterCount);
+    for (i = 0; i < fnInfo->parameterCount; ++i) {
+        if (unlikely(!isLongValue(argv[i]))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+#define LARG(fnInfo, argv, i) \
+    rbffi_GetLongValue(i, argv, fnInfo)
+
+#define LCALL(fnInfo, argc, argv, fn, a...) ({ \
+    L result; \
+    \
+    if (unlikely(!checkArgs(argc, argv, fnInfo))) { \
+        return rbffi_CallFunction(argc, argv, function, fnInfo); \
+    } \
+    \
+    result = (*(fn))(a); \
+    \
+    returnL(fnInfo, &result); \
+})
+
 static VALUE
 rbffi_InvokeLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
 {
@@ -647,7 +690,7 @@ rbffi_InvokeLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         return rbffi_CallFunction(argc, argv, function, fnInfo);
     }
 
-    result = (*fn)(rbffi_GetLongValue(argv[0], fnInfo->nativeParameterTypes[0], fnInfo->rbEnums));
+    result = (*fn)(LARG(fnInfo, argv, 0));
 
     return returnL(fnInfo, &result);
 }
@@ -664,8 +707,7 @@ rbffi_InvokeLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         return rbffi_CallFunction(argc, argv, function, fnInfo);
     }
 
-    result = (*fn)(rbffi_GetLongValue(argv[0], fnInfo->nativeParameterTypes[0], fnInfo->rbEnums),
-                rbffi_GetLongValue(argv[1], fnInfo->nativeParameterTypes[1], fnInfo->rbEnums));
+    result = (*fn)(LARG(fnInfo, argv, 0), LARG(fnInfo, argv, 1));
 
     return returnL(fnInfo, &result);
 }
@@ -682,11 +724,34 @@ rbffi_InvokeLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         return rbffi_CallFunction(argc, argv, function, fnInfo);
     }
     
-    result = (*fn)(rbffi_GetLongValue(argv[0], fnInfo->nativeParameterTypes[0], fnInfo->rbEnums),
-                rbffi_GetLongValue(argv[1], fnInfo->nativeParameterTypes[1], fnInfo->rbEnums),
-                rbffi_GetLongValue(argv[2], fnInfo->nativeParameterTypes[2], fnInfo->rbEnums));
+    result = (*fn)(LARG(fnInfo, argv, 0), LARG(fnInfo, argv, 1), LARG(fnInfo, argv, 2));
 
     return returnL(fnInfo, &result);
+}
+
+
+static VALUE
+rbffi_InvokeLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
+{
+    return LCALL(fnInfo, argc, argv, (L (*)(L, L, L, L)) function,
+        LARG(fnInfo, argv, 0), LARG(fnInfo, argv, 1),
+        LARG(fnInfo, argv, 2), LARG(fnInfo, argv, 3));
+}
+
+static VALUE
+rbffi_InvokeLLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
+{
+    return LCALL(fnInfo, argc, argv, (L (*)(L, L, L, L, L)) function,
+        LARG(fnInfo, argv, 0), LARG(fnInfo, argv, 1), LARG(fnInfo, argv, 2),
+        LARG(fnInfo, argv, 3), LARG(fnInfo, argv, 4));
+}
+
+static VALUE
+rbffi_InvokeLLLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
+{
+    return LCALL(fnInfo, argc, argv, (L (*)(L, L, L, L, L, L)) function,
+        LARG(fnInfo, argv, 0), LARG(fnInfo, argv, 1), LARG(fnInfo, argv, 2),
+        LARG(fnInfo, argv, 3), LARG(fnInfo, argv, 4), LARG(fnInfo, argv, 5));
 }
 
 #endif /* BYPASS_FFI */
