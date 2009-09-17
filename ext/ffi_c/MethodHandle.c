@@ -51,6 +51,7 @@
 #include "Type.h"
 #include "LastError.h"
 #include "Call.h"
+#include "ClosurePool.h"
 #include "MethodHandle.h"
 
 
@@ -67,15 +68,6 @@
   typedef char* caddr_t;
 #endif
 
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
-#  define pool_lock(p) pthread_mutex_lock(&(p)->mutex)
-#  define pool_unlock(p)  pthread_mutex_unlock(&(p)->mutex)
-#else
-#  define pool_lock(p)
-#  define pool_unlock(p)
-#endif
-
-
 #ifdef USE_RAW
 #  define METHOD_CLOSURE ffi_raw_closure
 #  define METHOD_PARAMS ffi_raw*
@@ -84,146 +76,57 @@
 #  define METHOD_PARAMS void**
 #endif
 
-static void* allocatePage(void);
-static bool freePage(void *);
-static bool protectPage(void *);
 
-typedef void (*methodfn)(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
-static void attached_method_fast_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
-static void attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
-static ffi_status prep_trampoline(MethodHandle* method, char* errmsg, size_t errmsgsize);
+
+static bool prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 static int trampoline_size(void);
 
 #if defined(__x86_64__) && defined(__GNUC__)
 # define CUSTOM_TRAMPOLINE 1
 #endif
 
+
 struct MethodHandle {
-    FunctionType* info;
-    void* function;
-    METHOD_CLOSURE* closure;
-    void* code;
-    ffi_cif cif;
-    struct MethodHandlePool* pool;
-    MethodHandle* next;
+    Closure* closure;
 };
 
-struct MethodHandlePool {
-#if defined (HAVE_NATIVETHREAD) && !defined(_WIN32)
-    pthread_mutex_t mutex;
-#endif
-    void (*fn)(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
-    MethodHandle* list;
-};
-
-static MethodHandlePool defaultMethodHandlePool, fastMethodHandlePool;
-static int pageSize;
+static ClosurePool* defaultClosurePool;
 
 
 MethodHandle*
 rbffi_MethodHandle_Alloc(FunctionType* fnInfo, void* function)
 {
-    MethodHandle* method, *list = NULL;
-    MethodHandlePool* pool;
-    caddr_t page;
-    int nclosures, trampolineSize;
-    int i, arity;
-
-    arity = fnInfo->parameterCount;
-    if (arity < 0) {
-        rb_raise(rb_eRuntimeError, "Cannot create method handle for variadic functions");
+    MethodHandle* handle;
+    Closure* closure = rbffi_Closure_Alloc(defaultClosurePool);
+    if (closure == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate closure from pool");
         return NULL;
     }
 
-    if (false && arity <= MAX_METHOD_FIXED_ARITY && !fnInfo->blocking && !fnInfo->hasStruct && fnInfo->invoke == rbffi_CallFunction) {
-        pool = &fastMethodHandlePool;
-    } else {
-        pool = &defaultMethodHandlePool;
-    }
+    handle = xcalloc(1, sizeof(*handle));
+    handle->closure = closure;
+    closure->info = fnInfo;
+    closure->function = function;
 
-    pool_lock(pool);
-    if (pool->list != NULL) {
-        method = pool->list;
-        pool->list = pool->list->next;
-        pool_unlock(pool);
-        method->info = fnInfo;
-        method->function = function;
-
-        return method;
-    }
-
-    trampolineSize = roundup(trampoline_size(), 8);
-    nclosures = pageSize / trampolineSize;
-    page = allocatePage();
-    if (page == NULL) {
-        pool_unlock(pool);
-        rb_raise(rb_eRuntimeError, "failed to allocate a page. errno=%d (%s)", errno, strerror(errno));
-    }
-
-    for (i = 0; i < nclosures; ++i) {
-        char errmsg[256];
-        method = calloc(1, sizeof(MethodHandle));
-        if (method == NULL) {
-            snprintf(errmsg, sizeof(errmsg), "malloc failed: %s", strerror(errno));
-            goto error;
-        }
-        method->next = list;
-        list = method;
-        method->pool = pool;
-        method->code = method->closure = (METHOD_CLOSURE *) (page + (i * trampolineSize));
-
-        if (prep_trampoline(method, errmsg, sizeof(errmsg)) != FFI_OK) {
-            goto error;
-        }
-        
-        continue;
-error:
-        while (list != NULL) {
-            method = list;
-            list = list->next;
-            free(method);
-        }
-        freePage(page);
-        pool_unlock(pool);
-        rb_raise(rb_eRuntimeError, "%s", errmsg);
-    }
-    protectPage(page);
-
-    /* take the first member of the list for this handle */
-    method = list;
-    list = list->next;
-
-    /* now add the new block of MethodHandles to the pool */
-    if (list != NULL) {
-        list->next = pool->list;
-        pool->list = list;
-    }
-    pool_unlock(pool);
-    method->info = fnInfo;
-    method->function = function;
-
-    return method;
+    return handle;
 }
 
 void
-rbffi_MethodHandle_Free(MethodHandle* method)
+rbffi_MethodHandle_Free(MethodHandle* handle)
 {
-    if (method != NULL) {
-        MethodHandlePool* pool = method->pool;
-        pool_lock(pool);
-        method->next = pool->list;
-        pool->list = method;
-        pool_unlock(pool);
+    if (handle != NULL) {
+        rbffi_Closure_Free(handle->closure);
     }
 }
 
 void*
 rbffi_MethodHandle_CodeAddress(MethodHandle* handle)
 {
-    return handle->code;
+    return handle->closure->code;
 }
 
 #ifndef CUSTOM_TRAMPOLINE
+static void attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 
 static ffi_type* methodHandleParamTypes[] = {
     &ffi_type_sint,
@@ -231,74 +134,31 @@ static ffi_type* methodHandleParamTypes[] = {
     &ffi_type_ulong,
 };
 
-static ffi_status
-prep_trampoline(MethodHandle* method, char* errmsg, size_t errmsgsize)
+static ffi_cif mh_cif;
+
+static bool
+prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize)
 {
-    ffi_status ffiStatus = ffi_prep_cif(&method->cif, FFI_DEFAULT_ABI, 3, &ffi_type_ulong,
-            methodHandleParamTypes);
-    if (ffiStatus != FFI_OK) {
-        snprintf(errmsg, errmsgsize, "ffi_prep_cif failed.  status=%#x", ffiStatus);
-        return ffiStatus;
-    }
+    ffi_status ffiStatus;
 
 #if defined(USE_RAW)
-    ffiStatus = ffi_prep_raw_closure(method->closure, &method->cif, method->pool->fn, method);
+    ffiStatus = ffi_prep_raw_closure(code, &mh_cif, attached_method_invoke, closure);
 #else
-    ffiStatus = ffi_prep_closure(method->closure, &method->cif, method->pool->fn, method);
+    ffiStatus = ffi_prep_closure(code, &mh_cif, attached_method_invoke, closure);
 #endif
     if (ffiStatus != FFI_OK) {
         snprintf(errmsg, errmsgsize, "ffi_prep_closure failed.  status=%#x", ffiStatus);
-        return ffiStatus;
+        return false;
     }
 
-    return FFI_OK;
+    return true;
 }
+
 
 static int
 trampoline_size(void)
 {
     return sizeof(METHOD_CLOSURE);
-}
-
-#endif
-/*
- * attached_method_invoke is used as the <= MAX_METHOD_FIXED_ARITY argument fixed-arity fast path
- */
-static void
-attached_method_fast_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, void* user_data)
-{
-    MethodHandle* handle =  (MethodHandle *) user_data;
-    FunctionType* fnInfo = handle->info;
-    void* ffiValues[MAX_METHOD_FIXED_ARITY];
-    FFIStorage params[MAX_METHOD_FIXED_ARITY], retval;
-
-
-    if (fnInfo->parameterCount > 0) {
-#ifdef USE_RAW
-        int argc = parameters[0].sint;
-        VALUE* argv = *(VALUE **) & parameters[1];
-#else
-        int argc = *(ffi_sarg *) parameters[0];
-        VALUE* argv = *(VALUE **) parameters[1];
-#endif
-
-        rbffi_SetupCallParams(argc, argv,
-                fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
-                fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
-    }
-
-#ifdef USE_RAW
-    ffi_raw_call(&fnInfo->ffi_cif, FFI_FN(handle->function), &retval, (ffi_raw *) ffiValues[0]);
-#else
-    ffi_call(&fnInfo->ffi_cif, FFI_FN(handle->function), &retval, ffiValues);
-#endif
-
-    if (!fnInfo->ignoreErrno) {
-        rbffi_save_errno();
-    }
-
-    *((VALUE *) mretval) = rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType,
-        &retval, fnInfo->rbEnums);
 }
 
 /*
@@ -308,8 +168,9 @@ attached_method_fast_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameter
 static void
 attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, void* user_data)
 {
-    MethodHandle* handle =  (MethodHandle *) user_data;
-    
+    Closure* handle =  (Closure *) user_data;
+    FunctionType* fnInfo = (FunctionType *) handle->info;
+
 #ifdef USE_RAW
     int argc = parameters[0].sint;
     VALUE* argv = *(VALUE **) &parameters[1];
@@ -318,13 +179,17 @@ attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, vo
     VALUE* argv = *(VALUE **) parameters[1];
 #endif
 
-    *(VALUE *) mretval = (*handle->info->invoke)(argc, argv, handle->function, handle->info);
+    *(VALUE *) mretval = (*fnInfo->invoke)(argc, argv, handle->function, fnInfo);
 }
+
+#endif
+
+
 
 #if defined(CUSTOM_TRAMPOLINE)
 #if defined(__x86_64__)
 
-static VALUE custom_trampoline(int argc, VALUE* argv, VALUE self, MethodHandle*);
+static VALUE custom_trampoline(int argc, VALUE* argv, VALUE self, Closure*);
 
 #define TRAMPOLINE_CTX_MAGIC (0xfee1deadcafebabe)
 #define TRAMPOLINE_FUN_MAGIC (0xfeedfacebeeff00d)
@@ -355,14 +220,15 @@ asm(
 );
 
 static VALUE
-custom_trampoline(int argc, VALUE* argv, VALUE self, MethodHandle* handle)
+custom_trampoline(int argc, VALUE* argv, VALUE self, Closure* handle)
 {
-    return (*handle->info->invoke)(argc, argv, handle->function, handle->info);
+    FunctionType* fnInfo = (FunctionType *) handle->info;
+    return (*fnInfo->invoke)(argc, argv, handle->function, fnInfo);
 }
 
 #elif defined(__i386__) && 0
 
-static VALUE custom_trampoline(caddr_t args, MethodHandle*);
+static VALUE custom_trampoline(caddr_t args, Closure*);
 #define TRAMPOLINE_CTX_MAGIC (0xfee1dead)
 #define TRAMPOLINE_FUN_MAGIC (0xbeefcafe)
 
@@ -394,9 +260,10 @@ asm(
 );
 
 static VALUE
-custom_trampoline(caddr_t args, MethodHandle* handle)
+custom_trampoline(caddr_t args, Closure* handle)
 {
-    return (*handle->info->invoke)(*(int *) args, *(VALUE **) (args + 4), handle->function, handle->info);
+    FunctionType* fnInfo = (FunctionType *) handle->info;
+    return (*fnInfo->invoke)(*(int *) args, *(VALUE **) (args + 4), handle->function, fnInfo);
 }
 
 #endif /* __x86_64__ else __i386__ */
@@ -436,17 +303,17 @@ trampoline_offsets(int* ctxOffset, int* fnOffset)
     return 0;
 }
 
-static ffi_status
-prep_trampoline(MethodHandle* method, char* errmsg, size_t errmsgsize)
+static bool
+prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize)
 {
-    caddr_t ptr = (caddr_t) method->code;
+    caddr_t ptr = (caddr_t) code;
 
     memcpy(ptr, &ffi_trampoline, trampoline_size());
     // Patch the context and function addresses into the stub code
-    *(intptr_t *)(ptr + trampoline_ctx_offset) = (intptr_t) method;
+    *(intptr_t *)(ptr + trampoline_ctx_offset) = (intptr_t) closure;
     *(intptr_t *)(ptr + trampoline_func_offset) = (intptr_t) custom_trampoline;
 
-    return FFI_OK;
+    return true;
 }
 
 static int
@@ -457,66 +324,23 @@ trampoline_size(void)
 
 #endif /* CUSTOM_TRAMPOLINE */
 
-static int
-getPageSize()
-{
-#ifdef _WIN32
-    SYSTEM_INFO si;
-    GetSystemInfo(&si);
-    return si.dwPageSize;
-#else
-    return sysconf(_SC_PAGESIZE);
-#endif
-}
-
-static void*
-allocatePage(void)
-{
-#ifdef _WIN32
-    return VirtualAlloc(NULL, pageSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-#else
-    caddr_t page = mmap(NULL, pageSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    return (page != (caddr_t) -1) ? page : NULL;
-#endif
-}
-
-static bool
-freePage(void *addr)
-{
-#ifdef _WIN32
-    return VirtualFree(addr, 0, MEM_RELEASE);
-#else
-    return munmap(addr, pageSize) == 0;
-#endif
-}
-
-static bool
-protectPage(void* page)
-{
-#ifdef _WIN32
-    DWORD oldProtect;
-    return VirtualProtect(page, pageSize, PAGE_EXECUTE_READ, &oldProtect);
-#else
-    return mprotect(page, pageSize, PROT_READ | PROT_EXEC) == 0;
-#endif
-}
 
 void
 rbffi_MethodHandle_Init(VALUE module)
 {
-    pageSize = getPageSize();
-
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
-    pthread_mutex_init(&defaultMethodHandlePool.mutex, NULL);
-    pthread_mutex_init(&fastMethodHandlePool.mutex, NULL);
-#endif /* USE_PTHREAD_LOCAL */
-    defaultMethodHandlePool.fn = attached_method_invoke;
-    fastMethodHandlePool.fn = attached_method_fast_invoke;
+    defaultClosurePool = rbffi_ClosurePool_New(trampoline_size(), prep_trampoline, NULL);
 
 #if defined(CUSTOM_TRAMPOLINE)
     if (trampoline_offsets(&trampoline_ctx_offset, &trampoline_func_offset) != 0) {
         rb_raise(rb_eFatal, "Could not locate offsets in trampoline code");
     }
+#else
+    ffi_status ffiStatus = ffi_prep_cif(&mh_cif, FFI_DEFAULT_ABI, 3, &ffi_type_ulong,
+            methodHandleParamTypes);
+    if (ffiStatus != FFI_OK) {
+        rb_raise(rb_eFatal, "ffi_prep_cif failed.  status=%#x", ffiStatus);
+    }
+
 #endif
 }
 
