@@ -81,6 +81,7 @@ struct ClosurePool_ {
 #endif
     struct Memory* blocks; /* Keeps track of all the allocated memory for this pool */
     Closure* list;
+    long refcnt;
 };
 
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
@@ -108,6 +109,7 @@ rbffi_ClosurePool_New(int closureSize,
     pool->closureSize = closureSize;
     pool->ctx = ctx;
     pool->prep = prep;
+    pool->refcnt = 1;
     
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
     pthread_mutex_init(&pool->mutex, NULL);
@@ -117,21 +119,33 @@ rbffi_ClosurePool_New(int closureSize,
 }
 
 void
-rbffi_ClosurePool_Free(ClosurePool* pool)
+cleanup_closure_pool(ClosurePool* pool)
 {
     Memory* memory;
-
-    if (pool != NULL) {
-        for (memory = pool->blocks; memory != NULL; ) {
-            Memory* next = memory->next;
-            freePage(memory->code);
-            free(memory->data);
-            free(memory);
-            memory = next;
-        }
-        free(pool);
+    
+    for (memory = pool->blocks; memory != NULL; ) {
+        Memory* next = memory->next;
+        freePage(memory->code);
+        free(memory->data);
+        free(memory);
+        memory = next;
     }
+    free(pool);
+}
 
+void
+rbffi_ClosurePool_Free(ClosurePool* pool)
+{
+    if (pool != NULL) {
+        int refcnt;
+        pool_lock(pool);
+        refcnt = --(pool->refcnt);
+        pool_unlock(pool);
+
+        if (refcnt == 0) {
+            cleanup_closure_pool(pool);
+        }
+    }
 }
 
 Closure*
@@ -148,6 +162,7 @@ rbffi_Closure_Alloc(ClosurePool* pool)
     if (pool->list != NULL) {
         Closure* closure = pool->list;
         pool->list = pool->list->next;
+        pool->refcnt++;
         pool_unlock(pool);
 
         return closure;
@@ -189,6 +204,7 @@ rbffi_Closure_Alloc(ClosurePool* pool)
     /* Thread the new block onto the free list, apart from the first one. */
     list[nclosures - 1].next = pool->list;
     pool->list = list->next;
+    pool->refcnt++;
 
     pool_unlock(pool);
 
@@ -213,11 +229,17 @@ rbffi_Closure_Free(Closure* closure)
 {
     if (closure != NULL) {
         ClosurePool* pool = closure->pool;
+        int refcnt;
         pool_lock(pool);
         // Just push it on the front of the free list
         closure->next = pool->list;
         pool->list = closure;
+        refcnt = --(pool->refcnt);
         pool_unlock(pool);
+
+        if (refcnt == 0) {
+            cleanup_closure_pool(pool);
+        }
     }
 }
 
