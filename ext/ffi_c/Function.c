@@ -52,14 +52,6 @@
 #include "ClosurePool.h"
 #include "Function.h"
 
-#if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
-static void* ffi_closure_alloc(size_t size, void** code);
-static void ffi_closure_free(void* ptr);
-ffi_status ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
-        void (*fun)(ffi_cif*, void*, void**, void*),
-        void* user_data, void* code);
-#endif /* HAVE_FFI_CLOSURE_ALLOC */
-
 typedef struct Function_ {
     AbstractMemory memory;
     FunctionType* info;
@@ -447,48 +439,6 @@ callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errm
 
     return true;
 }
-
-
-#if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
-/*
- * versions of ffi_closure_alloc, ffi_closure_free and ffi_prep_closure_loc for older
- * system libffi versions.
- */
-static void*
-ffi_closure_alloc(size_t size, void** code)
-{
-    void* closure;
-    closure = mmap(NULL, size, PROT_READ | PROT_WRITE,
-             MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (closure == (void *) -1) {
-        return NULL;
-    }
-    memset(closure, 0, size);
-    *code = closure;
-    return closure;
-}
-
-static void
-ffi_closure_free(void* ptr)
-{
-    if (ptr != NULL && ptr != (void *) -1) {
-        munmap(ptr, sizeof(ffi_closure));
-    }
-}
-
-ffi_status
-ffi_prep_closure_loc(ffi_closure* closure, ffi_cif* cif,
-        void (*fun)(ffi_cif*, void*, void**, void*),
-        void* user_data, void* code)
-{
-    ffi_status retval = ffi_prep_closure(closure, cif, fun, user_data);
-    if (retval == FFI_OK) {
-        mprotect(closure, sizeof(ffi_closure), PROT_READ | PROT_EXEC);
-    }
-    return retval;
-}
-
-#endif /* HAVE_FFI_CLOSURE_ALLOC */
 
 void
 rbffi_Function_Init(VALUE moduleFFI)
