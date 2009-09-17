@@ -123,7 +123,7 @@ rbffi_ClosurePool_Free(ClosurePool* pool)
 
     if (pool != NULL) {
         for (memory = pool->blocks; memory != NULL; ) {
-            Memory* next = memory;
+            Memory* next = memory->next;
             freePage(memory->code);
             free(memory->data);
             free(memory);

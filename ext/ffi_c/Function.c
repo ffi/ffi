@@ -49,6 +49,7 @@
 #include "Type.h"
 #include "LastError.h"
 #include "Call.h"
+#include "ClosurePool.h"
 #include "Function.h"
 
 #if defined(HAVE_LIBFFI) && !defined(HAVE_FFI_CLOSURE_ALLOC)
@@ -64,7 +65,7 @@ typedef struct Function_ {
     FunctionType* info;
     MethodHandle* methodHandle;
     bool autorelease;
-    ffi_closure* ffiClosure;
+    Closure* closure;
     VALUE rbProc;
     VALUE rbFunctionInfo;
 } Function;
@@ -73,6 +74,7 @@ static void function_mark(Function *);
 static void function_free(Function *);
 static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
+static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 
 VALUE rbffi_FunctionClass = Qnil;
 
@@ -110,8 +112,8 @@ function_free(Function *fn)
         rbffi_MethodHandle_Free(fn->methodHandle);
     }
 
-    if (fn->ffiClosure != NULL && fn->autorelease) {
-        ffi_closure_free(fn->ffiClosure);
+    if (fn->closure != NULL && fn->autorelease) {
+        rbffi_Closure_Free(fn->closure);
     }
 
     xfree(fn);
@@ -201,21 +203,17 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         fn->memory = *memory;
 
     } else if (rb_obj_is_kind_of(rbProc, rb_cProc) || rb_respond_to(rbProc, id_call)) {
-        void* code;
-        ffi_status status;
-        fn->ffiClosure = ffi_closure_alloc(sizeof(*fn->ffiClosure), &code);
-        if (fn->ffiClosure == NULL) {
-            rb_raise(rb_eNoMemError, "Failed to allocate libffi closure");
+        if (fn->info->closurePool == NULL) {
+            fn->info->closurePool = rbffi_ClosurePool_New(sizeof(ffi_closure), callback_prep, fn->info);
+            if (fn->info->closurePool == NULL) {
+                rb_raise(rb_eNoMemError, "failed to create closure pool");
+            }
         }
 
-        status = ffi_prep_closure_loc(fn->ffiClosure, &fn->info->ffi_cif,
-                callback_invoke, fn, code);
-        if (status != FFI_OK) {
-            rb_raise(rb_eArgError, "ffi_prep_closure_loc failed");
-        }
-
-        fn->memory.address = code;
-        fn->memory.size = sizeof(*fn->ffiClosure);
+        fn->closure = rbffi_Closure_Alloc(fn->info->closurePool);
+        fn->closure->info = fn;
+        fn->memory.address = fn->closure->code;
+        fn->memory.size = sizeof(*fn->closure);
         fn->autorelease = true;
 
     } else {
@@ -298,12 +296,12 @@ function_release(VALUE self)
 
     Data_Get_Struct(self, Function, fn);
 
-    if (fn->ffiClosure == NULL) {
+    if (fn->closure == NULL) {
         rb_raise(rb_eRuntimeError, "cannot free function which was not allocated");
     }
     
-    ffi_closure_free(fn->ffiClosure);
-    fn->ffiClosure = NULL;
+    rbffi_Closure_Free(fn->closure);
+    fn->closure = NULL;
     
     return self;
 }
@@ -311,7 +309,8 @@ function_release(VALUE self)
 static void
 callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
-    Function* fn = (Function *) user_data;
+    Closure* closure = (Closure *) user_data;
+    Function* fn = (Function *) closure->info;
     FunctionType *cbInfo = fn->info;
     VALUE* rbParams;
     VALUE rbReturnValue;
@@ -431,6 +430,22 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
             *((ffi_arg *) retval) = 0;
             break;
     }
+}
+
+
+static bool
+callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize)
+{
+    FunctionType* fnInfo = (FunctionType *) ctx;
+    ffi_status ffiStatus;
+
+    ffiStatus = ffi_prep_closure(code, &fnInfo->ffi_cif, callback_invoke, closure);
+    if (ffiStatus != FFI_OK) {
+        snprintf(errmsg, errmsgsize, "ffi_prep_closure failed.  status=%#x", ffiStatus);
+        return false;
+    }
+
+    return true;
 }
 
 
