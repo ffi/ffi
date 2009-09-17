@@ -1,5 +1,4 @@
-require 'benchmark'
-require 'ffi'
+require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 
 module Posix
   extend FFI::Library
@@ -9,7 +8,7 @@ class Timeval < FFI::Struct
   layout :tv_sec, :ulong, :tv_nsec, :ulong
 end
 
-iter = 100_000
+iter = ITER
 puts "Benchmark FFI gettimeofday(2) (nil, nil) performance, #{iter}x"
 
 10.times {
@@ -23,15 +22,15 @@ puts "Benchmark FFI gettimeofday(2) (Timeval.alloc_out, nil) performance, #{iter
     iter.times { Posix.gettimeofday(Timeval.alloc_out, nil) }
   }
 }
-puts "Benchmark FFI gettimeofday(2) (Timeval.new(MemoryPointer.new), nil) performance, #{iter}x"
+puts "Benchmark FFI gettimeofday(2) (Timeval.new(FFI::MemoryPointer.new), nil) performance, #{iter}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { Posix.gettimeofday(Timeval.new(MemoryPointer.new(Timeval)), nil) }
+    iter.times { Posix.gettimeofday(Timeval.new(FFI::MemoryPointer.new(Timeval)), nil) }
   }
 }
 puts "Benchmark FFI gettimeofday(2) (pre allocated pointer, nil) performance, #{iter}x"
 10.times {
-  t = Timeval.new MemoryPointer.new(Timeval)
+  t = Timeval.new FFI::MemoryPointer.new(Timeval)
   puts Benchmark.measure {
     iter.times { Posix.gettimeofday(t, nil) }
   }

@@ -17,7 +17,7 @@ unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
       extend DL::Importable
     end
     dlload LIBTEST_PATH
-    extern "void bench_s32s32s32_v(int)"
+    extern "void bench_s32s32s32_v(int, int, int)"
   end
 end
 
