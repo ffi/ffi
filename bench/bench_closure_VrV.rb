@@ -3,7 +3,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 module LibTest
   extend FFI::Library
   ffi_lib LIBTEST_PATH
-  callback :closureVrV, [ :void ], :void
+  callback :closureVrV, [ ], :void
   attach_function :ffi_bench, :testClosureVrV, [ :closureVrV ], :void
   def self.rb_bench(&block); nil; end
 end
