@@ -83,6 +83,7 @@
         <itemPath>spec/ffi/pointer_spec.rb</itemPath>
         <itemPath>spec/ffi/spec_helper.rb</itemPath>
         <itemPath>spec/ffi/string_spec.rb</itemPath>
+        <itemPath>spec/ffi/struct_callback_spec.rb</itemPath>
         <itemPath>spec/ffi/struct_spec.rb</itemPath>
         <itemPath>spec/ffi/typedef_spec.rb</itemPath>
         <itemPath>spec/ffi/union_spec.rb</itemPath>
