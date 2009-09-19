@@ -21,16 +21,36 @@ unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
   end
 end
 
-puts "Benchmark [ ], :void closure block performance, #{ITER}x calls"
+puts "Benchmark [ ], :void closure block, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
     ITER.times { LibTest.ffi_bench(1, 2, 3) { } }
   }
 }
 
-puts "Benchmark [ ], :void pre-allocated function performance, #{ITER}x calls"
+class Foo
+  def call(a, b, c); nil; end
+end
+
+puts "Benchmark [ ], :void closure callable, #{ITER}x calls"
+10.times {
+  puts Benchmark.measure {
+    ITER.times { LibTest.ffi_bench(Foo.new, 1, 2, 3) }
+  }
+}
+
+
+puts "Benchmark [ ], :void pre-allocated function with block, #{ITER}x calls"
 10.times {
   fn = FFI::Function.new(:void, [ :int, :int, :int ]) {}
+  puts Benchmark.measure {
+    ITER.times { LibTest.ffi_bench(fn, 1, 2, 3) }
+  }
+}
+
+puts "Benchmark [ ], :void pre-allocated function with callable, #{ITER}x calls"
+10.times {
+  fn = FFI::Function.new(:void, [ :int, :int, :int ], Foo.new)
   puts Benchmark.measure {
     ITER.times { LibTest.ffi_bench(fn, 1, 2, 3) }
   }
