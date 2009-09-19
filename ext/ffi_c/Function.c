@@ -70,7 +70,7 @@ static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg,
 
 VALUE rbffi_FunctionClass = Qnil;
 
-static ID id_call = 0, id_cbtable = 0;
+static ID id_call = 0, id_cbtable = 0, id_cb_ref = 0;
 
 static VALUE
 function_allocate(VALUE klass)
@@ -160,21 +160,35 @@ rbffi_Function_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
 VALUE
 rbffi_Function_ForProc(VALUE rbFunctionInfo, VALUE proc)
 {
-    VALUE callback;
-    VALUE cbTable = RTEST(rb_ivar_defined(proc, id_cbtable)) ? rb_ivar_get(proc, id_cbtable) : Qnil;
+    VALUE callback, cbref, cbTable;
+    Function* fp;
 
-    if (cbTable == Qnil) {
-        cbTable = rb_hash_new();
-        rb_ivar_set(proc, id_cbtable, cbTable);
+    cbref = RTEST(rb_ivar_defined(proc, id_cb_ref)) ? rb_ivar_get(proc, id_cb_ref) : Qnil;
+    /* If the first callback reference has the same function function signature, use it */
+    if (cbref != Qnil && CLASS_OF(cbref) == rbffi_FunctionClass) {
+        Data_Get_Struct(cbref, Function, fp);
+        if (fp->rbFunctionInfo == rbFunctionInfo) {
+            return cbref;
+        }
     }
-
-    callback = rb_hash_aref(cbTable, rbFunctionInfo);
-    if (callback != Qnil) {
+    
+    cbTable = RTEST(rb_ivar_defined(proc, id_cbtable)) ? rb_ivar_get(proc, id_cbtable) : Qnil;
+    if (cbTable != Qnil && (callback = rb_hash_aref(cbTable, rbFunctionInfo)) != Qnil) {
         return callback;
     }
-
+    
+    /* No existing function for the proc with that signature, create a new one and cache it */
     callback = rbffi_Function_NewInstance(rbFunctionInfo, proc);
-    rb_hash_aset(cbTable, rbFunctionInfo, callback);
+    if (cbref == Qnil) {
+        /* If there is no other cb already cached for this proc, we can use the ivar slot */
+        rb_ivar_set(proc, id_cb_ref, callback);
+    } else {
+        /* The proc instance has been used as more than one type of callback, store extras in a hash */
+        cbTable = rb_hash_new();
+        rb_ivar_set(proc, id_cbtable, cbTable);
+        rb_hash_aset(cbTable, rbFunctionInfo, callback);
+    }
+
     return callback;
 }
 
@@ -459,5 +473,6 @@ rbffi_Function_Init(VALUE moduleFFI)
 
     id_call = rb_intern("call");
     id_cbtable = rb_intern("@__ffi_callback_table__");
+    id_cb_ref = rb_intern("@__ffi_callback__");
 }
 
