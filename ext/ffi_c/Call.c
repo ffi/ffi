@@ -89,6 +89,7 @@ static VALUE rbffi_InvokeLLLrL(int argc, VALUE* argv, void* function, FunctionTy
 static VALUE rbffi_InvokeLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
 static VALUE rbffi_InvokeLLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
 static VALUE rbffi_InvokeLLLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+static VALUE rbffi_InvokeLongParams(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
 #endif
 
 
@@ -460,6 +461,8 @@ rbffi_GetInvoker(FunctionType *fnInfo)
             case NATIVE_BUFFER_IN:
             case NATIVE_BUFFER_OUT:
             case NATIVE_BUFFER_INOUT:
+            case NATIVE_FUNCTION:
+            case NATIVE_CALLBACK:
                 break;
             default:
                 fastLong = false;
@@ -467,7 +470,7 @@ rbffi_GetInvoker(FunctionType *fnInfo)
         }
     }
 
-    if (fastLong) {
+    if (fastLong && fnInfo->callbackCount < 1) {
         switch (fnInfo->parameterCount) {
             case 0:
                 return rbffi_InvokeVrL;
@@ -487,6 +490,9 @@ rbffi_GetInvoker(FunctionType *fnInfo)
             default:
                 break;
         }
+
+    } else if (fastLong && fnInfo->parameterCount <= 6) {
+        return rbffi_InvokeLongParams;
     }
 #endif
 
@@ -752,6 +758,66 @@ rbffi_InvokeLLLLLLrL(int argc, VALUE* argv, void* function, FunctionType* fnInfo
     return LCALL(fnInfo, argc, argv, (L (*)(L, L, L, L, L, L)) function,
         LARG(fnInfo, argv, 0), LARG(fnInfo, argv, 1), LARG(fnInfo, argv, 2),
         LARG(fnInfo, argv, 3), LARG(fnInfo, argv, 4), LARG(fnInfo, argv, 5));
+}
+
+static VALUE
+rbffi_InvokeLongParams(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
+{
+    void **ffiValues = NULL;
+    FFIStorage* params = NULL;
+    L result;
+
+    if (fnInfo->parameterCount > 0) {
+        ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
+        params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
+
+        rbffi_SetupCallParams(argc, argv,
+            fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
+            fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
+
+        switch (fnInfo->parameterCount) {
+            case 0:
+                result = ((L(*)(void)) function)();
+                break;
+
+            case 1:
+                result = ((L(*)(L)) function)(*(L *) ffiValues[0]);
+                break;
+
+            case 2:
+                result = ((L(*)(L, L)) function)(*(L *) ffiValues[0],
+                        *(L *) ffiValues[1]);
+                break;
+
+            case 3:
+                result = ((L(*)(L, L, L)) function)(*(L *) ffiValues[0],
+                        *(L *) ffiValues[1], *(L *) ffiValues[2]);
+                break;
+
+            case 4:
+                result = ((L(*)(L, L, L, L)) function)(*(L *) ffiValues[0],
+                        *(L *) ffiValues[1], *(L *) ffiValues[2], *(L *) ffiValues[3]);
+                break;
+
+            case 5:
+                result = ((L(*)(L, L, L, L, L)) function)(*(L *) ffiValues[0],
+                        *(L *) ffiValues[1], *(L *) ffiValues[2], *(L *) ffiValues[3],
+                        *(L *) ffiValues[4]);
+                break;
+
+            case 6:
+                result = ((L(*)(L, L, L, L, L, L)) function)(*(L *) ffiValues[0],
+                        *(L *) ffiValues[1], *(L *) ffiValues[2], *(L *) ffiValues[3],
+                        *(L *) ffiValues[4], *(L *) ffiValues[5]);
+                break;
+
+            default:
+                rb_raise(rb_eRuntimeError, "BUG: should not reach this point");
+                return Qnil;
+        }
+    }
+
+    return returnL(fnInfo, &result);
 }
 
 #endif /* BYPASS_FFI */
