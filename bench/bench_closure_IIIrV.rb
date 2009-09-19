@@ -4,8 +4,8 @@ module LibTest
   extend FFI::Library
   ffi_lib LIBTEST_PATH
   callback :closureIIIrV, [ :int, :int, :int ], :void
-  attach_function :ffi_bench, :testClosureVrV, [ :closureVrV ], :void
-  def self.rb_bench(&block); nil; end
+  attach_function :ffi_bench, :testClosureIIIrV, [ :closureIIIrV, :int, :int, :int ], :void
+  def self.rb_bench(&block); yield; end
 end
 unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
   require 'dl'
@@ -24,15 +24,15 @@ end
 puts "Benchmark [ ], :void closure block performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
-    ITER.times { LibTest.ffi_bench { } }
+    ITER.times { LibTest.ffi_bench(1, 2, 3) { } }
   }
 }
 
-puts "Benchmark [ ], :void pre-allocated closure performance, #{ITER}x calls"
+puts "Benchmark [ ], :void pre-allocated function performance, #{ITER}x calls"
 10.times {
-  fn = FFI::Function.new(:void, []) {}
+  fn = FFI::Function.new(:void, [ :int, :int, :int ]) {}
   puts Benchmark.measure {
-    ITER.times { LibTest.ffi_bench fn }
+    ITER.times { LibTest.ffi_bench(fn, 1, 2, 3) }
   }
 }
 
