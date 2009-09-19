@@ -5,7 +5,7 @@ module LibTest
   ffi_lib LIBTEST_PATH
   callback :closureVrV, [ ], :void
   attach_function :ffi_bench, :testClosureVrV, [ :closureVrV ], :void
-  def self.rb_bench(&block); nil; end
+  def self.rb_bench(&block); yield; end
 end
 unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
   require 'dl'
@@ -21,13 +21,28 @@ unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
   end
 end
 
-puts "Benchmark [ ], :int performance, #{ITER}x calls"
+puts "Benchmark [ ], :void closure block performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
     ITER.times { LibTest.ffi_bench { } }
   }
 }
 
+puts "Benchmark [ ], :void pre-allocated function pointer performance, #{ITER}x calls"
+10.times {
+  fn = FFI::Function.new(:void, []) {}
+  puts Benchmark.measure {
+    ITER.times { LibTest.ffi_bench fn }
+  }
+}
+
+puts "Benchmark [ ], :void pre-allocated closure performance, #{ITER}x calls"
+10.times {
+  proc = lambda {}
+  puts Benchmark.measure {
+    ITER.times { LibTest.ffi_bench proc }
+  }
+}
 
 #unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
 #puts "Benchmark DL void bench() performance, #{ITER}x calls"
