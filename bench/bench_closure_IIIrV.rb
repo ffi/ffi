@@ -64,7 +64,7 @@ puts "Benchmark [ ], :void pre-allocated proc, #{ITER}x calls"
   }
 }
 
-puts "Benchmark [ ], :void closure callable, #{ITER}x calls"
+puts "Benchmark [ ], :void pre-allocated callable, #{ITER}x calls"
 10.times {
   proc = Foo.new
   puts Benchmark.measure {
