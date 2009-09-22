@@ -263,7 +263,7 @@ function_attach(VALUE self, VALUE module, VALUE name)
     snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
     rb_cv_set(module, var, self);
 
-    rb_define_module_function(module, StringValueCStr(name),
+    rb_define_singleton_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
 
     

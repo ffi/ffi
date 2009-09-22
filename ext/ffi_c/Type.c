@@ -265,7 +265,7 @@ rbffi_Type_Init(VALUE moduleFFI)
     rb_define_method(classType, "initialize", type_initialize, 1);
     rb_define_method(classType, "size", type_size, 0);
     rb_define_method(classType, "alignment", type_alignment, 0);
-    rb_define_method(classBuiltinType, "inspect", type_inspect, 0);
+    rb_define_method(classType, "inspect", type_inspect, 0);
 
     // Make Type::Builtin non-allocatable
     rb_undef_method(CLASS_OF(classBuiltinType), "new");

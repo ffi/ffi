@@ -162,7 +162,7 @@ ffi_invoke(ffi_cif* cif, void* function, Type* returnType, void** ffiValues,
 }
 
 static VALUE
-variadic_call(VALUE self, VALUE parameterTypes, VALUE parameterValues)
+variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 {
     VariadicInvoker* invoker;
     FFIStorage* params;
@@ -254,7 +254,6 @@ rbffi_Variadic_Init(VALUE moduleFFI)
     rb_define_alloc_func(classVariadicInvoker, variadic_allocate);
 
     rb_define_method(classVariadicInvoker, "initialize", variadic_initialize, 4);
-    rb_define_method(classVariadicInvoker, "invoke", variadic_call, 2);
-    rb_define_alias(classVariadicInvoker, "call", "invoke");
+    rb_define_method(classVariadicInvoker, "invoke", variadic_invoke, 2);
 }
 
