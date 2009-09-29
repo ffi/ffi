@@ -17,8 +17,9 @@ module FFI
     when /win|mingw/
       "windows"
     else
-      raise FFI::PlatformError, "Unknown operating system: #{Config::CONFIG['host_os']}"
+      Config::CONFIG['host_os'].downcase
     end
+
     ARCH = case CPU.downcase
     when /amd64|x86_64/
       "x86_64"
@@ -27,8 +28,9 @@ module FFI
     when /ppc|powerpc/
       "powerpc"
     else
-      raise FFI::PlatformError, "Unknown cpu architecture: #{ARCH_}"
+      Config::CONFIG['host_cpu']
     end
+
     private
     def self.is_os(os)
       OS == os
@@ -43,6 +45,7 @@ module FFI
     IS_BSD = IS_MAC || IS_FREEBSD || IS_OPENBSD
     CONF_DIR = File.dirname(__FILE__)
     public
+
     LIBC = if IS_WINDOWS
       "msvcrt"
     elsif IS_LINUX
@@ -50,26 +53,33 @@ module FFI
     else
       "c"
     end
+
     LIBPREFIX = IS_WINDOWS ? '' : 'lib'
+
     LIBSUFFIX = case OS
     when /darwin/
       'dylib'
     when /linux|bsd|solaris/
       'so'
-    when /win/
+    when /windows/
       'dll'
     else
-      raise PlatformError, "Cannot determine shared library extension for #{OS}"
+      # Punt and just assume a sane unix (i.e. anything but AIX)
+      'so'
     end
+
     def self.bsd?
       IS_BSD
     end
+
     def self.windows?
       IS_WINDOWS
     end
+
     def self.mac?
       IS_MAC
     end
+
     def self.unix?
       !IS_WINDOWS
     end
