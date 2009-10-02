@@ -3,7 +3,6 @@
 * Major improvements
   * New Function class
   * Structs can be passed and returned by value
-
 * Minor improvements
   * Add support for MacOSX Snow Leopard
   * Implement a custom trampoline for x86_64, resulting in roughly 30% speedup
@@ -17,10 +16,8 @@
   * Callback fields in structs can now be both read and written
   * Add a bunch of new benchmarks
   * Lots of refactoring
-
 * Experimental features
   * blocking functions (i.e. native code that blocks the thread) support
-
 * Bug fixes
   * Fix RUBY-FFI_43 (rake gem dependency)
 
