@@ -26,3 +26,4 @@ void rbffi_Closure_Free(Closure *);
 void* rbffi_Closure_GetCodeAddress(Closure *);
 
 #endif /* RUBYFFI_CLOSUREPOOL_H */
+
