@@ -18,7 +18,7 @@ spec = Gem::Specification.new do |s|
   s.extensions = %w(ext/ffi_c/extconf.rb gen/Rakefile)
   s.require_path = 'lib'
   s.files = PROJ.gem.files
-  s.add_dependency PROJ.gem.dependencies
+  s.add_dependency *PROJ.gem.dependencies.flatten
 end
 
 Rake::ExtensionTask.new('ffi_c', spec) do |ext|

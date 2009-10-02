@@ -61,10 +61,12 @@ PROJ.rdoc.opts << '-x' << 'ext'
 PROJ.ruby_opts = []
 PROJ.ruby_opts << '-I' << BUILD_EXT_DIR unless RUBY_PLATFORM == "java"
 
-#RSpec
+# RSpec
 PROJ.spec.opts << '--color' << '-fs'
 
-depend_on 'rake'
+# Dependencies
+
+depend_on 'rake', '>=0.8.7'
 
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
