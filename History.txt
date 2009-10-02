@@ -1,13 +1,21 @@
-== 0.5.0 /
+== 0.5.0 / 2009-10-02
 
 * Major improvements
   * New Function class
   * Structs can be passed and returned by value
 
 * Minor improvements
+  * Add support for MacOSX Snow Leopard
+  * Implement a custom trampoline for x86_64, resulting in roughly 30% speedup
+  * Better introspection in structs:
+    * Add StructLayout::Field#type, size, offset, alignment and name 
+      methods
+    * Add StructLayout#fields which returns an array of 
+      StructLayout::Field objects
   * Add automagic deducing of library name from module name. 
     Idea and prototype implementation from Matt Hulse
   * Callback fields in structs can now be both read and written
+  * Add a bunch of new benchmarks
   * Lots of refactoring
 
 * Experimental features
