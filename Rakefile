@@ -23,8 +23,52 @@ rescue LoadError
   end
 end
 
-LIBEXT = Config::CONFIG['host_os'].downcase =~ /darwin/ ? "dylib" : "so"
-GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd/ ? "gmake" : "make"
+LIBEXT = case Config::CONFIG['host_os'].downcase
+  when /darwin/
+    "dylib"
+  when /mswin|mingw/
+    "dll"
+  else
+    Config::CONFIG['DLEXT']
+  end
+
+CPU = case Config::CONFIG['host_cpu'].downcase
+  when /i[3456]86/
+    # Darwin always reports i686, even when running in 64bit mode
+    if Config::CONFIG['host_os'] =~ /darwin/ && 0xfee1deadbeef.is_a?(Fixnum)
+      "x86_64"
+    else
+      "i386"
+    end
+  when /amd64|x86_64/
+    "x86_64"
+  when /ppc|powerpc/
+    "powerpc"
+  else
+    Config::CONFIG['host_cpu']
+  end
+
+OS = case Config::CONFIG['host_os'].downcase
+  when /linux/
+    "linux"
+  when /darwin/
+    "darwin"
+  when /freebsd/
+    "freebsd"
+  when /openbsd/
+    "openbsd"
+  when /sunos|solaris/
+    "solaris"
+  when /mswin|mingw/
+    "win32"
+  else
+    Config::CONFIG['host_os'].downcase
+  end
+
+CC=ENV['CC'] || Config::CONFIG['CC'] || "gcc"
+
+GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd|solaris/ ? "gmake" : "make"
+
 LIBTEST = "build/libtest.#{LIBEXT}"
 BUILD_DIR = "build"
 BUILD_EXT_DIR = File.join(BUILD_DIR, "#{Config::CONFIG['arch']}", 'ffi_c', RUBY_VERSION)
@@ -112,7 +156,7 @@ end
 
 desc "Build the native test lib"
 task "build/libtest.#{LIBEXT}" do
-  sh %{#{GMAKE} -f libtest/GNUmakefile CPU=#{Config::CONFIG['host_cpu']}}
+  sh %{#{GMAKE} -f libtest/GNUmakefile CPU=#{CPU} OS=#{OS} CC="#{CC}" }
 end
 
 

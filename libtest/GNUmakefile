@@ -1,10 +1,18 @@
 # -*- makefile -*-
-BUILD_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
-OS ?= $(BUILD_OS)
-CPU ?= $(shell uname -m)
-override CPU := $(shell echo $(CPU) | sed -e 's/i[345678]86/i386/')
+
+ifeq ($(OS),)
+  BUILD_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+  OS := $(BUILD_OS)
+endif
+
+ifeq ($(CPU),)
+  CPU := $(shell uname -m | sed -e 's/i[345678]86/i386/')
+endif
+
 MODEL = 32 # Default to 32bit compiles
+
 PLATFORM = $(CPU)-$(OS)
+
 ifeq ($(OS), sunos)
   OS = solaris
 endif
@@ -14,14 +22,12 @@ BUILD_DIR ?= build
 TEST_BUILD_DIR = $(BUILD_DIR)/libtest
 # Set defaults to unix (linux/solaris/bsd)
 PREFIX = lib
-LIBEXT = so
+LIBEXT ?= so
 LIBNAME = $(PREFIX)test.$(LIBEXT)
 
 export MACOSX_DEPLOYMENT_TARGET=10.4
 
-ifeq ($(OS),linux)
-CCACHE := $(shell /usr/bin/which ccache)
-endif
+CCACHE := $(strip $(realpath $(shell which ccache 2> /dev/null)))
 
 TEST_SRCS = $(wildcard $(SRC_DIR)/*.c)
 TEST_OBJS := $(patsubst $(SRC_DIR)/%.c, $(TEST_BUILD_DIR)/%.o, $(TEST_SRCS))
@@ -39,7 +45,7 @@ LDFLAGS += $(SOFLAGS)
 IFLAGS = -I"$(BUILD_DIR)"
 CFLAGS = $(OFLAGS) $(WFLAGS) $(IFLAGS) $(PICFLAGS) -D_REENTRANT
 
-ifeq ($(OS), win32)
+ifneq ($(strip $(findstring $(OS), win32, mingw, cygwin)),)
   # For cygwin => win32-native builds, strip out cygwin deps
   ifneq ($(findstring cygwin, $(BUILD_OS)),)
     CC += -mno-cygwin -mwin32
@@ -48,6 +54,7 @@ ifeq ($(OS), win32)
   PICFLAGS=
   LIBEXT=dll
 endif
+
 ifeq ($(OS), darwin)
   ARCHFLAGS = -arch ppc
   ifeq ($(CPU),i386)
@@ -55,11 +62,12 @@ ifeq ($(OS), darwin)
   endif
   CFLAGS += $(ARCHFLAGS) -DTARGET_RT_MAC_CFM=0
   CFLAGS += -fno-common
-  LDFLAGS = $(ARCHFLAGS) -dynamiclib -Wl,-syslibroot,$(SDKROOT) -mmacosx-version-min=10.4
+  MACSDK = /Developer/SDKs/MacOSX10.4u.sdk
+  LDFLAGS = $(ARCHFLAGS) -dynamiclib -Wl,-syslibroot,$(MACSDK) -mmacosx-version-min=10.4
   # link against the universal libraries on ppc machines
-  LDFLAGS += -L/Developer/SDKs/MacOSX10.4u.sdk/usr/lib
+  LDFLAGS += -L$(MACSDK)/usr/lib
   LIBEXT = dylib
-  FFI_CFLAGS += -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+  FFI_CFLAGS += -isysroot $(MACSDK)
   PICFLAGS =
   SOFLAGS =
 endif
@@ -86,16 +94,6 @@ ifneq ($(findstring bsd, $(OS)),)
   LDFLAGS += -pthread
 endif
 
-ifneq ($(findstring cygwin, $(OS)),)
-  CFLAGS += -mno-cygwin -mwin32
-  LIBEXT = dll
-#  PREFIX =
-  PICFLAGS=
-endif
-ifneq ($(findstring mingw, $(OS)),)
-  LIBEXT = dll
-  PICFLAGS=
-endif
 ifeq ($(CPU), sparcv9)
   MODEL = 64
 endif
