@@ -146,7 +146,7 @@ task :install => 'gem:install'
 desc "Clean all built files"
 task :distclean => :clobber do
   FileUtils.rm_rf('build')
-  FileUtils.rm_rf(Dir['lib/**/ffi_c.so'])
+  FileUtils.rm_rf(Dir["lib/**/ffi_c.#{Config::CONFIG['DLEXT']}"])
   FileUtils.rm_rf('lib/1.8')
   FileUtils.rm_rf('lib/1.9')
   FileUtils.rm_rf('conftest.dSYM')
@@ -156,7 +156,7 @@ end
 
 desc "Build the native test lib"
 task "build/libtest.#{LIBEXT}" do
-  sh %{#{GMAKE} -f libtest/GNUmakefile CPU=#{CPU} OS=#{OS} CC="#{CC}" }
+  sh %{#{GMAKE} -f libtest/GNUmakefile CPU=#{CPU} OS=#{OS} }
 end
 
 

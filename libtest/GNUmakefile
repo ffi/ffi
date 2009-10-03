@@ -53,11 +53,12 @@ ifneq ($(strip $(findstring $(OS), win32, mingw, cygwin)),)
   endif
   PICFLAGS=
   LIBEXT=dll
+  CC ?= gcc
 endif
 
 ifeq ($(OS), darwin)
   ARCHFLAGS = -arch ppc
-  ifeq ($(CPU),i386)
+  ifneq ($(findstring $(CPU),i386 x86_64),)
     ARCHFLAGS += -arch i386 -arch x86_64
   endif
   CFLAGS += $(ARCHFLAGS) -DTARGET_RT_MAC_CFM=0
