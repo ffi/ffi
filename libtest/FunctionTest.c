@@ -27,6 +27,11 @@
 
 #include <unistd.h>
 
+#ifdef __WIN32__
+#include <windows.h>
+#define sleep(x) Sleep(x)
+#endif
+
 int testAdd(int a, int b)
 {
     return a + b;

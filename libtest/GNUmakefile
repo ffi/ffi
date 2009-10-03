@@ -31,7 +31,7 @@ CCACHE := $(strip $(realpath $(shell which ccache 2> /dev/null)))
 
 TEST_SRCS = $(wildcard $(SRC_DIR)/*.c)
 TEST_OBJS := $(patsubst $(SRC_DIR)/%.c, $(TEST_BUILD_DIR)/%.o, $(TEST_SRCS))
-	
+
 #
 # Compiler/linker flags from:
 #   http://weblogs.java.net/blog/kellyohair/archive/2006/01/compilation_of_1.html
@@ -53,7 +53,7 @@ ifneq ($(strip $(findstring $(OS), win32, mingw, cygwin)),)
   endif
   PICFLAGS=
   LIBEXT=dll
-  CC ?= gcc
+  CC = gcc
 endif
 
 ifeq ($(OS), darwin)

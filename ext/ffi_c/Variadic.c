@@ -104,7 +104,8 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     invoker->function = rbffi_AbstractMemory_Cast(rbFunction, rbffi_PointerClass)->address;
 
 #if defined(_WIN32) || defined(__WIN32__)
-    invoker->abi = (RTEST(convention) && strcmp(StringValueCStr(convention), "stdcall") == 0)
+    VALUE rbConventionStr = rb_funcall2(convention, rb_intern("to_s"), 0, NULL);
+    invoker->abi = (RTEST(convention) && strcmp(StringValueCStr(rbConventionStr), "stdcall") == 0)
             ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else
     invoker->abi = FFI_DEFAULT_ABI;
