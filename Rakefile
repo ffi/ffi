@@ -106,6 +106,7 @@ PROJ.ruby_opts = []
 PROJ.ruby_opts << '-I' << BUILD_EXT_DIR unless RUBY_PLATFORM == "java"
 
 # RSpec
+PROJ.spec.files.exclude /rbx/
 PROJ.spec.opts << '--color' << '-fs'
 
 # Dependencies
