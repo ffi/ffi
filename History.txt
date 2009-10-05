@@ -1,4 +1,4 @@
-== 0.5.0 / 2009-10-02
+== 0.5.0 / 2009-10-06
 
 * Major improvements
   * New Function class
@@ -8,6 +8,7 @@
   * Callbacks are now approximately 100% faster on x86_64
 * Minor improvements
   * Add support for MacOSX Snow Leopard
+  * Improve support for Windows and build fat-binaries
   * Better introspection in structs:
     * Add StructLayout::Field#type, size, offset, alignment and name 
       methods
