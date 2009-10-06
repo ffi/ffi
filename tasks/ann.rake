@@ -60,7 +60,7 @@ namespace :ann do
       ann.email[key]
     end
 
-    params[3] = PROJ.email if params[3].nil?
+    params[3] = (PROJ.ann.email[:from] || PROJ.email) if params[3].nil?
 
     if params[4].nil?
       STDOUT.write "Please enter your e-mail password (#{params[3]}): "

@@ -86,7 +86,7 @@ PROJ.readme_file = 'README.rdoc'
 PROJ.ann.paragraphs << 'FEATURES' << 'SYNOPSIS' << 'REQUIREMENTS' << 'DOWNLOAD/INSTALL' << 'CREDITS' << 'LICENSE'
 
 PROJ.ann.email[:from] = 'andrea.fazzi@alcacoop.it'
-PROJ.ann.email[:to] << 'ruby-ffi@groups.google.com'
+PROJ.ann.email[:to] = ['ruby-ffi@googlegroups.com']
 PROJ.ann.email[:server] = 'smtp.gmail.com'
 
 # Gem specifications
