@@ -2,11 +2,6 @@ spec = Gem::Specification.new do |s|
   s.name = PROJ.name
   s.version = PROJ.version
   s.platform = Gem::Platform::RUBY
-  if RUBY_VERSION =~ /1\.8/
-    s.required_ruby_version = '~> 1.8.4'
-  else
-    s.required_ruby_version = '~> 1.9.1'
-  end
   s.has_rdoc = true
   s.extra_rdoc_files = ["README.rdoc", "LICENSE"]
   s.summary = PROJ.summary
