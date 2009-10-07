@@ -156,6 +156,7 @@ get_pointer_value(VALUE value)
         return MEMORY_PTR(rb_funcall2(value, id_to_ptr, 0, NULL));
     } else {
         rb_raise(rb_eArgError, "value is not a pointer");
+        return NULL;
     }
 }
 
@@ -253,6 +254,7 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
     
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
+        return Qnil;
     }
 
     memcpy(ptr->address + off, RSTRING_PTR(str), len);
@@ -290,10 +292,12 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     idx = nargs > 2 ? NUM2LONG(rbIndex) : 0;
     if (idx < 0) {
         rb_raise(rb_eRangeError, "index canot be less than zero");
+        return Qnil;
     }
     len = nargs > 3 ? NUM2LONG(rbLength) : (RSTRING_LEN(str) - idx);
     if ((idx + len) > RSTRING_LEN(str)) {
         rb_raise(rb_eRangeError, "index+length is greater than size of string");
+        return Qnil;
     }
 
     checkWrite(ptr);
@@ -301,6 +305,7 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
 
     if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
         rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
+        return Qnil;
     }
     memcpy(ptr->address + off, RSTRING_PTR(str) + idx, len);
 

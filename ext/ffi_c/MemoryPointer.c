@@ -98,6 +98,7 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
     p->storage = xmalloc(msize + 7);
     if (p->storage == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", msize);
+        return Qnil;
     }
     p->autorelease = true;
     p->memory.typeSize = size;

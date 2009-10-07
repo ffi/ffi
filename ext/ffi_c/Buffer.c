@@ -87,6 +87,7 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     p->storage = xmalloc(p->memory.size + 7);
     if (p->storage == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", p->memory.size);
+        return Qnil;
     }
 
     /* ensure the memory is aligned on at least a 8 byte boundary */
