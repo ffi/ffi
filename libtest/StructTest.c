@@ -30,6 +30,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 
 typedef char s8;
 typedef short s16;
@@ -215,3 +216,26 @@ struct_s8s32_s64_ret_s64(struct s8s32 s, long long s64)
 {
     return s64;
 }
+
+// Pass a char *, copy into buffer length struct
+struct struct_string {
+    char *bytes;
+    int len;
+};
+
+struct struct_string
+struct_varargs_ret_struct_string(int len, ...)
+{
+    struct struct_string ss;
+    va_list vl;
+
+    va_start(vl, len);
+
+    ss.len = len;
+    ss.bytes = va_arg(vl, char *);
+
+    va_end(vl);
+
+    return ss;
+}
+
