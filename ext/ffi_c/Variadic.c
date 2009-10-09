@@ -145,28 +145,12 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     return retval;
 }
 
-
-static inline VALUE
-ffi_invoke(ffi_cif* cif, void* function, Type* returnType, void** ffiValues,
-    VALUE rbReturnType, VALUE rbEnums)
-{
-    FFIStorage retval;
-
-#ifdef USE_RAW
-    ffi_raw_call(cif, function, &retval, (ffi_raw *) ffiValues[0]);
-#else
-    ffi_call(cif, function, &retval, ffiValues);
-#endif
-    rbffi_save_errno();
-
-    return rbffi_NativeValue_ToRuby(returnType, rbReturnType, &retval, rbEnums);
-}
-
 static VALUE
 variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 {
     VariadicInvoker* invoker;
     FFIStorage* params;
+    void* retval;
     ffi_cif cif;
     void** ffiValues;
     ffi_type** ffiParamTypes;
@@ -186,6 +170,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     params = ALLOCA_N(FFIStorage, paramCount);
     ffiValues = ALLOCA_N(void*, paramCount);
     argv = ALLOCA_N(VALUE, paramCount);
+    retval = alloca(MAX(invoker->returnType->ffiType->size, FFI_SIZEOF_ARG));
 
     for (i = 0; i < paramCount; ++i) {
         VALUE entry = rb_ary_entry(parameterTypes, i);
@@ -241,8 +226,11 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     rbffi_SetupCallParams(paramCount, argv, -1, paramTypes, params,
         ffiValues, NULL, 0, invoker->rbEnums);
 
-    return ffi_invoke(&cif, invoker->function, invoker->returnType,
-        ffiValues, invoker->rbReturnType, invoker->rbEnums);
+    ffi_call(&cif, invoker->function, retval, ffiValues);
+
+    rbffi_save_errno();
+
+    return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, retval, invoker->rbEnums);
 }
 
 
