@@ -57,15 +57,17 @@ extern "C" {
 #endif
 
 /* Specify which architecture libffi is configured for. */
-#ifndef @TARGET@
 #define @TARGET@
-#endif
 
 /* ---- System configuration information --------------------------------- */
 
 #include <ffitarget.h>
 
 #ifndef LIBFFI_ASM
+
+#ifdef _MSC_VER
+#define __attribute__(X)
+#endif
 
 #include <stddef.h>
 #include <limits.h>

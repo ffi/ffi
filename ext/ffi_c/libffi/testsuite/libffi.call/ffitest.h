@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <ffi.h>
 #include "fficonfig.h"
 
@@ -41,6 +43,15 @@
 # endif
 # define USING_MMAP
 
+#endif
+
+/* MinGW kludge.  */
+#ifdef WIN64
+#define PRIdLL "PRId64"
+#define PRIuLL "PRIu64"
+#else
+#define PRIdLL "lld"
+#define PRIuLL "llu"
 #endif
 
 #ifdef USING_MMAP
