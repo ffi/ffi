@@ -78,7 +78,7 @@ PROJ.name = 'ffi'
 PROJ.authors = 'Wayne Meissner'
 PROJ.email = 'wmeissner@gmail.com'
 PROJ.url = 'http://wiki.github.com/ffi/ffi'
-PROJ.version = '0.5.0'
+PROJ.version = '0.6.0'
 PROJ.rubyforge.name = 'ffi'
 PROJ.readme_file = 'README.rdoc'
 
