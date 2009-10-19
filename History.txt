@@ -1,3 +1,7 @@
+== 0.5.1 / 2009-10-06
+* Bug fixes
+  * fixed up struct-by-value result variadic invokers
+
 == 0.5.0 / 2009-10-06
 
 * Major improvements
