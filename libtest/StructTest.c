@@ -228,11 +228,17 @@ struct_varargs_ret_struct_string(int len, ...)
 {
     struct struct_string ss;
     va_list vl;
+    char* cp = NULL;
 
     va_start(vl, len);
 
     ss.len = len;
     ss.bytes = va_arg(vl, char *);
+    if (ss.bytes != NULL) {
+        cp = malloc(strlen(ss.bytes) + 1);
+        strcpy(cp, ss.bytes);
+        ss.bytes = cp;
+    }
 
     va_end(vl);
 
