@@ -28,14 +28,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _INVOKE_H
-#define	_INVOKE_H
+#ifndef RBFFI_INVOKE_H
+#define	RBFFI_INVOKE_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#if defined(__i386__) && !defined(_WIN32) && !defined(__WIN32__)
+#if defined(__i386__) && defined(HAVE_RAW_API) && !defined(_WIN32) && !defined(__WIN32__)
 #  define USE_RAW
 #endif
 
@@ -82,5 +82,5 @@ extern int rbffi_GetSignedIntValue(VALUE value, int type, int minValue, int maxV
 }
 #endif
 
-#endif	/* _INVOKE_H */
+#endif	/* RBFFI_INVOKE_H */
 
