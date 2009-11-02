@@ -107,7 +107,7 @@ end
 
 describe "AutoPointer" do
   loop_count = 30
-  wiggle_room = 2 # GC rarely cleans up all objects. we can get most of them, and that's enough to determine if the basic functionality is working.
+  wiggle_room = 5 # GC rarely cleans up all objects. we can get most of them, and that's enough to determine if the basic functionality is working.
   magic = 0x12345678
 
   class AutoPointerTestHelper
