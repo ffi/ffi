@@ -40,10 +40,16 @@ CPU = case Config::CONFIG['host_cpu'].downcase
     else
       "i386"
     end
+
   when /amd64|x86_64/
     "x86_64"
+
+  when /ppc64|powerpc64/
+    "powerpc64"
+
   when /ppc|powerpc/
     "powerpc"
+
   else
     Config::CONFIG['host_cpu']
   end
