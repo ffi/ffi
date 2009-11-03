@@ -51,16 +51,22 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
           return INT2NUM((signed short) *(ffi_sarg *) ptr);
         case NATIVE_INT32:
           return INT2NUM((signed int) *(ffi_sarg *) ptr);
+        case NATIVE_LONG:
+            return LONG2NUM((signed long) *(ffi_sarg *) ptr);
+        case NATIVE_INT64:
+            return LL2NUM(*(signed long long *) ptr);
+
         case NATIVE_UINT8:
           return UINT2NUM((unsigned char) *(ffi_arg *) ptr);
         case NATIVE_UINT16:
           return UINT2NUM((unsigned short) *(ffi_arg *) ptr);
         case NATIVE_UINT32:
           return UINT2NUM((unsigned int) *(ffi_arg *) ptr);
-        case NATIVE_INT64:
-            return LL2NUM(*(signed long long *) ptr);
+        case NATIVE_ULONG:
+            return ULONG2NUM((unsigned long) *(ffi_arg *) ptr);
         case NATIVE_UINT64:
             return ULL2NUM(*(unsigned long long *) ptr);
+
         case NATIVE_FLOAT32:
             return rb_float_new(*(float *) ptr);
         case NATIVE_FLOAT64:

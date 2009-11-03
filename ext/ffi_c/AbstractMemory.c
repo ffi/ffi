@@ -137,6 +137,8 @@ NUM_OP(int32, int32_t, NUM2INT, INT2NUM);
 NUM_OP(uint32, uint32_t, NUM2UINT, UINT2NUM);
 NUM_OP(int64, int64_t, NUM2LL, LL2NUM);
 NUM_OP(uint64, uint64_t, NUM2ULL, ULL2NUM);
+NUM_OP(long, long, NUM2LONG, LONG2NUM);
+NUM_OP(ulong, unsigned long, NUM2ULONG, ULONG2NUM);
 NUM_OP(float32, float, NUM2DBL, rb_float_new);
 NUM_OP(float64, double, NUM2DBL, rb_float_new);
 
@@ -400,6 +402,8 @@ MemoryOps rbffi_AbstractMemoryOps = {
     .uint32 = &memory_op_uint32,
     .int64 = &memory_op_int64,
     .uint64 = &memory_op_uint64,
+    .slong = &memory_op_long,
+    .ulong = &memory_op_ulong,
     .float32 = &memory_op_float32,
     .float64 = &memory_op_float64,
     .pointer = &memory_op_pointer,
@@ -433,6 +437,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     INT(int16);
     INT(int32);
     INT(int64);
+    INT(long);
     
 #define ALIAS(name, old) \
     rb_define_alias(classMemory, "put_" #name, "put_" #old); \
@@ -449,12 +454,6 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     ALIAS(int, int32);
     ALIAS(long_long, int64);
     
-    if (sizeof(long) == 4) {
-        ALIAS(long, int32);
-    } else {
-        ALIAS(long, int64);
-    }
-
     rb_define_method(classMemory, "put_float32", memory_put_float32, 2);
     rb_define_method(classMemory, "get_float32", memory_get_float32, 1);
     rb_define_alias(classMemory, "put_float", "put_float32");

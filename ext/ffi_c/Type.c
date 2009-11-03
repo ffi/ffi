@@ -293,6 +293,8 @@ rbffi_Type_Init(VALUE moduleFFI)
     T(UINT32, &ffi_type_uint32);
     T(INT64, &ffi_type_sint64);
     T(UINT64, &ffi_type_uint64);
+    T(LONG, &ffi_type_slong);
+    T(ULONG, &ffi_type_ulong);
     T(FLOAT32, &ffi_type_float);
     T(FLOAT64, &ffi_type_double);
     T(POINTER, &ffi_type_pointer);
@@ -307,23 +309,4 @@ rbffi_Type_Init(VALUE moduleFFI)
 
     T(CHAR_ARRAY, &ffi_type_void);
     T(VARARGS, &ffi_type_void);
-    
-
-    if (sizeof(long) == 4) {
-        VALUE t = Qnil;
-        rb_define_const(classType, "LONG", t = builtin_type_new(classBuiltinType, NATIVE_INT32, &ffi_type_slong, "LONG"));
-        rb_define_const(moduleNativeType, "LONG", t);
-        rb_define_const(moduleFFI, "TYPE_LONG", t);
-        rb_define_const(classType, "ULONG", t = builtin_type_new(classBuiltinType, NATIVE_UINT32, &ffi_type_slong, "ULONG"));
-        rb_define_const(moduleNativeType, "ULONG", t);
-        rb_define_const(moduleFFI, "TYPE_ULONG", t);
-    } else {
-        VALUE t = Qnil;
-        rb_define_const(classType, "LONG", t = builtin_type_new(classBuiltinType, NATIVE_INT64, &ffi_type_slong, "LONG"));
-        rb_define_const(moduleNativeType, "LONG", t);
-        rb_define_const(moduleFFI, "TYPE_LONG", t);
-        rb_define_const(classType, "ULONG", t = builtin_type_new(classBuiltinType, NATIVE_UINT64, &ffi_type_slong, "ULONG"));
-        rb_define_const(moduleNativeType, "ULONG", t);
-        rb_define_const(moduleFFI, "TYPE_ULONG", t);
-    }
 }

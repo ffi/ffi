@@ -61,6 +61,8 @@ typedef struct {
     MemoryOp* uint32;
     MemoryOp* int64;
     MemoryOp* uint64;
+    MemoryOp* slong;
+    MemoryOp* ulong;
     MemoryOp* float32;
     MemoryOp* float64;
     MemoryOp* pointer;
@@ -129,6 +131,10 @@ memory_get_op(AbstractMemory* ptr, Type* type)
             return ptr->ops->int64;
         case NATIVE_UINT64:
             return ptr->ops->uint64;
+        case NATIVE_LONG:
+            return ptr->ops->slong;
+        case NATIVE_ULONG:
+            return ptr->ops->ulong;
         case NATIVE_FLOAT32:
             return ptr->ops->float32;
         case NATIVE_FLOAT64:

@@ -60,6 +60,7 @@
 #define INT16_ADJ (4)
 #define INT32_ADJ (4)
 #define INT64_ADJ (8)
+#define LONG_ADJ (sizeof(long))
 #define FLOAT32_ADJ (4)
 #define FLOAT64_ADJ (8)
 #define ADDRESS_ADJ (sizeof(void *))
@@ -186,6 +187,17 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
                 ++argidx;
                 break;
 
+            case NATIVE_LONG:
+                *(ffi_sarg *) param = NUM2LONG(argv[argidx]);
+                ADJ(param, LONG);
+                ++argidx;
+                break;
+
+            case NATIVE_ULONG:
+                *(ffi_arg *) param = NUM2ULONG(argv[argidx]);
+                ADJ(param, LONG);
+                ++argidx;
+                break;
 
             case NATIVE_FLOAT32:
                 if (type != T_FLOAT && type != T_FIXNUM) {
@@ -431,6 +443,8 @@ rbffi_GetInvoker(FunctionType *fnInfo)
         case NATIVE_UINT16:
         case NATIVE_INT32:
         case NATIVE_UINT32:
+        case NATIVE_LONG:
+        case NATIVE_ULONG:
 #ifdef __x86_64__
         case NATIVE_INT64:
         case NATIVE_UINT64:
@@ -452,6 +466,8 @@ rbffi_GetInvoker(FunctionType *fnInfo)
             case NATIVE_UINT16:
             case NATIVE_INT32:
             case NATIVE_UINT32:
+            case NATIVE_LONG:
+            case NATIVE_ULONG:
 #ifdef __x86_64__
             case NATIVE_INT64:
             case NATIVE_UINT64:
@@ -536,6 +552,12 @@ rbffi_GetLongValue(int idx, VALUE* argv, FunctionType* fnInfo)
             /* Special handling/checking for unsigned 32 bit integers */
             return getUnsignedInt32(value, type);
 
+        case NATIVE_LONG:
+            return NUM2LONG(value);
+
+        case NATIVE_ULONG:
+            return NUM2ULONG(value);
+
 #ifdef __x86_64__
         case NATIVE_INT64:
             if (type != T_FIXNUM && type != T_BIGNUM) {
@@ -609,6 +631,9 @@ returnL(FunctionType* fnInfo, L* result)
         case NATIVE_INT32:
           return INT2NUM(*(signed int *) result);
 
+        case NATIVE_LONG:
+          return LONG2NUM(*(signed long *) result);
+
         case NATIVE_UINT8:
           return UINT2NUM(*(unsigned char *) result);
 
@@ -617,6 +642,9 @@ returnL(FunctionType* fnInfo, L* result)
 
         case NATIVE_UINT32:
           return UINT2NUM(*(unsigned int *) result);
+
+        case NATIVE_ULONG:
+          return ULONG2NUM(*(unsigned long *) result);
 
 #ifdef __x86_64__
         case NATIVE_INT64:

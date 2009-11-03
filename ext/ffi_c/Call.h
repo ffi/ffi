@@ -57,6 +57,8 @@ typedef union {
 #endif
     signed long long i64;
     unsigned long long u64;
+    signed long sl;
+    unsigned long ul;
     void* ptr;
     float f32;
     double f64;

@@ -350,6 +350,12 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
             case NATIVE_UINT64:
                 param = ULL2NUM(*(uint64_t *) parameters[i]);
                 break;
+            case NATIVE_LONG:
+                param = LONG2NUM(*(long *) parameters[i]);
+                break;
+            case NATIVE_ULONG:
+                param = ULONG2NUM(*(unsigned long *) parameters[i]);
+                break;
             case NATIVE_FLOAT32:
                 param = rb_float_new(*(float *) parameters[i]);
                 break;
@@ -396,6 +402,12 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
             break;
         case NATIVE_UINT64:
             *((uint64_t *) retval) = NUM2ULL(rbReturnValue);
+            break;
+        case NATIVE_LONG:
+            *((ffi_sarg *) retval) = NUM2LONG(rbReturnValue);
+            break;
+        case NATIVE_ULONG:
+            *((ffi_arg *) retval) = NUM2ULONG(rbReturnValue);
             break;
         case NATIVE_FLOAT32:
             *((float *) retval) = (float) NUM2DBL(rbReturnValue);
