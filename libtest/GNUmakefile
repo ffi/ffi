@@ -107,6 +107,10 @@ ifeq ($(CPU), x86_64)
   MODEL = 64
 endif
 
+ifeq ($(CPU), powerpc64)
+  MODEL = 64
+endif
+
 # On platforms (linux, solaris) that support both 32bit and 64bit, force building for one or the other
 ifneq ($(or $(findstring linux, $(OS)), $(findstring solaris, $(OS))),)
   # Change the CC/LD instead of CFLAGS/LDFLAGS, incase other things in the flags
