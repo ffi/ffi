@@ -48,7 +48,7 @@ int testClosureVrI(int (*closure)(void))
 {
     return (*closure)();
 }
-long long testClosureVrL(long (*closure)(void))
+long testClosureVrL(long (*closure)(void))
 {
     return (*closure)();
 }
