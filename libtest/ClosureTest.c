@@ -28,92 +28,48 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#define R(T, rtype) rtype testClosureVr##T(rtype (*closure)(void)) { \
+    return closure != NULL ? (*closure)() : (rtype) 0; \
+}
+
+#define P(T, ptype) void testClosure##T##rV(void (*closure)(ptype), ptype a1) { \
+    if (closure != NULL) (*closure)(a1); \
+}
+
 void testClosureVrV(void (*closure)(void))
 {
     (*closure)();
 }
-char testClosureVrB(char (*closure)(void))
-{
-    return (*closure)();
-}
-bool testClosureVrZ(bool (*closure)(void))
-{
-    return (*closure)();
-}
-short testClosureVrS(short (*closure)(void))
-{
-    return (*closure)();
-}
-int testClosureVrI(int (*closure)(void))
-{
-    return (*closure)();
-}
-long testClosureVrL(long (*closure)(void))
-{
-    return (*closure)();
-}
-long long testClosureVrLL(long long (*closure)(void))
-{
-    return (*closure)();
-}
-float testClosureVrF(float (*closure)(void))
-{
-    return (*closure)();
-}
-double testClosureVrD(double (*closure)(void))
-{
-    return (*closure)();
-}
-void* testClosureVrP(void* (*closure)(void))
-{
-    return (*closure)();
-}
-void testClosureZrV(void (*closure)(bool), bool a1)
-{
-    (*closure)(a1);
-}
-void testClosureBrV(void (*closure)(char), char a1)
-{
-    (*closure)(a1);
-}
-void testClosureSrV(void (*closure)(short), short a1)
-{
-    (*closure)(a1);
-}
-void testClosureIrV(void (*closure)(int), int a1)
-{
-    (*closure)(a1);
-}
-void testClosureLrV(void (*closure)(long), long a1)
-{
-    (*closure)(a1);
-}
-void testClosureULrV(void (*closure)(unsigned long), unsigned long a1)
-{
-    (*closure)(a1);
-}
-void testClosureLLrV(void (*closure)(long long), long long a1)
-{
-    (*closure)(a1);
-}
-void testClosureFrV(void (*closure)(float), float a1)
-{
-    (*closure)(a1);
-}
-void testClosureDrV(void (*closure)(double), double a1)
-{
-    (*closure)(a1);
-}
+
+R(Z, bool);
+R(B, char);
+R(S, short);
+R(I, int);
+R(L, long);
+R(J, long long);
+R(LL, long long);
+R(F, float);
+R(D, double);
+R(P, const void*);
+
+
+P(Z, bool);
+P(B, char);
+P(S, short);
+P(I, int);
+P(L, long);
+P(J, long long);
+P(LL, long long);
+P(F, float);
+P(D, double);
+P(P, const void*);
+P(UL, unsigned long);
+
 void testOptionalClosureBrV(void (*closure)(char), char a1)
 {
     if (closure) {
         (*closure)(a1);
     }
-}
-
-void testClosurePrV(void (*closure)(const void *), const void *a1)
-{
-    (*closure)(a1);
 }
 
 struct s8f32s32 {
@@ -169,7 +125,7 @@ int testArgumentClosure(withArgumentClosure_t closure_with, argumentClosure_t cl
 #define C2_(J1, J2, N1, N2) \
 void testClosure##J1##J2##rV(void (*closure)(N1, N2), N1 a1, N2 a2) \
 { \
-    (*closure)(a1, a2); \
+    if (closure != NULL) (*closure)(a1, a2); \
 }
 
 #define C2(J, N) \
