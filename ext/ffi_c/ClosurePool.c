@@ -35,6 +35,8 @@
 #include <stdbool.h>
 #ifndef _WIN32
 #  include <unistd.h>
+#else
+#  include <windows.h>
 #endif
 #include <errno.h>
 #include <ruby.h>
@@ -111,7 +113,7 @@ rbffi_ClosurePool_New(int closureSize,
     pool->prep = prep;
     pool->refcnt = 1;
     
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
     pthread_mutex_init(&pool->mutex, NULL);
 #endif
 
@@ -253,7 +255,7 @@ rbffi_Closure_CodeAddress(Closure* handle)
 static int
 getPageSize()
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__WIN32__)
     SYSTEM_INFO si;
     GetSystemInfo(&si);
     return si.dwPageSize;
@@ -265,7 +267,7 @@ getPageSize()
 static void*
 allocatePage(void)
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__WIN32__)
     return VirtualAlloc(NULL, pageSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #else
     caddr_t page = mmap(NULL, pageSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
@@ -276,7 +278,7 @@ allocatePage(void)
 static bool
 freePage(void *addr)
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__WIN32__)
     return VirtualFree(addr, 0, MEM_RELEASE);
 #else
     return munmap(addr, pageSize) == 0;
@@ -286,7 +288,7 @@ freePage(void *addr)
 static bool
 protectPage(void* page)
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__WIN32__)
     DWORD oldProtect;
     return VirtualProtect(page, pageSize, PAGE_EXECUTE_READ, &oldProtect);
 #else
