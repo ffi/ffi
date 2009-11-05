@@ -45,7 +45,7 @@ describe "Managed Struct" do
     end
 
     loop_count = 30
-    wiggle_room = 2
+    wiggle_room = 5
 
     PleaseReleaseMe.should_receive(:release).at_least(loop_count-wiggle_room).times
     loop_count.times do
