@@ -3,14 +3,12 @@ require 'mkmf'
 require 'rbconfig'
 dir_config("ffi_c")
 
-IS_MAC = Config::CONFIG['host_os'] =~ /^darwin/
 pkg_config("libffi")
-#have_libffi = find_library("ffi", "ffi_call", `pkg-config libffi --cflags --libs`)
 have_ffi_call = have_library("ffi", "ffi_call", [ "ffi.h" ])
-have_prep_closure = have_library("ffi", "ffi_prep_closure", [ "ffi.h" ])
+have_prep_closure = have_func("ffi_prep_closure")
 libffi_ok = have_ffi_call && have_prep_closure
 $defs << "-DHAVE_LIBFFI" if libffi_ok
-$defs << "-DHAVE_RAW_API" if have_library("ffi", "ffi_raw_call", [ "ffi.h" ]) && have_library("ffi", "ffi_prep_raw_closure", [ "ffi.h"])
+$defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")
 
 
 have_func('rb_thread_blocking_region')
