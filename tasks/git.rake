@@ -16,7 +16,8 @@ namespace :git do
     v = ENV['VERSION'] or abort 'Must supply VERSION=x.y.z'
     abort "Versions don't match #{v} vs #{PROJ.version}" if v != PROJ.version
 
-    tag = "%s-%s" % [PROJ.name, PROJ.version]
+#    tag = "%s-%s" % [PROJ.name, PROJ.version]
+    tag = "%s" % [ PROJ.version ]
     msg = "Creating tag for #{PROJ.name} version #{PROJ.version}"
 
     puts "Creating Git tag '#{tag}'"
@@ -24,16 +25,16 @@ namespace :git do
       abort "Tag creation failed"
     end
 
-    if %x/git remote/ =~ %r/^origin\s*$/
-      unless system "git push origin #{tag}"
-        abort "Could not push tag to remote Git repository"
-      end
-    end
+#    if %x/git remote/ =~ %r/^origin\s*$/
+#      unless system "git push origin #{tag}"
+#        abort "Could not push tag to remote Git repository"
+#      end
+#    end
   end
 
 end  # namespace :git
 
-task 'gem:release' => 'git:create_tag'
+#task 'gem:release' => 'git:create_tag'
 
 end  # if HAVE_GIT
 
