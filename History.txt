@@ -1,4 +1,10 @@
-== 0.5.1 / 2009-10-06
+== 0.5.2 / 2009-11-06
+* Bug fixes
+  * powerpc64/ppc64 cpu detection
+  * big-endian 64bit fixes
+  * Use system libffi when possible
+
+== 0.5.1 / 2009-10-19
 * Bug fixes
   * fixed up struct-by-value result variadic invokers
 
