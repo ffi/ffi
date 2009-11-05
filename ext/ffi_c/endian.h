@@ -4,7 +4,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__CYGWIN__)
 #  include_next <endian.h>
 #endif
 
