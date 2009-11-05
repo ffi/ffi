@@ -175,7 +175,7 @@ attached_method_invoke(ffi_cif* cif, void* mretval, METHOD_PARAMS parameters, vo
     int argc = parameters[0].sint;
     VALUE* argv = *(VALUE **) &parameters[1];
 #else
-    int argc = *(ffi_sarg *) parameters[0];
+    int argc = *(int *) parameters[0];
     VALUE* argv = *(VALUE **) parameters[1];
 #endif
 
