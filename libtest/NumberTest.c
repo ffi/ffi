@@ -99,8 +99,8 @@ TEST2(u64)
 #endif
 
 #define ADD3(R, T1, T2, T3) R add_##T1##T2##T3##_##R(T1 arg1, T2 arg2, T3 arg3) { return arg1 + arg2 + arg3; }
-#define pack_f32(buf, v) do { *(float *)(buf) = v; } while(0)
-#define pack_f64(buf, v) do { *(double *)(buf) = v; } while(0)
+#define pack_f32(buf, v) do { float f = v; memcpy((buf), &f, sizeof(f)); } while(0)
+#define pack_f64(buf, v) do { double f = v; memcpy((buf), &f, sizeof(f)); } while(0)
 #define pack_int(buf, v) do { *(buf) = v; } while(0)
 #define pack_s8 pack_int
 #define pack_u8 pack_int
