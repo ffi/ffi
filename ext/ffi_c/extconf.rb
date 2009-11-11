@@ -17,8 +17,8 @@ $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 
 create_header
 
-$CFLAGS << "-mwin32" if Config::CONFIG['host_os'] =~ /cygwin/
-$CFLAGS << "-Werror -Wunused -Wformat -Wimplicit -Wreturn-type"
+$CFLAGS << "-mwin32 " if Config::CONFIG['host_os'] =~ /cygwin/
+$CFLAGS << "-Werror -Wunused -Wformat -Wimplicit -Wreturn-type "
 
 create_makefile("ffi_c")
 unless libffi_ok
