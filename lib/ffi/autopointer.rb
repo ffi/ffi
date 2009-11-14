@@ -30,32 +30,62 @@ module FFI
     def initialize(ptr, proc=nil, &block)
       raise TypeError, "Invalid pointer" if ptr.nil? || !ptr.kind_of?(Pointer) \
         || ptr.kind_of?(MemoryPointer) || ptr.kind_of?(AutoPointer)
-      free_lambda = if proc and proc.is_a? Method
-                      AutoPointer.finalize(ptr, AutoPointer.method_to_proc(proc))
-                    elsif proc and proc.is_a? Proc
-                      AutoPointer.finalize(ptr, proc)
-                    else
-                      AutoPointer.finalize(ptr, AutoPointer.method_to_proc(self.class.method(:release)))
-                    end
+
+      @releaser = if proc
+                    raise RuntimeError.new("proc must be callable") unless proc.respond_to?(:call)
+                    CallableReleaser.new(ptr, proc)
+
+                  else
+                    raise RuntimeError.new("no release method defined") unless self.class.respond_to?(:release)
+                    DefaultReleaser.new(ptr, self.class)
+                  end
+
       self.parent = ptr
-      ObjectSpace.define_finalizer(self, free_lambda)
+      ObjectSpace.define_finalizer(self, @releaser)
       self
     end
-    def self.release(ptr)
+
+    def free
+      @releaser.free
     end
 
-    private
-    def self.finalize(ptr, proc)
-      #
-      #  having a method create the lambda eliminates inadvertent
-      #  references to the underlying object, which would prevent GC
-      #  from running.
-      #
-      Proc.new { |*args| proc.call(ptr) }
+    def autorelease=(autorelease)
+      @releaser.autorelease=(autorelease)
     end
-    def self.method_to_proc method
-      #  again, can't call this inline as it causes a memory leak.
-      method.to_proc
+
+    class Releaser
+      def initialize(ptr, proc)
+        @ptr = ptr
+        @proc = proc
+        @autorelease = true
+      end
+
+      def free
+        raise RuntimeError.new("pointer already freed") unless @ptr
+        @autorelease = false
+        @ptr = nil
+        @proc = nil
+      end
+      
+      def autorelease=(autorelease)
+        raise RuntimeError.new("pointer already freed") unless @ptr
+        @autorelease = autorelease
+      end
+
     end
+
+    class DefaultReleaser < Releaser
+      def call(*args)
+        @proc.release(@ptr) if @autorelease && @ptr
+      end
+    end
+
+    class CallableReleaser < Releaser
+      def call(*args)
+        @proc.call(@ptr) if @autorelease && @ptr
+      end
+    end
+
   end
+
 end
