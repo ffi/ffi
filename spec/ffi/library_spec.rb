@@ -22,7 +22,7 @@ describe "Library" do
       lambda {
         Module.new do |m|
           m.extend FFI::Library
-          ffi_lib 'c', 'libc.so.6'
+          ffi_lib [ 'c', 'libc.so.6' ]
           attach_function :getpid, [ ], :uint
         end.getpid.should == Process.pid
       }.should_not raise_error
@@ -31,7 +31,7 @@ describe "Library" do
       lambda {
         Module.new do |m|
           m.extend FFI::Library
-          ffi_lib 'libc.so.6', 'c'
+          ffi_lib [ 'libc.so.6', 'c' ]
           attach_function :getpid, [ ], :uint
         end.getpid.should == Process.pid
       }.should_not raise_error
@@ -40,7 +40,7 @@ describe "Library" do
       lambda {
         Module.new do |m|
           m.extend FFI::Library
-          ffi_lib 'libfubar.so.0xdeadbeef', nil, 'c'
+          ffi_lib [ 'libfubar.so.0xdeadbeef', nil, 'c' ]
           attach_function :getpid, [ ], :uint
         end.getpid.should == Process.pid
       }.should_not raise_error
