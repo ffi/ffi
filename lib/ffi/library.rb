@@ -143,7 +143,11 @@ module FFI::Library
     else
       [ nil, args[0], args[1] ]
     end
-    cb = FFI::CallbackInfo.new(find_type(ret), params.map { |e| find_type(e) })
+
+    options = Hash.new
+    options[:convention] = defined?(@ffi_convention) ? @ffi_convention : :default
+    options[:enums] = @ffi_enums if defined?(@ffi_enums)
+    cb = FFI::CallbackInfo.new(find_type(ret), params.map { |e| find_type(e) }, options)
 
     # Add to the symbol -> type map (unless there was no name)
     unless name.nil?
