@@ -1,19 +1,20 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 describe "Library" do
 
-  unless Config::CONFIG['target_os'] =~ /mingw/ || Config::CONFIG['target_os'] =~ /win/
+  unless Config::CONFIG['target_os'] =~ /mswin|mingw/
     it "attach_function with no library specified" do
       lambda {
         Module.new do |m|
           m.extend FFI::Library
           attach_function :getpid, [ ], :uint
         end
-      }.should_not raise_error
+      }.should raise_error
     end
     it "attach_function :getpid from this process" do
       lambda {
         Module.new do |m|
           m.extend FFI::Library
+          ffi_lib FFI::Library::CURRENT_PROCESS
           attach_function :getpid, [ ], :uint
         end.getpid.should == Process.pid
       }.should_not raise_error
