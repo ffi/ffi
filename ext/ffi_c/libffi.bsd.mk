@@ -9,7 +9,7 @@ LOCAL_LIBS += ${LIBFFI} -lpthread
 LIBFFI_CFLAGS = ${FFI_MMAP_EXEC} -pthread
 LIBFFI_BUILD_DIR = ${.CURDIR}/libffi
 
-.if "${srcdir}" == "."
+.if ${srcdir} == "."
   LIBFFI_SRC_DIR := ${.CURDIR}/libffi
 .else
   LIBFFI_SRC_DIR := ${srcdir}/libffi
