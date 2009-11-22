@@ -2,6 +2,7 @@ module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = Object.new
 
   module Library
+    CURRENT_PROCESS = FFI::CURRENT_PROCESS
     LIBC = FFI::Platform::LIBC
 
     def ffi_lib(*names)
