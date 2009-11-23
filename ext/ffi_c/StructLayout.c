@@ -235,18 +235,10 @@ array_field_get(VALUE self, VALUE pointer)
 {
     StructField* f;
     ArrayType* array;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
     VALUE argv[2];
 
     Data_Get_Struct(self, StructField, f);
     Data_Get_Struct(f->rbType, ArrayType, array);
-
-    op = memory_get_op(memory, array->componentType);
-    if (op == NULL) {
-        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(array->rbComponentType));
-        return Qnil;
-    }
 
     argv[0] = pointer;
     argv[1] = self;

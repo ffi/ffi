@@ -566,9 +566,6 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
     Data_Get_Struct(arrayType->rbComponentType, Type, array->componentType);
     
     array->op = memory_get_op(array->memory, array->componentType);
-    if (array->op == NULL) {
-        rb_raise(rb_eRuntimeError, "invalid memory ops");
-    }
 
     return self;
 }
@@ -596,7 +593,21 @@ inline_array_aref(VALUE self, VALUE rbIndex)
 
     Data_Get_Struct(self, InlineArray, array);
 
-    return array->op->get(array->memory, inline_array_offset(array, NUM2UINT(rbIndex)));
+    if (array->op != NULL) {
+        return array->op->get(array->memory, inline_array_offset(array, NUM2UINT(rbIndex)));
+    } else if (array->componentType->nativeType == NATIVE_STRUCT) {
+        int offset = inline_array_offset(array, NUM2UINT(rbIndex));
+        VALUE rbOffset = INT2NUM(offset);
+        VALUE rbPointer = rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
+
+        return rb_class_new_instance(1, &rbPointer, ((StructByValue *) array->componentType)->rbStructClass);
+    } else {
+        ArrayType* arrayType;
+        Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+
+        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(arrayType->rbComponentType));
+        return Qnil;
+    }
 }
 
 static VALUE
@@ -606,8 +617,37 @@ inline_array_aset(VALUE self, VALUE rbIndex, VALUE rbValue)
 
     Data_Get_Struct(self, InlineArray, array);
 
-    array->op->put(array->memory, inline_array_offset(array, NUM2UINT(rbIndex)),
-        rbValue);
+    if (array->op != NULL) {
+        array->op->put(array->memory, inline_array_offset(array, NUM2UINT(rbIndex)),
+            rbValue);
+    } else if (array->componentType->nativeType == NATIVE_STRUCT) {
+        int offset = inline_array_offset(array, NUM2UINT(rbIndex));
+        ArrayType* arrayType;
+        Struct* s;
+
+        Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+
+        if (!rb_obj_is_kind_of(rbValue, rbffi_StructClass)) {
+            rb_raise(rb_eTypeError, "argument not an instance of struct");
+            return Qnil;
+        }
+
+        checkWrite(array->memory);
+        checkBounds(array->memory, offset, array->componentType->ffiType->size);
+
+        Data_Get_Struct(rbValue, Struct, s);
+        checkRead(s->pointer);
+        checkBounds(s->pointer, 0, array->componentType->ffiType->size);
+
+        memcpy(array->memory->address + offset, s->pointer->address, array->componentType->ffiType->size);
+
+    } else {
+        ArrayType* arrayType;
+        Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+
+        rb_raise(rb_eArgError, "set not supported for %s", rb_obj_classname(arrayType->rbComponentType));
+        return Qnil;
+    }
 
     return rbValue;
 }
@@ -623,9 +663,24 @@ inline_array_each(VALUE self)
     Data_Get_Struct(self, InlineArray, array);
     Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
 
-    for (i = 0; i < arrayType->length; ++i) {
-    int offset = inline_array_offset(array, i);
-        rb_yield(array->op->get(array->memory, offset));
+    if (array->op != NULL) {
+        for (i = 0; i < arrayType->length; ++i) {
+            int offset = inline_array_offset(array, i);
+            rb_yield(array->op->get(array->memory, offset));
+        }
+    } else if (array->componentType->nativeType == NATIVE_STRUCT) {
+        for (i = 0; i < arrayType->length; ++i) {
+            VALUE rbOffset = UINT2NUM(inline_array_offset(array, i));
+            VALUE rbPointer = rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
+
+            rb_yield(rb_class_new_instance(1, &rbPointer, ((StructByValue *) array->componentType)->rbStructClass));
+        }
+    } else {
+        ArrayType* arrayType;
+        Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+
+        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(arrayType->rbComponentType));
+        return Qnil;
     }
 
     return self;
