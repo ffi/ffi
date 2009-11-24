@@ -380,7 +380,7 @@ describe FFI::Struct, ' with a nested struct field'  do
 end
 
 describe FFI::Struct, ' with a nested array of structs'  do
-  module LibTest
+  module InlineArrayOfStructs
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     class NestedStruct < FFI::Struct
@@ -394,16 +394,16 @@ describe FFI::Struct, ' with a nested array of structs'  do
   end
 
   before do
-    @cs = LibTest::ContainerStruct.new
+    @cs = InlineArrayOfStructs::ContainerStruct.new
   end
 
   it 'should align correctly nested struct field' do
     @cs[:ns][0][:i] = 123
-    LibTest.struct_align_nested_struct(@cs.to_ptr).should == 123
+    InlineArrayOfStructs.struct_align_nested_struct(@cs.to_ptr).should == 123
   end
 
   it 'should correctly calculate Container size (in bytes)' do
-    LibTest::ContainerStruct.size.should == 8
+    InlineArrayOfStructs::ContainerStruct.size.should == 8
   end
 
   it 'should return a Struct object when the field is accessed' do
@@ -411,17 +411,18 @@ describe FFI::Struct, ' with a nested array of structs'  do
   end
 
   it 'should read a value from memory' do
-    @cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
+    @cs = InlineArrayOfStructs::ContainerStruct.new(InlineArrayOfStructs.struct_make_container_struct(123))
     @cs[:ns][0][:i].should == 123
   end
 
   it 'should write a value to memory' do
-    @cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
+    @cs = InlineArrayOfStructs::ContainerStruct.new(InlineArrayOfStructs.struct_make_container_struct(123))
     @cs[:ns][0][:i] = 456
-    LibTest.struct_align_nested_struct(@cs.to_ptr).should == 456
+    InlineArrayOfStructs.struct_align_nested_struct(@cs.to_ptr).should == 456
   end
+
   it 'should support Enumerable#each' do
-    @cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
+    @cs = InlineArrayOfStructs::ContainerStruct.new(InlineArrayOfStructs.struct_make_container_struct(123))
     ints = []
     @cs[:ns].each { |s| ints << s[:i] }
     ints[0].should == 123
