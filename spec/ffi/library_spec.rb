@@ -146,4 +146,29 @@ describe "Library" do
     lib.gvar = val
     lib.get.should == val
   end
+
+  [ 0, 0x7fffffff, -0x80000000, -1 ].each do |i|
+    it "structure" do
+      class GlobalStruct < FFI::Struct
+        layout :data, :long
+      end
+
+      lib = Module.new do |m|
+        m.extend FFI::Library
+        ffi_lib TestLibrary::PATH
+        attach_variable :gvar, "gvar_gstruct", GlobalStruct
+        attach_function :get, "gvar_gstruct_get", [], GlobalStruct
+        attach_function :set, "gvar_gstruct_set", [ GlobalStruct ], :void
+      end
+
+      val = GlobalStruct.new
+      val[:data] = i
+      lib.set(val)
+      lib.gvar[:data].should == i
+      val[:data] = 0
+      lib.gvar[:data] = i
+      val = GlobalStruct.new(lib.get)
+      val[:data].should == i
+    end
+  end
 end

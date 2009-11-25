@@ -36,3 +36,21 @@ GVAR(u64);
 GVAR(long);
 GVAR(ulong);
 GVAR(pointer);
+
+struct gstruct {
+    long data;
+};
+
+struct gstruct gvar_gstruct = { -1 };
+
+struct gstruct*
+gvar_gstruct_get(void)
+{
+    return &gvar_gstruct;
+}
+
+void
+gvar_gstruct_set(const struct gstruct* val)
+{ 
+    gvar_gstruct = *val;
+}
