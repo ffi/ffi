@@ -286,6 +286,18 @@ describe "Struct tests" do
     s[:v] = value
     (s.pointer.get_double(0) - value).abs.should < 0.0001
   end
+  module EnumFields
+    extend FFI::Library
+    enum :test_enum, [:c1, :c2, :c3, :c4, :c5, :c6]
+    class TestStruct < FFI::Struct
+      layout :c, :test_enum
+    end
+  end
+  it ":enum field r/w" do
+    s = EnumFields::TestStruct.new
+    s[:c] = :c6
+    s[:c].should == :c6
+  end
   module CallbackMember
     extend FFI::Library
     ffi_lib TestLibrary::PATH
