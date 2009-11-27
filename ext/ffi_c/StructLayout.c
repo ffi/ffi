@@ -50,6 +50,8 @@
 static void struct_layout_mark(StructLayout *);
 static void struct_layout_free(StructLayout *);
 static void struct_field_mark(StructField* );
+static VALUE enum_field_op_get(StructField* f, Struct* s);
+static void enum_field_op_put(StructField* f, Struct* s, VALUE value);
 
 VALUE rbffi_StructLayoutFieldClass = Qnil;
 VALUE rbffi_StructLayoutFunctionFieldClass = Qnil, rbffi_StructLayoutArrayFieldClass = Qnil;
@@ -263,39 +265,56 @@ inline_struct_field_get(VALUE self, VALUE pointer)
 }
 
 static VALUE
+enum_field_allocate(VALUE klass)
+{
+    StructField* field;
+    VALUE obj = struct_field_allocate(klass);
+
+    field = (StructField *) DATA_PTR(obj);
+    
+    field->get = enum_field_op_get;
+    field->put = enum_field_op_put;
+
+    return obj;
+}
+
+static VALUE
+enum_field_op_get(StructField* f, Struct* s)
+{
+    VALUE value = (*rbffi_AbstractMemoryOps.int32->get)(s->pointer, f->offset);
+
+    return rb_funcall2(f->rbType, rb_intern("find"), 1, &value);
+}
+
+static void
+enum_field_op_put(StructField* f, Struct* s, VALUE value)
+{
+    (*rbffi_AbstractMemoryOps.int32->put)(s->pointer, f->offset, rb_funcall2(f->rbType, rb_intern("find"), 1, &value));
+}
+
+static VALUE
 enum_field_get(VALUE self, VALUE pointer)
 {
     StructField* f;
-    MemoryOp* op;
+    VALUE value;
     AbstractMemory* memory = MEMORY(pointer);
 
     Data_Get_Struct(self, StructField, f);
-    op = memory->ops->int32;
-    if (op == NULL) {
-        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(self));
-        return Qnil;
-    }
+    value = (*rbffi_AbstractMemoryOps.int32->get)(memory, f->offset);
 
-    return rb_funcall(f->rbType, rb_intern("find"), 1, (*op->get)(memory, f->offset));
+    return rb_funcall2(f->rbType, rb_intern("find"), 1, &value);
 }
 
 static VALUE
 enum_field_put(VALUE self, VALUE pointer, VALUE value)
 {
     StructField* f;
-    MemoryOp* op;
     AbstractMemory* memory = MEMORY(pointer);
 
     Data_Get_Struct(self, StructField, f);
-    op = memory->ops->int32;
-    if (op == NULL) {
-        rb_raise(rb_eArgError, "put not supported for %s", rb_obj_classname(self));
-        return Qnil;
-    }
+    (*rbffi_AbstractMemoryOps.int32->put)(memory, f->offset, rb_funcall2(f->rbType, rb_intern("find"), 1, &value));
 
-    (*op->put)(memory, f->offset, rb_funcall2(f->rbType, rb_intern("find"), 1, &value));
-
-    return self;
+    return value;
 }
 
 static VALUE
@@ -470,6 +489,7 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructLayoutArrayFieldClass, "get", array_field_get, 1);
     rb_define_method(rbffi_StructLayoutStructFieldClass, "get", inline_struct_field_get, 1);
 
+    rb_define_alloc_func(rbffi_StructLayoutEnumFieldClass, enum_field_allocate);
     rb_define_method(rbffi_StructLayoutEnumFieldClass, "put", enum_field_put, 2);
     rb_define_method(rbffi_StructLayoutEnumFieldClass, "get", enum_field_get, 1);
 

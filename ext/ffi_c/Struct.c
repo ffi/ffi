@@ -177,13 +177,17 @@ struct_aref(VALUE self, VALUE fieldName)
     rbField = struct_field(s, fieldName);
     f = (StructField *) DATA_PTR(rbField);
 
-    op = memory_get_op(s->pointer, f->type);
-    if (op != NULL) {
-        return (*op->get)(s->pointer, f->offset);
-    }
+    if (f->get != NULL) {
+        return (*f->get)(f, s);
     
-    /* call up to the ruby code to fetch the value */
-    return rb_funcall2(rbField, id_get, 1, &s->rbPointer);
+    } else if ((op = memory_get_op(s->pointer, f->type)) != NULL) {
+        return (*op->get)(s->pointer, f->offset);
+
+    } else {
+    
+        /* call up to the ruby code to fetch the value */
+        return rb_funcall2(rbField, id_get, 1, &s->rbPointer);
+    }
 }
 
 static VALUE
@@ -198,19 +202,22 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
     Data_Get_Struct(self, Struct, s);
     rbField = struct_field(s, fieldName);
     f = (StructField *) DATA_PTR(rbField);
+    if (f->put != NULL) {
+        (*f->put)(f, s, value);
 
-    op = memory_get_op(s->pointer, f->type);
-    if (op != NULL) {
+    } else if ((op = memory_get_op(s->pointer, f->type)) != NULL) {
+
         (*op->put)(s->pointer, f->offset, value);
-        return self;
+    
+    } else {
+
+        /* call up to the ruby code to set the value */
+        argv[0] = s->rbPointer;
+        argv[1] = value;
+        rb_funcall2(rbField, id_put, 2, argv);
     }
     
-    /* call up to the ruby code to set the value */
-    argv[0] = s->rbPointer;
-    argv[1] = value;
-    rb_funcall2(rbField, id_put, 2, argv);
-    
-    return self;
+    return value;
 }
 
 static VALUE

@@ -39,16 +39,22 @@ extern "C" {
 
     extern void rbffi_Struct_Init(VALUE ffiModule);
     extern void rbffi_StructLayout_Init(VALUE ffiModule);
+    typedef struct StructField_ StructField;
+    typedef struct StructLayout_ StructLayout;
+    typedef struct Struct_ Struct;
 
-    typedef struct StructField_ {
+    struct StructField_ {
         Type* type;
         unsigned int offset;
 
         VALUE rbType;
         VALUE rbName;
-    } StructField;
 
-    typedef struct StructLayout_ {
+        VALUE (*get)(StructField* field, Struct* s);
+        void (*put)(StructField* field, Struct* s, VALUE value);
+    };
+
+    struct StructLayout_ {
         Type base;
         StructField** fields;
         unsigned int fieldCount;
@@ -58,14 +64,14 @@ extern "C" {
         VALUE rbFieldNames;
         VALUE rbFieldMap;
         VALUE rbFields;
-    } StructLayout;
+    };
 
-    typedef struct Struct {
+    struct Struct_ {
         StructLayout* layout;
         AbstractMemory* pointer;
         VALUE rbLayout;
         VALUE rbPointer;
-    } Struct;
+    };
 
     extern VALUE rbffi_StructClass, rbffi_StructLayoutClass;
     extern VALUE rbffi_StructLayoutFieldClass, rbffi_StructLayoutFunctionFieldClass;
