@@ -1,3 +1,8 @@
+== 0.5.4 / 2009-11-26
+* Bug fixes
+  * FreeBSD compilation fixes
+  * Use -mwin32 flag for cygwin builds
+  
 == 0.5.2 / 2009-11-06
 * Bug fixes
   * powerpc64/ppc64 cpu detection
