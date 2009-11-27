@@ -53,7 +53,7 @@ static void struct_field_mark(StructField* );
 
 VALUE rbffi_StructLayoutFieldClass = Qnil;
 VALUE rbffi_StructLayoutFunctionFieldClass = Qnil, rbffi_StructLayoutArrayFieldClass = Qnil;
-VALUE rbffi_StructLayoutStructFieldClass = Qnil;
+VALUE rbffi_StructLayoutStructFieldClass = Qnil, rbffi_StructLayoutEnumFieldClass = Qnil;
 
 VALUE rbffi_StructLayoutClass = Qnil;
 
@@ -263,6 +263,42 @@ inline_struct_field_get(VALUE self, VALUE pointer)
 }
 
 static VALUE
+enum_field_get(VALUE self, VALUE pointer)
+{
+    StructField* f;
+    MemoryOp* op;
+    AbstractMemory* memory = MEMORY(pointer);
+
+    Data_Get_Struct(self, StructField, f);
+    op = memory->ops->int32;
+    if (op == NULL) {
+        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(self));
+        return Qnil;
+    }
+
+    return rb_funcall(f->rbType, rb_intern("find"), 1, (*op->get)(memory, f->offset));
+}
+
+static VALUE
+enum_field_put(VALUE self, VALUE pointer, VALUE value)
+{
+    StructField* f;
+    MemoryOp* op;
+    AbstractMemory* memory = MEMORY(pointer);
+
+    Data_Get_Struct(self, StructField, f);
+    op = memory->ops->int32;
+    if (op == NULL) {
+        rb_raise(rb_eArgError, "put not supported for %s", rb_obj_classname(self));
+        return Qnil;
+    }
+
+    (*op->put)(memory, f->offset, rb_funcall2(f->rbType, rb_intern("find"), 1, &value));
+
+    return self;
+}
+
+static VALUE
 struct_layout_allocate(VALUE klass)
 {
     StructLayout* layout;
@@ -415,6 +451,9 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rbffi_StructLayoutArrayFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Array", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutArrayFieldClass);
 
+    rbffi_StructLayoutEnumFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Enum", rbffi_StructLayoutFieldClass);
+    rb_global_variable(&rbffi_StructLayoutEnumFieldClass);
+
     rb_define_alloc_func(rbffi_StructLayoutFieldClass, struct_field_allocate);
     rb_define_method(rbffi_StructLayoutFieldClass, "initialize", struct_field_initialize, -1);
     rb_define_method(rbffi_StructLayoutFieldClass, "offset", struct_field_offset, 0);
@@ -431,6 +470,8 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructLayoutArrayFieldClass, "get", array_field_get, 1);
     rb_define_method(rbffi_StructLayoutStructFieldClass, "get", inline_struct_field_get, 1);
 
+    rb_define_method(rbffi_StructLayoutEnumFieldClass, "put", enum_field_put, 2);
+    rb_define_method(rbffi_StructLayoutEnumFieldClass, "get", enum_field_get, 1);
 
     rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
     rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);

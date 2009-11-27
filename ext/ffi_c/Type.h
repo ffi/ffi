@@ -44,7 +44,7 @@ struct Type_ {
     ffi_type* ffiType;
 };
 
-extern VALUE rbffi_TypeClass;
+extern VALUE rbffi_TypeClass, rbffi_EnumTypeClass;
 extern int rbffi_Type_GetIntValue(VALUE type);
 extern VALUE rbffi_Type_Lookup(VALUE type);
 extern VALUE rbffi_Type_Find(VALUE type);

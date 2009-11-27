@@ -431,6 +431,8 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
             rbFieldClass = rbffi_StructLayoutStructFieldClass;
         } else if (rb_obj_is_kind_of(rbType, rbffi_ArrayTypeClass)) {
             rbFieldClass = rbffi_StructLayoutArrayFieldClass;
+        } else if (rb_obj_is_kind_of(rbType, rbffi_EnumTypeClass)) {
+            rbFieldClass = rbffi_StructLayoutEnumFieldClass;
         } else {
             rbFieldClass = rbffi_StructLayoutFieldClass;
         }

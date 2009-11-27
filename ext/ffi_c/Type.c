@@ -42,7 +42,7 @@ typedef struct BuiltinType_ {
 
 static void builtin_type_free(BuiltinType *);
 
-VALUE rbffi_TypeClass = Qnil;
+VALUE rbffi_TypeClass = Qnil, rbffi_EnumTypeClass = Qnil;
 
 static VALUE classBuiltinType = Qnil;
 static VALUE typeMap = Qnil, sizeMap = Qnil;
@@ -243,7 +243,7 @@ rbffi_Type_Init(VALUE moduleFFI)
 {
     VALUE moduleNativeType;
     VALUE classType = rbffi_TypeClass = rb_define_class_under(moduleFFI, "Type", rb_cObject);
-    VALUE classEnum =  rb_define_class_under(moduleFFI, "Enum", classType);
+    VALUE classEnum = rbffi_EnumTypeClass = rb_define_class_under(moduleFFI, "Enum", classType);
 
     rb_define_const(moduleFFI, "TypeDefs", typeMap = rb_hash_new());
     rb_define_const(moduleFFI, "SizeTypes", sizeMap = rb_hash_new());
