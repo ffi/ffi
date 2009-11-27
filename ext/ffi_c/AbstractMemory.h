@@ -74,8 +74,11 @@ struct AbstractMemory_ {
     long size;
     int access;
     int typeSize;
-    MemoryOps* ops;
 };
+
+
+extern VALUE rbffi_AbstractMemoryClass;
+extern MemoryOps rbffi_AbstractMemoryOps;
 
 extern void rbffi_AbstractMemory_Init(VALUE ffiModule);
 
@@ -109,40 +112,37 @@ checkWrite(AbstractMemory* mem)
 }
 
 static inline MemoryOp*
-memory_get_op(AbstractMemory* ptr, Type* type)
+get_memory_op(Type* type)
 {
-    if (ptr == NULL || ptr->ops == NULL || type == NULL) {
-        return NULL;
-    }
     switch (type->nativeType) {
         case NATIVE_INT8:
-            return ptr->ops->int8;
+            return rbffi_AbstractMemoryOps.int8;
         case NATIVE_UINT8:
-            return ptr->ops->uint8;
+            return rbffi_AbstractMemoryOps.uint8;
         case NATIVE_INT16:
-            return ptr->ops->int16;
+            return rbffi_AbstractMemoryOps.int16;
         case NATIVE_UINT16:
-            return ptr->ops->uint16;
+            return rbffi_AbstractMemoryOps.uint16;
         case NATIVE_INT32:
-            return ptr->ops->int32;
+            return rbffi_AbstractMemoryOps.int32;
         case NATIVE_UINT32:
-            return ptr->ops->uint32;
+            return rbffi_AbstractMemoryOps.uint32;
         case NATIVE_INT64:
-            return ptr->ops->int64;
+            return rbffi_AbstractMemoryOps.int64;
         case NATIVE_UINT64:
-            return ptr->ops->uint64;
+            return rbffi_AbstractMemoryOps.uint64;
         case NATIVE_LONG:
-            return ptr->ops->slong;
+            return rbffi_AbstractMemoryOps.slong;
         case NATIVE_ULONG:
-            return ptr->ops->ulong;
+            return rbffi_AbstractMemoryOps.ulong;
         case NATIVE_FLOAT32:
-            return ptr->ops->float32;
+            return rbffi_AbstractMemoryOps.float32;
         case NATIVE_FLOAT64:
-            return ptr->ops->float64;
+            return rbffi_AbstractMemoryOps.float64;
         case NATIVE_POINTER:
-            return ptr->ops->pointer;
+            return rbffi_AbstractMemoryOps.pointer;
         case NATIVE_STRING:
-            return ptr->ops->strptr;
+            return rbffi_AbstractMemoryOps.strptr;
         default:
             return NULL;
     }
@@ -152,10 +152,6 @@ memory_get_op(AbstractMemory* ptr, Type* type)
 #define MEMORY_PTR(obj) MEMORY((obj))->address
 #define MEMORY_LEN(obj) MEMORY((obj))->size
 
-
-
-extern VALUE rbffi_AbstractMemoryClass;
-extern MemoryOps rbffi_AbstractMemoryOps;
 
 
 #ifdef	__cplusplus

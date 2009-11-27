@@ -54,7 +54,6 @@ buffer_allocate(VALUE klass)
 
     obj = Data_Make_Struct(klass, Buffer, NULL, buffer_release, buffer);
     buffer->rbParent = Qnil;
-    buffer->memory.ops = &rbffi_AbstractMemoryOps;
     buffer->memory.access = MEM_RD | MEM_WR;
 
     return obj;
@@ -124,7 +123,6 @@ buffer_plus(VALUE self, VALUE rbOffset)
     obj = Data_Make_Struct(BufferClass, Buffer, buffer_mark, -1, result);
     result->memory.address = ptr->memory.address + offset;
     result->memory.size = ptr->memory.size - offset;
-    result->memory.ops = ptr->memory.ops;
     result->memory.access = ptr->memory.access;
     result->memory.typeSize = ptr->memory.typeSize;
     result->rbParent = self;

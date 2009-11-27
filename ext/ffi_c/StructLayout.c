@@ -107,6 +107,7 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     field->rbName = (TYPE(rbName) == T_SYMBOL) ? rbName : rb_str_intern(rbName);
     field->rbType = rbType;
     Data_Get_Struct(field->rbType, Type, field->type);
+    field->memoryOp = get_memory_op(field->type);
 
     return self;
 }
@@ -155,34 +156,28 @@ static VALUE
 struct_field_get(VALUE self, VALUE pointer)
 {
     StructField* f;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
 
     Data_Get_Struct(self, StructField, f);
-    op = memory_get_op(memory, f->type);
-    if (op == NULL) {
-        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(self));
+    if (f->memoryOp == NULL) {
+        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(f->rbType));
         return Qnil;
     }
 
-    return (*op->get)(memory, f->offset);
+    return (*f->memoryOp->get)(MEMORY(pointer), f->offset);
 }
 
 static VALUE
 struct_field_put(VALUE self, VALUE pointer, VALUE value)
 {
     StructField* f;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
-
+    
     Data_Get_Struct(self, StructField, f);
-    op = memory_get_op(memory, f->type);
-    if (op == NULL) {
-        rb_raise(rb_eArgError, "put not supported for %s", rb_obj_classname(self));
+    if (f->memoryOp == NULL) {
+        rb_raise(rb_eArgError, "put not supported for %s", rb_obj_classname(f->rbType));
         return self;
     }
 
-    (*op->put)(memory, f->offset, value);
+    (*f->memoryOp->put)(MEMORY(pointer), f->offset, value);
 
     return self;
 }
@@ -191,33 +186,19 @@ static VALUE
 function_field_get(VALUE self, VALUE pointer)
 {
     StructField* f;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
-
+    
     Data_Get_Struct(self, StructField, f);
-    op = memory->ops->pointer;
-    if (op == NULL) {
-        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(self));
-        return Qnil;
-    }
 
-    return rbffi_Function_NewInstance(f->rbType, (*op->get)(memory, f->offset));
+    return rbffi_Function_NewInstance(f->rbType, (*rbffi_AbstractMemoryOps.pointer->get)(MEMORY(pointer), f->offset));
 }
 
 static VALUE
 function_field_put(VALUE self, VALUE pointer, VALUE proc)
 {
     StructField* f;
-    MemoryOp* op;
-    AbstractMemory* memory = MEMORY(pointer);
     VALUE value = Qnil;
 
     Data_Get_Struct(self, StructField, f);
-    op = memory->ops->pointer;
-    if (op == NULL) {
-        rb_raise(rb_eArgError, "put not supported for %s", rb_obj_classname(self));
-        return self;
-    }
 
     if (NIL_P(proc) || rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
         value = proc;
@@ -227,7 +208,7 @@ function_field_put(VALUE self, VALUE pointer, VALUE proc)
         rb_raise(rb_eTypeError, "wrong type (expected Proc or Function)");
     }
 
-    (*op->put)(memory, f->offset, value);
+    (*rbffi_AbstractMemoryOps.pointer->put)(MEMORY(pointer), f->offset, value);
 
     return self;
 }
@@ -451,6 +432,7 @@ struct_layout_free(StructLayout *layout)
     xfree(layout->fields);
     xfree(layout);
 }
+
 
 void
 rbffi_StructLayout_Init(VALUE moduleFFI)

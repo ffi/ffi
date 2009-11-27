@@ -49,7 +49,6 @@ memory_allocate(VALUE klass)
     AbstractMemory* memory;
     VALUE obj;
     obj = Data_Make_Struct(klass, AbstractMemory, NULL, -1, memory);
-    memory->ops = &rbffi_AbstractMemoryOps;
     memory->access = MEM_RD | MEM_WR;
 
     return obj;

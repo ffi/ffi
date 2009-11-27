@@ -52,6 +52,8 @@ extern "C" {
 
         VALUE (*get)(StructField* field, Struct* s);
         void (*put)(StructField* field, Struct* s, VALUE value);
+
+        MemoryOp* memoryOp;
     };
 
     struct StructLayout_ {

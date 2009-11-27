@@ -132,11 +132,6 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
         s->pointer = (AbstractMemory *) DATA_PTR(s->rbPointer);
     }
 
-    if (s->pointer->ops == NULL) {
-        VALUE name = rb_class_name(CLASS_OF(s->rbPointer));
-        rb_raise(rb_eRuntimeError, "No memory ops set for %s", StringValueCStr(name));
-    }
-
     return self;
 }
 
@@ -171,8 +166,7 @@ struct_aref(VALUE self, VALUE fieldName)
     Struct* s;
     VALUE rbField;
     StructField* f;
-    MemoryOp* op;
-
+    
     Data_Get_Struct(self, Struct, s);
     rbField = struct_field(s, fieldName);
     f = (StructField *) DATA_PTR(rbField);
@@ -180,8 +174,8 @@ struct_aref(VALUE self, VALUE fieldName)
     if (f->get != NULL) {
         return (*f->get)(f, s);
     
-    } else if ((op = memory_get_op(s->pointer, f->type)) != NULL) {
-        return (*op->get)(s->pointer, f->offset);
+    } else if (f->memoryOp != NULL) {
+        return (*f->memoryOp->get)(s->pointer, f->offset);
 
     } else {
     
@@ -196,8 +190,7 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
     Struct* s;
     VALUE rbField;
     StructField* f;
-    MemoryOp* op;
-    VALUE argv[2];
+
 
     Data_Get_Struct(self, Struct, s);
     rbField = struct_field(s, fieldName);
@@ -205,13 +198,13 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
     if (f->put != NULL) {
         (*f->put)(f, s, value);
 
-    } else if ((op = memory_get_op(s->pointer, f->type)) != NULL) {
+    } else if (f->memoryOp != NULL) {
 
-        (*op->put)(s->pointer, f->offset, value);
+        (*f->memoryOp->put)(s->pointer, f->offset, value);
     
     } else {
-
         /* call up to the ruby code to set the value */
+        VALUE argv[2];
         argv[0] = s->rbPointer;
         argv[1] = value;
         rb_funcall2(rbField, id_put, 2, argv);
@@ -574,7 +567,7 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
     Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
     Data_Get_Struct(arrayType->rbComponentType, Type, array->componentType);
     
-    array->op = memory_get_op(array->memory, array->componentType);
+    array->op = get_memory_op(array->componentType);
 
     return self;
 }
