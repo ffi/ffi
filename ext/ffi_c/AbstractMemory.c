@@ -228,7 +228,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
 
     } else {
         checkBounds(ptr, off, sizeof (char*));
-        for ( ; off < ptr->size - sizeof (void *); off += sizeof (void *)) {
+        for ( ; off < ptr->size - (long) sizeof (void *); off += (long) sizeof (void *)) {
             const char* strptr = *(const char**) (ptr->address + off);
             if (strptr == NULL) {
                 break;

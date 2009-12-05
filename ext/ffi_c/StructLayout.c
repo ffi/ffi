@@ -337,7 +337,7 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
     layout->base.ffiType->alignment = 1;
 
     ltype = layout->base.ffiType;
-    for (i = 0; i < layout->fieldCount; ++i) {
+    for (i = 0; i < (int) layout->fieldCount; ++i) {
         VALUE rbName = rb_ary_entry(field_names, i);
         VALUE rbField = rb_hash_aref(fields, rbName);
         StructField* field;

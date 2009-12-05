@@ -745,7 +745,7 @@ inline_array_to_ptr(VALUE self)
     Data_Get_Struct(rbPointer, AbstractMemory, ptr);
     
     // Restrict the size of the pointer so ops like ptr.get_string(0) are bounds checked
-    ptr->size = MIN(ptr->size, array->field->type->ffiType->size);
+    ptr->size = MIN(ptr->size, (long) array->field->type->ffiType->size);
 
     return rbPointer;
 }
