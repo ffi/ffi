@@ -4,7 +4,7 @@ require 'rbconfig'
 dir_config("ffi_c")
 
 unless Config::CONFIG['host_os'] =~ /mswin32|mingw32/
-  if pkg_config("libffi") || find_header("ffi.h", "/usr/local/include", "/opt/local/include")
+  if pkg_config("libffi") || find_header("ffi.h", "/usr/local/include")
 
     # We need at least ffi_call and ffi_prep_closure
     libffi_ok = have_library("ffi", "ffi_call", [ "ffi.h" ]) && have_func("ffi_prep_closure")
