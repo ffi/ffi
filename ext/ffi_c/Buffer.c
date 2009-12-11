@@ -151,7 +151,7 @@ buffer_free(VALUE self)
 
     Data_Get_Struct(self, Buffer, ptr);
     if (ptr->storage != NULL) {
-        free(ptr->storage);
+        xfree(ptr->storage);
         ptr->storage = NULL;
     }
 

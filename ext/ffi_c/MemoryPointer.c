@@ -105,7 +105,7 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (char *) (((uintptr_t) p->storage + 0x7) & (uintptr_t) ~0x7UL);;
     p->allocated = true;
-
+    
     if (clear && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
@@ -134,7 +134,7 @@ memptr_free(VALUE self)
 
     if (ptr->allocated) {
         if (ptr->storage != NULL) {
-            free(ptr->storage);
+            xfree(ptr->storage);
             ptr->storage = NULL;
         }
         ptr->allocated = false;
