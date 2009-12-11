@@ -15,12 +15,12 @@ RANLIB=ranlib
 CC=gcc
 CCC=g++
 CXX=g++
-FC=g77
-AS=gas
+FC=
+AS=as
 
 # Macros
-CND_PLATFORM=GNU-Solaris-x86
-CND_CONF=Default
+CND_PLATFORM=GNU-Linux-x86
+CND_CONF=x86_64-Linux
 CND_DISTDIR=dist
 
 # Include project Makefile
@@ -50,14 +50,14 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	cd . && rake compile
+	cd . && ${MAKE}
 
 # Subprojects
 .build-subprojects:
 
 # Clean Targets
-.clean-conf:
-	cd . && rake clean
+.clean-conf: ${CLEAN_SUBPROJECTS}
+	cd . && ${MAKE} clean
 
 # Subprojects
 .clean-subprojects:

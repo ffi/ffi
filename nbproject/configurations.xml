@@ -95,27 +95,29 @@
                    projectFiles="false">
       <itemPath>Makefile</itemPath>
       <itemPath>Rakefile</itemPath>
+      <itemPath>ext/ffi_c/extconf.rb</itemPath>
       <itemPath>ruby-ffi-Makefile.mk</itemPath>
     </logicalFolder>
   </logicalFolder>
   <projectmakefile>ruby-ffi-Makefile.mk</projectmakefile>
   <confs>
-    <conf name="Default" type="0">
+    <conf name="x86_64-Linux" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <compilerSet>GNU|GNU</compilerSet>
-        <platform>1</platform>
+        <platform>2</platform>
       </toolsSet>
       <makefileType>
         <makeTool>
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
-          <buildCommand>rake compile</buildCommand>
-          <cleanCommand>rake clean</cleanCommand>
+          <buildCommand>${MAKE}</buildCommand>
+          <cleanCommand>${MAKE} clean</cleanCommand>
           <executablePath></executablePath>
           <cTool>
             <incDir>
-              <pElem>/usr/local/ruby-1.8.6-p369/lib/ruby/1.8/i386-solaris2.11</pElem>
-              <pElem>/usr/lib/libffi-3.0.5/include</pElem>
+              <pElem>/usr/local/ruby-trunk/include/ruby-1.9.1/ruby</pElem>
+              <pElem>/usr/local/ruby-trunk/include/ruby-1.9.1</pElem>
+              <pElem>/usr/include/x86_64-linux-gnu</pElem>
             </incDir>
           </cTool>
         </makeTool>

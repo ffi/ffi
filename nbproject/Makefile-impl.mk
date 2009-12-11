@@ -27,11 +27,11 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=ruby-ffi.git
 
 # Active Configuration
-DEFAULTCONF=Default
+DEFAULTCONF=x86_64-Linux
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=Default 
+ALLCONFS=x86_64-Linux 
 
 
 # build
