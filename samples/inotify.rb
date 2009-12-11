@@ -2,6 +2,7 @@ require 'rubygems'
 require 'ffi'
 module Inotify
   extend FFI::Library
+  ffi_lib FFI::Library::LIBC
   class Event < FFI::Struct
     layout \
       :wd, :int,

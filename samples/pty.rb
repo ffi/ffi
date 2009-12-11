@@ -5,6 +5,7 @@ module PTY
   private
   module LibC
     extend FFI::Library
+    ffi_lib FFI::Library::LIBC
     attach_function :forkpty, [ :buffer_out, :buffer_out, :buffer_in, :buffer_in ], :int
     attach_function :openpty, [ :buffer_out, :buffer_out, :buffer_out, :buffer_in, :buffer_in ], :int
     attach_function :login_tty, [ :int ], :int
