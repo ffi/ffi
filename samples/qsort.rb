@@ -5,7 +5,7 @@ module LibC
   extend FFI::Library
   ffi_lib FFI::Library::LIBC
   callback :qsort_cmp, [ :pointer, :pointer ], :int
-  attach_function :qsort, [ :pointer, :int, :int, :qsort_cmp ], :int
+  attach_function :qsort, [ :pointer, :ulong, :ulong, :qsort_cmp ], :int
 end
 
 p = FFI::MemoryPointer.new(:int, 2)
