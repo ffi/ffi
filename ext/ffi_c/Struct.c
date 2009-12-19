@@ -63,6 +63,8 @@ typedef struct InlineArray_ {
     StructField* field;
     MemoryOp *op;
     Type* componentType;
+    ArrayType* arrayType;
+    unsigned int length;
 } InlineArray;
 
 
@@ -568,6 +570,7 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
     Data_Get_Struct(arrayType->rbComponentType, Type, array->componentType);
     
     array->op = get_memory_op(array->componentType);
+    array->length = arrayType->length;
 
     return self;
 }
@@ -583,8 +586,12 @@ inline_array_size(VALUE self)
 }
 
 static int
-inline_array_offset(InlineArray* array, unsigned int index)
+inline_array_offset(InlineArray* array, int index)
 {
+    if (index < 0 || index >= array->length) {
+        rb_raise(rb_eIndexError, "index %d out of bounds", index);
+    }
+
     return array->field->offset + (index * array->componentType->ffiType->size);
 }
 
@@ -596,9 +603,9 @@ inline_array_aref(VALUE self, VALUE rbIndex)
     Data_Get_Struct(self, InlineArray, array);
 
     if (array->op != NULL) {
-        return array->op->get(array->memory, inline_array_offset(array, NUM2UINT(rbIndex)));
+        return array->op->get(array->memory, inline_array_offset(array, NUM2INT(rbIndex)));
     } else if (array->componentType->nativeType == NATIVE_STRUCT) {
-        int offset = inline_array_offset(array, NUM2UINT(rbIndex));
+        int offset = inline_array_offset(array, NUM2INT(rbIndex));
         VALUE rbOffset = INT2NUM(offset);
         VALUE rbPointer = rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
 
@@ -620,10 +627,10 @@ inline_array_aset(VALUE self, VALUE rbIndex, VALUE rbValue)
     Data_Get_Struct(self, InlineArray, array);
 
     if (array->op != NULL) {
-        array->op->put(array->memory, inline_array_offset(array, NUM2UINT(rbIndex)),
+        array->op->put(array->memory, inline_array_offset(array, NUM2INT(rbIndex)),
             rbValue);
     } else if (array->componentType->nativeType == NATIVE_STRUCT) {
-        int offset = inline_array_offset(array, NUM2UINT(rbIndex));
+        int offset = inline_array_offset(array, NUM2INT(rbIndex));
         ArrayType* arrayType;
         Struct* s;
 
