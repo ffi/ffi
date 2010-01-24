@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------
-   closures.c - Copyright (c) 2007  Red Hat, Inc.
-   Copyright (C) 2007 Free Software Foundation, Inc
+   closures.c - Copyright (c) 2007, 2009  Red Hat, Inc.
+   Copyright (C) 2007, 2009 Free Software Foundation, Inc
 
    Code to allocate and deallocate memory for closures.
 
@@ -210,6 +210,7 @@ static int dlmunmap(void *, size_t);
 #if !(defined(X86_WIN32) || defined(X86_WIN64)) || defined (__CYGWIN__)
 
 #if FFI_MMAP_EXEC_SELINUX
+
 /* A mutex used to synchronize access to *exec* variables in this file.  */
 static pthread_mutex_t open_temp_exec_file_mutex = PTHREAD_MUTEX_INITIALIZER;
 
