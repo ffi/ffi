@@ -12,6 +12,8 @@
         <itemPath>ext/ffi_c/Buffer.c</itemPath>
         <itemPath>ext/ffi_c/Call.c</itemPath>
         <itemPath>ext/ffi_c/Call.h</itemPath>
+        <itemPath>ext/ffi_c/ClosurePool.c</itemPath>
+        <itemPath>ext/ffi_c/ClosurePool.h</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.c</itemPath>
         <itemPath>ext/ffi_c/DynamicLibrary.h</itemPath>
         <itemPath>ext/ffi_c/Function.c</itemPath>
