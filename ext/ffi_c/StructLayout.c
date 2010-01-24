@@ -213,6 +213,13 @@ function_field_put(VALUE self, VALUE pointer, VALUE proc)
     return self;
 }
 
+static inline bool
+isCharArray(ArrayType* arrayType)
+{
+    return arrayType->componentType->nativeType == NATIVE_INT8
+            || arrayType->componentType->nativeType == NATIVE_UINT8;
+}
+
 static VALUE
 array_field_get(VALUE self, VALUE pointer)
 {
@@ -226,7 +233,78 @@ array_field_get(VALUE self, VALUE pointer)
     argv[0] = pointer;
     argv[1] = self;
 
-    return rb_class_new_instance(2, argv, rbffi_StructInlineArrayClass);
+    return rb_class_new_instance(2, argv, isCharArray(array)
+            ? rbffi_StructLayoutCharArrayClass : rbffi_StructInlineArrayClass);
+}
+
+static VALUE
+array_field_put(VALUE self, VALUE pointer, VALUE value)
+{
+    StructField* f;
+    ArrayType* array;
+    MemoryOp* op;
+
+    Data_Get_Struct(self, StructField, f);
+    Data_Get_Struct(f->rbType, ArrayType, array);
+    
+    
+    if (isCharArray(array) && rb_obj_is_instance_of(value, rb_cString)) {
+        VALUE argv[2];
+
+        argv[0] = INT2FIX(f->offset);
+        argv[1] = value;
+
+        rb_funcall2(pointer, rb_intern("put_string"), 2, argv);
+    
+    } else {
+        int count = RARRAY_LEN(value);
+        int i;
+        AbstractMemory* memory = MEMORY(pointer);
+
+        if (count > array->length) {
+            rb_raise(rb_eIndexError, "array too large");
+        }
+
+        // clear the contents in case of a short write
+        checkWrite(memory);
+        checkBounds(memory, f->offset, f->type->ffiType->size);
+        if (count < array->length) {
+            memset(memory->address + f->offset + (count * array->componentType->ffiType->size),
+                    0, (array->length - count) * array->componentType->ffiType->size);
+        }
+
+        // now copy each element in
+        if ((op = get_memory_op(array->componentType)) != NULL) {
+
+            for (i = 0; i < count; ++i) {
+                (*op->put)(memory, f->offset + (i * array->componentType->ffiType->size), rb_ary_entry(value, i));
+            }
+
+        } else if (array->componentType->nativeType == NATIVE_STRUCT) {
+
+            for (i = 0; i < count; ++i) {
+                VALUE entry = rb_ary_entry(value, i);
+                Struct* s;
+
+                if (!rb_obj_is_kind_of(entry, rbffi_StructClass)) {
+                    rb_raise(rb_eTypeError, "array element not an instance of FFI::Struct");
+                    break;
+                }
+
+                Data_Get_Struct(entry, Struct, s);
+                checkRead(s->pointer);
+                checkBounds(s->pointer, 0, array->componentType->ffiType->size);
+
+                memcpy(memory->address + f->offset + (i * array->componentType->ffiType->size),
+                        s->pointer->address, array->componentType->ffiType->size);
+            }
+
+        } else {
+            rb_raise(rb_eArgError, "put not supported for arrays of type %s", rb_obj_classname(array->rbComponentType));
+        }
+    }
+
+    return self;
 }
 
 static VALUE
@@ -469,6 +547,7 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructLayoutFunctionFieldClass, "get", function_field_get, 1);
 
     rb_define_method(rbffi_StructLayoutArrayFieldClass, "get", array_field_get, 1);
+    rb_define_method(rbffi_StructLayoutArrayFieldClass, "put", array_field_put, 2);
     rb_define_method(rbffi_StructLayoutStructFieldClass, "get", inline_struct_field_get, 1);
 
     rb_define_alloc_func(rbffi_StructLayoutEnumFieldClass, enum_field_allocate);

@@ -79,6 +79,8 @@ VALUE rbffi_StructClass = Qnil;
 static VALUE StructLayoutBuilderClass = Qnil;
 
 VALUE rbffi_StructInlineArrayClass = Qnil;
+VALUE rbffi_StructLayoutCharArrayClass = Qnil;
+
 static ID id_pointer_ivar = 0, id_layout_ivar = 0;
 static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
 
@@ -727,8 +729,8 @@ inline_array_to_s(VALUE self)
     Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
 
     if (arrayType->componentType->nativeType != NATIVE_INT8 && arrayType->componentType->nativeType != NATIVE_UINT8) {
-        rb_raise(rb_eNoMethodError, "to_s not defined for this array type");
-        return Qnil;
+        VALUE dummy = Qnil;
+        return rb_call_super(0, &dummy);
     }
 
     argv[0] = UINT2NUM(array->field->offset);
@@ -775,6 +777,9 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rbffi_StructInlineArrayClass = rb_define_class_under(rbffi_StructClass, "InlineArray", rb_cObject);
     rb_global_variable(&rbffi_StructInlineArrayClass);
 
+    rbffi_StructLayoutCharArrayClass = rb_define_class_under(rbffi_StructLayoutClass,
+        "CharArray", rbffi_StructInlineArrayClass);
+    rb_global_variable(&rbffi_StructLayoutCharArrayClass);
 
 
     rb_define_alloc_func(StructClass, struct_allocate);
@@ -820,9 +825,10 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructInlineArrayClass, "each", inline_array_each, 0);
     rb_define_method(rbffi_StructInlineArrayClass, "size", inline_array_size, 0);
     rb_define_method(rbffi_StructInlineArrayClass, "to_a", inline_array_to_a, 0);
-    rb_define_method(rbffi_StructInlineArrayClass, "to_s", inline_array_to_s, 0);
-    rb_define_alias(rbffi_StructInlineArrayClass, "to_str", "to_s");
     rb_define_method(rbffi_StructInlineArrayClass, "to_ptr", inline_array_to_ptr, 0);
+
+    rb_define_method(rbffi_StructLayoutCharArrayClass, "to_s", inline_array_to_s, 0);
+    rb_define_alias(rbffi_StructLayoutCharArrayClass, "to_str", "to_s");
 
     id_pointer_ivar = rb_intern("@pointer");
     id_layout_ivar = rb_intern("@layout");
