@@ -35,7 +35,9 @@
 extern "C" {
 #endif
 
-#if defined(__i386__) && defined(HAVE_RAW_API) && !defined(_WIN32) && !defined(__WIN32__)
+#if defined(__i386__) && \
+  (defined(HAVE_RAW_API) || defined(USE_INTERNAL_LIBFFI)) && \
+  !defined(_WIN32) && !defined(__WIN32__)
 #  define USE_RAW
 #endif
 

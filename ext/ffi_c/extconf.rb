@@ -17,6 +17,7 @@ end
 have_func('rb_thread_blocking_region')
 
 $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
+$defs << "-DUSE_INTERNAL_LIBFFI" unless libffi_ok
 
 create_header
 
