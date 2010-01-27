@@ -582,19 +582,18 @@ static VALUE
 inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
 {
     InlineArray* array;
-    ArrayType* arrayType;
-
+    
     Data_Get_Struct(self, InlineArray, array);
     array->rbMemory = rbMemory;
     array->rbField = rbField;
 
     Data_Get_Struct(rbMemory, AbstractMemory, array->memory);
     Data_Get_Struct(rbField, StructField, array->field);
-    Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
-    Data_Get_Struct(arrayType->rbComponentType, Type, array->componentType);
+    Data_Get_Struct(array->field->rbType, ArrayType, array->arrayType);
+    Data_Get_Struct(array->arrayType->rbComponentType, Type, array->componentType);
     
     array->op = get_memory_op(array->componentType);
-    array->length = arrayType->length;
+    array->length = array->arrayType->length;
 
     return self;
 }
@@ -629,16 +628,14 @@ inline_array_aref(VALUE self, VALUE rbIndex)
     if (array->op != NULL) {
         return array->op->get(array->memory, inline_array_offset(array, NUM2INT(rbIndex)));
     } else if (array->componentType->nativeType == NATIVE_STRUCT) {
-        int offset = inline_array_offset(array, NUM2INT(rbIndex));
-        VALUE rbOffset = INT2NUM(offset);
-        VALUE rbPointer = rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
+        VALUE rbOffset = INT2NUM(inline_array_offset(array, NUM2INT(rbIndex)));
+        VALUE rbLength = INT2NUM(array->componentType->ffiType->size);
+        VALUE rbPointer = rb_funcall(array->rbMemory, rb_intern("slice"), 2, rbOffset, rbLength);
 
         return rb_class_new_instance(1, &rbPointer, ((StructByValue *) array->componentType)->rbStructClass);
     } else {
-        ArrayType* arrayType;
-        Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
 
-        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(arrayType->rbComponentType));
+        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(array->arrayType->rbComponentType));
         return Qnil;
     }
 }
@@ -655,10 +652,7 @@ inline_array_aset(VALUE self, VALUE rbIndex, VALUE rbValue)
             rbValue);
     } else if (array->componentType->nativeType == NATIVE_STRUCT) {
         int offset = inline_array_offset(array, NUM2INT(rbIndex));
-        ArrayType* arrayType;
         Struct* s;
-
-        Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
 
         if (!rb_obj_is_kind_of(rbValue, rbffi_StructClass)) {
             rb_raise(rb_eTypeError, "argument not an instance of struct");
@@ -689,24 +683,21 @@ static VALUE
 inline_array_each(VALUE self)
 {
     InlineArray* array;
-    ArrayType* arrayType;
     
     int i;
 
     Data_Get_Struct(self, InlineArray, array);
-    Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
-
+    
     if (array->op != NULL) {
-        for (i = 0; i < arrayType->length; ++i) {
+        for (i = 0; i < array->length; ++i) {
             int offset = inline_array_offset(array, i);
             rb_yield(array->op->get(array->memory, offset));
         }
     } else if (array->componentType->nativeType == NATIVE_STRUCT) {
-        for (i = 0; i < arrayType->length; ++i) {
+        for (i = 0; i < array->length; ++i) {
             VALUE rbOffset = UINT2NUM(inline_array_offset(array, i));
-            VALUE rbLength = UINT2NUM(arrayType->length * arrayType->componentType->ffiType->size);
-            VALUE argv[2] = { rbOffset, rbLength };
-            VALUE rbPointer = rb_funcall2(array->rbMemory, rb_intern("slice"), 2, argv);
+            VALUE rbLength = UINT2NUM(array->componentType->ffiType->size);
+            VALUE rbPointer = rb_funcall(array->rbMemory, rb_intern("slice"), 2, rbOffset, rbLength);
 
             rb_yield(rb_class_new_instance(1, &rbPointer, ((StructByValue *) array->componentType)->rbStructClass));
         }
@@ -725,16 +716,14 @@ static VALUE
 inline_array_to_a(VALUE self)
 {
     InlineArray* array;
-    ArrayType* arrayType;
     VALUE obj;
     int i;
 
     Data_Get_Struct(self, InlineArray, array);
-    Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
-    obj = rb_ary_new2(arrayType->length);
+    obj = rb_ary_new2(array->length);
 
     
-    for (i = 0; i < arrayType->length; ++i) {
+    for (i = 0; i < array->length; ++i) {
         int offset = inline_array_offset(array, i);
         rb_ary_push(obj, array->op->get(array->memory, offset));
     }
@@ -746,19 +735,17 @@ static VALUE
 inline_array_to_s(VALUE self)
 {
     InlineArray* array;
-    ArrayType* arrayType;
     VALUE argv[2];
 
     Data_Get_Struct(self, InlineArray, array);
-    Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
-
-    if (arrayType->componentType->nativeType != NATIVE_INT8 && arrayType->componentType->nativeType != NATIVE_UINT8) {
+ 
+    if (array->componentType->nativeType != NATIVE_INT8 && array->componentType->nativeType != NATIVE_UINT8) {
         VALUE dummy = Qnil;
         return rb_call_super(0, &dummy);
     }
 
     argv[0] = UINT2NUM(array->field->offset);
-    argv[1] = UINT2NUM(arrayType->length);
+    argv[1] = UINT2NUM(array->length);
 
     return rb_funcall2(array->rbMemory, rb_intern("get_string"), 2, argv);
 }
@@ -768,19 +755,11 @@ static VALUE
 inline_array_to_ptr(VALUE self)
 {
     InlineArray* array;
-    AbstractMemory* ptr;
-    VALUE rbOffset, rbPointer;
-
+    
     Data_Get_Struct(self, InlineArray, array);
 
-    rbOffset = UINT2NUM(array->field->offset);
-    rbPointer = rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
-    Data_Get_Struct(rbPointer, AbstractMemory, ptr);
-    
-    // Restrict the size of the pointer so ops like ptr.get_string(0) are bounds checked
-    ptr->size = MIN(ptr->size, (long) array->field->type->ffiType->size);
-
-    return rbPointer;
+    return rb_funcall(array->rbMemory, rb_intern("slice"), 2,
+        UINT2NUM(array->field->offset), UINT2NUM(array->arrayType->base.ffiType->size));
 }
 
 
