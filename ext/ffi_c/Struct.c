@@ -704,7 +704,9 @@ inline_array_each(VALUE self)
     } else if (array->componentType->nativeType == NATIVE_STRUCT) {
         for (i = 0; i < arrayType->length; ++i) {
             VALUE rbOffset = UINT2NUM(inline_array_offset(array, i));
-            VALUE rbPointer = rb_funcall2(array->rbMemory, rb_intern("+"), 1, &rbOffset);
+            VALUE rbLength = UINT2NUM(arrayType->length * arrayType->componentType->ffiType->size);
+            VALUE argv[2] = { rbOffset, rbLength };
+            VALUE rbPointer = rb_funcall2(array->rbMemory, rb_intern("slice"), 2, argv);
 
             rb_yield(rb_class_new_instance(1, &rbPointer, ((StructByValue *) array->componentType)->rbStructClass));
         }
