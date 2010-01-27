@@ -436,9 +436,15 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
         } else if (rb_obj_is_kind_of(rbType, rbffi_ArrayTypeClass)) {
             rbFieldClass = rbffi_StructLayoutArrayFieldClass;
         } else if (rb_obj_is_kind_of(rbType, rbffi_EnumTypeClass)) {
-            rbFieldClass = rbffi_StructLayoutEnumFieldClass;
+            rbFieldClass = rb_const_get(rbffi_StructLayoutClass, rb_intern("Enum"));
+
         } else {
             rbFieldClass = rbffi_StructLayoutFieldClass;
+        }
+
+        if (!RTEST(rbFieldClass)) {
+            rb_raise(rb_eTypeError, "invalid struct field type (%s)", rb_obj_classname(rbType));
+            return Qnil;
         }
 
         rbField = rb_class_new_instance(3, fargv, rbFieldClass);

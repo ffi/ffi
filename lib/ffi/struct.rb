@@ -40,6 +40,18 @@ module FFI
     def offset_of(field_name)
       self[field_name].offset
     end
+
+    class Enum < Field
+      
+      def get(ptr)
+        type.find(ptr.get_int(0))
+      end
+
+      def put(ptr, value)
+        ptr.put_int(0, type.find(value))
+      end
+
+    end
   end
 
   
