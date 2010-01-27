@@ -242,11 +242,10 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
 {
     StructField* f;
     ArrayType* array;
-    MemoryOp* op;
+    
 
     Data_Get_Struct(self, StructField, f);
     Data_Get_Struct(f->rbType, ArrayType, array);
-    
     
     if (isCharArray(array) && rb_obj_is_instance_of(value, rb_cString)) {
         VALUE argv[2];
@@ -258,6 +257,7 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
 
     } else {
 #ifdef notyet
+        MemoryOp* op;
         int count = RARRAY_LEN(value);
         int i;
         AbstractMemory* memory = MEMORY(pointer);
