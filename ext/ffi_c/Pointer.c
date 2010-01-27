@@ -130,25 +130,41 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
 
 
 static VALUE
-ptr_plus(VALUE self, VALUE offset)
+slice(VALUE self, long offset, long size)
 {
     AbstractMemory* ptr;
     Pointer* p;
     VALUE retval;
-    long off = NUM2LONG(offset);
-
+    
     Data_Get_Struct(self, AbstractMemory, ptr);
-    checkBounds(ptr, off, 1);
+    checkBounds(ptr, offset, 1);
 
     retval = Data_Make_Struct(rbffi_PointerClass, Pointer, ptr_mark, -1, p);
 
-    p->memory.address = ptr->address + off;
-    p->memory.size = ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off;
+    p->memory.address = ptr->address + offset;
+    p->memory.size = size;
     p->memory.access = ptr->access;
     p->memory.typeSize = ptr->typeSize;
     p->parent = self;
 
     return retval;
+}
+
+static VALUE
+ptr_plus(VALUE self, VALUE offset)
+{
+    AbstractMemory* ptr;
+    long off = NUM2LONG(offset);
+
+    Data_Get_Struct(self, AbstractMemory, ptr);
+
+    return slice(self, off, ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off);
+}
+
+static VALUE
+ptr_slice(VALUE self, VALUE rbOffset, VALUE rbLength)
+{
+    return slice(self, NUM2LONG(rbOffset), NUM2LONG(rbLength));
 }
 
 static VALUE
@@ -211,6 +227,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_method(rbffi_PointerClass, "initialize", ptr_initialize, -1);
     rb_define_method(rbffi_PointerClass, "inspect", ptr_inspect, 0);
     rb_define_method(rbffi_PointerClass, "+", ptr_plus, 1);
+    rb_define_method(rbffi_PointerClass, "slice", ptr_slice, 2);
     rb_define_method(rbffi_PointerClass, "null?", ptr_null_p, 0);
     rb_define_method(rbffi_PointerClass, "address", ptr_address, 0);
     rb_define_alias(rbffi_PointerClass, "to_i", "address");

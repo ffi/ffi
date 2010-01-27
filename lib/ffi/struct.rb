@@ -55,9 +55,7 @@ module FFI
 
     class InlineStruct < Field
       def get(ptr)
-        # FIXME: really should use ptr#slice(off, len) to limit the inner struct
-        # to just its part of the outer struct
-        type.struct_class.new(ptr + self.offset)
+        type.struct_class.new(ptr.slice(self.offset, self.size))
       end
 
 #      def put(ptr, value)

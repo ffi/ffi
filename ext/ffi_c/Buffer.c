@@ -110,24 +110,40 @@ buffer_alloc_inout(int argc, VALUE* argv, VALUE klass)
 }
 
 static VALUE
-buffer_plus(VALUE self, VALUE rbOffset)
+slice(VALUE self, long offset, long len)
 {
     Buffer* ptr;
     Buffer* result;
     VALUE obj = Qnil;
-    long offset = NUM2LONG(rbOffset);
-
+    
     Data_Get_Struct(self, Buffer, ptr);
-    checkBounds(&ptr->memory, offset, 1);
+    checkBounds(&ptr->memory, offset, len);
 
     obj = Data_Make_Struct(BufferClass, Buffer, buffer_mark, -1, result);
     result->memory.address = ptr->memory.address + offset;
-    result->memory.size = ptr->memory.size - offset;
+    result->memory.size = len;
     result->memory.access = ptr->memory.access;
     result->memory.typeSize = ptr->memory.typeSize;
     result->rbParent = self;
 
     return obj;
+}
+
+static VALUE
+buffer_plus(VALUE self, VALUE rbOffset)
+{
+    Buffer* ptr;
+    long offset = NUM2LONG(rbOffset);
+
+    Data_Get_Struct(self, Buffer, ptr);
+
+    return slice(self, offset, ptr->memory.size - offset);
+}
+
+static VALUE
+buffer_slice(VALUE self, VALUE rbOffset, VALUE rbLength)
+{
+    return slice(self, NUM2LONG(rbOffset), NUM2LONG(rbLength));
 }
 
 static VALUE
@@ -183,4 +199,5 @@ rbffi_Buffer_Init(VALUE moduleFFI)
     rb_define_method(BufferClass, "inspect", buffer_inspect, 0);
     rb_define_alias(BufferClass, "length", "total");
     rb_define_method(BufferClass, "+", buffer_plus, 1);
+    rb_define_method(BufferClass, "slice", buffer_slice, 2);
 }
