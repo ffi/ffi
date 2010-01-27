@@ -77,7 +77,7 @@ extern "C" {
 
     extern VALUE rbffi_StructClass, rbffi_StructLayoutClass;
     extern VALUE rbffi_StructLayoutFieldClass, rbffi_StructLayoutFunctionFieldClass;
-    extern VALUE rbffi_StructLayoutArrayFieldClass, rbffi_StructLayoutStructFieldClass;
+    extern VALUE rbffi_StructLayoutArrayFieldClass;
     extern VALUE rbffi_StructInlineArrayClass;
     extern VALUE rbffi_StructLayoutCharArrayClass;
 

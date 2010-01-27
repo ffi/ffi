@@ -429,13 +429,21 @@ struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
         fargv[0] = rbName;
         fargv[1] = UINT2NUM(offset);
         fargv[2] = rbType;
+        
         if (rb_obj_is_kind_of(rbType, rbffi_FunctionTypeClass)) {
+
             rbFieldClass = rbffi_StructLayoutFunctionFieldClass;
+
         } else if (rb_obj_is_kind_of(rbType, rbffi_StructByValueClass)) {
-            rbFieldClass = rbffi_StructLayoutStructFieldClass;
+            
+            rbFieldClass = rb_const_get(rbffi_StructLayoutClass, rb_intern("InlineStruct"));
+
         } else if (rb_obj_is_kind_of(rbType, rbffi_ArrayTypeClass)) {
+
             rbFieldClass = rbffi_StructLayoutArrayFieldClass;
+
         } else if (rb_obj_is_kind_of(rbType, rbffi_EnumTypeClass)) {
+
             rbFieldClass = rb_const_get(rbffi_StructLayoutClass, rb_intern("Enum"));
 
         } else {
@@ -461,7 +469,8 @@ static VALUE
 struct_layout_builder_add_struct(int argc, VALUE* argv, VALUE self)
 {
     StructLayoutBuilder* builder;
-    VALUE rbName = Qnil, rbType = Qnil, rbOffset = Qnil, rbField = Qnil, rbStructClass = Qnil;
+    VALUE rbName = Qnil, rbType = Qnil, rbOffset = Qnil, rbField = Qnil;
+    VALUE rbFieldClass = Qnil, rbStructClass = Qnil;
     VALUE fargv[3];
     unsigned int size, alignment, offset;
     int nargs;
@@ -484,7 +493,14 @@ struct_layout_builder_add_struct(int argc, VALUE* argv, VALUE self)
     fargv[0] = rbName;
     fargv[1] = UINT2NUM(offset);
     fargv[2] = rbType;
-    rbField = rb_class_new_instance(3, fargv, rbffi_StructLayoutStructFieldClass);
+    rbFieldClass = rb_const_get(rbffi_StructLayoutClass, rb_intern("InlineStruct"));
+    if (!RTEST(rbFieldClass)) {
+        rb_raise(rb_eRuntimeError, "could not locate StructLayout::InlineStruct");
+        return Qnil;
+    }
+    
+    rbField = rb_class_new_instance(3, fargv, rbFieldClass);
+
     store_field(builder, rbName, rbField, offset, size, alignment);
 
     return self;

@@ -53,7 +53,6 @@ static void struct_field_mark(StructField* );
 
 VALUE rbffi_StructLayoutFieldClass = Qnil;
 VALUE rbffi_StructLayoutFunctionFieldClass = Qnil, rbffi_StructLayoutArrayFieldClass = Qnil;
-VALUE rbffi_StructLayoutStructFieldClass = Qnil;
 
 VALUE rbffi_StructLayoutClass = Qnil;
 
@@ -310,22 +309,6 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
     return value;
 }
 
-static VALUE
-inline_struct_field_get(VALUE self, VALUE pointer)
-{
-    StructField* f;
-    StructByValue* sbv;
-    VALUE rbPointer = Qnil, rbOffset = Qnil;
-
-    Data_Get_Struct(self, StructField, f);
-    Data_Get_Struct(f->rbType, StructByValue, sbv);
-
-    rbOffset = UINT2NUM(f->offset);
-    rbPointer = rb_funcall2(pointer, rb_intern("+"), 1, &rbOffset);
-
-    return rb_class_new_instance(1, &rbPointer, sbv->rbStructClass);
-}
-
 
 static VALUE
 struct_layout_allocate(VALUE klass)
@@ -475,9 +458,6 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rbffi_StructLayoutFunctionFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Function", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutFunctionFieldClass);
 
-    rbffi_StructLayoutStructFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "StructByValue", rbffi_StructLayoutFieldClass);
-    rb_global_variable(&rbffi_StructLayoutStructFieldClass);
-
     rbffi_StructLayoutArrayFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Array", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutArrayFieldClass);
 
@@ -496,7 +476,6 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
 
     rb_define_method(rbffi_StructLayoutArrayFieldClass, "get", array_field_get, 1);
     rb_define_method(rbffi_StructLayoutArrayFieldClass, "put", array_field_put, 2);
-    rb_define_method(rbffi_StructLayoutStructFieldClass, "get", inline_struct_field_get, 1);
 
     rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
     rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);
