@@ -255,8 +255,9 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
         argv[1] = value;
 
         rb_funcall2(pointer, rb_intern("put_string"), 2, argv);
-    
+
     } else {
+#ifdef notyet
         int count = RARRAY_LEN(value);
         int i;
         AbstractMemory* memory = MEMORY(pointer);
@@ -300,11 +301,14 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
             }
 
         } else {
-            rb_raise(rb_eArgError, "put not supported for arrays of type %s", rb_obj_classname(array->rbComponentType));
+            rb_raise(rb_eNotImpError, "put not supported for arrays of type %s", rb_obj_classname(array->rbComponentType));
         }
+#else
+        rb_raise(rb_eNotImpError, "cannot set array field");
+#endif
     }
 
-    return self;
+    return value;
 }
 
 static VALUE
