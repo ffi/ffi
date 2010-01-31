@@ -249,7 +249,13 @@ function_attach(VALUE self, VALUE module, VALUE name)
     Data_Get_Struct(self, Function, fn);
 
     if (fn->info->parameterCount == -1) {
-        rb_raise(rb_eRuntimeError, "Cannot attach variadic functions");
+        rb_raise(rb_eRuntimeError, "cannot attach variadic functions");
+        return Qnil;
+    }
+
+    if (!rb_obj_is_kind_of(module, rb_cModule)) {
+        rb_raise(rb_eRuntimeError, "trying to attach function to non-module");
+        return Qnil;
     }
 
     if (fn->methodHandle == NULL) {

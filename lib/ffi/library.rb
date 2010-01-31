@@ -34,6 +34,10 @@ module FFI
     CURRENT_PROCESS = FFI::CURRENT_PROCESS
     LIBC = FFI::Platform::LIBC
 
+    def self.extended(mod)
+      raise RuntimeError.new("must only be extended by module") unless mod.kind_of?(Module)
+    end
+
     def ffi_lib(*names)
 
       ffi_libs = names.map do |name|
