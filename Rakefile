@@ -12,16 +12,7 @@ require 'date'
 require 'fileutils'
 require 'rbconfig'
 
-begin
-  require 'bones'
-  Bones.setup
-rescue LoadError
-  begin
-    load 'tasks/setup.rb'
-  rescue LoadError
-    raise RuntimeError, '### please install the "bones" gem ###'
-  end
-end
+load 'tasks/setup.rb'
 
 LIBEXT = case Config::CONFIG['host_os'].downcase
   when /darwin/
