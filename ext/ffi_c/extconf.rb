@@ -22,7 +22,7 @@ $defs << "-DUSE_INTERNAL_LIBFFI" unless libffi_ok
 create_header
 
 $CFLAGS << " -mwin32 " if Config::CONFIG['host_os'] =~ /cygwin/
-$CFLAGS << " -Werror -Wunused -Wformat -Wimplicit -Wreturn-type "
+#$CFLAGS << " -Werror -Wunused -Wformat -Wimplicit -Wreturn-type "
 
 create_makefile("ffi_c")
 unless libffi_ok
