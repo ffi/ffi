@@ -44,11 +44,11 @@ module FFI
     class Enum < Field
       
       def get(ptr)
-        type.find(ptr.get_int(0))
+        type.find(ptr.get_int(offset))
       end
 
       def put(ptr, value)
-        ptr.put_int(0, type.find(value))
+        ptr.put_int(offset, type.find(value))
       end
 
     end
