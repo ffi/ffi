@@ -9,3 +9,4 @@ build
 *.so
 *.[oa]
 core
+lib/ffi/types.conf

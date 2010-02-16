@@ -147,6 +147,7 @@ task :distclean => :clobber do
   FileUtils.rm_rf(Dir["lib/**/ffi_c.#{Config::CONFIG['DLEXT']}"])
   FileUtils.rm_rf('lib/1.8')
   FileUtils.rm_rf('lib/1.9')
+  FileUtils.rm_rf('lib/ffi/types.conf')
   FileUtils.rm_rf('conftest.dSYM')
   FileUtils.rm_rf('pkg')
 end
