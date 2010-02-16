@@ -290,14 +290,14 @@ describe "Struct tests" do
     extend FFI::Library
     enum :test_enum, [:c1, 10, :c2, 20, :c3, 30, :c4, 40]
     class TestStruct < FFI::Struct
-      layout :c, :test_enum
+      layout :a, :int, :c, :test_enum
     end
   end
   it ":enum field r/w" do
     s = EnumFields::TestStruct.new
     s[:c] = :c3
 
-    s.pointer.get_uint(0).should == 30
+    s.pointer.get_uint(FFI::Type::INT32.size).should == 30
     s[:c].should == :c3
   end
   module CallbackMember
