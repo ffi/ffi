@@ -71,6 +71,8 @@ typedef struct InlineArray_ {
 static void struct_mark(Struct *);
 static void struct_layout_builder_mark(StructLayoutBuilder *);
 static void struct_layout_builder_free(StructLayoutBuilder *);
+static VALUE struct_class_layout(VALUE klass);
+static void struct_malloc(Struct* s);
 static void inline_array_mark(InlineArray *);
 
 static inline int align(int offset, int align);
@@ -116,10 +118,8 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
     /* Call up into ruby code to adjust the layout */
     if (nargs > 1) {
         s->rbLayout = rb_funcall2(CLASS_OF(self), id_layout, RARRAY_LEN(rest), RARRAY_PTR(rest));
-    } else if (rb_cvar_defined(klass, id_layout_ivar)) {
-        s->rbLayout = rb_cvar_get(klass, id_layout_ivar);
     } else {
-        rb_raise(rb_eRuntimeError, "No Struct layout configured");
+        s->rbLayout = struct_class_layout(klass);
     }
 
     if (!rb_obj_is_kind_of(s->rbLayout, rbffi_StructLayoutClass)) {
@@ -132,11 +132,72 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
         s->pointer = MEMORY(rbPointer);
         s->rbPointer = rbPointer;
     } else {
-        s->rbPointer = rbffi_MemoryPointer_NewInstance(s->layout->size, 1, true);
-        s->pointer = (AbstractMemory *) DATA_PTR(s->rbPointer);
+        struct_malloc(s);
     }
 
     return self;
+}
+
+static VALUE
+struct_class_layout(VALUE klass)
+{
+    VALUE layout;
+    if (!rb_cvar_defined(klass, id_layout_ivar)) {
+        rb_raise(rb_eRuntimeError, "no Struct layout configured for %s", rb_class2name(klass));
+    }
+
+    layout = rb_cvar_get(klass, id_layout_ivar);
+    if (!rb_obj_is_kind_of(layout, rbffi_StructLayoutClass)) {
+        rb_raise(rb_eRuntimeError, "invalid Struct layout for %s", rb_class2name(klass));
+    }
+
+    return layout;
+}
+
+static StructLayout*
+struct_layout(VALUE self)
+{
+    Struct* s = (Struct *) DATA_PTR(self);
+    if (s->layout != NULL) {
+        return s->layout;
+    }
+
+    if (s->layout == NULL) {
+        s->rbLayout = struct_class_layout(CLASS_OF(self));
+        Data_Get_Struct(s->rbLayout, StructLayout, s->layout);
+    }
+
+    return s->layout;
+}
+
+static Struct*
+struct_validate(VALUE self)
+{
+    Struct* s;
+    Data_Get_Struct(self, Struct, s);
+
+    if (struct_layout(self) == NULL) {
+        rb_raise(rb_eRuntimeError, "struct layout == null");
+    }
+
+    if (s->pointer == NULL) {
+        struct_malloc(s);
+    }
+
+    return s;
+}
+
+static void
+struct_malloc(Struct* s)
+{
+    if (s->rbPointer == Qnil) {
+        s->rbPointer = rbffi_MemoryPointer_NewInstance(s->layout->size, 1, true);
+
+    } else if (!rb_obj_is_kind_of(s->rbPointer, rbffi_AbstractMemoryClass)) {
+        rb_raise(rb_eRuntimeError, "invalid pointer in struct");
+    }
+
+    s->pointer = (AbstractMemory *) DATA_PTR(s->rbPointer);
 }
 
 static void
@@ -151,9 +212,6 @@ struct_field(Struct* s, VALUE fieldName)
 {
     StructLayout* layout = s->layout;
     VALUE rbField;
-    if (layout == NULL) {
-        rb_raise(rb_eRuntimeError, "layout not set for Struct");
-    }
 
     rbField = rb_hash_aref(layout->rbFieldMap, fieldName);
     if (rbField == Qnil) {
@@ -170,8 +228,9 @@ struct_aref(VALUE self, VALUE fieldName)
     Struct* s;
     VALUE rbField;
     StructField* f;
-    
-    Data_Get_Struct(self, Struct, s);
+
+    s = struct_validate(self);
+
     rbField = struct_field(s, fieldName);
     f = (StructField *) DATA_PTR(rbField);
 
@@ -196,7 +255,8 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
     StructField* f;
 
 
-    Data_Get_Struct(self, Struct, s);
+    s = struct_validate(self);
+
     rbField = struct_field(s, fieldName);
     f = (StructField *) DATA_PTR(rbField);
     if (f->put != NULL) {
@@ -221,12 +281,25 @@ static VALUE
 struct_set_pointer(VALUE self, VALUE pointer)
 {
     Struct* s;
+    StructLayout* layout;
+    AbstractMemory* memory;
 
     if (!rb_obj_is_kind_of(pointer, rbffi_AbstractMemoryClass)) {
-        rb_raise(rb_eArgError, "Invalid pointer");
+        rb_raise(rb_eTypeError, "wrong argument type %s (expected Pointer or Buffer)",
+                rb_obj_classname(pointer));
+        return Qnil;
     }
 
+    
     Data_Get_Struct(self, Struct, s);
+    Data_Get_Struct(pointer, AbstractMemory, memory);
+    layout = struct_layout(self);
+
+    if (layout->base.ffiType->size > memory->size) {
+        rb_raise(rb_eArgError, "memory of %d bytes too small for struct %s (expected at least %d)",
+                memory->size, rb_obj_classname(self), layout->base.ffiType->size);
+    }
+    
     s->pointer = MEMORY(pointer);
     s->rbPointer = pointer;
     rb_ivar_set(self, id_pointer_ivar, pointer);
@@ -251,7 +324,9 @@ struct_set_layout(VALUE self, VALUE layout)
     Data_Get_Struct(self, Struct, s);
 
     if (!rb_obj_is_kind_of(layout, rbffi_StructLayoutClass)) {
-        rb_raise(rb_eArgError, "Invalid Struct layout");
+        rb_raise(rb_eTypeError, "wrong argument type %s (expected %s)",
+                rb_obj_classname(layout), rb_class2name(rbffi_StructLayoutClass));
+        return Qnil;
     }
 
     Data_Get_Struct(layout, StructLayout, s->layout);

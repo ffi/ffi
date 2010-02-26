@@ -133,6 +133,24 @@ describe "Struct tests" do
       mp.get_int64(ll_off).should == 0xfee1deadbeef
       end
   end
+
+  it "subclass overrides initialize without calling super" do
+    class InitializeWithoutSuper < FFI::Struct
+      layout :a, :int, :b, :long_long, :d, [:double, 2]
+
+      def initialize(a, b)
+        self[:a] = a
+        self[:b] = b
+        self[:d][0] = 1.2
+        self[:d][1] = 3.4
+      end
+
+    end
+    s = InitializeWithoutSuper.new(0x1eefbeef, 0xdeadcafebabe)
+    s[:a].should == 0x1eefbeef
+    s[:b].should == 0xdeadcafebabe
+  end
+
   it "Can use Struct subclass as parameter type" do
     module StructParam
       extend FFI::Library
