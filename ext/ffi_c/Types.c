@@ -76,7 +76,7 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
         case NATIVE_POINTER:
             return rbffi_Pointer_NewInstance(*(void **) ptr);
         case NATIVE_BOOL:
-            return ((int) *(ffi_arg *) ptr) ? Qtrue : Qfalse;
+            return ((unsigned char) *(ffi_arg *) ptr) ? Qtrue : Qfalse;
         case NATIVE_ENUM:
             return rb_funcall(rbType, id_find, 1, INT2NUM((unsigned int) *(ffi_arg *) ptr));
         
