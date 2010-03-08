@@ -374,7 +374,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
                 param = rbffi_Pointer_NewInstance(*(void **) parameters[i]);
                 break;
             case NATIVE_BOOL:
-                param = (*(int8_t *) parameters[i]) ? Qtrue : Qfalse;
+                param = (*(uint8_t *) parameters[i]) ? Qtrue : Qfalse;
                 break;
 
             case NATIVE_FUNCTION:
@@ -428,8 +428,9 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
                 *((void **) retval) = NULL;
             }
             break;
+
         case NATIVE_BOOL:
-            *((ffi_sarg *) retval) = rbReturnValue == Qtrue;
+            *((ffi_arg *) retval) = rbReturnValue == Qtrue;
             break;
 
         case NATIVE_FUNCTION:
