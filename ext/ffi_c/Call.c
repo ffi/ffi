@@ -142,10 +142,10 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
 
             case NATIVE_BOOL:
                 if (type != T_TRUE && type != T_FALSE) {
-                    rb_raise(rb_eTypeError, "Expected a Boolean parameter");
+                    rb_raise(rb_eTypeError, "wrong argument type  (expected a boolean parameter)");
                 }
-                param->s32 = argv[argidx++] == Qtrue;
-                ADJ(param, INT32);
+                param->s8 = argv[argidx++] == Qtrue;
+                ADJ(param, INT8);
                 break;
 
 
