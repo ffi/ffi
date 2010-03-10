@@ -107,6 +107,10 @@ ifeq ($(CPU), x86_64)
   MODEL = 64
 endif
 
+ifeq ($(CPU), ppc64)
+  MODEL = 64
+endif
+
 ifeq ($(CPU), powerpc64)
   MODEL = 64
 endif
