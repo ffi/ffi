@@ -317,12 +317,55 @@ function_release(VALUE self)
     return self;
 }
 
+struct gvl_callback {
+    Closure* closure;
+    void*    retval;
+    void**   parameters;
+};
+
+static void* callback_with_gvl(void* data);
+
+#ifdef HAVE_RUBY_THREAD_HAS_GVL_P
+extern int ruby_thread_has_gvl_p(void);
+#endif
+
+#ifdef HAVE_RB_THREAD_CALL_WITH_GVL
+extern void *rb_thread_call_with_gvl(void *(*func)(void *), void *data1);
+#endif
+
+
 static void
 callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
-    Closure* closure = (Closure *) user_data;
-    Function* fn = (Function *) closure->info;
+    struct gvl_callback cb;
+    cb.closure = (Closure *) user_data;
+    cb.retval = retval;
+    cb.parameters = parameters;
+
+#ifdef HAVE_RUBY_THREAD_HAS_GVL_P
+    if (ruby_thread_has_gvl_p()) {
+#else
+    if (1) {
+#endif
+        callback_with_gvl(&cb);
+    
+#if defined(HAVE_RUBY_NATIVE_THREAD_P) && defined (HAVE_RB_THREAD_CALL_WITH_GVL)
+    } else if (ruby_native_thread_p()) {
+        rb_thread_call_with_gvl(callback_with_gvl, &cb);
+#endif
+    }
+}
+
+
+static void*
+callback_with_gvl(void* data)
+{
+    struct gvl_callback* cb = (struct gvl_callback *) data;
+
+    Function* fn = (Function *) cb->closure->info;
     FunctionType *cbInfo = fn->info;
+    void* retval = cb->retval;
+    void** parameters = cb->parameters;
     VALUE* rbParams;
     VALUE rbReturnValue;
     int i;
@@ -388,7 +431,9 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         }
         rbParams[i] = param;
     }
+
     rbReturnValue = rb_funcall2(fn->rbProc, id_call, cbInfo->parameterCount, rbParams);
+
     if (rbReturnValue == Qnil || TYPE(rbReturnValue) == T_NIL) {
         memset(retval, 0, cbInfo->ffiReturnType->size);
     } else switch (cbInfo->returnType->nativeType) {
@@ -454,6 +499,8 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
             *((ffi_arg *) retval) = 0;
             break;
     }
+
+    return NULL;
 }
 
 

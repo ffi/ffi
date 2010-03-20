@@ -15,6 +15,9 @@ unless Config::CONFIG['host_os'] =~ /mswin32|mingw32/
 end
 
 have_func('rb_thread_blocking_region')
+have_func('ruby_thread_has_gvl_p')
+have_func('ruby_native_thread_p')
+have_func('rb_thread_call_with_gvl')
 
 $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 $defs << "-DUSE_INTERNAL_LIBFFI" unless libffi_ok
