@@ -39,6 +39,7 @@
 #include <ruby.h>
 
 #include <ffi.h>
+#include <pthread.h>
 #include "rbffi.h"
 #include "compat.h"
 
@@ -67,10 +68,42 @@ static void function_free(Function *);
 static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
+static void* callback_with_gvl(void* data);
+static VALUE async_cb_event(void);
+static VALUE async_cb_call(void *);
+
+#ifdef HAVE_RUBY_THREAD_HAS_GVL_P
+extern int ruby_thread_has_gvl_p(void);
+#endif
+
+#ifdef HAVE_RB_THREAD_CALL_WITH_GVL
+extern void *rb_thread_call_with_gvl(void *(*func)(void *), void *data1);
+#endif
 
 VALUE rbffi_FunctionClass = Qnil;
+static VALUE async_cb_thread = Qnil;
 
 static ID id_call = 0, id_cbtable = 0, id_cb_ref = 0;
+
+struct gvl_callback {
+    Closure* closure;
+    void*    retval;
+    void**   parameters;
+
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+    struct gvl_callback* next;
+    pthread_cond_t async_cond;
+    pthread_mutex_t async_mutex;
+#endif
+};
+
+
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+static struct gvl_callback* async_cb_list = NULL;
+static pthread_mutex_t async_cb_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t async_cb_cond = PTHREAD_COND_INITIALIZER;
+#endif
+
 
 static VALUE
 function_allocate(VALUE klass)
@@ -215,6 +248,10 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
             }
         }
 
+        if (async_cb_thread == Qnil) {
+            async_cb_thread = rb_thread_create(async_cb_event, NULL);
+        }
+
         fn->closure = rbffi_Closure_Alloc(fn->info->closurePool);
         fn->closure->info = fn;
         fn->memory.address = fn->closure->code;
@@ -317,23 +354,6 @@ function_release(VALUE self)
     return self;
 }
 
-struct gvl_callback {
-    Closure* closure;
-    void*    retval;
-    void**   parameters;
-};
-
-static void* callback_with_gvl(void* data);
-
-#ifdef HAVE_RUBY_THREAD_HAS_GVL_P
-extern int ruby_thread_has_gvl_p(void);
-#endif
-
-#ifdef HAVE_RB_THREAD_CALL_WITH_GVL
-extern void *rb_thread_call_with_gvl(void *(*func)(void *), void *data1);
-#endif
-
-
 static void
 callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
@@ -353,8 +373,102 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
     } else if (ruby_native_thread_p()) {
         rb_thread_call_with_gvl(callback_with_gvl, &cb);
 #endif
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+    } else {
+        pthread_mutex_init(&cb.async_mutex, NULL);
+        pthread_cond_init(&cb.async_cond, NULL);
+
+        pthread_mutex_lock(&cb.async_mutex);
+
+        // Now signal the async callback thread
+        pthread_mutex_lock(&async_cb_mutex);
+        cb.next = async_cb_list;
+        async_cb_list = &cb;
+        pthread_cond_signal(&async_cb_cond);
+        pthread_mutex_unlock(&async_cb_mutex);
+
+        // Wait for the thread executing the ruby callback to signal it is done
+        pthread_cond_wait(&cb.async_cond, &cb.async_mutex);
+#endif
     }
 }
+
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+struct async_wait {
+    void* cb;
+    bool stop;
+};
+
+static VALUE async_cb_wait(void *);
+static void async_cb_stop(void *);
+
+static VALUE
+async_cb_event(void)
+{
+    struct async_wait w = { 0 };
+
+    w.stop = false;
+    while (!w.stop) {
+        rb_thread_blocking_region(async_cb_wait, &w, async_cb_stop, &w);
+        if (w.cb != NULL) {
+            // Start up a new ruby thread to run the ruby callback
+            rb_thread_create(async_cb_call, w.cb);
+        }
+    }
+    
+    return Qnil;
+}
+
+static VALUE
+async_cb_wait(void *data)
+{
+    struct async_wait* w = (struct async_wait *) data;
+
+    w->cb = NULL;
+
+    pthread_mutex_lock(&async_cb_mutex);
+
+    while (!w->stop && async_cb_list == NULL) {
+        pthread_cond_wait(&async_cb_cond, &async_cb_mutex);
+    }
+    
+    if (async_cb_list != NULL) {
+        w->cb = async_cb_list;
+        async_cb_list = async_cb_list->next;
+    }
+
+    pthread_mutex_unlock(&async_cb_mutex);
+    
+    return Qnil;
+}
+
+static void
+async_cb_stop(void *data)
+{
+    struct async_wait* w = (struct async_wait *) data;
+
+    pthread_mutex_lock(&async_cb_mutex);
+    w->stop = true;
+    pthread_cond_signal(&async_cb_cond);
+    pthread_mutex_unlock(&async_cb_mutex);
+}
+
+static VALUE
+async_cb_call(void *data)
+{
+    struct gvl_callback* cb = (struct gvl_callback *) data;
+
+    callback_with_gvl(cb);
+
+    // Signal the original native thread that the ruby code has completed
+    pthread_mutex_lock(&cb->async_mutex);
+    pthread_cond_signal(&cb->async_cond);
+    pthread_mutex_unlock(&cb->async_mutex);
+
+    return Qnil;
+}
+
+#endif
 
 
 static void*
