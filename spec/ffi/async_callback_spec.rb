@@ -6,8 +6,8 @@ describe "async callback" do
     ffi_lib TestLibrary::PATH
     AsyncIntCallback = callback [ :int ], :void
 
-    @blocking = true
-    attach_function :testAsyncCallback, [ AsyncIntCallback, :int ], :void
+#    @blocking = true
+    attach_function :testAsyncCallback, [ AsyncIntCallback, :int ], :void, :blocking => true
   end
 
   unless RUBY_VERSION =~ /1.8/
