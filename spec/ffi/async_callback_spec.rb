@@ -10,11 +10,13 @@ describe "async callback" do
     fp.attach(self, "testAsyncCallback")
   end
 
-  it ":int (0x7fffffff) argument" do
-    v = 0xdeadbeef
-    called = false
-    LibTest.testAsyncCallback(0x7fffffff) { |i| v = i; called = true }
-    called.should be_true
-    v.should == 0x7fffffff
+  unless RUBY_VERSION =~ /1.8/
+    it ":int (0x7fffffff) argument" do
+      v = 0xdeadbeef
+      called = false
+      LibTest.testAsyncCallback(0x7fffffff) { |i| v = i; called = true }
+      called.should be_true
+      v.should == 0x7fffffff
+    end
   end
 end

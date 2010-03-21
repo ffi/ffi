@@ -39,7 +39,9 @@
 #include <ruby.h>
 
 #include <ffi.h>
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
 #include <pthread.h>
+#endif
 #include "rbffi.h"
 #include "compat.h"
 
@@ -69,8 +71,15 @@ static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 static void* callback_with_gvl(void* data);
+
+#if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION)
+# define DEFER_ASYNC_CALLBACK 1
+#endif
+
+#if defined(DEFER_ASYNC_CALLBACK)
 static VALUE async_cb_event(void);
 static VALUE async_cb_call(void *);
+#endif
 
 #ifdef HAVE_RUBY_THREAD_HAS_GVL_P
 extern int ruby_thread_has_gvl_p(void);
@@ -81,7 +90,10 @@ extern void *rb_thread_call_with_gvl(void *(*func)(void *), void *data1);
 #endif
 
 VALUE rbffi_FunctionClass = Qnil;
+
+#if defined(DEFER_ASYNC_CALLBACK)
 static VALUE async_cb_thread = Qnil;
+#endif
 
 static ID id_call = 0, id_cbtable = 0, id_cb_ref = 0;
 
@@ -90,18 +102,22 @@ struct gvl_callback {
     void*    retval;
     void**   parameters;
 
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#if defined(DEFER_ASYNC_CALLBACK)
     struct gvl_callback* next;
+# ifndef _WIN32
     pthread_cond_t async_cond;
     pthread_mutex_t async_mutex;
+# endif
 #endif
 };
 
 
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#if defined(DEFER_ASYNC_CALLBACK)
 static struct gvl_callback* async_cb_list = NULL;
+# ifndef _WIN32
 static pthread_mutex_t async_cb_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t async_cb_cond = PTHREAD_COND_INITIALIZER;
+# endif
 #endif
 
 
@@ -248,9 +264,11 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
             }
         }
 
+#if defined(DEFER_ASYNC_CALLBACK)
         if (async_cb_thread == Qnil) {
             async_cb_thread = rb_thread_create(async_cb_event, NULL);
         }
+#endif
 
         fn->closure = rbffi_Closure_Alloc(fn->info->closurePool);
         fn->closure->info = fn;
@@ -373,7 +391,8 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
     } else if (ruby_native_thread_p()) {
         rb_thread_call_with_gvl(callback_with_gvl, &cb);
 #endif
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+
+#if defined(DEFER_ASYNC_CALLBACK) && !defined(_WIN32)
     } else {
         pthread_mutex_init(&cb.async_mutex, NULL);
         pthread_cond_init(&cb.async_cond, NULL);
@@ -393,7 +412,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
     }
 }
 
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
+#if defined(DEFER_ASYNC_CALLBACK)
 struct async_wait {
     void* cb;
     bool stop;
