@@ -42,6 +42,7 @@
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
 #include <pthread.h>
 #endif
+
 #include "rbffi.h"
 #include "compat.h"
 
@@ -79,6 +80,10 @@ static void* callback_with_gvl(void* data);
 #if defined(DEFER_ASYNC_CALLBACK)
 static VALUE async_cb_event(void);
 static VALUE async_cb_call(void *);
+#endif
+
+#if defined(HAVE_NATIVETHREAD) && defined (HAVE_RB_THREAD_BLOCKING_REGION)
+#  define DEFER_ASYNC_CALLBACK
 #endif
 
 #ifdef HAVE_RUBY_THREAD_HAS_GVL_P
@@ -391,7 +396,6 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
     } else if (ruby_native_thread_p()) {
         rb_thread_call_with_gvl(callback_with_gvl, &cb);
 #endif
-
 #if defined(DEFER_ASYNC_CALLBACK) && !defined(_WIN32)
     } else {
         pthread_mutex_init(&cb.async_mutex, NULL);
