@@ -5,9 +5,9 @@ describe "async callback" do
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     AsyncIntCallback = callback [ :int ], :void
-    lib = FFI::DynamicLibrary.open(TestLibrary::PATH, FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL)
-    fp = FFI::Function.new(:void, [ AsyncIntCallback, :int ], lib.find_function("testAsyncCallback"), :blocking => true)
-    fp.attach(self, "testAsyncCallback")
+
+    @blocking = true
+    attach_function :testAsyncCallback, [ AsyncIntCallback, :int ], :void
   end
 
   unless RUBY_VERSION =~ /1.8/

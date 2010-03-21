@@ -100,6 +100,8 @@ module FFI
       options[:convention] = defined?(@ffi_convention) ? @ffi_convention : :default
       options[:type_map] = @ffi_typedefs if defined?(@ffi_typedefs)
       options[:enums] = @ffi_enums if defined?(@ffi_enums)
+      options[:blocking] = true if defined?(@blocking) && @blocking
+      @blocking = false
 
       # Try to locate the function in any of the libraries
       invokers = []
