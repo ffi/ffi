@@ -128,32 +128,14 @@ module FFI
   
   add_typedef(NativeType::ENUM, :enum)
   add_typedef(NativeType::BOOL, :bool)
-
-  # Use for a C struct with a char [] embedded inside.
-  add_typedef(NativeType::CHAR_ARRAY, :char_array)
-
+  
   TypeSizes = {
     1 => :char,
     2 => :short,
     4 => :int,
     8 => :long_long,
   }
-  SizeTypes.merge!({
-    NativeType::INT8 => 1,
-    NativeType::UINT8 => 1,
-    NativeType::INT16 => 2,
-    NativeType::UINT16 => 2,
-    NativeType::INT32 => 4,
-    NativeType::UINT32 => 4,
-    NativeType::INT64 => 8,
-    NativeType::UINT64 => 8,
-    NativeType::FLOAT32 => 4,
-    NativeType::FLOAT64 => 8,
-    NativeType::LONG => FFI::Platform::LONG_SIZE / 8,
-    NativeType::ULONG => FFI::Platform::LONG_SIZE / 8,
-    NativeType::POINTER => FFI::Platform::ADDRESS_SIZE / 8,
-  })
-
+  
   def self.size_to_type(size)
     if sz = TypeSizes[size]
       return sz
@@ -162,11 +144,9 @@ module FFI
     # Be like C, use int as the default type size.
     return :int
   end
+  
   def self.type_size(type)
-    if sz = SizeTypes[find_type(type)]
-      return sz
-    end
-    raise ArgumentError, "Unknown native type"
+    find_type(type).size
   end
 
   # Load all the platform dependent types

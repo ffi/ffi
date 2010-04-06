@@ -57,20 +57,21 @@ typedef enum {
     NATIVE_CHAR_ARRAY,
     NATIVE_BOOL,
     
-    /**
-     * An immutable string.  Nul terminated, but only copies in to the native function
-     */
+    /** An immutable string.  Nul terminated, but only copies in to the native function */
     NATIVE_STRING,
-    /** A Rubinus :string arg - copies data both ways, and nul terminates */
-    NATIVE_RBXSTRING,
+
     /** the function returns [ str, c_ptr ] so c_ptr can be used to free the native string */
     NATIVE_STRPTR,
+
     /** The function takes a variable number of arguments */
     NATIVE_VARARGS,
+
     /** A typedef-ed enum */
     NATIVE_ENUM,
+
     /** Struct-by-value param or result */
     NATIVE_STRUCT,
+
     /** An array type definition */
     NATIVE_ARRAY,
 } NativeType;
