@@ -63,6 +63,8 @@ typedef enum {
     NATIVE_STRING,
     /** A Rubinus :string arg - copies data both ways, and nul terminates */
     NATIVE_RBXSTRING,
+    /** the function returns [ str, c_ptr ] so c_ptr can be used to free the native string */
+    NATIVE_STRPTR,
     /** The function takes a variable number of arguments */
     NATIVE_VARARGS,
     /** A typedef-ed enum */
