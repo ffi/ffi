@@ -116,7 +116,7 @@ module FFI
   # Converts NUL-terminated C strings
   add_typedef(NativeType::STRING, :string)
 
-  # Converts NUL-terminated C strings
+  # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
   add_typedef(NativeType::STRPTR, :strptr)
 
   # Converts FFI::Buffer objects
