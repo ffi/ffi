@@ -52,6 +52,7 @@ typedef struct StructLayoutBuilder {
     VALUE rbFieldMap;
     unsigned int size;
     unsigned int alignment;
+    bool packed;
     bool isUnion;
 } StructLayoutBuilder;
 
@@ -355,6 +356,7 @@ struct_layout_builder_allocate(VALUE klass)
 
     builder->size = 0;
     builder->alignment = 1;
+    builder->packed = false;
     builder->isUnion = false;
     builder->rbFieldNames = rb_ary_new();
     builder->rbFieldMap = rb_hash_new();
@@ -421,12 +423,23 @@ static VALUE
 struct_layout_builder_set_alignment(VALUE self, VALUE rbAlign)
 {
     StructLayoutBuilder* builder;
-    unsigned int align = NUM2UINT(rbAlign);
 
     Data_Get_Struct(self, StructLayoutBuilder, builder);
-    builder->size = MAX(align, builder->alignment);
+
+    builder->alignment = MAX(1, NUM2UINT(rbAlign));
 
     return UINT2NUM(builder->alignment);
+}
+
+static VALUE
+struct_layout_builder_set_packed(VALUE self, VALUE rbPacked)
+{
+    StructLayoutBuilder* builder;
+
+    Data_Get_Struct(self, StructLayoutBuilder, builder);
+    builder->packed = RTEST(rbPacked);
+
+    return rbPacked;
 }
 
 static VALUE
@@ -460,7 +473,7 @@ store_field(StructLayoutBuilder* builder, VALUE rbName, VALUE rbField,
     rb_ary_push(builder->rbFieldNames, rbName);
     rb_hash_aset(builder->rbFieldMap, rbName, rbField);
 
-    builder->alignment = MAX(builder->alignment, alignment);
+    builder->alignment = MAX(builder->alignment, builder->packed ? 1 : alignment);
 
     if (builder->isUnion) {
         builder->size = MAX(builder->size, size);
@@ -475,7 +488,7 @@ calculate_offset(StructLayoutBuilder* builder, int alignment, VALUE rbOffset)
     if (rbOffset != Qnil) {
         return NUM2UINT(rbOffset);
     } else {
-        return builder->isUnion ? 0 : align(builder->size, alignment);
+        return builder->isUnion ? 0 : align(builder->size, builder->packed ? 1 : alignment);
     }
 }
 
@@ -887,6 +900,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
 
     rb_define_method(StructLayoutBuilderClass, "alignment", struct_layout_builder_get_alignment, 0);
     rb_define_method(StructLayoutBuilderClass, "alignment=", struct_layout_builder_set_alignment, 1);
+    rb_define_method(StructLayoutBuilderClass, "packed=", struct_layout_builder_set_packed, 1);
     rb_define_method(StructLayoutBuilderClass, "size", struct_layout_builder_get_size, 0);
     rb_define_method(StructLayoutBuilderClass, "size=", struct_layout_builder_set_size, 1);
     rb_define_method(StructLayoutBuilderClass, "union=", struct_layout_builder_set_union, 1);

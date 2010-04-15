@@ -345,8 +345,8 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
     layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
     layout->rbFields = rb_ary_new2(layout->fieldCount);
     layout->base.ffiType->elements = layout->ffiTypes;
-    layout->base.ffiType->size = 0;
-    layout->base.ffiType->alignment = 1;
+    layout->base.ffiType->size = layout->size;
+    layout->base.ffiType->alignment = layout->align;
 
     ltype = layout->base.ffiType;
     for (i = 0; i < (int) layout->fieldCount; ++i) {
@@ -374,16 +374,11 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
         rb_hash_aset(layout->rbFieldMap, rbName, rbField);
         layout->ffiTypes[i] = ftype;
         rb_ary_push(layout->rbFields, rbField);
-        ltype->size = MAX(ltype->size, field->offset + ftype->size);
-        ltype->alignment = MAX(ltype->alignment, ftype->alignment);
     }
 
     if (ltype->size == 0) {
         rb_raise(rb_eRuntimeError, "Struct size is zero");
     }
-
-    // Include tail padding
-    ltype->size = FFI_ALIGN(ltype->size, ltype->alignment);
 
     return self;
 }
