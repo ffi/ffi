@@ -29,6 +29,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'ffi/platform'
+require 'ffi/struct_layout_builder'
+
 module FFI
 
   class StructLayout
@@ -175,12 +177,12 @@ module FFI
         FFI::CallbackInfo.new(find_type(ret, mod), params.map { |e| find_type(e, mod) })
       end
 
-      def packed(packed = true)
+      def packed(packed = 1)
         @packed = packed
       end
       alias :pack :packed
       
-      def aligned(alignment)
+      def aligned(alignment = 1)
         @min_alignment = alignment
       end
       alias :align :aligned

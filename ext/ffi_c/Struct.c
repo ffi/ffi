@@ -45,17 +45,6 @@
 #include "StructByValue.h"
 #include "ArrayType.h"
 
-#define FFI_ALIGN(v, a)  (((((size_t) (v))-1) | ((a)-1))+1)
-
-typedef struct StructLayoutBuilder {
-    VALUE rbFieldNames;
-    VALUE rbFieldMap;
-    unsigned int size;
-    unsigned int alignment;
-    bool packed;
-    bool isUnion;
-} StructLayoutBuilder;
-
 typedef struct InlineArray_ {
     VALUE rbMemory;
     VALUE rbField;
@@ -70,16 +59,11 @@ typedef struct InlineArray_ {
 
 
 static void struct_mark(Struct *);
-static void struct_layout_builder_mark(StructLayoutBuilder *);
-static void struct_layout_builder_free(StructLayoutBuilder *);
 static VALUE struct_class_layout(VALUE klass);
 static void struct_malloc(Struct* s);
 static void inline_array_mark(InlineArray *);
 
-static inline int align(int offset, int align);
-
 VALUE rbffi_StructClass = Qnil;
-static VALUE StructLayoutBuilderClass = Qnil;
 
 VALUE rbffi_StructInlineArrayClass = Qnil;
 VALUE rbffi_StructLayoutCharArrayClass = Qnil;
@@ -347,306 +331,6 @@ struct_get_layout(VALUE self)
 }
 
 static VALUE
-struct_layout_builder_allocate(VALUE klass)
-{
-    StructLayoutBuilder* builder;
-    VALUE obj;
-
-    obj = Data_Make_Struct(klass, StructLayoutBuilder, struct_layout_builder_mark, struct_layout_builder_free, builder);
-
-    builder->size = 0;
-    builder->alignment = 1;
-    builder->packed = false;
-    builder->isUnion = false;
-    builder->rbFieldNames = rb_ary_new();
-    builder->rbFieldMap = rb_hash_new();
-
-    return obj;
-}
-
-static void
-struct_layout_builder_mark(StructLayoutBuilder* builder)
-{
-    rb_gc_mark(builder->rbFieldNames);
-    rb_gc_mark(builder->rbFieldMap);
-}
-
-static void
-struct_layout_builder_free(StructLayoutBuilder* builder)
-{
-    xfree(builder);
-}
-
-static VALUE
-struct_layout_builder_initialize(VALUE self)
-{
-    StructLayoutBuilder* builder;
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-    return self;
-}
-
-static VALUE
-struct_layout_builder_get_size(VALUE self)
-{
-    StructLayoutBuilder* builder;
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-    return UINT2NUM(builder->size);
-}
-
-static VALUE
-struct_layout_builder_set_size(VALUE self, VALUE rbSize)
-{
-    StructLayoutBuilder* builder;
-    unsigned int size = NUM2UINT(rbSize);
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-    builder->size = MAX(size, builder->size);
-
-    return UINT2NUM(builder->size);
-}
-
-static VALUE
-struct_layout_builder_get_alignment(VALUE self)
-{
-    StructLayoutBuilder* builder;
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-    return UINT2NUM(builder->alignment);
-}
-
-static VALUE
-struct_layout_builder_set_alignment(VALUE self, VALUE rbAlign)
-{
-    StructLayoutBuilder* builder;
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-    builder->alignment = MAX(1, NUM2UINT(rbAlign));
-
-    return UINT2NUM(builder->alignment);
-}
-
-static VALUE
-struct_layout_builder_set_packed(VALUE self, VALUE rbPacked)
-{
-    StructLayoutBuilder* builder;
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-    builder->packed = RTEST(rbPacked);
-
-    return rbPacked;
-}
-
-static VALUE
-struct_layout_builder_set_union(VALUE self, VALUE rbUnion)
-{
-    StructLayoutBuilder* builder;
-
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-    builder->isUnion = RTEST(rbUnion);
-
-    return rbUnion;
-}
-
-static VALUE
-struct_layout_builder_union_p(VALUE self)
-{
-    StructLayoutBuilder* builder;
-
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-
-    return builder->isUnion ? Qtrue : Qfalse;
-}
-
-static void
-store_field(StructLayoutBuilder* builder, VALUE rbName, VALUE rbField, 
-    unsigned int offset, unsigned int size, unsigned int alignment)
-{
-    rb_ary_push(builder->rbFieldNames, rbName);
-    rb_hash_aset(builder->rbFieldMap, rbName, rbField);
-
-    builder->alignment = MAX(builder->alignment, builder->packed ? 1 : alignment);
-
-    if (builder->isUnion) {
-        builder->size = MAX(builder->size, size);
-    } else {
-        builder->size = MAX(builder->size, offset + size);
-    }
-}
-
-static int
-calculate_offset(StructLayoutBuilder* builder, int alignment, VALUE rbOffset)
-{
-    if (rbOffset != Qnil) {
-        return NUM2UINT(rbOffset);
-    } else {
-        return builder->isUnion ? 0 : align(builder->size, builder->packed ? 1 : alignment);
-    }
-}
-
-static VALUE
-struct_layout_builder_add_field(int argc, VALUE* argv, VALUE self)
-{
-    StructLayoutBuilder* builder;
-    VALUE rbName = Qnil, rbType = Qnil, rbOffset = Qnil, rbField = Qnil;
-    unsigned int size, alignment, offset;
-    int nargs;
-
-    nargs = rb_scan_args(argc, argv, "21", &rbName, &rbType, &rbOffset);
-    
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-    alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
-    size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL));
-
-    offset = calculate_offset(builder, alignment, rbOffset);
-
-    //
-    // If a primitive type was passed in as the type arg, try and convert
-    //
-    if (!rb_obj_is_kind_of(rbType, rbffi_StructLayoutFieldClass)) {
-        VALUE fargv[3], rbFieldClass;
-        fargv[0] = rbName;
-        fargv[1] = UINT2NUM(offset);
-        fargv[2] = rbType;
-        
-        if (rb_obj_is_kind_of(rbType, rbffi_FunctionTypeClass)) {
-
-            rbFieldClass = rbffi_StructLayoutFunctionFieldClass;
-
-        } else if (rb_obj_is_kind_of(rbType, rbffi_StructByValueClass)) {
-            
-            rbFieldClass = rb_const_get(rbffi_StructLayoutClass, rb_intern("InlineStruct"));
-
-        } else if (rb_obj_is_kind_of(rbType, rbffi_ArrayTypeClass)) {
-
-            rbFieldClass = rbffi_StructLayoutArrayFieldClass;
-
-        } else if (rb_obj_is_kind_of(rbType, rbffi_EnumTypeClass)) {
-
-            rbFieldClass = rb_const_get(rbffi_StructLayoutClass, rb_intern("Enum"));
-
-        } else {
-            rbFieldClass = rbffi_StructLayoutFieldClass;
-        }
-
-        if (!RTEST(rbFieldClass)) {
-            rb_raise(rb_eTypeError, "invalid struct field type (%s)", rb_obj_classname(rbType));
-            return Qnil;
-        }
-
-        rbField = rb_class_new_instance(3, fargv, rbFieldClass);
-    } else {
-        rbField = rbType;
-    }
-
-    store_field(builder, rbName, rbField, offset, size, alignment);
-    
-    return self;
-}
-
-static VALUE
-struct_layout_builder_add_struct(int argc, VALUE* argv, VALUE self)
-{
-    StructLayoutBuilder* builder;
-    VALUE rbName = Qnil, rbType = Qnil, rbOffset = Qnil, rbField = Qnil;
-    VALUE rbFieldClass = Qnil, rbStructClass = Qnil;
-    VALUE fargv[3];
-    unsigned int size, alignment, offset;
-    int nargs;
-
-    nargs = rb_scan_args(argc, argv, "21", &rbName, &rbStructClass, &rbOffset);
-
-    if (!rb_obj_is_instance_of(rbStructClass, rb_cClass) || !rb_class_inherited(rbStructClass, rbffi_StructClass)) {
-        rb_raise(rb_eTypeError, "wrong argument type.  Expected subclass of FFI::Struct");
-    }
-
-    rbType = rb_class_new_instance(1, &rbStructClass, rbffi_StructByValueClass);
-
-    alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
-    size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL));
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-    offset = calculate_offset(builder, alignment, rbOffset);
-
-    fargv[0] = rbName;
-    fargv[1] = UINT2NUM(offset);
-    fargv[2] = rbType;
-    rbFieldClass = rb_const_get(rbffi_StructLayoutClass, rb_intern("InlineStruct"));
-    if (!RTEST(rbFieldClass)) {
-        rb_raise(rb_eRuntimeError, "could not locate StructLayout::InlineStruct");
-        return Qnil;
-    }
-    
-    rbField = rb_class_new_instance(3, fargv, rbFieldClass);
-
-    store_field(builder, rbName, rbField, offset, size, alignment);
-
-    return self;
-}
-
-static VALUE
-struct_layout_builder_add_array(int argc, VALUE* argv, VALUE self)
-{
-    StructLayoutBuilder* builder;
-    VALUE rbName = Qnil, rbType = Qnil, rbLength = Qnil, rbOffset = Qnil, rbField;
-    VALUE fargv[3], aargv[2];
-    unsigned int size, alignment, offset;
-    int nargs;
-
-    nargs = rb_scan_args(argc, argv, "31", &rbName, &rbType, &rbLength, &rbOffset);
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-    alignment = NUM2UINT(rb_funcall2(rbType, rb_intern("alignment"), 0, NULL));
-    size = NUM2UINT(rb_funcall2(rbType, rb_intern("size"), 0, NULL)) * NUM2UINT(rbLength);
-
-    offset = calculate_offset(builder, alignment, rbOffset);
-
-    aargv[0] = rbType;
-    aargv[1] = rbLength;
-    fargv[0] = rbName;
-    fargv[1] = UINT2NUM(offset);
-    fargv[2] = rb_class_new_instance(2, aargv, rbffi_ArrayTypeClass);
-    rbField = rb_class_new_instance(3, fargv, rbffi_StructLayoutArrayFieldClass);
-
-    store_field(builder, rbName, rbField, offset, size, alignment);
-
-    return self;
-}
-
-static inline int
-align(int offset, int align)
-{
-    return align + ((offset - 1) & ~(align - 1));
-}
-
-static VALUE
-struct_layout_builder_build(VALUE self)
-{
-    StructLayoutBuilder* builder;
-    VALUE argv[4];
-
-    Data_Get_Struct(self, StructLayoutBuilder, builder);
-
-    argv[0] = builder->rbFieldNames;
-    argv[1] = builder->rbFieldMap;
-    argv[2] = UINT2NUM(align(builder->size, builder->alignment)); // tail padding
-    argv[3] = UINT2NUM(builder->alignment);
-
-    return rb_class_new_instance(4, argv, rbffi_StructLayoutClass);
-}
-
-static VALUE
 inline_array_allocate(VALUE klass)
 {
     InlineArray* array;
@@ -861,10 +545,6 @@ rbffi_Struct_Init(VALUE moduleFFI)
     rbffi_StructClass = StructClass = rb_define_class_under(moduleFFI, "Struct", rb_cObject);
     rb_global_variable(&rbffi_StructClass);
 
-
-    StructLayoutBuilderClass = rb_define_class_under(moduleFFI, "StructLayoutBuilder", rb_cObject);
-    rb_global_variable(&StructLayoutBuilderClass);
-
     rbffi_StructInlineArrayClass = rb_define_class_under(rbffi_StructClass, "InlineArray", rb_cObject);
     rb_global_variable(&rbffi_StructInlineArrayClass);
 
@@ -891,23 +571,6 @@ rbffi_Struct_Init(VALUE moduleFFI)
 
     rb_define_method(StructClass, "[]", struct_aref, 1);
     rb_define_method(StructClass, "[]=", struct_aset, 2);
-    
-    
-
-    rb_define_alloc_func(StructLayoutBuilderClass, struct_layout_builder_allocate);
-    rb_define_method(StructLayoutBuilderClass, "initialize", struct_layout_builder_initialize, 0);
-    rb_define_method(StructLayoutBuilderClass, "build", struct_layout_builder_build, 0);
-
-    rb_define_method(StructLayoutBuilderClass, "alignment", struct_layout_builder_get_alignment, 0);
-    rb_define_method(StructLayoutBuilderClass, "alignment=", struct_layout_builder_set_alignment, 1);
-    rb_define_method(StructLayoutBuilderClass, "packed=", struct_layout_builder_set_packed, 1);
-    rb_define_method(StructLayoutBuilderClass, "size", struct_layout_builder_get_size, 0);
-    rb_define_method(StructLayoutBuilderClass, "size=", struct_layout_builder_set_size, 1);
-    rb_define_method(StructLayoutBuilderClass, "union=", struct_layout_builder_set_union, 1);
-    rb_define_method(StructLayoutBuilderClass, "union?", struct_layout_builder_union_p, 0);
-    rb_define_method(StructLayoutBuilderClass, "add_field", struct_layout_builder_add_field, -1);
-    rb_define_method(StructLayoutBuilderClass, "add_array", struct_layout_builder_add_array, -1);
-    rb_define_method(StructLayoutBuilderClass, "add_struct", struct_layout_builder_add_struct, -1);
 
     rb_include_module(rbffi_StructInlineArrayClass, rb_mEnumerable);
     rb_define_alloc_func(rbffi_StructInlineArrayClass, inline_array_allocate);
