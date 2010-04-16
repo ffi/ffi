@@ -178,10 +178,12 @@ module FFI
       def packed(packed = true)
         @packed = packed
       end
+      alias :pack :packed
       
-      def align(alignment)
+      def aligned(alignment)
         @min_alignment = alignment
       end
+      alias :align :aligned
 
       def enclosing_module
         begin
