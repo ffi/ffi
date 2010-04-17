@@ -55,7 +55,7 @@ module FFI
 
     end
 
-    class InlineStruct < Field
+    class InnerStruct < Field
       def get(ptr)
         type.struct_class.new(ptr.slice(self.offset, self.size))
       end

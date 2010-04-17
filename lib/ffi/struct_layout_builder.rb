@@ -55,7 +55,7 @@ module FFI
           StructLayout::Function
 
         elsif type.is_a?(FFI::Type::Struct)
-          StructLayout::InlineStruct
+          StructLayout::InnerStruct
 
         elsif type.is_a?(FFI::Type::Array)
           StructLayout::Array
@@ -65,6 +65,7 @@ module FFI
 
         elsif type.is_a?(FFI::Type)
           StructLayout::Field
+
         else
           raise TypeError, "invalid struct field type #{type.inspect}" unless field_class
         end
