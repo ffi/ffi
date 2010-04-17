@@ -9,8 +9,7 @@ module FFI
       @min_alignment = 1
       @packed = false
       @union = false
-      @field_names = Array.new
-      @field_map = Hash.new
+      @fields = Array.new
     end
 
     def size=(size)
@@ -98,7 +97,9 @@ module FFI
         type
       end
 
-      store_field(name, field)
+      @fields << field
+      @alignment = [ @alignment, field.alignment ].max unless @packed
+      @size = [ @size, field.size + (@union ? 0 : field.offset) ].max
       
     end
 
@@ -114,21 +115,13 @@ module FFI
       # Add tail padding if the struct is not packed
       size = @packed ? @size : align(@size, @alignment)
       
-      FFI::StructLayout.new(@field_names, @field_map, size, @alignment)
+      FFI::StructLayout.new(@fields, size, @alignment)
     end
 
     private
     
     def align(offset, align)
       align + ((offset - 1) & ~(align - 1));
-    end
-
-
-    def store_field(name, field)
-      @field_names << name
-      @field_map[name] = field
-      @alignment = @packed ? @packed : [ @alignment, field.alignment ].max
-      @size = [ @size, field.size + (@union ? 0 : field.offset) ].max
     end
 
   end

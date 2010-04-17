@@ -331,18 +331,18 @@ struct_layout_allocate(VALUE klass)
 }
 
 static VALUE
-struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size, VALUE align)
+struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
 {
     StructLayout* layout;
     ffi_type* ltype;
     int i;
 
     Data_Get_Struct(self, StructLayout, layout);
+    layout->fieldCount = RARRAY_LEN(fields);
     layout->rbFieldMap = rb_hash_new();
-    layout->rbFieldNames = rb_ary_dup(field_names);
+    layout->rbFieldNames = rb_ary_new2(layout->fieldCount);
     layout->size = NUM2INT(size);
     layout->align = NUM2INT(align);
-    layout->fieldCount = RARRAY_LEN(field_names);
     layout->fields = xcalloc(layout->fieldCount, sizeof(StructField *));
     layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
     layout->rbFields = rb_ary_new2(layout->fieldCount);
@@ -352,8 +352,8 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
 
     ltype = layout->base.ffiType;
     for (i = 0; i < (int) layout->fieldCount; ++i) {
-        VALUE rbName = rb_ary_entry(field_names, i);
-        VALUE rbField = rb_hash_aref(fields, rbName);
+        VALUE rbField = rb_ary_entry(fields, i);
+        VALUE rbName;
         StructField* field;
         ffi_type* ftype;
 
@@ -361,6 +361,7 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
         if (!rb_obj_is_kind_of(rbField, rbffi_StructLayoutFieldClass)) {
             rb_raise(rb_eTypeError, "wrong type for field %d.", i);
         }
+        rbName = rb_funcall2(rbField, rb_intern("name"), 0, NULL);
 
         Data_Get_Struct(rbField, StructField, field = layout->fields[i]);
 
@@ -373,9 +374,10 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
             rb_raise(rb_eTypeError, "type of field %d has zero size", i);
         }
 
-        rb_hash_aset(layout->rbFieldMap, rbName, rbField);
         layout->ffiTypes[i] = ftype;
+        rb_hash_aset(layout->rbFieldMap, rbName, rbField);
         rb_ary_push(layout->rbFields, rbField);
+        rb_ary_push(layout->rbFieldNames, rbName);
     }
 
     if (ltype->size == 0) {
@@ -484,7 +486,7 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructLayoutArrayFieldClass, "put", array_field_put, 2);
 
     rb_define_alloc_func(rbffi_StructLayoutClass, struct_layout_allocate);
-    rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 4);
+    rb_define_method(rbffi_StructLayoutClass, "initialize", struct_layout_initialize, 3);
     rb_define_method(rbffi_StructLayoutClass, "[]", struct_layout_aref, 1);
     rb_define_method(rbffi_StructLayoutClass, "fields", struct_layout_fields, 0);
     rb_define_method(rbffi_StructLayoutClass, "members", struct_layout_members, 0);
