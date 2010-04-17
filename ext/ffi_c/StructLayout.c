@@ -52,6 +52,8 @@ static void struct_layout_free(StructLayout *);
 static void struct_field_mark(StructField* );
 
 VALUE rbffi_StructLayoutFieldClass = Qnil;
+VALUE rbffi_StructLayoutNumberFieldClass = Qnil, rbffi_StructLayoutPointerFieldClass = Qnil;
+VALUE rbffi_StructLayoutStringFieldClass = Qnil;
 VALUE rbffi_StructLayoutFunctionFieldClass = Qnil, rbffi_StructLayoutArrayFieldClass = Qnil;
 
 VALUE rbffi_StructLayoutClass = Qnil;
@@ -449,6 +451,15 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     
     rbffi_StructLayoutFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Field", rb_cObject);
     rb_global_variable(&rbffi_StructLayoutFieldClass);
+
+    rbffi_StructLayoutNumberFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Number", rbffi_StructLayoutFieldClass);
+    rb_global_variable(&rbffi_StructLayoutNumberFieldClass);
+
+    rbffi_StructLayoutStringFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "String", rbffi_StructLayoutFieldClass);
+    rb_global_variable(&rbffi_StructLayoutStringFieldClass);
+
+    rbffi_StructLayoutPointerFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Pointer", rbffi_StructLayoutFieldClass);
+    rb_global_variable(&rbffi_StructLayoutPointerFieldClass);
 
     rbffi_StructLayoutFunctionFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Function", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutFunctionFieldClass);

@@ -40,6 +40,21 @@ module FFI
     end
 
 
+    NUMBER_TYPES = [
+      FFI::Type::INT8,
+      FFI::Type::UINT8,
+      FFI::Type::INT16,
+      FFI::Type::UINT16,
+      FFI::Type::INT32,
+      FFI::Type::UINT32,
+      FFI::Type::LONG,
+      FFI::Type::ULONG,
+      FFI::Type::INT64,
+      FFI::Type::UINT64,
+      FFI::Type::FLOAT32,
+      FFI::Type::FLOAT64,
+    ]
+
     def add_field(name, type, offset = nil)
 
       if offset.nil? || offset == -1
@@ -51,24 +66,31 @@ module FFI
       #
       field = if !type.is_a?(StructLayout::Field)
 
-        field_class = if type.is_a?(FFI::Type::Function)
-          StructLayout::Function
+        field_class = case
+          when type.is_a?(FFI::Type::Function)
+            StructLayout::Function
 
-        elsif type.is_a?(FFI::Type::Struct)
-          StructLayout::InnerStruct
+          when type.is_a?(FFI::Type::Struct)
+            StructLayout::InnerStruct
 
-        elsif type.is_a?(FFI::Type::Array)
-          StructLayout::Array
+          when type.is_a?(FFI::Type::Array)
+            StructLayout::Array
 
-        elsif type.is_a?(FFI::Enum)
-          StructLayout::Enum
+          when type.is_a?(FFI::Enum)
+            StructLayout::Enum
 
-        elsif type.is_a?(FFI::Type)
-          StructLayout::Field
+          when NUMBER_TYPES.include?(type)
+            StructLayout::Number
 
-        else
-          raise TypeError, "invalid struct field type #{type.inspect}" unless field_class
-        end
+          when type == FFI::Type::POINTER
+            StructLayout::Pointer
+
+          when type == FFI::Type::STRING
+            StructLayout::String
+
+          else
+            raise TypeError, "invalid struct field type #{type.inspect}"
+          end
 
         field_class.new(name, offset, type)
 
