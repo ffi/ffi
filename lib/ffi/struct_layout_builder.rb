@@ -98,7 +98,7 @@ module FFI
         type
       end
 
-      store_field(name, field, type)
+      store_field(name, field)
       
     end
 
@@ -124,11 +124,11 @@ module FFI
     end
 
 
-    def store_field(name, field, type)
+    def store_field(name, field)
       @field_names << name
       @field_map[name] = field
-      @alignment = @packed ? @packed : [ @alignment, type.alignment ].max
-      @size = [ @size, type.size + (@union ? 0 : field.offset) ].max
+      @alignment = @packed ? @packed : [ @alignment, field.alignment ].max
+      @size = [ @size, field.size + (@union ? 0 : field.offset) ].max
     end
 
   end
