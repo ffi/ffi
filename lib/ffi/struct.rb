@@ -237,13 +237,21 @@ module FFI
           else
             offset = nil
           end
-          if type.kind_of?(Class) && type < Struct
-            builder.add_struct(name, type, offset)
+          
+          ftype = if type.kind_of?(Class) && type < Struct
+            FFI::Type::Struct.new(type)
+
+          elsif type.kind_of?(Class) && type < FFI::StructLayout::Field
+            type
+          
           elsif type.kind_of?(::Array)
-            builder.add_array(name, find_type(type[0], mod), type[1], offset)
+            FFI::Type::Array.new(find_type(type[0], mod), type[1])
+
           else
-            builder.add_field(name, find_type(type, mod), offset)
+            find_type(type, mod)
           end
+
+          builder.add name, ftype, offset
         end
       end
     end
