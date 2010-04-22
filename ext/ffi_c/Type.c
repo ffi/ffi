@@ -284,19 +284,40 @@ rbffi_Type_Init(VALUE moduleFFI)
         rb_define_const(moduleFFI, "TYPE_" #x, t); \
     } while(0)
 
+    #define A(old_type, new_type) do { \
+        VALUE t = rb_const_get(classType, rb_intern(#old_type)); \
+        rb_const_set(classType, rb_intern(#new_type), t); \
+    } while(0)
+
     T(VOID, &ffi_type_void);
     T(INT8, &ffi_type_sint8);
+    A(INT8, SCHAR);
+    A(INT8, CHAR);
     T(UINT8, &ffi_type_uint8);
+    A(UINT8, UCHAR);
+
     T(INT16, &ffi_type_sint16);
+    A(INT16, SHORT);
+    A(INT16, SSHORT);
     T(UINT16, &ffi_type_uint16);
+    A(UINT16, USHORT);
     T(INT32, &ffi_type_sint32);
+    A(INT32, INT);
+    A(INT32, SINT);
     T(UINT32, &ffi_type_uint32);
+    A(UINT32, UINT);
     T(INT64, &ffi_type_sint64);
+    A(INT64, LONG_LONG);
+    A(INT64, SLONG_LONG);
     T(UINT64, &ffi_type_uint64);
+    A(UINT64, ULONG_LONG);
     T(LONG, &ffi_type_slong);
+    A(LONG, SLONG);
     T(ULONG, &ffi_type_ulong);
     T(FLOAT32, &ffi_type_float);
+    A(FLOAT32, FLOAT);
     T(FLOAT64, &ffi_type_double);
+    A(FLOAT64, DOUBLE);
     T(POINTER, &ffi_type_pointer);
     T(STRING, &ffi_type_pointer);
     T(STRPTR, &ffi_type_pointer);
@@ -305,8 +326,5 @@ rbffi_Type_Init(VALUE moduleFFI)
     T(BUFFER_INOUT, &ffi_type_pointer);
     T(ENUM, &ffi_type_sint);
     T(BOOL, &ffi_type_uchar);
-
-
-    T(CHAR_ARRAY, &ffi_type_void);
     T(VARARGS, &ffi_type_void);
 }

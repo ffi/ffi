@@ -28,96 +28,98 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 module FFI
-#  TypeDefs = Hash.new
+
   def self.add_typedef(current, add)
-    if current.kind_of?(FFI::Type)
-      code = current
-    else
-      code = TypeDefs[current]
-      raise TypeError, "Unable to resolve type '#{current}'" unless code
+    TypeDefs[add] = self.find_type(current)
     end
 
-    TypeDefs[add] = code
-  end
+
   def self.find_type(name, type_map = nil)
-    type_map = TypeDefs if type_map.nil?
-    code = type_map[name]
-    code = name if !code && name.kind_of?(FFI::Type)
-    raise TypeError, "Unable to resolve type '#{name}'" unless code
-    return code
+    type = if name.is_a?(FFI::Type)
+      name
+    elsif type_map
+      type_map[name]
+    end || TypeDefs[name]
+
+    raise TypeError, "Unable to resolve type '#{name}'" unless type
+
+    return type
   end
 
   # Converts a char
-  add_typedef(NativeType::INT8, :char)
+  add_typedef(Type::CHAR, :char)
 
   # Converts an unsigned char
-  add_typedef(NativeType::UINT8, :uchar)
+  add_typedef(Type::UCHAR, :uchar)
 
   # Converts an 8 bit int
-  add_typedef(NativeType::INT8, :int8)
+  add_typedef(Type::INT8, :int8)
 
   # Converts an unsigned char
-  add_typedef(NativeType::UINT8, :uint8)
+  add_typedef(Type::UINT8, :uint8)
 
   # Converts a short
-  add_typedef(NativeType::INT16, :short)
+  add_typedef(Type::SHORT, :short)
 
   # Converts an unsigned short
-  add_typedef(NativeType::UINT16, :ushort)
+  add_typedef(Type::USHORT, :ushort)
 
   # Converts a 16bit int
-  add_typedef(NativeType::INT16, :int16)
+  add_typedef(Type::INT16, :int16)
 
   # Converts an unsigned 16 bit int
-  add_typedef(NativeType::UINT16, :uint16)
+  add_typedef(Type::UINT16, :uint16)
 
   # Converts an int
-  add_typedef(NativeType::INT32, :int)
+  add_typedef(Type::INT, :int)
 
   # Converts an unsigned int
-  add_typedef(NativeType::UINT32, :uint)
+  add_typedef(Type::UINT, :uint)
 
   # Converts a 32 bit int
-  add_typedef(NativeType::INT32, :int32)
+  add_typedef(Type::INT32, :int32)
 
   # Converts an unsigned 16 bit int
-  add_typedef(NativeType::UINT32, :uint32)
+  add_typedef(Type::UINT32, :uint32)
 
   # Converts a long
-  add_typedef(NativeType::LONG, :long)
+  add_typedef(Type::LONG, :long)
 
   # Converts an unsigned long
-  add_typedef(NativeType::ULONG, :ulong)
+  add_typedef(Type::ULONG, :ulong)
 
   # Converts a 64 bit int
-  add_typedef(NativeType::INT64, :int64)
+  add_typedef(Type::INT64, :int64)
 
   # Converts an unsigned 64 bit int
-  add_typedef(NativeType::UINT64, :uint64)
+  add_typedef(Type::UINT64, :uint64)
 
   # Converts a long long
-  add_typedef(NativeType::INT64, :long_long)
+  add_typedef(Type::LONG_LONG, :long_long)
 
   # Converts an unsigned long long
-  add_typedef(NativeType::UINT64, :ulong_long)
+  add_typedef(Type::ULONG_LONG, :ulong_long)
 
   # Converts a float
-  add_typedef(NativeType::FLOAT32, :float)
+  add_typedef(Type::FLOAT, :float)
 
   # Converts a double
-  add_typedef(NativeType::FLOAT64, :double)
+  add_typedef(Type::DOUBLE, :double)
 
   # Converts a pointer to opaque data
-  add_typedef(NativeType::POINTER, :pointer)
+  add_typedef(Type::POINTER, :pointer)
 
   # For when a function has no return value
-  add_typedef(NativeType::VOID, :void)
+  add_typedef(Type::VOID, :void)
+
+  # Native boolean type
+  add_typedef(Type::BOOL, :bool)
 
   # Converts NUL-terminated C strings
-  add_typedef(NativeType::STRING, :string)
+  add_typedef(Type::STRING, :string)
 
   # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
-  add_typedef(NativeType::STRPTR, :strptr)
+  add_typedef(Type::STRPTR, :strptr)
 
   # Converts FFI::Buffer objects
   add_typedef(NativeType::BUFFER_IN, :buffer_in)
