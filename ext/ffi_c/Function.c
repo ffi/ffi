@@ -559,9 +559,11 @@ callback_with_gvl(void* data)
 
             case NATIVE_FUNCTION:
             case NATIVE_CALLBACK:
+            case NATIVE_STRUCT:
                 param = rbffi_NativeValue_ToRuby(cbInfo->parameterTypes[i],
                      rb_ary_entry(cbInfo->rbParameterTypes, i), parameters[i], Qnil);
                 break;
+
             default:
                 param = Qnil;
                 break;
@@ -629,6 +631,22 @@ callback_with_gvl(void* data)
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(function))->address;
             } else {
                 *((void **) retval) = NULL;
+            }
+            break;
+
+        case NATIVE_STRUCT:
+            if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_StructClass)) {
+                AbstractMemory* memory = ((Struct *) DATA_PTR(rbReturnValue))->pointer;
+
+                if (memory->address != NULL) {
+                    memcpy(retval, memory->address, cbInfo->ffiReturnType->size);
+
+                } else {
+                    memset(retval, 0, cbInfo->ffiReturnType->size);
+                }
+                
+            } else {
+                memset(retval, 0, cbInfo->ffiReturnType->size);
             }
             break;
 

@@ -82,8 +82,11 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
         
         case NATIVE_FUNCTION:
         case NATIVE_CALLBACK: {
-            return rbffi_Function_NewInstance(rbType, rbffi_Pointer_NewInstance(*(void **) ptr));
+            return *(void **) ptr != NULL 
+                    ? rbffi_Function_NewInstance(rbType, rbffi_Pointer_NewInstance(*(void **) ptr))
+                    : Qnil;
         }
+
         case NATIVE_STRUCT: {
             StructByValue* sbv = (StructByValue *)type;
             AbstractMemory* mem;

@@ -31,6 +31,10 @@ describe "Callback" do
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
+    class S8F32S32 < FFI::Struct
+      layout :s8, :char, :f32, :float, :s32, :int
+    end
+
     callback :cbVrS8, [ ], :char
     callback :cbVrU8, [ ], :uchar
     callback :cbVrS16, [ ], :short
@@ -49,6 +53,8 @@ describe "Callback" do
     callback :cbLrV, [ :long ], :void
     callback :cbULrV, [ :ulong ], :void
     callback :cbLrV, [ :long_long ], :void
+    callback :cbVrT, [ ], S8F32S32.by_value
+    callback :cbTrV, [ S8F32S32.by_value ], :void
 
     attach_function :testCallbackVrS8, :testClosureVrB, [ :cbVrS8 ], :char
     attach_function :testCallbackVrU8, :testClosureVrB, [ :cbVrU8 ], :uchar
@@ -63,6 +69,8 @@ describe "Callback" do
     attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbCrV, :char ], :void
+    attach_function :testCallbackVrT, :testClosureVrT, [ :cbVrT ], S8F32S32.by_value
+    attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32 ], :void
     attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
     attach_variable :pVrS8, :gvar_pointer, :pointer
     attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
@@ -217,6 +225,33 @@ describe "Callback" do
     LibTest.testCallbackVrP { p }.should == p
   end
 
+
+  it "returning struct by value" do
+    s = LibTest::S8F32S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x1eefbeef
+    s[:f32] = 1.234567
+    ret = LibTest.testCallbackVrT { s }
+    ret[:s8].should == s[:s8]
+    ret[:f32].should == s[:f32]
+    ret[:s32].should == s[:s32]
+
+  end
+
+  it "struct by value parameter" do
+    s = LibTest::S8F32S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x1eefbeef
+    s[:f32] = 1.234567
+    s2 = LibTest::S8F32S32.new
+    LibTest.testCallbackTrV(s) do |struct|
+      s2[:s8] = struct[:s8]
+      s2[:f32] = struct[:f32]
+      s2[:s32] = struct[:s32]
+    end
+  end
+
+  
   it "global variable" do
     proc = Proc.new { 0x1e }
     LibTest.cbVrS8 = proc
@@ -588,4 +623,5 @@ describe "Callback with " do
     LibTest.testCallbackPrV(nil) { |i| v = i }
     v.should == FFI::Pointer::NULL
   end
+
 end # unless true
