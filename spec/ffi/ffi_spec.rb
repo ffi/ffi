@@ -15,6 +15,10 @@ describe "FFI" do
       FFI.map_library_name("#{prefix}dummy_with_#{suffix}").should == "#{prefix}dummy_with_#{suffix}.#{suffix}"
     end
 
+    it "should return Platform::LIBC when called with 'c'" do
+      FFI.map_library_name('c').should == FFI::Library::LIBC
+    end
+
   end
 
 end

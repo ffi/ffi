@@ -73,13 +73,7 @@ module FFI
     CONF_DIR = File.dirname(__FILE__)
     public
 
-    LIBC = if IS_WINDOWS
-      "msvcrt"
-    elsif IS_LINUX
-      "libc.so.6"
-    else
-      "c"
-    end
+    
 
     LIBPREFIX = IS_WINDOWS ? '' : 'lib'
 
@@ -93,6 +87,14 @@ module FFI
     else
       # Punt and just assume a sane unix (i.e. anything but AIX)
       'so'
+    end
+
+    LIBC = if IS_WINDOWS
+      "msvcrt.dll"
+    elsif IS_LINUX
+      "libc.so.6"
+    else
+      "#{LIBPREFIX}c.#{LIBSUFFIX}"
     end
 
     def self.bsd?
