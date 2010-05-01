@@ -45,4 +45,18 @@ describe "Custom type definitions" do
     s[:a] = 0x12345678
     s.pointer.get_uint(0).should == 0x12345678
   end
+
+  it "attach_function after a typedef should not reject normal types" do
+    lambda do
+      Module.new do
+        extend FFI::Library
+        # enum() will insert a custom typedef called :foo for the enum
+        enum :foo, [ :a, :b ]
+        typedef :int, :bar
+        
+        ffi_lib TestLibrary::PATH
+        attach_function :ptr_ret_int32_t, [ :string, :foo ], :bar
+      end
+    end.should_not raise_error
+  end
 end
