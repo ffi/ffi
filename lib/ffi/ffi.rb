@@ -60,9 +60,9 @@ module FFI
     lib = lib.to_s unless lib.kind_of?(String)
     lib = Platform::LIBC if Platform::IS_LINUX && lib == 'c'
     if lib && File.basename(lib) == lib
-      ext = ".#{Platform::LIBSUFFIX}"
       lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
-      lib += ext unless lib =~ /#{Regexp.escape(ext)}$/
+      r = Platform::IS_LINUX ? "\\.so($|\\.[1234567890]+)" : "\\.#{Platform::LIBSUFFIX}$"
+      lib += ".#{Platform::LIBSUFFIX}" unless lib =~ /#{r}/
     end
     lib
   end
