@@ -231,8 +231,7 @@ rbffi_Type_Find(VALUE name)
     VALUE rbType = rbffi_Type_Lookup(name);
 
     if (!RTEST(rbType)) {
-        VALUE typeName = rb_funcall2(name, rb_intern("inspect"), 0, NULL);
-        rb_raise(rb_eTypeError, "Invalid type (%s)", RSTRING_PTR(typeName));
+        rb_raise(rb_eTypeError, "invalid type, %s", RSTRING_PTR(rb_inspect(name)));
     }
 
     return rbType;
