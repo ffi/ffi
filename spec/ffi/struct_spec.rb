@@ -621,4 +621,18 @@ describe "Struct allocation" do
     p.put_uint(4, 0xdeadbeef)
     S.new(p[1])[:i].should == 0xdeadbeef
   end
+
+  it "null? should be true when initialized with NULL pointer" do
+    class S < FFI::Struct
+      layout :i, :uint
+    end
+    S.new(Pointer::NULL).null?.should be_true
+  end
+
+  it "null? should be false when initialized with non-NULL pointer" do
+    class S < FFI::Struct
+      layout :i, :uint
+    end
+    S.new(MemoryPointer.new(S)).null?.should be_false
+  end
 end

@@ -330,6 +330,17 @@ struct_get_layout(VALUE self)
     return s->rbLayout;
 }
 
+
+static VALUE
+struct_null_p(VALUE self)
+{
+    Struct* s;
+
+    Data_Get_Struct(self, Struct, s);
+
+    return s->pointer->address == NULL ? Qtrue : Qfalse;
+}
+
 static VALUE
 inline_array_allocate(VALUE klass)
 {
@@ -571,6 +582,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
 
     rb_define_method(StructClass, "[]", struct_aref, 1);
     rb_define_method(StructClass, "[]=", struct_aset, 2);
+    rb_define_method(StructClass, "null?", struct_null_p, 0);
 
     rb_include_module(rbffi_StructInlineArrayClass, rb_mEnumerable);
     rb_define_alloc_func(rbffi_StructInlineArrayClass, inline_array_allocate);
