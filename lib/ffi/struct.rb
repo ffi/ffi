@@ -148,17 +148,28 @@ module FFI
     end
 
     def self.in
-      :buffer_in
+      ptr
     end
 
     def self.out
-      :buffer_out
+      ptr
+    end
+
+    def self.ptr(flags = :inout)
+      @ref_data_converter ||= StructByReference.new(self)
     end
 
     def self.by_value
-      ::FFI::StructByValue.new(self)
+      StructByValue.new(self)
     end
 
+    def self.by_ref(flags = :inout)
+      self.ptr(flags)
+    end
+
+
+
+    
 
 
     class << self

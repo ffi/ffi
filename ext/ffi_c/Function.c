@@ -581,7 +581,7 @@ callback_with_gvl(void* data)
 
         // Convert the native value into a custom ruby value
         if (unlikely(cbInfo->parameterTypes[i]->nativeType == NATIVE_MAPPED)) {
-            VALUE values = { param, Qnil };
+            VALUE values[] = { param, Qnil };
             param = rb_funcall2(((MappedType *) cbInfo->parameterTypes[i])->rbConverter, id_from_native, 2, values);
         }
 
@@ -591,7 +591,7 @@ callback_with_gvl(void* data)
     rbReturnValue = rb_funcall2(fn->rbProc, id_call, cbInfo->parameterCount, rbParams);
     
     if (unlikely(returnType->nativeType == NATIVE_MAPPED)) {
-        VALUE values = { rbReturnValue, Qnil };
+        VALUE values[] = { rbReturnValue, Qnil };
         rbReturnValue = rb_funcall2(((MappedType *) returnType)->rbConverter, id_to_native, 2, values);
         rbReturnType = ((MappedType *) returnType)->rbType;
         returnType = ((MappedType* ) returnType)->type;
