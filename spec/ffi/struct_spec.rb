@@ -158,7 +158,7 @@ describe "Struct tests" do
       class TestStruct < FFI::Struct
         layout :c, :char
       end
-      attach_function :struct_field_s8, [ TestStruct ], :char
+      attach_function :struct_field_s8, [ TestStruct.in ], :char
     end
   end
   it "Can use Struct subclass as IN parameter type" do
@@ -327,8 +327,8 @@ describe "Struct tests" do
       layout :add, :add,
         :sub, :sub
     end
-    attach_function :struct_call_add_cb, [TestStruct, :int, :int], :int
-    attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int
+    attach_function :struct_call_add_cb, [TestStruct.in, :int, :int], :int
+    attach_function :struct_call_sub_cb, [TestStruct.in, :int, :int], :int
   end
   it "Can have CallbackInfo struct field" do
       s = CallbackMember::TestStruct.new
@@ -336,8 +336,8 @@ describe "Struct tests" do
       sub_proc = lambda { |a, b| a-b }
       s[:add] = add_proc
       s[:sub] = sub_proc
-      CallbackMember.struct_call_add_cb(s.pointer, 40, 2).should == 42
-      CallbackMember.struct_call_sub_cb(s.pointer, 44, 2).should == 42
+      CallbackMember.struct_call_add_cb(s, 40, 2).should == 42
+      CallbackMember.struct_call_sub_cb(s, 44, 2).should == 42
   end
   it "Can return its members as a list" do
     class TestStruct < FFI::Struct

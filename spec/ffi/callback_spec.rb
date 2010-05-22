@@ -55,6 +55,8 @@ describe "Callback" do
     callback :cbLrV, [ :long_long ], :void
     callback :cbVrT, [ ], S8F32S32.by_value
     callback :cbTrV, [ S8F32S32.by_value ], :void
+    callback :cbYrV, [ S8F32S32.ptr ], :void
+    callback :cbVrY, [ ], S8F32S32.ptr
 
     attach_function :testCallbackVrS8, :testClosureVrB, [ :cbVrS8 ], :char
     attach_function :testCallbackVrU8, :testClosureVrB, [ :cbVrU8 ], :uchar
@@ -68,9 +70,10 @@ describe "Callback" do
     attach_function :testCallbackVrS64, :testClosureVrLL, [ :cbVrS64 ], :long_long
     attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
+    attach_function :testCallbackVrY, :testClosureVrP, [ :cbVrY ], S8F32S32.ptr
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbCrV, :char ], :void
     attach_function :testCallbackVrT, :testClosureVrT, [ :cbVrT ], S8F32S32.by_value
-    attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32 ], :void
+    attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32.ptr ], :void
     attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
     attach_variable :pVrS8, :gvar_pointer, :pointer
     attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
@@ -379,6 +382,8 @@ describe "Callback" do
   end
 
 end
+
+
 describe "Callback with " do
   #
   # Test callbacks that take an argument, returning void
@@ -386,6 +391,11 @@ describe "Callback with " do
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
+
+    class S8F32S32 < FFI::Struct
+      layout :s8, :char, :f32, :float, :s32, :int
+    end
+
     callback :cbS8rV, [ :char ], :void
     callback :cbU8rV, [ :uchar ], :void
     callback :cbS16rV, [ :short ], :void
@@ -399,6 +409,7 @@ describe "Callback with " do
     callback :cbULrV, [ :ulong ], :void
     callback :cbArV, [ :string ], :void
     callback :cbPrV, [ :pointer], :void
+    callback :cbYrV, [ S8F32S32.ptr ], :void
 
     callback :cbS64rV, [ :long_long ], :void
     attach_function :testCallbackCrV, :testClosureBrV, [ :cbS8rV, :char ], :void
@@ -415,6 +426,7 @@ describe "Callback with " do
     attach_function :testCallbackLLrV, :testClosureLLrV, [ :cbS64rV, :long_long ], :void
     attach_function :testCallbackArV, :testClosurePrV, [ :cbArV, :string ], :void
     attach_function :testCallbackPrV, :testClosurePrV, [ :cbPrV, :pointer], :void
+    attach_function :testCallbackYrV, :testClosurePrV, [ :cbYrV, S8F32S32.in ], :void
   end
   it ":char (0) argument" do
     v = 0xdeadbeef
@@ -622,6 +634,20 @@ describe "Callback with " do
     v = "Hello, World"
     LibTest.testCallbackPrV(nil) { |i| v = i }
     v.should == FFI::Pointer::NULL
+  end
+  it "struct by reference argument" do
+    v = nil
+    magic = LibTest::S8F32S32.new
+    LibTest.testCallbackYrV(magic) { |i| v = i }
+    v.class.should == magic.class
+    v.pointer == magic.pointer
+  end
+
+  it "struct by reference argument with nil value" do
+    v = LibTest::S8F32S32.new
+    LibTest.testCallbackYrV(nil) { |i| v = i }
+    v.is_a?(FFI::Struct).should be_true
+    v.pointer.should == FFI::Pointer::NULL
   end
 
 end # unless true
