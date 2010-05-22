@@ -35,11 +35,11 @@ module FFI
 
 
   def self.find_type(name, type_map = nil)
-    type = if name.is_a?(FFI::Type)
+    type = if name.is_a?(Type)
       name
 
     elsif name.is_a?(DataConverter)
-      FFI::Type::Mapped.new(name)
+      Type::Mapped.new(name)
 
     elsif type_map
       type_map[name]
@@ -136,13 +136,11 @@ module FFI
   add_typedef(StrPtrConverter, :strptr)
 
   # Converts FFI::Buffer objects
-  add_typedef(NativeType::BUFFER_IN, :buffer_in)
-  add_typedef(NativeType::BUFFER_OUT, :buffer_out)
-  add_typedef(NativeType::BUFFER_INOUT, :buffer_inout)
+  add_typedef(Type::BUFFER_IN, :buffer_in)
+  add_typedef(Type::BUFFER_OUT, :buffer_out)
+  add_typedef(Type::BUFFER_INOUT, :buffer_inout)
 
-  add_typedef(NativeType::VARARGS, :varargs)
-  
-  add_typedef(NativeType::BOOL, :bool)
+  add_typedef(Type::VARARGS, :varargs)
   
   TypeSizes = {
     1 => :char,
@@ -166,7 +164,7 @@ module FFI
 
   # Load all the platform dependent types
   begin
-    File.open(File.join(FFI::Platform::CONF_DIR, 'types.conf'), "r") do |f|
+    File.open(File.join(Platform::CONF_DIR, 'types.conf'), "r") do |f|
       prefix = "rbx.platform.typedef."
       f.each_line { |line|
         if line.index(prefix) == 0
