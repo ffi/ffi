@@ -148,28 +148,28 @@ module FFI
     end
 
     def self.in
-      ptr
+      ptr(:in)
     end
 
     def self.out
-      ptr
+      ptr(:out)
     end
 
     def self.ptr(flags = :inout)
-      @ref_data_converter ||= StructByReference.new(self)
+      @ref_data_type ||= Type::Mapped.new(StructByReference.new(self))
+    end
+
+    def self.val
+      @val_data_type ||= StructByValue.new(self)
     end
 
     def self.by_value
-      StructByValue.new(self)
+      self.val
     end
 
     def self.by_ref(flags = :inout)
       self.ptr(flags)
     end
-
-
-
-    
 
 
     class << self
