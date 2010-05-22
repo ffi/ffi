@@ -114,18 +114,6 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
 }
 
 static VALUE
-memptr_inspect(VALUE self)
-{
-    MemoryPointer* ptr;
-    char tmp[100];
-
-    Data_Get_Struct(self, MemoryPointer, ptr);
-
-    snprintf(tmp, sizeof(tmp), "#<FFI::MemoryPointer address=%p size=%lu>", ptr->memory.address, ptr->memory.size);
-    return rb_str_new2(tmp);
-}
-
-static VALUE
 memptr_free(VALUE self)
 {
     MemoryPointer* ptr;
@@ -172,7 +160,6 @@ rbffi_MemoryPointer_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(rbffi_MemoryPointerClass, memptr_allocate);
     rb_define_method(rbffi_MemoryPointerClass, "initialize", memptr_initialize, -1);
-    rb_define_method(rbffi_MemoryPointerClass, "inspect", memptr_inspect, 0);
     rb_define_method(rbffi_MemoryPointerClass, "autorelease=", memptr_autorelease, 1);
     rb_define_method(rbffi_MemoryPointerClass, "free", memptr_free, 0);
 }

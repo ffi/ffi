@@ -72,7 +72,7 @@ ptr_allocate(VALUE klass)
     Pointer* p;
     VALUE obj;
 
-    obj = Data_Make_Struct(klass, Pointer, NULL, -1, p);
+    obj = Data_Make_Struct(klass, Pointer, ptr_mark, -1, p);
     p->parent = Qnil;
     p->memory.access = MEM_RD | MEM_WR;
 
@@ -172,11 +172,12 @@ ptr_inspect(VALUE self)
 {
     Pointer* ptr;
     char tmp[100];
-
+    
     Data_Get_Struct(self, Pointer, ptr);
-    snprintf(tmp, sizeof(tmp), "#<FFI::Pointer address=%p>", ptr->memory.address);
 
-    return rb_str_new2(tmp);
+    snprintf(tmp, sizeof(tmp), "%lu", ptr->memory.size);
+    return rb_sprintf("#<%s address=%p size=%s>", rb_obj_classname(self),
+        ptr->memory.address, ptr->memory.size == LONG_MAX ? "unknown" : tmp);
 }
 
 static VALUE
