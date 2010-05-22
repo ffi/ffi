@@ -35,7 +35,6 @@
 #include "AbstractMemory.h"
 #include "Pointer.h"
 #include "MemoryPointer.h"
-#include "AutoPointer.h"
 #include "Struct.h"
 #include "StructByValue.h"
 #include "StructByReference.h"
@@ -75,7 +74,6 @@ Init_ffi_c(void) {
     rbffi_Platform_Init(moduleFFI);
     rbffi_AbstractMemory_Init(moduleFFI);
     rbffi_Pointer_Init(moduleFFI);
-    rbffi_AutoPointer_Init(moduleFFI);
     rbffi_Function_Init(moduleFFI);
     rbffi_MemoryPointer_Init(moduleFFI);
     rbffi_Buffer_Init(moduleFFI);

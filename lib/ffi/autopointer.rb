@@ -58,6 +58,7 @@ module FFI
     # release(), which by default does nothing.
     #
     def initialize(ptr, proc=nil, &block)
+      super(ptr)
       raise TypeError, "Invalid pointer" if ptr.nil? || !ptr.kind_of?(Pointer) \
         || ptr.kind_of?(MemoryPointer) || ptr.kind_of?(AutoPointer)
 
@@ -70,7 +71,6 @@ module FFI
                     DefaultReleaser.new(ptr, self.class)
                   end
 
-      self.parent = ptr
       ObjectSpace.define_finalizer(self, @releaser)
       self
     end
