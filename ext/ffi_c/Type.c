@@ -42,7 +42,7 @@ typedef struct BuiltinType_ {
 
 static void builtin_type_free(BuiltinType *);
 
-VALUE rbffi_TypeClass = Qnil, rbffi_EnumTypeClass = Qnil;
+VALUE rbffi_TypeClass = Qnil;
 
 static VALUE classBuiltinType = Qnil;
 static VALUE typeMap = Qnil, sizeMap = Qnil;
@@ -112,19 +112,6 @@ type_inspect(VALUE self)
             type, (int) type->ffiType->size, (int) type->ffiType->alignment);
 
     return rb_str_new2(buf);
-}
-
-static VALUE
-enum_allocate(VALUE klass)
-{
-    Type* type;
-    VALUE obj;
-
-    obj = Data_Make_Struct(klass, Type, NULL, -1, type);
-    type->nativeType = NATIVE_ENUM;
-    type->ffiType = &ffi_type_sint;
-
-    return obj;
 }
 
 int
@@ -242,7 +229,6 @@ rbffi_Type_Init(VALUE moduleFFI)
 {
     VALUE moduleNativeType;
     VALUE classType = rbffi_TypeClass = rb_define_class_under(moduleFFI, "Type", rb_cObject);
-    VALUE classEnum = rbffi_EnumTypeClass = rb_define_class_under(moduleFFI, "Enum", classType);
 
     rb_define_const(moduleFFI, "TypeDefs", typeMap = rb_hash_new());
     rb_define_const(moduleFFI, "SizeTypes", sizeMap = rb_hash_new());
@@ -269,9 +255,7 @@ rbffi_Type_Init(VALUE moduleFFI)
     // Make Type::Builtin non-allocatable
     rb_undef_method(CLASS_OF(classBuiltinType), "new");
     rb_define_method(classBuiltinType, "inspect", builtin_type_inspect, 0);
-
-    rb_define_alloc_func(classEnum, enum_allocate);
-
+    
     rb_global_variable(&rbffi_TypeClass);
     rb_global_variable(&classBuiltinType);
 
@@ -322,7 +306,6 @@ rbffi_Type_Init(VALUE moduleFFI)
     T(BUFFER_IN, &ffi_type_pointer);
     T(BUFFER_OUT, &ffi_type_pointer);
     T(BUFFER_INOUT, &ffi_type_pointer);
-    T(ENUM, &ffi_type_sint);
     T(BOOL, &ffi_type_uchar);
     T(VARARGS, &ffi_type_void);
 }

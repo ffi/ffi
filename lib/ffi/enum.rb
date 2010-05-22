@@ -57,6 +57,8 @@ module FFI
   end
 
   class Enum
+    include DataConverter
+
     attr_reader :tag
 
     def initialize(info, tag=nil)
@@ -100,6 +102,18 @@ module FFI
       @kv_map
     end
     alias to_h symbol_map
+
+    def native_type
+      Type::INT
+    end
+
+    def to_native(val, ctx)
+      @kv_map[val]
+    end
+
+    def from_native(val, ctx)
+      @vk_map[val]
+    end
 
   end
 

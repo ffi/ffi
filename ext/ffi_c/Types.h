@@ -62,10 +62,7 @@ typedef enum {
     
     /** The function takes a variable number of arguments */
     NATIVE_VARARGS,
-
-    /** A typedef-ed enum */
-    NATIVE_ENUM,
-
+    
     /** Struct-by-value param or result */
     NATIVE_STRUCT,
 

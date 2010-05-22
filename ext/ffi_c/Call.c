@@ -145,7 +145,6 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
 
 
             case NATIVE_INT32:
-            case NATIVE_ENUM:
                 param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int", enums);
                 ADJ(param, INT32);
                 break;
@@ -544,7 +543,6 @@ rbffi_GetLongValue(int idx, VALUE* argv, FunctionType* fnInfo)
             return getSignedInt(value, type, -0x8000, 0x7fff, "short", fnInfo->rbEnums);
 
         case NATIVE_INT32:
-        case NATIVE_ENUM:
             return getSignedInt(value, type, -0x80000000, 0x7fffffff, "int", fnInfo->rbEnums);
 
         case NATIVE_BOOL:

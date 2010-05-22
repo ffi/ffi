@@ -142,7 +142,6 @@ module FFI
 
   add_typedef(NativeType::VARARGS, :varargs)
   
-  add_typedef(NativeType::ENUM, :enum)
   add_typedef(NativeType::BOOL, :bool)
   
   TypeSizes = {

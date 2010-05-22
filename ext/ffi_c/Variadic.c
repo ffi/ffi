@@ -184,7 +184,6 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
             case NATIVE_INT8:
             case NATIVE_INT16:
             case NATIVE_INT32:
-            case NATIVE_ENUM:
                 rbType = rb_const_get(rbffi_TypeClass, rb_intern("INT32"));
                 Data_Get_Struct(rbType, Type, paramTypes[i]);
                 break;

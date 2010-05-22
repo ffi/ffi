@@ -37,7 +37,7 @@
 #include "MappedType.h"
 #include "MemoryPointer.h"
 
-static ID id_find = 0, id_from_native = 0;
+static ID id_from_native = 0;
 
 
 VALUE
@@ -78,8 +78,6 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
             return rbffi_Pointer_NewInstance(*(void **) ptr);
         case NATIVE_BOOL:
             return ((unsigned char) *(ffi_arg *) ptr) ? Qtrue : Qfalse;
-        case NATIVE_ENUM:
-            return rb_funcall(rbType, id_find, 1, INT2NUM((unsigned int) *(ffi_arg *) ptr));
         
         case NATIVE_FUNCTION:
         case NATIVE_CALLBACK: {
@@ -121,7 +119,6 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
 void
 rbffi_Types_Init(VALUE moduleFFI)
 {
-    id_find = rb_intern("find");
     id_from_native = rb_intern("from_native");
 }
 
