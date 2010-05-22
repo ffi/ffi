@@ -171,6 +171,24 @@ module FFI
       self.ptr(flags)
     end
 
+    class ManagedStructConverter < StructByReference
+
+      def initialize(struct_class)
+        super(struct_class)
+
+        raise NoMethodError, "release() not implemented for class #{struct_class}" unless struct_class.respond_to? :release
+        @method = struct_class.method(:release)
+      end
+
+      def from_native(ptr, ctx)
+        struct_class.new(AutoPointer.new(ptr, @method))
+      end
+    end
+
+    def self.managed
+      @managed_type ||= Type::Mapped.new(ManagedStructConverter.new(self))
+    end
+
 
     class << self
       public
