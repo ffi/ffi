@@ -21,6 +21,8 @@
         <itemPath>ext/ffi_c/FunctionInfo.c</itemPath>
         <itemPath>ext/ffi_c/LastError.c</itemPath>
         <itemPath>ext/ffi_c/LastError.h</itemPath>
+        <itemPath>ext/ffi_c/MappedType.c</itemPath>
+        <itemPath>ext/ffi_c/MappedType.h</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.c</itemPath>
         <itemPath>ext/ffi_c/MemoryPointer.h</itemPath>
         <itemPath>ext/ffi_c/MethodHandle.c</itemPath>
@@ -78,6 +80,8 @@
       <logicalFolder name="f2" displayName="spec" projectFiles="true">
         <itemPath>spec/ffi/buffer_spec.rb</itemPath>
         <itemPath>spec/ffi/callback_spec.rb</itemPath>
+        <itemPath>spec/ffi/custom_param_type.rb</itemPath>
+        <itemPath>spec/ffi/custom_type_spec.rb</itemPath>
         <itemPath>spec/ffi/enum_spec.rb</itemPath>
         <itemPath>spec/ffi/errno_spec.rb</itemPath>
         <itemPath>spec/ffi/library_spec.rb</itemPath>

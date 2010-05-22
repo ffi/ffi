@@ -90,43 +90,7 @@ module FFI
       #
       # If a FFI::Type type was passed in as the field arg, try and convert to a StructLayout::Field instance
       #
-      field = if !type.is_a?(StructLayout::Field)
-
-        field_class = case
-          when type.is_a?(FFI::Type::Function)
-            StructLayout::Function
-
-          when type.is_a?(FFI::Type::Struct)
-            StructLayout::InnerStruct
-
-          when type.is_a?(FFI::Type::Array)
-            StructLayout::Array
-
-          when type.is_a?(FFI::Enum)
-            StructLayout::Enum
-
-          when NUMBER_TYPES.include?(type)
-            StructLayout::Number
-
-          when type == FFI::Type::POINTER
-            StructLayout::Pointer
-
-          when type == FFI::Type::STRING
-            StructLayout::String
-
-          when type.is_a?(Class) && type < FFI::StructLayout::Field
-            type
-
-          else
-            raise TypeError, "invalid struct field type #{type.inspect}"
-          end
-
-        field_class.new(name, offset, type)
-
-      else
-        type
-      end
-
+      field = type.is_a?(StructLayout::Field) ? type : field_for_type(name, offset, type)
       @fields << field
       @alignment = [ @alignment, field.alignment ].max unless @packed
       @size = [ @size, field.size + (@union ? 0 : field.offset) ].max
@@ -159,6 +123,44 @@ module FFI
       align + ((offset - 1) & ~(align - 1));
     end
 
+    def field_for_type(name, offset, type)
+      field_class = case
+      when type.is_a?(FFI::Type::Function)
+        StructLayout::Function
+
+      when type.is_a?(FFI::Type::Struct)
+        StructLayout::InnerStruct
+
+      when type.is_a?(FFI::Type::Array)
+        StructLayout::Array
+
+      when type.is_a?(FFI::Enum)
+        StructLayout::Enum
+
+      when NUMBER_TYPES.include?(type)
+        StructLayout::Number
+
+      when type == FFI::Type::POINTER
+        StructLayout::Pointer
+
+      when type == FFI::Type::STRING
+        StructLayout::String
+
+      when type.is_a?(Class) && type < FFI::StructLayout::Field
+        type
+
+      when type.is_a?(DataConverter)
+        return StructLayout::Mapped.new(name, offset, FFI::Type::Mapped.new(type), field_for_type(name, offset, type.native_type))
+
+      when type.is_a?(FFI::Type::Mapped)
+        return StructLayout::Mapped.new(name, offset, type, field_for_type(name, offset, type.native_type))
+
+      else
+        raise TypeError, "invalid struct field type #{type.inspect}"
+      end
+
+      field_class.new(name, offset, type)
+    end
   end
 
 end

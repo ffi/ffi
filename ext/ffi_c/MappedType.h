@@ -1,7 +1,5 @@
 /*
- * Copyright (c) 2008, 2009, Wayne Meissner
- * Copyright (c) 2009, Luc Heinrich <luc@honk-honk.com>
- *
+ * Copyright (c) 2010, Wayne Meissner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,67 +25,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RBFFI_TYPES_H
-#define	RBFFI_TYPES_H
+#ifndef RBFFI_MAPPEDTYPE_H
+#define	RBFFI_MAPPEDTYPE_H
+
+
+#include <ruby.h>
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-typedef enum {
-    NATIVE_VOID,
-    NATIVE_INT8,
-    NATIVE_UINT8,
-    NATIVE_INT16,
-    NATIVE_UINT16,
-    NATIVE_INT32,
-    NATIVE_UINT32,
-    NATIVE_INT64,
-    NATIVE_UINT64,
-    NATIVE_LONG,
-    NATIVE_ULONG,
-    NATIVE_FLOAT32,
-    NATIVE_FLOAT64,
-    NATIVE_POINTER,
-    NATIVE_CALLBACK,
-    NATIVE_FUNCTION,
-    NATIVE_BUFFER_IN,
-    NATIVE_BUFFER_OUT,
-    NATIVE_BUFFER_INOUT,
-    NATIVE_CHAR_ARRAY,
-    NATIVE_BOOL,
+
+typedef struct MappedType_ {
+    Type base;
+    Type* type;
+    VALUE rbConverter;
+    VALUE rbType;
     
-    /** An immutable string.  Nul terminated, but only copies in to the native function */
-    NATIVE_STRING,
+} MappedType;
 
-    /** the function returns [ str, c_ptr ] so c_ptr can be used to free the native string */
-    NATIVE_STRPTR,
+void rbffi_MappedType_Init(VALUE moduleFFI);
 
-    /** The function takes a variable number of arguments */
-    NATIVE_VARARGS,
+extern VALUE rbffi_MappedTypeClass;
 
-    /** A typedef-ed enum */
-    NATIVE_ENUM,
-
-    /** Struct-by-value param or result */
-    NATIVE_STRUCT,
-
-    /** An array type definition */
-    NATIVE_ARRAY,
-
-    /** Custom native type */
-    NATIVE_MAPPED,
-} NativeType;
-
-#include <ffi.h>
-#include "Type.h"
-
-VALUE rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums);
-void rbffi_Types_Init(VALUE moduleFFI);
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* RBFFI_TYPES_H */
+#endif	/* RBFFI_MAPPEDTYPE_H */
 

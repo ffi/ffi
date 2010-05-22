@@ -226,12 +226,17 @@ module FFI
       @ffi_typedefs = Hash.new unless defined?(@ffi_typedefs)
       code = if current.kind_of?(FFI::Type)
         current
+
+      elsif current.is_a?(DataConverter)
+        FFI::Type::Mapped.new(current)
+
       elsif current == :enum
         if add.kind_of?(Array)
           self.enum(add)
         else
           self.enum(info, add)
         end
+
       else
         @ffi_typedefs[current] || FFI.find_type(current)
       end
@@ -269,21 +274,24 @@ module FFI
       @ffi_enums.__map_symbol(symbol)
     end
 
-    def find_type(name)
-      code = if defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(name)
-        @ffi_typedefs[name]
-      elsif defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(name)
-        @ffi_callbacks[name]
-      elsif name.is_a?(Class) && name < FFI::Struct
-        FFI::NativeType::POINTER
-      elsif name.kind_of?(FFI::Type)
-        name
-      end
-      if code.nil? || code.kind_of?(Symbol)
-        FFI.find_type(name)
-      else
-        code
-      end
+    def find_type(t)
+      if t.kind_of?(Type)
+        t
+      
+      elsif defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(t)
+        @ffi_typedefs[t]
+
+      elsif defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(t)
+        @ffi_callbacks[t]
+      
+      elsif t.is_a?(Class) && t < Struct
+        Type::POINTER
+
+      elsif t.is_a?(DataConverter)
+        # Add a typedef so next time the converter is used, it hits the cache
+        typedef Type::Mapped.new(t), t
+      
+      end || FFI.find_type(t)
     end
   end
 end

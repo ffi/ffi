@@ -155,7 +155,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     void** ffiValues;
     ffi_type** ffiParamTypes;
     ffi_type* ffiReturnType;
-    NativeType* paramTypes;
+    Type** paramTypes;
     VALUE* argv;
     int paramCount = 0, i;
     ffi_status ffiStatus;
@@ -165,7 +165,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
     Data_Get_Struct(self, VariadicInvoker, invoker);
     paramCount = RARRAY_LEN(parameterTypes);
-    paramTypes = ALLOCA_N(NativeType, paramCount);
+    paramTypes = ALLOCA_N(Type *, paramCount);
     ffiParamTypes = ALLOCA_N(ffi_type *, paramCount);
     params = ALLOCA_N(FFIStorage, paramCount);
     ffiValues = ALLOCA_N(void*, paramCount);
@@ -173,36 +173,41 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     retval = alloca(MAX(invoker->returnType->ffiType->size, FFI_SIZEOF_ARG));
 
     for (i = 0; i < paramCount; ++i) {
-        VALUE entry = rb_ary_entry(parameterTypes, i);
-        int paramType = rbffi_Type_GetIntValue(entry);
-        Type* type;
-        Data_Get_Struct(entry, Type, type);
+        VALUE rbType = rb_ary_entry(parameterTypes, i);
+        
+        if (!rb_obj_is_kind_of(rbType, rbffi_TypeClass)) {
+            rb_raise(rb_eTypeError, "wrong type.  Expected (FFI::Type)");
+        }
+        Data_Get_Struct(rbType, Type, paramTypes[i]);
 
-        switch (paramType) {
+        switch (paramTypes[i]->nativeType) {
             case NATIVE_INT8:
             case NATIVE_INT16:
             case NATIVE_INT32:
             case NATIVE_ENUM:
-                paramType = NATIVE_INT32;
-                ffiParamTypes[i] = &ffi_type_sint;
+                rbType = rb_const_get(rbffi_TypeClass, rb_intern("INT32"));
+                Data_Get_Struct(rbType, Type, paramTypes[i]);
                 break;
             case NATIVE_UINT8:
             case NATIVE_UINT16:
             case NATIVE_UINT32:
-                paramType = NATIVE_UINT32;
-                ffiParamTypes[i] = &ffi_type_uint;
+                rbType = rb_const_get(rbffi_TypeClass, rb_intern("UINT32"));
+                Data_Get_Struct(rbType, Type, paramTypes[i]);
                 break;
+            
             case NATIVE_FLOAT32:
-                paramType = NATIVE_FLOAT64;
-                ffiParamTypes[i] = &ffi_type_double;
+                rbType = rb_const_get(rbffi_TypeClass, rb_intern("DOUBLE"));
+                Data_Get_Struct(rbType, Type, paramTypes[i]);
                 break;
+
             default:
-                ffiParamTypes[i] = type->ffiType;
                 break;
         }
-        paramTypes[i] = paramType;
+        
+        
+        ffiParamTypes[i] = paramTypes[i]->ffiType;
         if (ffiParamTypes[i] == NULL) {
-            rb_raise(rb_eArgError, "Invalid parameter type #%x", paramType);
+            rb_raise(rb_eArgError, "Invalid parameter type #%x", paramTypes[i]);
         }
         argv[i] = rb_ary_entry(parameterValues, i);
     }

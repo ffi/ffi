@@ -50,6 +50,7 @@
 #include "Type.h"
 #include "LastError.h"
 #include "Call.h"
+#include "MappedType.h"
 
 #ifdef USE_RAW
 #  ifndef __i386__
@@ -94,10 +95,10 @@ static VALUE rbffi_InvokeLongParams(int argc, VALUE* argv, void* function, Funct
 #endif
 
 
-static ID id_to_ptr, id_map_symbol;
+static ID id_to_ptr, id_map_symbol, id_to_native;
 
 void
-rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTypes,
+rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
         FFIStorage* paramStorage, void** ffiValues,
         VALUE* callbackParameters, int callbackCount, VALUE enums)
 {
@@ -116,10 +117,20 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
     argCount = paramCount != -1 ? paramCount : argc;
 
     for (i = 0, argidx = 0, cbidx = 0; i < argCount; ++i) {
-        int type = argidx < argc ? TYPE(argv[argidx]) : T_NONE;
+        Type* paramType = paramTypes[i];
+        int type;
+
+        
+        if (unlikely(paramType->nativeType == NATIVE_MAPPED)) {
+            VALUE values[] = { argv[argidx], Qnil };
+            argv[argidx] = rb_funcall2(((MappedType *) paramType)->rbConverter, id_to_native, 2, values);
+            paramType = ((MappedType *) paramType)->type;
+        }
+
+        type = argidx < argc ? TYPE(argv[argidx]) : T_NONE;
         ffiValues[i] = param;
 
-        switch (paramTypes[i]) {
+        switch (paramType->nativeType) {
 
             case NATIVE_INT8:
                 param->s8 = getSignedInt(argv[argidx++], type, -128, 127, "char", Qnil);
@@ -248,7 +259,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, NativeType* paramTy
                 break;
 
             default:
-                rb_raise(rb_eArgError, "Invalid parameter type: %d", paramTypes[i]);
+                rb_raise(rb_eArgError, "Invalid parameter type: %d", paramType->nativeType);
         }
     }
 }
@@ -286,7 +297,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
 
     rbffi_SetupCallParams(argc, argv,
-        fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
+        fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
         fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
 #if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION)
@@ -800,7 +811,7 @@ rbffi_InvokeLongParams(int argc, VALUE* argv, void* function, FunctionType* fnIn
         params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
 
         rbffi_SetupCallParams(argc, argv,
-            fnInfo->parameterCount, fnInfo->nativeParameterTypes, params, ffiValues,
+            fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
             fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
         switch (fnInfo->parameterCount) {
@@ -876,6 +887,7 @@ void
 rbffi_Call_Init(VALUE moduleFFI)
 {
     id_to_ptr = rb_intern("to_ptr");
+    id_to_native = rb_intern("to_native");
     id_map_symbol = rb_intern("__map_symbol");
 }
 

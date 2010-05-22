@@ -64,6 +64,21 @@ module FFI
 #        raise TypeError, "wrong value type (expected #{type.struct_class}" unless value.is_a(type.struct_class)
 #      end
     end
+
+    class Mapped < Field
+      def initialize(name, offset, type, orig_field)
+        super(name, offset, type)
+        @orig_field = orig_field
+      end
+
+      def get(ptr)
+        type.from_native(@orig_field.get(ptr), nil)
+      end
+
+      def put(ptr, value)
+        @orig_field.put(ptr, type.to_native(value, nil))
+      end
+    end
   end
 
   

@@ -47,6 +47,7 @@
 #include "MethodHandle.h"
 #include "Call.h"
 #include "ArrayType.h"
+#include "MappedType.h"
 
 void Init_ffi_c(void);
 
@@ -78,5 +79,8 @@ Init_ffi_c(void) {
     rbffi_DynamicLibrary_Init(moduleFFI);
     rbffi_Variadic_Init(moduleFFI);
     rbffi_Types_Init(moduleFFI);
+
+    rbffi_DataConverter_Init(moduleFFI);
+    rbffi_MappedType_Init(moduleFFI);
 }
 

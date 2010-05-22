@@ -55,6 +55,7 @@
 #include "Call.h"
 #include "ClosurePool.h"
 #include "Function.h"
+#include "MappedType.h"
 
 typedef struct Function_ {
     AbstractMemory memory;
@@ -100,7 +101,7 @@ VALUE rbffi_FunctionClass = Qnil;
 static VALUE async_cb_thread = Qnil;
 #endif
 
-static ID id_call = 0, id_cbtable = 0, id_cb_ref = 0;
+static ID id_call = 0, id_to_native = 0, id_from_native = 0, id_cbtable = 0, id_cb_ref = 0;
 
 struct gvl_callback {
     Closure* closure;
@@ -501,16 +502,26 @@ callback_with_gvl(void* data)
 
     Function* fn = (Function *) cb->closure->info;
     FunctionType *cbInfo = fn->info;
+    Type* returnType = cbInfo->returnType;
     void* retval = cb->retval;
     void** parameters = cb->parameters;
     VALUE* rbParams;
+    VALUE rbReturnType = cbInfo->rbReturnType;
     VALUE rbReturnValue;
     int i;
 
     rbParams = ALLOCA_N(VALUE, cbInfo->parameterCount);
     for (i = 0; i < cbInfo->parameterCount; ++i) {
         VALUE param;
-        switch (cbInfo->parameterTypes[i]->nativeType) {
+        Type* paramType = cbInfo->parameterTypes[i];
+        VALUE rbParamType = rb_ary_entry(cbInfo->rbParameterTypes, i);
+
+        if (unlikely(paramType->nativeType == NATIVE_MAPPED)) {
+            paramType = ((MappedType *) paramType)->type;
+            rbParamType = ((MappedType *) paramType)->rbType;
+        }
+
+        switch (paramType->nativeType) {
             case NATIVE_INT8:
                 param = INT2NUM(*(int8_t *) parameters[i]);
                 break;
@@ -560,22 +571,35 @@ callback_with_gvl(void* data)
             case NATIVE_FUNCTION:
             case NATIVE_CALLBACK:
             case NATIVE_STRUCT:
-                param = rbffi_NativeValue_ToRuby(cbInfo->parameterTypes[i],
-                     rb_ary_entry(cbInfo->rbParameterTypes, i), parameters[i], Qnil);
+                param = rbffi_NativeValue_ToRuby(paramType, rbParamType, parameters[i], Qnil);
                 break;
 
             default:
                 param = Qnil;
                 break;
         }
+
+        // Convert the native value into a custom ruby value
+        if (unlikely(cbInfo->parameterTypes[i]->nativeType == NATIVE_MAPPED)) {
+            VALUE values = { param, Qnil };
+            param = rb_funcall2(((MappedType *) cbInfo->parameterTypes[i])->rbConverter, id_from_native, 2, values);
+        }
+
         rbParams[i] = param;
     }
 
     rbReturnValue = rb_funcall2(fn->rbProc, id_call, cbInfo->parameterCount, rbParams);
+    
+    if (unlikely(returnType->nativeType == NATIVE_MAPPED)) {
+        VALUE values = { rbReturnValue, Qnil };
+        rbReturnValue = rb_funcall2(((MappedType *) returnType)->rbConverter, id_to_native, 2, values);
+        rbReturnType = ((MappedType *) returnType)->rbType;
+        returnType = ((MappedType* ) returnType)->type;
+    }
 
     if (rbReturnValue == Qnil || TYPE(rbReturnValue) == T_NIL) {
-        memset(retval, 0, cbInfo->ffiReturnType->size);
-    } else switch (cbInfo->returnType->nativeType) {
+        memset(retval, 0, returnType->ffiType->size);
+    } else switch (returnType->nativeType) {
         case NATIVE_INT8:
         case NATIVE_INT16:
         case NATIVE_INT32:
@@ -626,7 +650,7 @@ callback_with_gvl(void* data)
             } else if (rb_obj_is_kind_of(rbReturnValue, rb_cProc) || rb_respond_to(rbReturnValue, id_call)) {
                 VALUE function;
 
-                function = rbffi_Function_ForProc(cbInfo->rbReturnType, rbReturnValue);
+                function = rbffi_Function_ForProc(rbReturnType, rbReturnValue);
 
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(function))->address;
             } else {
@@ -639,14 +663,14 @@ callback_with_gvl(void* data)
                 AbstractMemory* memory = ((Struct *) DATA_PTR(rbReturnValue))->pointer;
 
                 if (memory->address != NULL) {
-                    memcpy(retval, memory->address, cbInfo->ffiReturnType->size);
+                    memcpy(retval, memory->address, returnType->ffiType->size);
 
                 } else {
-                    memset(retval, 0, cbInfo->ffiReturnType->size);
+                    memset(retval, 0, returnType->ffiType->size);
                 }
                 
             } else {
-                memset(retval, 0, cbInfo->ffiReturnType->size);
+                memset(retval, 0, returnType->ffiType->size);
             }
             break;
 
@@ -694,5 +718,7 @@ rbffi_Function_Init(VALUE moduleFFI)
     id_call = rb_intern("call");
     id_cbtable = rb_intern("@__ffi_callback_table__");
     id_cb_ref = rb_intern("@__ffi_callback__");
+    id_to_native = rb_intern("to_native");
+    id_from_native = rb_intern("from_native");
 }
 

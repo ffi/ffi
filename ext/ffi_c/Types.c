@@ -34,9 +34,10 @@
 #include "StructByValue.h"
 #include "Types.h"
 #include "Struct.h"
+#include "MappedType.h"
 #include "MemoryPointer.h"
 
-static ID id_find = 0;
+static ID id_find = 0, id_from_native = 0;
 
 
 VALUE
@@ -108,6 +109,19 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
             return ary;
         }
 
+        case NATIVE_MAPPED: {
+            // For mapped types, first convert to the real native type, then upcall to
+            // ruby to convert to the expected return type
+            MappedType* m;
+            VALUE values[2];
+
+            Data_Get_Struct(rbType, MappedType, m);
+            values[0] = rbffi_NativeValue_ToRuby(m->type, m->rbType, ptr, enums);
+            values[1] = Qnil;
+
+            return rb_funcall2(m->rbConverter, id_from_native, 2, values);
+        }
+    
         default:
             rb_raise(rb_eRuntimeError, "Unknown type: %d", type->nativeType);
             return Qnil;
@@ -118,5 +132,6 @@ void
 rbffi_Types_Init(VALUE moduleFFI)
 {
     id_find = rb_intern("find");
+    id_from_native = rb_intern("from_native");
 }
 

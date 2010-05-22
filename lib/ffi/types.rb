@@ -37,6 +37,10 @@ module FFI
   def self.find_type(name, type_map = nil)
     type = if name.is_a?(FFI::Type)
       name
+
+    elsif name.is_a?(DataConverter)
+      FFI::Type::Mapped.new(name)
+
     elsif type_map
       type_map[name]
     end || TypeDefs[name]
