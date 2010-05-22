@@ -177,7 +177,21 @@ describe "AutoPointer" do
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
+
+  it "can be used as the return type of a function" do
+    lambda do
+      Module.new do
+        extend FFI::Library
+        ffi_lib TestLibrary::PATH
+        class CustomAutoPointer < FFI::AutoPointer
+          def self.release(ptr); end
+        end
+        attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], CustomAutoPointer
+      end
+    end.should_not raise_error
+  end
 end
+
 describe "AutoPointer#new" do
   class AutoPointerSubclass < FFI::AutoPointer
     def self.release(ptr); end
@@ -193,3 +207,4 @@ describe "AutoPointer#new" do
   end
 
 end
+
