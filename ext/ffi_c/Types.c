@@ -99,16 +99,6 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
             return rb_class_new_instance(1, &rbMemory, sbv->rbStructClass);
         }
 
-        case NATIVE_STRPTR: {
-            void* address = *(void **) ptr;
-            VALUE ary = rb_ary_new2(2);
-
-            rb_ary_push(ary, address != NULL ? rb_str_new2((const char *) address) : Qnil);
-            rb_ary_push(ary, rbffi_Pointer_NewInstance(address));
-
-            return ary;
-        }
-
         case NATIVE_MAPPED: {
             // For mapped types, first convert to the real native type, then upcall to
             // ruby to convert to the expected return type

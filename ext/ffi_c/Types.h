@@ -59,10 +59,7 @@ typedef enum {
     
     /** An immutable string.  Nul terminated, but only copies in to the native function */
     NATIVE_STRING,
-
-    /** the function returns [ str, c_ptr ] so c_ptr can be used to free the native string */
-    NATIVE_STRPTR,
-
+    
     /** The function takes a variable number of arguments */
     NATIVE_VARARGS,
 

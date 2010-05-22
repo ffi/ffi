@@ -123,7 +123,17 @@ module FFI
   add_typedef(Type::STRING, :string)
 
   # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
-  add_typedef(Type::STRPTR, :strptr)
+  class StrPtrConverter
+    extend DataConverter
+    native_type Type::POINTER
+
+    def self.from_native(val, ctx)
+      [ val.null? ? Qnil : val.get_string(0), val ]
+    end
+
+  end
+
+  add_typedef(StrPtrConverter, :strptr)
 
   # Converts FFI::Buffer objects
   add_typedef(NativeType::BUFFER_IN, :buffer_in)
