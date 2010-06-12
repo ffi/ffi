@@ -283,7 +283,8 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         fn->autorelease = true;
 
     } else {
-        rb_raise(rb_eTypeError, "wrong argument type.  Expected pointer or proc");
+        rb_raise(rb_eTypeError, "wrong argument type %s, expected pointer or proc",
+                rb_obj_classname(rbProc));
     }
     
     fn->rbProc = rbProc;
