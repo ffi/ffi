@@ -1,3 +1,4 @@
+# coding: utf-8
 require "rubygems"
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
@@ -13,7 +14,12 @@ describe "MemoryPointer" do
     m = FFI::MemoryPointer.from_string("FFI is Awesome")
     m.type_size.should == 15
   end
-  
+
+  it "makes a pointer from a string with multibyte characters" do
+    m = FFI::MemoryPointer.from_string("ぱんだ")
+    m.type_size.should == 10
+  end
+
   it "reads back a string" do
     m = FFI::MemoryPointer.from_string("FFI is Awesome")
     m.read_string.should == "FFI is Awesome"
