@@ -5,27 +5,19 @@
  * Copyright (c) 2009, Aman Gupta.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This file is part of ruby-ffi.
  *
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * The name of the author or authors may not be used to endorse or promote
- *   products derived from this software without specific prior written permission.
+ * This code is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License version 3 only, as
+ * published by the Free Software Foundation.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * version 3 for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <sys/param.h>
@@ -75,9 +67,6 @@
 #endif
 
 static void* callback_param(VALUE proc, VALUE cbinfo);
-static inline int getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* typeName, VALUE enums);
-static inline int getUnsignedInt(VALUE value, int type, int maxValue, const char* typeName);
-static inline unsigned int getUnsignedInt32(VALUE value, int type);
 static inline void* getPointer(VALUE value, int type);
 static inline char* getString(VALUE value, int type);
 
@@ -133,19 +122,29 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
         switch (paramType->nativeType) {
 
             case NATIVE_INT8:
-                param->s8 = getSignedInt(argv[argidx++], type, -128, 127, "char", Qnil);
+                param->s8 = NUM2INT(argv[argidx]);
+                ++argidx;
                 ADJ(param, INT8);
                 break;
 
 
             case NATIVE_INT16:
-                param->s16 = getSignedInt(argv[argidx++], type, -0x8000, 0x7fff, "short", Qnil);
+                param->s16 = NUM2INT(argv[argidx]);
+                ++argidx;
                 ADJ(param, INT16);
                 break;
 
 
             case NATIVE_INT32:
-                param->s32 = getSignedInt(argv[argidx++], type, -0x80000000, 0x7fffffff, "int", enums);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->s32 = NUM2INT(value);
+
+                } else {
+                    param->s32 = NUM2INT(argv[argidx]);
+                }
+
+                ++argidx;
                 ADJ(param, INT32);
                 break;
 
@@ -160,28 +159,28 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
 
 
             case NATIVE_UINT8:
-                param->u8 = getUnsignedInt(argv[argidx++], type, 0xff, "unsigned char");
+                param->u8 = NUM2UINT(argv[argidx]);
                 ADJ(param, INT8);
+                ++argidx;
                 break;
 
 
             case NATIVE_UINT16:
-                param->u16 = getUnsignedInt(argv[argidx++], type, 0xffff, "unsigned short");
+                param->u16 = NUM2UINT(argv[argidx]);
                 ADJ(param, INT16);
+                ++argidx;
                 break;
 
 
             case NATIVE_UINT32:
                 /* Special handling/checking for unsigned 32 bit integers */
-                param->u32 = getUnsignedInt32(argv[argidx++], type);
+                param->u32 = NUM2UINT(argv[argidx]);
                 ADJ(param, INT32);
+                ++argidx;
                 break;
 
 
             case NATIVE_INT64:
-                if (type != T_FIXNUM && type != T_BIGNUM) {
-                    rb_raise(rb_eTypeError, "Expected an Integer parameter");
-                }
                 param->i64 = NUM2LL(argv[argidx]);
                 ADJ(param, INT64);
                 ++argidx;
@@ -189,9 +188,6 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
 
 
             case NATIVE_UINT64:
-                if (type != T_FIXNUM && type != T_BIGNUM) {
-                    rb_raise(rb_eTypeError, "Expected an Integer parameter");
-                }
                 param->u64 = NUM2ULL(argv[argidx]);
                 ADJ(param, INT64);
                 ++argidx;
@@ -210,18 +206,12 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                 break;
 
             case NATIVE_FLOAT32:
-                if (type != T_FLOAT && type != T_FIXNUM) {
-                    rb_raise(rb_eTypeError, "Expected a Float parameter");
-                }
                 param->f32 = (float) NUM2DBL(argv[argidx]);
                 ADJ(param, FLOAT32);
                 ++argidx;
                 break;
 
             case NATIVE_FLOAT64:
-                if (type != T_FLOAT && type != T_FIXNUM) {
-                    rb_raise(rb_eTypeError, "Expected a Float parameter");
-                }
                 param->f64 = NUM2DBL(argv[argidx]);
                 ADJ(param, FLOAT64);
                 ++argidx;
@@ -322,64 +312,6 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
 
     return rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval,
         fnInfo->rbEnums);
-}
-
-static inline int
-getSignedInt(VALUE value, int type, int minValue, int maxValue, const char* typeName, VALUE enums)
-{
-    int i;
-
-    if (type == T_SYMBOL && enums != Qnil) {
-        value = rb_funcall2(enums, id_map_symbol, 1, &value);
-        if (value == Qnil) {
-            rb_raise(rb_eTypeError, "Expected a valid enum constant");
-        }
-
-    } else if (type != T_FIXNUM && type != T_BIGNUM) {
-        rb_raise(rb_eTypeError, "Expected an Integer parameter");
-    }
-
-    i = NUM2INT(value);
-    if (i < minValue || i > maxValue) {
-        rb_raise(rb_eRangeError, "Value %d outside %s range", i, typeName);
-    }
-
-    return i;
-}
-
-static inline int
-getUnsignedInt(VALUE value, int type, int maxValue, const char* typeName)
-{
-    int i;
-
-    if (type != T_FIXNUM && type != T_BIGNUM) {
-        rb_raise(rb_eTypeError, "Expected an Integer parameter");
-    }
-
-    i = NUM2INT(value);
-    if (i < 0 || i > maxValue) {
-        rb_raise(rb_eRangeError, "Value %d outside %s range", i, typeName);
-    }
-
-    return i;
-}
-
-/* Special handling/checking for unsigned 32 bit integers */
-static inline unsigned int
-getUnsignedInt32(VALUE value, int type)
-{
-    long long i;
-
-    if (type != T_FIXNUM && type != T_BIGNUM) {
-        rb_raise(rb_eTypeError, "Expected an Integer parameter");
-    }
-
-    i = NUM2LL(value);
-    if (i < 0L || i > 0xffffffffL) {
-        rb_raise(rb_eRangeError, "Value %lld outside unsigned int range", i);
-    }
-
-    return (unsigned int) i;
 }
 
 static inline void*
@@ -537,14 +469,10 @@ rbffi_GetLongValue(int idx, VALUE* argv, FunctionType* fnInfo)
 
     switch (nativeType) {
         case NATIVE_INT8:
-            return getSignedInt(value, type, -128, 127, "char", fnInfo->rbEnums);
-
         case NATIVE_INT16:
-            return getSignedInt(value, type, -0x8000, 0x7fff, "short", fnInfo->rbEnums);
-
         case NATIVE_INT32:
-            return getSignedInt(value, type, -0x80000000, 0x7fffffff, "int", fnInfo->rbEnums);
-
+            return NUM2INT(value);
+        
         case NATIVE_BOOL:
             if (type != T_TRUE && type != T_FALSE) {
                 rb_raise(rb_eTypeError, "Expected a Boolean parameter");
@@ -552,14 +480,9 @@ rbffi_GetLongValue(int idx, VALUE* argv, FunctionType* fnInfo)
             return RTEST(value) ? 1 : 0;
 
         case NATIVE_UINT8:
-            return getUnsignedInt(value, type, 0xff, "unsigned char");
-
         case NATIVE_UINT16:
-            return getUnsignedInt(value, type, 0xffff, "unsigned short");
-
         case NATIVE_UINT32:
-            /* Special handling/checking for unsigned 32 bit integers */
-            return getUnsignedInt32(value, type);
+            return NUM2UINT(value);
 
         case NATIVE_LONG:
             return NUM2LONG(value);
@@ -569,15 +492,9 @@ rbffi_GetLongValue(int idx, VALUE* argv, FunctionType* fnInfo)
 
 #ifdef __x86_64__
         case NATIVE_INT64:
-            if (type != T_FIXNUM && type != T_BIGNUM) {
-                rb_raise(rb_eTypeError, "Expected an Integer parameter");
-            }
             return NUM2LL(value);
 
         case NATIVE_UINT64:
-            if (type != T_FIXNUM && type != T_BIGNUM) {
-                rb_raise(rb_eTypeError, "Expected an Integer parameter");
-            }
             return NUM2ULL(value);
 #endif
         case NATIVE_STRING:
