@@ -1,126 +1,124 @@
 #
-# Copyright (C) 2008, 2009 Wayne Meissner
-# Copyright (C) 2009 Luc Heinrich
-# Copyright (c) 2007, 2008 Evan Phoenix
+# Copyright (C) 2008-2010 Wayne Meissner
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# This file is part of ruby-ffi.
 #
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-# * Redistributions in binary form must reproduce the above copyright notice
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-# * Neither the name of the Evan Phoenix nor the names of its contributors
-#   may be used to endorse or promote products derived from this software
-#   without specific prior written permission.
+# This code is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License version 3 only, as
+# published by the Free Software Foundation.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+# version 3 for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 module FFI
 
-  def self.add_typedef(current, add)
-    TypeDefs[add] = self.find_type(current)
-    end
+  def self.typedef(old, add)
+    TypeDefs[add] = self.find_type(old)
+  end
+
+  def self.add_typedef(old, add)
+    typedef old, add
+  end
 
 
   def self.find_type(name, type_map = nil)
-    type = if name.is_a?(Type)
+    if name.is_a?(Type)
       name
 
-    elsif name.is_a?(DataConverter)
-      Type::Mapped.new(name)
-
-    elsif type_map
+    elsif type_map && type_map.has_key?(name)
       type_map[name]
-    end || TypeDefs[name]
 
-    raise TypeError, "Unable to resolve type '#{name}'" unless type
+    elsif TypeDefs.has_key?(name)
+      TypeDefs[name]
 
-    return type
+    elsif name.is_a?(DataConverter)
+      (type_map || TypeDefs)[name] = Type::Mapped.new(name)
+    
+    else
+      raise TypeError, "unable to resolve type '#{name}'"
+    end
   end
 
-  # Converts a char
-  add_typedef(Type::CHAR, :char)
+  TypeDefs.merge!({
+      # The C void type; only useful for function return types
+      :void => Type::VOID,
 
-  # Converts an unsigned char
-  add_typedef(Type::UCHAR, :uchar)
+      # C boolean type
+      :bool => Type::BOOL,
 
-  # Converts an 8 bit int
-  add_typedef(Type::INT8, :int8)
+      # C nul-terminated string
+      :string => Type::STRING,
 
-  # Converts an unsigned char
-  add_typedef(Type::UINT8, :uint8)
+      # C signed char
+      :char => Type::CHAR,
+      # C unsigned char
+      :uchar => Type::UCHAR,
 
-  # Converts a short
-  add_typedef(Type::SHORT, :short)
+      # C signed short
+      :short => Type::SHORT,
+      # C unsigned short
+      :ushort => Type::USHORT,
 
-  # Converts an unsigned short
-  add_typedef(Type::USHORT, :ushort)
+      # C signed int
+      :int => Type::INT,
+      # C unsigned int
+      :uint => Type::UINT,
 
-  # Converts a 16bit int
-  add_typedef(Type::INT16, :int16)
+      # C signed long
+      :long => Type::LONG,
 
-  # Converts an unsigned 16 bit int
-  add_typedef(Type::UINT16, :uint16)
+      # C unsigned long
+      :ulong => Type::ULONG,
 
-  # Converts an int
-  add_typedef(Type::INT, :int)
+      # C signed long long integer
+      :long_long => Type::LONG_LONG,
 
-  # Converts an unsigned int
-  add_typedef(Type::UINT, :uint)
+      # C unsigned long long integer
+      :ulong_long => Type::ULONG_LONG,
 
-  # Converts a 32 bit int
-  add_typedef(Type::INT32, :int32)
+      # C single precision float
+      :float => Type::FLOAT,
 
-  # Converts an unsigned 16 bit int
-  add_typedef(Type::UINT32, :uint32)
+      # C double precision float
+      :double => Type::DOUBLE,
 
-  # Converts a long
-  add_typedef(Type::LONG, :long)
+      # Native memory address
+      :pointer => Type::POINTER,
 
-  # Converts an unsigned long
-  add_typedef(Type::ULONG, :ulong)
+      # 8 bit signed integer
+      :int8 => Type::INT8,
+      # 8 bit unsigned integer
+      :uint8 => Type::UINT8,
 
-  # Converts a 64 bit int
-  add_typedef(Type::INT64, :int64)
+      # 16 bit signed integer
+      :int16 => Type::INT16,
+      # 16 bit unsigned integer
+      :uint16 => Type::UINT16,
 
-  # Converts an unsigned 64 bit int
-  add_typedef(Type::UINT64, :uint64)
+      # 32 bit signed integer
+      :int32 => Type::INT32,
+      # 32 bit unsigned integer
+      :uint32 => Type::UINT32,
 
-  # Converts a long long
-  add_typedef(Type::LONG_LONG, :long_long)
+      # 64 bit signed integer
+      :int64 => Type::INT64,
+      # 64 bit unsigned integer
+      :uint64 => Type::UINT64,
 
-  # Converts an unsigned long long
-  add_typedef(Type::ULONG_LONG, :ulong_long)
+      :buffer_in => Type::BUFFER_IN,
+      :buffer_out => Type::BUFFER_OUT,
+      :buffer_inout => Type::BUFFER_INOUT,
 
-  # Converts a float
-  add_typedef(Type::FLOAT, :float)
-
-  # Converts a double
-  add_typedef(Type::DOUBLE, :double)
-
-  # Converts a pointer to opaque data
-  add_typedef(Type::POINTER, :pointer)
-
-  # For when a function has no return value
-  add_typedef(Type::VOID, :void)
-
-  # Native boolean type
-  add_typedef(Type::BOOL, :bool)
-
-  # Converts NUL-terminated C strings
-  add_typedef(Type::STRING, :string)
+      # Used in function prototypes to indicate the arguments are variadic
+      :varargs => Type::VARARGS,
+  })
 
   # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
   class StrPtrConverter
@@ -133,31 +131,8 @@ module FFI
 
   end
 
-  add_typedef(StrPtrConverter, :strptr)
+  typedef(StrPtrConverter, :strptr)
 
-  # Converts FFI::Buffer objects
-  add_typedef(Type::BUFFER_IN, :buffer_in)
-  add_typedef(Type::BUFFER_OUT, :buffer_out)
-  add_typedef(Type::BUFFER_INOUT, :buffer_inout)
-
-  add_typedef(Type::VARARGS, :varargs)
-  
-  TypeSizes = {
-    1 => :char,
-    2 => :short,
-    4 => :int,
-    8 => :long_long,
-  }
-  
-  def self.size_to_type(size)
-    if sz = TypeSizes[size]
-      return sz
-    end
-
-    # Be like C, use int as the default type size.
-    return :int
-  end
-  
   def self.type_size(type)
     find_type(type).size
   end
@@ -169,7 +144,7 @@ module FFI
       f.each_line { |line|
         if line.index(prefix) == 0
           new_type, orig_type = line.chomp.slice(prefix.length..-1).split(/\s*=\s*/)
-          add_typedef(orig_type.to_sym, new_type.to_sym)
+          typedef(orig_type.to_sym, new_type.to_sym)
         end
       }
     end

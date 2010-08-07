@@ -1,34 +1,45 @@
 #
-# Copyright (C) 2008, 2009 Wayne Meissner
+# Copyright (C) 2008-2010 Wayne Meissner
 # Copyright (C) 2008 Luc Heinrich <luc@honk-honk.com>
-# Copyright (c) 2007, 2008 Evan Phoenix
+#
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# This file is part of ruby-ffi.
 #
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-# * Redistributions in binary form must reproduce the above copyright notice
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-# * Neither the name of the Evan Phoenix nor the names of its contributors
-#   may be used to endorse or promote products derived from this software
-#   without specific prior written permission.
+# This code is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License version 3 only, as
+# published by the Free Software Foundation.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+# version 3 for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
 
 module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = Object.new
+
+  def self.map_library_name(lib)
+    # Mangle the library name to reflect the native library naming conventions
+    lib = lib.to_s unless lib.kind_of?(String)
+    lib = Library::LIBC if lib == 'c'
+
+    if lib && File.basename(lib) == lib
+      lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
+      r = Platform::IS_LINUX ? "\\.so($|\\.[1234567890]+)" : "\\.#{Platform::LIBSUFFIX}$"
+      lib += ".#{Platform::LIBSUFFIX}" unless lib =~ /#{r}/
+    end
+
+    lib
+  end
+
+  class NotFoundError < LoadError
+    def initialize(function, *libraries)
+      super("Function '#{function}' not found in [#{libraries[0].nil? ? 'current process' : libraries.join(", ")}]")
+    end
+  end
 
   module Library
     CURRENT_PROCESS = FFI::CURRENT_PROCESS
@@ -41,8 +52,10 @@ module FFI
     def ffi_lib(*names)
       lib_flags = defined?(@ffi_lib_flags) ? @ffi_lib_flags : FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL
       ffi_libs = names.map do |name|
+
         if name == FFI::CURRENT_PROCESS
           FFI::DynamicLibrary.open(nil, FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL)
+
         else
           libnames = (name.is_a?(::Array) ? name : [ name ]).map { |n| [ n, FFI.map_library_name(n) ].uniq }.flatten.compact
           lib = nil
@@ -52,6 +65,7 @@ module FFI
             begin
               lib = FFI::DynamicLibrary.open(libname, lib_flags)
               break if lib
+
             rescue Exception => ex
               errors[libname] = ex
             end
@@ -93,69 +107,50 @@ module FFI
 
     
     ##
-    # Attach C function +name+ to this module.
+    # Attach C function to this module.
     #
-    # If you want to provide an alternate name for the module function, supply
-    # it after the +name+, otherwise the C function name will be used.#
-    #
-    # After the +name+, the C function argument types are provided as an Array.
-    #
-    # The C function return type is provided last.
-
     def attach_function(mname, a2, a3, a4=nil, a5 = nil)
       cname, arg_types, ret_type, opts = (a4 && (a2.is_a?(String) || a2.is_a?(Symbol))) ? [ a2, a3, a4, a5 ] : [ mname.to_s, a2, a3, a4 ]
 
       # Convert :foo to the native type
       arg_types.map! { |e| find_type(e) }
-      has_callback = arg_types.any? {|t| t.kind_of?(FFI::CallbackInfo)}
-      options = Hash.new
+      options = {
+        :convention => defined?(@ffi_convention) ? @ffi_convention : :default,
+        :type_map => defined?(@ffi_typedefs) ? @ffi_typedefs : nil,
+        :blocking => defined?(@blocking) && @blocking,
+        :enums => defined?(@ffi_enums) ? @ffi_enums : nil,
+      }
       
-      options[:convention] = defined?(@ffi_convention) ? @ffi_convention : :default
-      options[:type_map] = @ffi_typedefs if defined?(@ffi_typedefs)
-      options[:enums] = @ffi_enums if defined?(@ffi_enums)
-      options[:blocking] = true if defined?(@blocking) && @blocking
       @blocking = false
       options.merge!(opts) if opts && opts.is_a?(Hash)
 
       # Try to locate the function in any of the libraries
       invokers = []
       ffi_libraries.each do |lib|
-        begin
-          invokers << FFI.create_invoker(lib, cname.to_s, arg_types, find_type(ret_type), options)
-        rescue LoadError => ex
-        end if invokers.empty?
+        if invokers.empty?
+          begin
+            function = lib.find_function(cname.to_s)
+            raise LoadError unless function
+
+            invokers << if arg_types.length > 0 && arg_types[arg_types.length - 1] == FFI::NativeType::VARARGS
+              VariadicInvoker.new(function, arg_types, find_type(ret_type), options)
+
+            else
+              Function.new(find_type(ret_type), arg_types, function, options)
+            end
+
+          rescue LoadError => ex
+          end
+        end
       end
       invoker = invokers.compact.shift
       raise FFI::NotFoundError.new(cname.to_s, ffi_libraries.map { |lib| lib.name }) unless invoker
 
-      # Setup the parameter list for the module function as (a1, a2)
-      arity = arg_types.length
-      params = (1..arity).map {|i| "a#{i}" }.join(",")
-
-      # Always use rest args for functions with callback parameters
-      if has_callback || invoker.kind_of?(FFI::VariadicInvoker)
-        params = "*args, &block"
-      end
-      call = arity <= 3 && !has_callback && !invoker.kind_of?(FFI::VariadicInvoker)? "call#{arity}" : "call"
-
-      #
-      # Attach the invoker to this module as 'mname'.
-      #
-      if !has_callback && !invoker.kind_of?(FFI::VariadicInvoker)
-        invoker.attach(self, mname.to_s)
-      else
-        self.module_eval <<-code
-          @@#{mname} = invoker
-          def self.#{mname}(#{params})
-            @@#{mname}.#{call}(#{params})
-          end
-          def #{mname}(#{params})
-            @@#{mname}.#{call}(#{params})
-          end
-        code
-      end
+      invoker.attach(self, mname.to_s)
       invoker
     end
+
+
     def attach_variable(mname, a1, a2 = nil)
       cname, type = a2 ? [ a1, a2 ] : [ mname.to_s, a1 ]
       address = nil
@@ -215,22 +210,25 @@ module FFI
 
       # Add to the symbol -> type map (unless there was no name)
       unless name.nil?
-        @ffi_callbacks = Hash.new unless defined?(@ffi_callbacks)
-        @ffi_callbacks[name] = cb
+        typedef cb, name
       end
 
       cb
     end
 
-    def typedef(current, add, info=nil)
+    def typedef(old, add, info=nil)
       @ffi_typedefs = Hash.new unless defined?(@ffi_typedefs)
-      code = if current.kind_of?(FFI::Type)
-        current
 
-      elsif current.is_a?(DataConverter)
-        FFI::Type::Mapped.new(current)
+      @ffi_typedefs[add] = if old.kind_of?(FFI::Type)
+        old
 
-      elsif current == :enum
+      elsif @ffi_typedefs.has_key?(old)
+        @ffi_typedefs[old]
+
+      elsif old.is_a?(DataConverter)
+        FFI::Type::Mapped.new(old)
+
+      elsif old == :enum
         if add.kind_of?(Array)
           self.enum(add)
         else
@@ -238,10 +236,8 @@ module FFI
         end
 
       else
-        @ffi_typedefs[current] || FFI.find_type(current)
+        FFI.find_type(old)
       end
-
-      @ffi_typedefs[add] = code
     end
 
     def enum(*args)
@@ -281,9 +277,6 @@ module FFI
       elsif defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(t)
         @ffi_typedefs[t]
 
-      elsif defined?(@ffi_callbacks) && @ffi_callbacks.has_key?(t)
-        @ffi_callbacks[t]
-      
       elsif t.is_a?(Class) && t < Struct
         Type::POINTER
 

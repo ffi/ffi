@@ -1,32 +1,24 @@
 #
-# Copyright (C) 2008, 2009 Wayne Meissner
+# Copyright (C) 2008-2010 Wayne Meissner
 # Copyright (C) 2008, 2009 Andrea Fazzi
 # Copyright (C) 2008, 2009 Luc Heinrich
 #
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# This file is part of ruby-ffi.
 #
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-# * Redistributions in binary form must reproduce the above copyright notice
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-# * Neither the name of the Evan Phoenix nor the names of its contributors
-#   may be used to endorse or promote products derived from this software
-#   without specific prior written permission.
+# This code is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License version 3 only, as
+# published by the Free Software Foundation.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+# version 3 for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 require 'ffi/platform'
 require 'ffi/struct_layout_builder'
@@ -185,7 +177,7 @@ module FFI
       end
     end
 
-    def self.managed
+    def self.auto_ptr
       @managed_type ||= Type::Mapped.new(ManagedStructConverter.new(self))
     end
 
@@ -196,7 +188,7 @@ module FFI
       def layout(*spec)
         return @layout if spec.size == 0
 
-        builder = FFI::StructLayoutBuilder.new
+        builder = StructLayoutBuilder.new
         builder.union = self < Union
         builder.packed = @packed if defined?(@packed)
         builder.alignment = @min_alignment if defined?(@min_alignment)
@@ -208,7 +200,7 @@ module FFI
         end
         builder.size = @size if defined?(@size) && @size > builder.size
         cspec = builder.build
-        @layout = cspec unless self == FFI::Struct
+        @layout = cspec unless self == Struct
         @size = cspec.size
         return cspec
       end
@@ -240,35 +232,38 @@ module FFI
         end
       end
 
-      def find_type(type, mod = nil)
-        if type.kind_of?(Class) && type < FFI::Struct
+
+      def find_field_type(type, mod = enclosing_module)
+        if type.kind_of?(Class) && type < Struct
           FFI::Type::Struct.new(type)
-        elsif type.is_a?(::Array)
+
+        elsif type.kind_of?(Class) && type < FFI::StructLayout::Field
           type
-        elsif mod
+
+        elsif type.kind_of?(::Array)
+          FFI::Type::Array.new(find_field_type(type[0]), type[1])
+
+        else
+          find_type(type, mod)
+        end
+      end
+
+      def find_type(type, mod = enclosing_module)
+        if mod
           mod.find_type(type)
         end || FFI.find_type(type)
       end
-
 
       private
 
       def hash_layout(builder, spec)
         raise "Ruby version not supported" if RUBY_VERSION =~ /1.8.*/
-        mod = enclosing_module
-        spec[0].each do |name,type|
-          if type.kind_of?(Class) && type < Struct
-            builder.add_struct(name, type)
-          elsif type.kind_of?(::Array)
-            builder.add_array(name, find_type(type[0], mod), type[1])
-          else
-            builder.add_field(name, find_type(type, mod))
-          end
+        spec[0].each do |name, type|
+          builder.add name, find_field_type(type), nil
         end
       end
 
       def array_layout(builder, spec)
-        mod = enclosing_module
         i = 0
         while i < spec.size
           name, type = spec[i, 2]
@@ -281,21 +276,8 @@ module FFI
           else
             offset = nil
           end
-          
-          ftype = if type.kind_of?(Class) && type < Struct
-            FFI::Type::Struct.new(type)
 
-          elsif type.kind_of?(Class) && type < FFI::StructLayout::Field
-            type
-          
-          elsif type.kind_of?(::Array)
-            FFI::Type::Array.new(find_type(type[0], mod), type[1])
-
-          else
-            find_type(type, mod)
-          end
-
-          builder.add name, ftype, offset
+          builder.add name, find_field_type(type), offset
         end
       end
     end
