@@ -81,7 +81,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
     FFIStorage* param = &paramStorage[0];
     int i, argidx, cbidx, argCount;
 
-    if (paramCount != -1 && paramCount != argc) {
+    if (unlikely(paramCount != -1 && paramCount != argc)) {
         if (argc == (paramCount - 1) && callbackCount == 1 && rb_block_given_p()) {
             callbackProc = rb_block_proc();
         } else {
@@ -159,7 +159,6 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
 
 
             case NATIVE_UINT32:
-                /* Special handling/checking for unsigned 32 bit integers */
                 param->u32 = NUM2UINT(argv[argidx]);
                 ADJ(param, INT32);
                 ++argidx;
@@ -292,7 +291,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
 #endif
 
-    if (!fnInfo->ignoreErrno) {
+    if (unlikely(!fnInfo->ignoreErrno)) {
         rbffi_save_errno();
     }
 
@@ -303,7 +302,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
 static inline void*
 getPointer(VALUE value, int type)
 {
-    if (type == T_DATA && rb_obj_is_kind_of(value, rbffi_AbstractMemoryClass)) {
+    if (likely(type == T_DATA && rb_obj_is_kind_of(value, rbffi_AbstractMemoryClass))) {
 
         return ((AbstractMemory *) DATA_PTR(value))->address;
 
@@ -366,7 +365,7 @@ static void*
 callback_param(VALUE proc, VALUE cbInfo)
 {
     VALUE callback ;
-    if (proc == Qnil) {
+    if (unlikely(proc == Qnil)) {
         return NULL ;
     }
 
