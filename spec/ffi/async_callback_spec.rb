@@ -14,7 +14,8 @@ describe "async callback" do
     it ":int (0x7fffffff) argument" do
       v = 0xdeadbeef
       called = false
-      LibTest.testAsyncCallback(0x7fffffff) { |i| v = i; called = true }
+      cb = Proc.new {|i| v = i; called = true }
+      LibTest.testAsyncCallback(cb, 0x7fffffff) 
       called.should be_true
       v.should == 0x7fffffff
     end
