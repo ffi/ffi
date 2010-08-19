@@ -171,13 +171,12 @@ static VALUE
 ptr_inspect(VALUE self)
 {
     Pointer* ptr;
-    char tmp[100];
     
     Data_Get_Struct(self, Pointer, ptr);
 
-    snprintf(tmp, sizeof(tmp), "%lu", ptr->memory.size);
-    return rb_sprintf("#<%s address=%p size=%s>", rb_obj_classname(self),
-        ptr->memory.address, ptr->memory.size == LONG_MAX ? "unknown" : tmp);
+    return ptr->memory.size != LONG_MAX
+        ? rb_sprintf("#<%s address=%p size=%lu>", rb_obj_classname(self), ptr->memory.address, ptr->memory.size)
+        : rb_sprintf("#<%s address=%p>", rb_obj_classname(self), ptr->memory.address);
 }
 
 static VALUE
@@ -227,6 +226,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_alloc_func(rbffi_PointerClass, ptr_allocate);
     rb_define_method(rbffi_PointerClass, "initialize", ptr_initialize, -1);
     rb_define_method(rbffi_PointerClass, "inspect", ptr_inspect, 0);
+    rb_define_method(rbffi_PointerClass, "to_s", ptr_inspect, 0);
     rb_define_method(rbffi_PointerClass, "+", ptr_plus, 1);
     rb_define_method(rbffi_PointerClass, "slice", ptr_slice, 2);
     rb_define_method(rbffi_PointerClass, "null?", ptr_null_p, 0);
