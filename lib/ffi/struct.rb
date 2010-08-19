@@ -186,6 +186,7 @@ module FFI
       public
 
       def layout(*spec)
+        raise RuntimeError, "struct layout already defined for #{self.inspect}" if defined?(@layout)
         return @layout if spec.size == 0
 
         builder = StructLayoutBuilder.new
