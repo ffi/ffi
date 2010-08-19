@@ -24,6 +24,8 @@ static VALUE PlatformModule = Qnil;
 #define CPU "sparc"
 #elif defined(__sparcv9__)
 #define CPU "sparcv9"
+#elif defined(__arm__)
+#define CPU "arm"
 #else
 #error "Unknown cpu type"
 #endif
