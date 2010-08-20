@@ -3,33 +3,26 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This file is part of ruby-ffi.
  *
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * The name of the author or authors may not be used to endorse or promote
- *   products derived from this software without specific prior written permission.
+ * This code is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License version 3 only, as
+ * published by the Free Software Foundation.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * version 3 for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"
 #include "compat.h"
@@ -49,17 +42,18 @@ memory_allocate(VALUE klass)
     AbstractMemory* memory;
     VALUE obj;
     obj = Data_Make_Struct(klass, AbstractMemory, NULL, -1, memory);
-    memory->access = MEM_RD | MEM_WR;
+    memory->flags = MEM_RD | MEM_WR;
 
     return obj;
 }
+#define VAL(x, swap) (unlikely(((memory->flags & MEM_SWAP) != 0)) ? swap((x)) : (x))
 
-#define NUM_OP(name, type, toNative, fromNative) \
+#define NUM_OP(name, type, toNative, fromNative, swap) \
 static void memory_op_put_##name(AbstractMemory* memory, long off, VALUE value); \
 static void \
 memory_op_put_##name(AbstractMemory* memory, long off, VALUE value) \
 { \
-    type tmp = (type) toNative(value); \
+    type tmp = (type) VAL(toNative(value), swap); \
     checkWrite(memory); \
     checkBounds(memory, off, sizeof(type)); \
     memcpy(memory->address + off, &tmp, sizeof(tmp)); \
@@ -81,7 +75,7 @@ memory_op_get_##name(AbstractMemory* memory, long off) \
     checkRead(memory); \
     checkBounds(memory, off, sizeof(type)); \
     memcpy(&tmp, memory->address + off, sizeof(tmp)); \
-    return fromNative(tmp); \
+    return fromNative(VAL(tmp, swap)); \
 } \
 static VALUE memory_get_##name(VALUE self, VALUE offset); \
 static VALUE \
@@ -104,7 +98,7 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     checkWrite(memory); \
     checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
-        type tmp = (type) toNative(RARRAY_PTR(ary)[i]); \
+        type tmp = (type) VAL(toNative(RARRAY_PTR(ary)[i]), swap); \
         memcpy(memory->address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
     } \
     return self; \
@@ -123,23 +117,47 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     for (i = 0; i < count; ++i) { \
         type tmp; \
         memcpy(&tmp, memory->address + off + (i * sizeof(type)), sizeof(tmp)); \
-        rb_ary_push(retVal, fromNative(tmp)); \
+        rb_ary_push(retVal, fromNative(VAL(tmp, swap))); \
     } \
     return retVal; \
 }
 
-NUM_OP(int8, int8_t, NUM2INT, INT2NUM);
-NUM_OP(uint8, uint8_t, NUM2UINT, UINT2NUM);
-NUM_OP(int16, int16_t, NUM2INT, INT2NUM);
-NUM_OP(uint16, uint16_t, NUM2UINT, UINT2NUM);
-NUM_OP(int32, int32_t, NUM2INT, INT2NUM);
-NUM_OP(uint32, uint32_t, NUM2UINT, UINT2NUM);
-NUM_OP(int64, int64_t, NUM2LL, LL2NUM);
-NUM_OP(uint64, uint64_t, NUM2ULL, ULL2NUM);
-NUM_OP(long, long, NUM2LONG, LONG2NUM);
-NUM_OP(ulong, unsigned long, NUM2ULONG, ULONG2NUM);
-NUM_OP(float32, float, NUM2DBL, rb_float_new);
-NUM_OP(float64, double, NUM2DBL, rb_float_new);
+#define NOSWAP(x) (x)
+#define bswap16(x) (((x) >> 8) & 0xff) | (((x) << 8) & 0xff00);
+static inline int16_t
+SWAPS16(int16_t x)
+{
+    return bswap16(x);
+}
+
+static inline uint16_t
+SWAPU16(uint16_t x)
+{
+    return bswap16(x);
+}
+
+#define SWAP16(x) (x)
+#define SWAP32(x) __builtin_bswap32(x)
+#define SWAP64(x) __builtin_bswap64(x)
+
+#if LONG_MAX > INT_MAX
+# define SWAPLONG SWAP64
+#else
+# define SWAPLONG SWAP32
+#endif
+
+NUM_OP(int8, int8_t, NUM2INT, INT2NUM, NOSWAP);
+NUM_OP(uint8, uint8_t, NUM2UINT, UINT2NUM, NOSWAP);
+NUM_OP(int16, int16_t, NUM2INT, INT2NUM, SWAP16);
+NUM_OP(uint16, uint16_t, NUM2UINT, UINT2NUM, SWAP16);
+NUM_OP(int32, int32_t, NUM2INT, INT2NUM, SWAP32);
+NUM_OP(uint32, uint32_t, NUM2UINT, UINT2NUM, SWAP32);
+NUM_OP(int64, int64_t, NUM2LL, LL2NUM, SWAP64);
+NUM_OP(uint64, uint64_t, NUM2ULL, ULL2NUM, SWAP64);
+NUM_OP(long, long, NUM2LONG, LONG2NUM, SWAPLONG);
+NUM_OP(ulong, unsigned long, NUM2ULONG, ULONG2NUM, SWAPLONG);
+NUM_OP(float32, float, NUM2DBL, rb_float_new, NOSWAP);
+NUM_OP(float64, double, NUM2DBL, rb_float_new, NOSWAP);
 
 static inline void*
 get_pointer_value(VALUE value)
@@ -161,7 +179,7 @@ get_pointer_value(VALUE value)
     }
 }
 
-NUM_OP(pointer, void *, get_pointer_value, rbffi_Pointer_NewInstance);
+NUM_OP(pointer, void *, get_pointer_value, rbffi_Pointer_NewInstance, NOSWAP);
 
 static VALUE
 memory_clear(VALUE self)

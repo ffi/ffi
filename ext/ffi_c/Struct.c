@@ -346,6 +346,25 @@ struct_null_p(VALUE self)
 }
 
 static VALUE
+struct_order(int argc, VALUE* argv, VALUE self)
+{
+    Struct* s;
+
+    Data_Get_Struct(self, Struct, s);
+    if (argc == 0) {
+        return rb_funcall(s->rbPointer, rb_intern("order"), 0);
+
+    } else {
+        VALUE retval = rb_obj_dup(self);
+        VALUE rbPointer = rb_funcall2(s->rbPointer, rb_intern("order"), argc, argv);
+        struct_set_pointer(retval, rbPointer);
+        
+        return retval;
+    }
+}
+
+
+static VALUE
 inline_array_allocate(VALUE klass)
 {
     InlineArray* array;
@@ -570,6 +589,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(StructClass, struct_allocate);
     rb_define_method(StructClass, "initialize", struct_initialize, -1);
+    rb_define_method(StructClass, "order", struct_order, -1);
     
     rb_define_alias(rb_singleton_class(StructClass), "alloc_in", "new");
     rb_define_alias(rb_singleton_class(StructClass), "alloc_out", "new");

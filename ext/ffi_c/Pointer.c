@@ -3,27 +3,19 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This file is part of ruby-ffi.
  *
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * The name of the author or authors may not be used to endorse or promote
- *   products derived from this software without specific prior written permission.
+ * This code is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License version 3 only, as
+ * published by the Free Software Foundation.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * version 3 for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdbool.h>
@@ -59,7 +51,7 @@ rbffi_Pointer_NewInstance(void* addr)
     obj = Data_Make_Struct(rbffi_PointerClass, Pointer, NULL, -1, p);
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
-    p->memory.access = (addr == NULL) ? 0 : (MEM_RD | MEM_WR);
+    p->memory.flags = (addr == NULL) ? 0 : (MEM_RD | MEM_WR);
     p->memory.typeSize = 1;
     p->parent = Qnil;
 
@@ -74,7 +66,7 @@ ptr_allocate(VALUE klass)
 
     obj = Data_Make_Struct(klass, Pointer, ptr_mark, -1, p);
     p->parent = Qnil;
-    p->memory.access = MEM_RD | MEM_WR;
+    p->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
 }
@@ -106,7 +98,7 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
             p->memory.address = (void*) (uintptr_t) NUM2LL(rbAddress);
             p->memory.size = LONG_MAX;
             if (p->memory.address == NULL) {
-                p->memory.access = 0;
+                p->memory.flags = 0;
             }
             break;
 
@@ -143,7 +135,7 @@ slice(VALUE self, long offset, long size)
 
     p->memory.address = ptr->address + offset;
     p->memory.size = size;
-    p->memory.access = ptr->access;
+    p->memory.flags = ptr->flags;
     p->memory.typeSize = ptr->typeSize;
     p->parent = self;
 
@@ -209,6 +201,50 @@ ptr_address(VALUE self)
     return ULL2NUM((uintptr_t) ptr->memory.address);
 }
 
+#if BYTE_ORDER == LITTLE_ENDIAN
+# define SWAPPED_ORDER BIG_ENDIAN
+#else
+# define SWAPPED_ORDER LITTLE_ENDIAN
+#endif
+
+static VALUE
+ptr_order(int argc, VALUE* argv, VALUE self)
+{
+    Pointer* ptr;
+
+    Data_Get_Struct(self, Pointer, ptr);
+    if (argc == 0) {
+        int order = (ptr->memory.flags & MEM_SWAP) == 0 ? BYTE_ORDER : SWAPPED_ORDER;
+        return order == BIG_ENDIAN ? ID2SYM(rb_intern("big")) : ID2SYM(rb_intern("little"));
+    } else {
+        VALUE rbOrder = Qnil;
+        int order = BYTE_ORDER;
+
+        if (rb_scan_args(argc, argv, "1", &rbOrder) < 1) {
+            rb_raise(rb_eArgError, "need byte order");
+        }
+        if (SYMBOL_P(rbOrder)) {
+            ID id = SYM2ID(rbOrder);
+            if (id == rb_intern("little")) {
+                order = LITTLE_ENDIAN;
+
+            } else if (id == rb_intern("big") || id == rb_intern("network")) {
+                order = BIG_ENDIAN;
+            }
+        }
+        if (order != BYTE_ORDER) {
+            Pointer* p2;
+            VALUE retval = slice(self, 0, ptr->memory.size);
+
+            Data_Get_Struct(retval, Pointer, p2);
+            p2->memory.flags |= MEM_SWAP;
+            return retval;
+        }
+
+        return self;
+    }
+}
+
 static void
 ptr_mark(Pointer* ptr)
 {
@@ -233,6 +269,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_method(rbffi_PointerClass, "address", ptr_address, 0);
     rb_define_alias(rbffi_PointerClass, "to_i", "address");
     rb_define_method(rbffi_PointerClass, "==", ptr_equals, 1);
+    rb_define_method(rbffi_PointerClass, "order", ptr_order, -1);
 
     rbffi_NullPointerSingleton = rb_class_new_instance(1, &rbNullAddress, rbffi_PointerClass);
     rb_define_const(rbffi_PointerClass, "NULL", rbffi_NullPointerSingleton);

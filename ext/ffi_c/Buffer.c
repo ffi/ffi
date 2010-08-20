@@ -1,28 +1,21 @@
 /*
- * Copyright (c) 2008, 2009, Wayne Meissner
+ * Copyright (c) 2008-2010 Wayne Meissner
+ * 
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This file is part of ruby-ffi.
  *
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * The name of the author or authors may not be used to endorse or promote
- *   products derived from this software without specific prior written permission.
+ * This code is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License version 3 only, as
+ * published by the Free Software Foundation.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * version 3 for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdbool.h>
@@ -54,7 +47,7 @@ buffer_allocate(VALUE klass)
 
     obj = Data_Make_Struct(klass, Buffer, NULL, buffer_release, buffer);
     buffer->rbParent = Qnil;
-    buffer->memory.access = MEM_RD | MEM_WR;
+    buffer->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
 }
@@ -122,7 +115,7 @@ slice(VALUE self, long offset, long len)
     obj = Data_Make_Struct(BufferClass, Buffer, buffer_mark, -1, result);
     result->memory.address = ptr->memory.address + offset;
     result->memory.size = len;
-    result->memory.access = ptr->memory.access;
+    result->memory.flags = ptr->memory.flags;
     result->memory.typeSize = ptr->memory.typeSize;
     result->rbParent = self;
 
@@ -157,6 +150,51 @@ buffer_inspect(VALUE self)
     snprintf(tmp, sizeof(tmp), "#<FFI:Buffer:%p address=%p size=%ld>", ptr, ptr->memory.address, ptr->memory.size);
     
     return rb_str_new2(tmp);
+}
+
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+# define SWAPPED_ORDER BIG_ENDIAN
+#else
+# define SWAPPED_ORDER LITTLE_ENDIAN
+#endif
+
+static VALUE
+buffer_order(int argc, VALUE* argv, VALUE self)
+{
+    Buffer* ptr;
+
+    Data_Get_Struct(self, Buffer, ptr);
+    if (argc == 0) {
+        int order = (ptr->memory.flags & MEM_SWAP) == 0 ? BYTE_ORDER : SWAPPED_ORDER;
+        return order == BIG_ENDIAN ? ID2SYM(rb_intern("big")) : ID2SYM(rb_intern("little"));
+    } else {
+        VALUE rbOrder = Qnil;
+        int order = BYTE_ORDER;
+
+        if (rb_scan_args(argc, argv, "1", &rbOrder) < 1) {
+            rb_raise(rb_eArgError, "need byte order");
+        }
+        if (SYMBOL_P(rbOrder)) {
+            ID id = SYM2ID(rbOrder);
+            if (id == rb_intern("little")) {
+                order = LITTLE_ENDIAN;
+
+            } else if (id == rb_intern("big") || id == rb_intern("network")) {
+                order = BIG_ENDIAN;
+            }
+        }
+        if (order != BYTE_ORDER) {
+            Buffer* p2;
+            VALUE retval = slice(self, 0, ptr->memory.size);
+
+            Data_Get_Struct(retval, Buffer, p2);
+            p2->memory.flags |= MEM_SWAP;
+            return retval;
+        }
+
+        return self;
+    }
 }
 
 /* Only used to free the buffer if the yield in the initializer throws an exception */
@@ -196,6 +234,7 @@ rbffi_Buffer_Init(VALUE moduleFFI)
     rb_define_alias(rb_singleton_class(BufferClass), "new_inout", "alloc_inout");
     
     rb_define_method(BufferClass, "initialize", buffer_initialize, -1);
+    rb_define_method(BufferClass, "order", buffer_order, -1);
     rb_define_method(BufferClass, "inspect", buffer_inspect, 0);
     rb_define_alias(BufferClass, "length", "total");
     rb_define_method(BufferClass, "+", buffer_plus, 1);
