@@ -21,6 +21,7 @@ have_func('rb_thread_call_with_gvl')
 
 $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 $defs << "-DUSE_INTERNAL_LIBFFI" unless libffi_ok
+$defs << "-DRUBY_1_9" if RUBY_VERSION >= "1.9.0"
 
 create_header
 

@@ -32,6 +32,11 @@
 
 #include "AbstractMemory.h"
 #include "Type.h"
+#ifdef RUBY_1_9
+#include <ruby/st.h>
+#else
+#include <st.h>
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
@@ -63,6 +68,7 @@ extern "C" {
         int size;
         int align;
         ffi_type** ffiTypes;
+        struct st_table* fieldSymbolTable;
         VALUE rbFieldNames;
         VALUE rbFieldMap;
         VALUE rbFields;

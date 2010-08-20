@@ -198,6 +198,10 @@ struct_field(Struct* s, VALUE fieldName)
     StructLayout* layout = s->layout;
     VALUE rbField;
 
+    if (likely(SYMBOL_P(fieldName) && st_lookup(layout->fieldSymbolTable, fieldName, (st_data_t *) &rbField))) {
+        return rbField;
+    }
+
     rbField = rb_hash_aref(layout->rbFieldMap, fieldName);
     if (rbField == Qnil) {
         VALUE str = rb_funcall2(fieldName, id_to_s, 0, NULL);

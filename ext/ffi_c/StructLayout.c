@@ -322,6 +322,7 @@ struct_layout_allocate(VALUE klass)
     layout->rbFieldMap = Qnil;
     layout->rbFieldNames = Qnil;
     layout->rbFields = Qnil;
+    layout->fieldSymbolTable = st_init_numtable();
     layout->base.ffiType = xcalloc(1, sizeof(*layout->base.ffiType));
     layout->base.ffiType->size = 0;
     layout->base.ffiType->alignment = 0;
@@ -375,6 +376,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
         }
 
         layout->ffiTypes[i] = ftype;
+        st_insert(layout->fieldSymbolTable, rbName, rbField);
         rb_hash_aset(layout->rbFieldMap, rbName, rbField);
         rb_ary_push(layout->rbFields, rbField);
         rb_ary_push(layout->rbFieldNames, rbName);
@@ -441,6 +443,7 @@ struct_layout_free(StructLayout *layout)
     xfree(layout->ffiTypes);
     xfree(layout->base.ffiType);
     xfree(layout->fields);
+    st_free_table(layout->fieldSymbolTable);
     xfree(layout);
 }
 

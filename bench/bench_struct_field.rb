@@ -2,7 +2,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 
 require 'benchmark'
 require 'ffi'
-iter = 100_000
+iter = 1000_000
 
 class TestStruct < FFI::Struct
   layout :i, :int, :p, :pointer
