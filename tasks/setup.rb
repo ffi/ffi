@@ -171,7 +171,8 @@ HAVE_GIT = (Dir.entries(Dir.pwd).include?('.git') and
 # Add bones as a development dependency
 #
 if HAVE_BONES
-  PROJ.gem.development_dependencies << ['bones', ">= #{Bones::VERSION}"]
+  bones_version = defined?(Bones::VERSION) ? Bones::VERSION : Bones.version
+  PROJ.gem.development_dependencies << ['bones', ">= #{bones_version}"]
 end
 
 # Reads a file at +path+ and spits out an array of the +paragraphs+
