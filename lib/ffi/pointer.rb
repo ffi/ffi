@@ -87,10 +87,11 @@ module FFI
       put_bytes(0, str, 0, len)
     end
     def write_string(str, len=nil)
-      len = str.size unless len
+      len = str.bytesize unless len
       # Write the string data without NUL termination
       put_bytes(0, str, 0, len)
     end
+
     def read_array_of_type(type, reader, length)
       ary = []
       size = FFI.type_size(type)
