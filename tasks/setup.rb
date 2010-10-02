@@ -155,12 +155,6 @@ RCOV = WIN32 ? 'rcov.bat' : 'rcov'
 RDOC = WIN32 ? 'rdoc.bat' : 'rdoc'
 GEM  = WIN32 ? 'gem.bat'  : 'gem'
 
-begin
-  gem 'bones', '=2.5.1'
-rescue Gem::LoadError
-  raise 'The gem: bones v2.5.1 is needed for development'
-end
-
 %w(rcov spec/rake/spectask rubyforge bones facets/ansicode).each do |lib|
   begin
     require lib
