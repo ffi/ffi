@@ -89,6 +89,25 @@ describe "A tagged typedef enum" do
     TestEnum3.test_tagged_typedef_enum4(:c15).should == :c15
     TestEnum3.test_tagged_typedef_enum4(:c16).should == :c16
   end
+
+  it "integers can be used instead of constants" do
+    TestEnum3.test_tagged_typedef_enum1(0).should == :c1
+    TestEnum3.test_tagged_typedef_enum1(1).should == :c2
+    TestEnum3.test_tagged_typedef_enum1(2).should == :c3
+    TestEnum3.test_tagged_typedef_enum1(3).should == :c4
+    TestEnum3.test_tagged_typedef_enum2(42).should == :c5
+    TestEnum3.test_tagged_typedef_enum2(43).should == :c6
+    TestEnum3.test_tagged_typedef_enum2(44).should == :c7
+    TestEnum3.test_tagged_typedef_enum2(45).should == :c8
+    TestEnum3.test_tagged_typedef_enum3(42).should == :c9
+    TestEnum3.test_tagged_typedef_enum3(43).should == :c10
+    TestEnum3.test_tagged_typedef_enum3(4242).should == :c11
+    TestEnum3.test_tagged_typedef_enum3(4243).should == :c12
+    TestEnum3.test_tagged_typedef_enum4(42).should == :c13
+    TestEnum3.test_tagged_typedef_enum4(4242).should == :c14
+    TestEnum3.test_tagged_typedef_enum4(424242).should == :c15
+    TestEnum3.test_tagged_typedef_enum4(42424242).should == :c16
+  end
 end
 
 describe "All enums" do

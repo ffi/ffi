@@ -94,14 +94,20 @@ module FFI
     def symbol_map
       @kv_map
     end
+    
     alias to_h symbol_map
+    alias to_hash symbol_map
 
     def native_type
       Type::INT
     end
 
     def to_native(val, ctx)
-      @kv_map[val]
+      @kv_map[val] || if val.is_a?(Integer)
+        val
+      else
+        raise ArgumentError, "invalid enum value, #{val.inspect}"
+      end
     end
 
     def from_native(val, ctx)
