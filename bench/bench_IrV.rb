@@ -36,24 +36,6 @@ puts "Benchmark DL void bench(int) performance, #{ITER}x calls"
   }
 }
 end
-puts "Benchmark Invoker.call [ :int  ], :void performance, #{ITER}x calls"
-
-invoker = FFI.create_invoker(LIBTEST_PATH, 'bench_s32_v', [ :int ], :void)
-10.times {
-  puts Benchmark.measure {
-    ITER.times { invoker.call(1) }
-  }
-}
-
-f = FFI::Function.new(:void, [ :int ], invoker, { :ignore_errno => true, :convention => :default })
-puts "Benchmark [ :int ], :void no-errno performance, #{ITER}x calls"
-module NoErrno ;end
-f.attach(NoErrno, "ffi_bench")
-10.times {
-  puts Benchmark.measure {
-    ITER.times { NoErrno.ffi_bench(0) }
-  }
-}
 
 puts "Benchmark ruby method(1 arg)  performance, #{ITER}x calls"
 10.times {

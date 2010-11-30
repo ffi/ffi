@@ -4,6 +4,7 @@ module LibTest
   extend FFI::Library
   ffi_lib LIBTEST_PATH
   attach_function :bench_f32_v, [ :float ], :void
+  def self.rb_bench(i0); nil; end
 end
 
 
@@ -14,11 +15,31 @@ f = 1.0
     ITER.times { LibTest.bench_f32_v(f) }
   }
 }
-puts "Benchmark Invoker.call [ :float  ], :void performance, #{ITER}x calls"
 
-invoker = FFI.create_invoker(LIBTEST_PATH, 'bench_f32_v', [ :float ], :void)
+puts "Benchmark ruby method(1 arg)  performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
-    ITER.times { invoker.call(f) }
+    ITER.times { LibTest.rb_bench(f) }
   }
 }
+
+unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
+  require 'dl'
+  require 'dl/import'
+  module LibTest
+    if RUBY_VERSION >= "1.9.0"
+      extend DL::Importer
+    else
+      extend DL::Importable
+    end
+    dlload LIBTEST_PATH
+    extern "void bench_f32_v(float)"
+  end
+  puts "Benchmark DL void bench(float) performance, #{ITER}x calls"
+  10.times {
+    puts Benchmark.measure {
+      ITER.times { LibTest.bench_f32_v(0) }
+    }
+  }
+end
+
