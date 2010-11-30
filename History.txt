@@ -1,3 +1,10 @@
+== 1.0.0 / 2010-11-30
+* Major improvements
+  * Better handling of non-ruby thread callbacks
+  * Support for releasing the GIL during C function calls
+* Minor improvements
+  * code cleanups
+
 == 0.5.0 / 2009-10-06
 
 * Major improvements
