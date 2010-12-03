@@ -76,10 +76,6 @@ static VALUE async_cb_event(void);
 static VALUE async_cb_call(void *);
 #endif
 
-#if defined(HAVE_NATIVETHREAD) && defined (HAVE_RB_THREAD_BLOCKING_REGION)
-#  define DEFER_ASYNC_CALLBACK
-#endif
-
 #ifdef HAVE_RUBY_THREAD_HAS_GVL_P
 extern int ruby_thread_has_gvl_p(void);
 #endif
@@ -119,7 +115,7 @@ static struct gvl_callback* async_cb_list = NULL;
 static pthread_mutex_t async_cb_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t async_cb_cond = PTHREAD_COND_INITIALIZER;
 # else
-static HANDLE async_cb_event;
+static HANDLE async_cb_cond;
 static CRITICAL_SECTION async_cb_lock;
 # endif
 #endif
@@ -422,7 +418,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         async_cb_list = &cb;
         LeaveCriticalSection(&async_cb_lock);
 
-        SetEvent(async_cb_event);
+        SetEvent(async_cb_cond);
         
         // Wait for the thread executing the ruby callback to signal it is done
         WaitForSingleObject(cb.async_event, INFINITE);
@@ -469,7 +465,7 @@ async_cb_wait(void *data)
 
     while (!w->stop && async_cb_list == NULL) {
         LeaveCriticalSection(&async_cb_lock);
-        WaitForSingleObject(async_cb_event, INFINITE);
+        WaitForSingleObject(async_cb_cond, INFINITE);
         EnterCriticalSection(&async_cb_lock);
     }
     
@@ -490,8 +486,8 @@ async_cb_stop(void *data)
 
     EnterCriticalSection(&async_cb_lock);
     w->stop = true;
-    ExitCriticalSection(&async_cb_lock);
-    SetEvent(async_cb_event);
+    LeaveCriticalSection(&async_cb_lock);
+    SetEvent(async_cb_cond);
 }
 
 #else
@@ -779,7 +775,7 @@ rbffi_Function_Init(VALUE moduleFFI)
     id_from_native = rb_intern("from_native");
 #ifdef _WIN32
     InitializeCriticalSection(&async_cb_lock);
-    async_cb_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    async_cb_cond = CreateEvent(NULL, FALSE, FALSE, NULL);
 #endif
 }
 
