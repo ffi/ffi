@@ -137,25 +137,72 @@ SWAPU16(uint16_t x)
 }
 
 #define SWAP16(x) (x)
-#define SWAP32(x) __builtin_bswap32(x)
-#define SWAP64(x) __builtin_bswap64(x)
+#if __GNUC__ < 4
+#define bswap32(x) \
+       (((x << 24) & 0xff000000) | \
+        ((x <<  8) & 0x00ff0000) | \
+        ((x >>  8) & 0x0000ff00) | \
+        ((x >> 24) & 0x000000ff))
+
+#define bswap64(x) \
+       (((x << 56) & 0xff00000000000000ULL) | \
+        ((x << 40) & 0x00ff000000000000ULL) | \
+        ((x << 24) & 0x0000ff0000000000ULL) | \
+        ((x <<  8) & 0x000000ff00000000ULL) | \
+        ((x >>  8) & 0x00000000ff000000ULL) | \
+        ((x >> 24) & 0x0000000000ff0000ULL) | \
+        ((x >> 40) & 0x000000000000ff00ULL) | \
+        ((x >> 56) & 0x00000000000000ffULL))
+
+static inline int32_t 
+SWAPS32(int32_t x)
+{
+    return bswap32(x);
+}
+
+static inline uint32_t 
+SWAPU32(uint32_t x)
+{
+    return bswap32(x);
+}
+
+static inline int64_t
+SWAPS64(int64_t x)
+{
+    return bswap64(x);
+}
+
+static inline uint64_t
+SWAPU64(uint64_t x)
+{
+    return bswap64(x);
+}
+
+#else
+# define SWAPU32(x) __builtin_bswap32(x)
+# define SWAPS32(x) __builtin_bswap32(x)
+# define SWAPS64(x) __builtin_bswap64(x)
+# define SWAPU64(x) __builtin_bswap64(x)
+#endif
 
 #if LONG_MAX > INT_MAX
-# define SWAPLONG SWAP64
+# define SWAPSLONG SWAPS64
+# define SWAPULONG SWAPU64
 #else
-# define SWAPLONG SWAP32
+# define SWAPSLONG SWAPS32
+# define SWAPULONG SWAPU32
 #endif
 
 NUM_OP(int8, int8_t, NUM2INT, INT2NUM, NOSWAP);
 NUM_OP(uint8, uint8_t, NUM2UINT, UINT2NUM, NOSWAP);
-NUM_OP(int16, int16_t, NUM2INT, INT2NUM, SWAP16);
-NUM_OP(uint16, uint16_t, NUM2UINT, UINT2NUM, SWAP16);
-NUM_OP(int32, int32_t, NUM2INT, INT2NUM, SWAP32);
-NUM_OP(uint32, uint32_t, NUM2UINT, UINT2NUM, SWAP32);
-NUM_OP(int64, int64_t, NUM2LL, LL2NUM, SWAP64);
-NUM_OP(uint64, uint64_t, NUM2ULL, ULL2NUM, SWAP64);
-NUM_OP(long, long, NUM2LONG, LONG2NUM, SWAPLONG);
-NUM_OP(ulong, unsigned long, NUM2ULONG, ULONG2NUM, SWAPLONG);
+NUM_OP(int16, int16_t, NUM2INT, INT2NUM, SWAPS16);
+NUM_OP(uint16, uint16_t, NUM2UINT, UINT2NUM, SWAPU16);
+NUM_OP(int32, int32_t, NUM2INT, INT2NUM, SWAPS32);
+NUM_OP(uint32, uint32_t, NUM2UINT, UINT2NUM, SWAPU32);
+NUM_OP(int64, int64_t, NUM2LL, LL2NUM, SWAPS64);
+NUM_OP(uint64, uint64_t, NUM2ULL, ULL2NUM, SWAPU64);
+NUM_OP(long, long, NUM2LONG, LONG2NUM, SWAPSLONG);
+NUM_OP(ulong, unsigned long, NUM2ULONG, ULONG2NUM, SWAPULONG);
 NUM_OP(float32, float, NUM2DBL, rb_float_new, NOSWAP);
 NUM_OP(float64, double, NUM2DBL, rb_float_new, NOSWAP);
 
