@@ -306,11 +306,13 @@ describe "Struct tests" do
   end
   module EnumFields
     extend FFI::Library
-    enum :test_enum, [:c1, 10, :c2, 20, :c3, 30, :c4, 40]
+    TestEnum = enum :test_enum, [:c1, 10, :c2, 20, :c3, 30, :c4, 40]
     class TestStruct < FFI::Struct
-      layout :a, :int, :c, :test_enum
+      layout :a, :int, :c, :test_enum, 
+        :d, [ TestEnum, TestEnum.symbols.length ]
     end
   end
+  
   it ":enum field r/w" do
     s = EnumFields::TestStruct.new
     s[:c] = :c3
@@ -318,6 +320,22 @@ describe "Struct tests" do
     s.pointer.get_uint(FFI::Type::INT32.size).should == 30
     s[:c].should == :c3
   end
+  
+  it "array of :enum field" do
+    s = EnumFields::TestStruct.new
+    EnumFields::TestEnum.symbols.each_with_index do |val, i|
+      s[:d][i] = val
+    end
+    
+    EnumFields::TestEnum.symbols.each_with_index do |val, i|
+      s.pointer.get_uint(FFI::Type::INT32.size * (2 + i)).should == EnumFields::TestEnum[val]
+    end
+    
+    s[:d].each_with_index do |val, i|
+      val.should == EnumFields::TestEnum.symbols[i]
+    end
+  end
+  
   module CallbackMember
     extend FFI::Library
     ffi_lib TestLibrary::PATH
@@ -626,13 +644,13 @@ describe "Struct allocation" do
     class S < FFI::Struct
       layout :i, :uint
     end
-    S.new(Pointer::NULL).null?.should be_true
+    S.new(FFI::Pointer::NULL).null?.should be_true
   end
 
   it "null? should be false when initialized with non-NULL pointer" do
     class S < FFI::Struct
       layout :i, :uint
     end
-    S.new(MemoryPointer.new(S)).null?.should be_false
+    S.new(FFI::MemoryPointer.new(S)).null?.should be_false
   end
 end

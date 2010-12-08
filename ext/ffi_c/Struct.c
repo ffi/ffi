@@ -44,6 +44,7 @@
 #include "Struct.h"
 #include "StructByValue.h"
 #include "ArrayType.h"
+#include "MappedType.h"
 
 typedef struct InlineArray_ {
     VALUE rbMemory;
@@ -285,8 +286,8 @@ struct_set_pointer(VALUE self, VALUE pointer)
     layout = struct_layout(self);
 
     if (layout->base.ffiType->size > memory->size) {
-        rb_raise(rb_eArgError, "memory of %d bytes too small for struct %s (expected at least %d)",
-                memory->size, rb_obj_classname(self), layout->base.ffiType->size);
+        rb_raise(rb_eArgError, "memory of %ld bytes too small for struct %s (expected at least %ld)",
+                memory->size, rb_obj_classname(self), (long) layout->base.ffiType->size);
     }
     
     s->pointer = MEMORY(pointer);
@@ -399,6 +400,10 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
     Data_Get_Struct(array->arrayType->rbComponentType, Type, array->componentType);
     
     array->op = get_memory_op(array->componentType);
+    if (array->op == NULL && array->componentType->nativeType == NATIVE_MAPPED) {
+        array->op = get_memory_op(((MappedType *) array->componentType)->type);
+    }
+    
     array->length = array->arrayType->length;
 
     return self;
@@ -432,7 +437,15 @@ inline_array_aref(VALUE self, VALUE rbIndex)
     Data_Get_Struct(self, InlineArray, array);
 
     if (array->op != NULL) {
-        return array->op->get(array->memory, inline_array_offset(array, NUM2INT(rbIndex)));
+        VALUE rbNativeValue = array->op->get(array->memory, 
+                inline_array_offset(array, NUM2INT(rbIndex)));
+        if (unlikely(array->componentType->nativeType == NATIVE_MAPPED)) {
+            return rb_funcall(((MappedType *) array->componentType)->rbConverter, 
+                    rb_intern("from_native"), 2, rbNativeValue, Qnil);
+        } else {
+            return rbNativeValue; 
+        }
+        
     } else if (array->componentType->nativeType == NATIVE_STRUCT) {
         VALUE rbOffset = INT2NUM(inline_array_offset(array, NUM2INT(rbIndex)));
         VALUE rbLength = INT2NUM(array->componentType->ffiType->size);
@@ -454,8 +467,13 @@ inline_array_aset(VALUE self, VALUE rbIndex, VALUE rbValue)
     Data_Get_Struct(self, InlineArray, array);
 
     if (array->op != NULL) {
+        if (unlikely(array->componentType->nativeType == NATIVE_MAPPED)) {
+            rbValue = rb_funcall(((MappedType *) array->componentType)->rbConverter, 
+                    rb_intern("to_native"), 2, rbValue, Qnil);
+        }
         array->op->put(array->memory, inline_array_offset(array, NUM2INT(rbIndex)),
             rbValue);
+        
     } else if (array->componentType->nativeType == NATIVE_STRUCT) {
         int offset = inline_array_offset(array, NUM2INT(rbIndex));
         Struct* s;
@@ -494,25 +512,8 @@ inline_array_each(VALUE self)
 
     Data_Get_Struct(self, InlineArray, array);
     
-    if (array->op != NULL) {
-        for (i = 0; i < array->length; ++i) {
-            int offset = inline_array_offset(array, i);
-            rb_yield(array->op->get(array->memory, offset));
-        }
-    } else if (array->componentType->nativeType == NATIVE_STRUCT) {
-        for (i = 0; i < array->length; ++i) {
-            VALUE rbOffset = UINT2NUM(inline_array_offset(array, i));
-            VALUE rbLength = UINT2NUM(array->componentType->ffiType->size);
-            VALUE rbPointer = rb_funcall(array->rbMemory, rb_intern("slice"), 2, rbOffset, rbLength);
-
-            rb_yield(rb_class_new_instance(1, &rbPointer, ((StructByValue *) array->componentType)->rbStructClass));
-        }
-    } else {
-        ArrayType* arrayType;
-        Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
-
-        rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(arrayType->rbComponentType));
-        return Qnil;
+    for (i = 0; i < array->length; ++i) {
+        rb_yield(inline_array_aref(self, INT2FIX(i)));
     }
 
     return self;
@@ -530,8 +531,7 @@ inline_array_to_a(VALUE self)
 
     
     for (i = 0; i < array->length; ++i) {
-        int offset = inline_array_offset(array, i);
-        rb_ary_push(obj, array->op->get(array->memory, offset));
+        rb_ary_push(obj, inline_array_aref(self, INT2FIX(i)));
     }
 
     return obj;
