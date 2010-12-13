@@ -14,6 +14,14 @@ spec = Gem::Specification.new do |s|
   s.require_path = 'lib'
   s.files = PROJ.gem.files
   s.add_dependency *PROJ.gem.dependencies.flatten
+  PROJ.gem.extras.each do |msg, val|
+    case val
+    when Proc
+      val.call(s.send(msg))
+    else
+      s.send "#{msg}=", val
+    end
+  end
 end
 
 Rake::ExtensionTask.new('ffi_c', spec) do |ext|
