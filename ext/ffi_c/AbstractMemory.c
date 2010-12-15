@@ -67,6 +67,15 @@ memory_put_##name(VALUE self, VALUE offset, VALUE value) \
     memory_op_put_##name(memory, NUM2LONG(offset), value); \
     return self; \
 } \
+static VALUE memory_write_##name(VALUE self, VALUE value); \
+static VALUE \
+memory_write_##name(VALUE self, VALUE value) \
+{ \
+    AbstractMemory* memory; \
+    Data_Get_Struct(self, AbstractMemory, memory); \
+    memory_op_put_##name(memory, 0, value); \
+    return self; \
+} \
 static VALUE memory_op_get_##name(AbstractMemory* memory, long off); \
 static VALUE \
 memory_op_get_##name(AbstractMemory* memory, long off) \
@@ -84,6 +93,14 @@ memory_get_##name(VALUE self, VALUE offset) \
     AbstractMemory* memory; \
     Data_Get_Struct(self, AbstractMemory, memory); \
     return memory_op_get_##name(memory, NUM2LONG(offset)); \
+} \
+static VALUE memory_read_##name(VALUE self); \
+static VALUE \
+memory_read_##name(VALUE self) \
+{ \
+    AbstractMemory* memory; \
+    Data_Get_Struct(self, AbstractMemory, memory); \
+    return memory_op_get_##name(memory, 0); \
 } \
 static MemoryOp memory_op_##name = { memory_op_get_##name, memory_op_put_##name }; \
 \
@@ -103,6 +120,12 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     } \
     return self; \
 } \
+static VALUE memory_write_array_of_##name(VALUE self, VALUE ary); \
+static VALUE \
+memory_write_array_of_##name(VALUE self, VALUE ary) \
+{ \
+    return memory_put_array_of_##name(self, INT2FIX(0), ary); \
+} \
 static VALUE memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length); \
 static VALUE \
 memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
@@ -120,6 +143,12 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
         rb_ary_push(retVal, fromNative(VAL(tmp, swap))); \
     } \
     return retVal; \
+} \
+static VALUE memory_read_array_of_##name(VALUE self, VALUE length); \
+static VALUE \
+memory_read_array_of_##name(VALUE self, VALUE length) \
+{ \
+    return memory_get_array_of_##name(self, INT2FIX(0), length); \
 }
 
 #define NOSWAP(x) (x)
@@ -492,10 +521,18 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "get_" #type, memory_get_##type, 1); \
     rb_define_method(classMemory, "put_u" #type, memory_put_u##type, 2); \
     rb_define_method(classMemory, "get_u" #type, memory_get_u##type, 1); \
+    rb_define_method(classMemory, "write_" #type, memory_write_##type, 1); \
+    rb_define_method(classMemory, "read_" #type, memory_read_##type, 0); \
+    rb_define_method(classMemory, "write_u" #type, memory_write_u##type, 1); \
+    rb_define_method(classMemory, "read_u" #type, memory_read_u##type, 0); \
     rb_define_method(classMemory, "put_array_of_" #type, memory_put_array_of_##type, 2); \
     rb_define_method(classMemory, "get_array_of_" #type, memory_get_array_of_##type, 2); \
     rb_define_method(classMemory, "put_array_of_u" #type, memory_put_array_of_u##type, 2); \
-    rb_define_method(classMemory, "get_array_of_u" #type, memory_get_array_of_u##type, 2);
+    rb_define_method(classMemory, "get_array_of_u" #type, memory_get_array_of_u##type, 2); \
+    rb_define_method(classMemory, "write_array_of_" #type, memory_write_array_of_##type, 1); \
+    rb_define_method(classMemory, "read_array_of_" #type, memory_read_array_of_##type, 1); \
+    rb_define_method(classMemory, "write_array_of_u" #type, memory_write_array_of_u##type, 1); \
+    rb_define_method(classMemory, "read_array_of_u" #type, memory_read_array_of_u##type, 1);
     
     INT(int8);
     INT(int16);
@@ -508,10 +545,18 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_alias(classMemory, "get_" #name, "get_" #old); \
     rb_define_alias(classMemory, "put_u" #name, "put_u" #old); \
     rb_define_alias(classMemory, "get_u" #name, "get_u" #old); \
+    rb_define_alias(classMemory, "write_" #name, "write_" #old); \
+    rb_define_alias(classMemory, "read_" #name, "read_" #old); \
+    rb_define_alias(classMemory, "write_u" #name, "write_u" #old); \
+    rb_define_alias(classMemory, "read_u" #name, "read_u" #old); \
     rb_define_alias(classMemory, "put_array_of_" #name, "put_array_of_" #old); \
     rb_define_alias(classMemory, "get_array_of_" #name, "get_array_of_" #old); \
     rb_define_alias(classMemory, "put_array_of_u" #name, "put_array_of_u" #old); \
-    rb_define_alias(classMemory, "get_array_of_u" #name, "get_array_of_u" #old);
+    rb_define_alias(classMemory, "get_array_of_u" #name, "get_array_of_u" #old); \
+    rb_define_alias(classMemory, "write_array_of_" #name, "write_array_of_" #old); \
+    rb_define_alias(classMemory, "read_array_of_" #name, "read_array_of_" #old); \
+    rb_define_alias(classMemory, "write_array_of_u" #name, "write_array_of_u" #old); \
+    rb_define_alias(classMemory, "read_array_of_u" #name, "read_array_of_u" #old);
     
     ALIAS(char, int8);
     ALIAS(short, int16);
@@ -522,22 +567,35 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "get_float32", memory_get_float32, 1);
     rb_define_alias(classMemory, "put_float", "put_float32");
     rb_define_alias(classMemory, "get_float", "get_float32");
+    rb_define_method(classMemory, "write_float", memory_write_float32, 1);
+    rb_define_method(classMemory, "read_float", memory_read_float32, 0);
     rb_define_method(classMemory, "put_array_of_float32", memory_put_array_of_float32, 2);
     rb_define_method(classMemory, "get_array_of_float32", memory_get_array_of_float32, 2);
+    rb_define_method(classMemory, "write_array_of_float", memory_write_array_of_float32, 1);
+    rb_define_method(classMemory, "read_array_of_float", memory_read_array_of_float32, 1);
     rb_define_alias(classMemory, "put_array_of_float", "put_array_of_float32");
     rb_define_alias(classMemory, "get_array_of_float", "get_array_of_float32");
     rb_define_method(classMemory, "put_float64", memory_put_float64, 2);
     rb_define_method(classMemory, "get_float64", memory_get_float64, 1);
     rb_define_alias(classMemory, "put_double", "put_float64");
     rb_define_alias(classMemory, "get_double", "get_float64");
+    rb_define_method(classMemory, "write_double", memory_write_float64, 1);
+    rb_define_method(classMemory, "read_double", memory_read_float64, 0);
     rb_define_method(classMemory, "put_array_of_float64", memory_put_array_of_float64, 2);
     rb_define_method(classMemory, "get_array_of_float64", memory_get_array_of_float64, 2);
+    rb_define_method(classMemory, "write_array_of_double", memory_write_array_of_float64, 1);
+    rb_define_method(classMemory, "read_array_of_double", memory_read_array_of_float64, 1);
     rb_define_alias(classMemory, "put_array_of_double", "put_array_of_float64");
     rb_define_alias(classMemory, "get_array_of_double", "get_array_of_float64");
     rb_define_method(classMemory, "put_pointer", memory_put_pointer, 2);
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
+    rb_define_method(classMemory, "write_pointer", memory_write_pointer, 1);
+    rb_define_method(classMemory, "read_pointer", memory_read_pointer, 0);
     rb_define_method(classMemory, "put_array_of_pointer", memory_put_array_of_pointer, 2);
     rb_define_method(classMemory, "get_array_of_pointer", memory_get_array_of_pointer, 2);
+    rb_define_method(classMemory, "write_array_of_pointer", memory_write_array_of_pointer, 1);
+    rb_define_method(classMemory, "read_array_of_pointer", memory_read_array_of_pointer, 1);
+
     rb_define_method(classMemory, "get_string", memory_get_string, -1);
     rb_define_method(classMemory, "put_string", memory_put_string, 2);
     rb_define_method(classMemory, "get_bytes", memory_get_bytes, 2);
