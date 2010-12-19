@@ -165,7 +165,6 @@ SWAPU16(uint16_t x)
     return bswap16(x);
 }
 
-#define SWAP16(x) (x)
 #if __GNUC__ < 4
 #define bswap32(x) \
        (((x << 24) & 0xff000000) | \
@@ -208,9 +207,9 @@ SWAPU64(uint64_t x)
 }
 
 #else
-# define SWAPU32(x) __builtin_bswap32(x)
-# define SWAPS32(x) ((uint32_t) __builtin_bswap32(x))
-# define SWAPS64(x) __builtin_bswap64(x)
+# define SWAPS32(x) ((int32_t) __builtin_bswap32(x))
+# define SWAPU32(x) ((uint32_t) __builtin_bswap32(x))
+# define SWAPS64(x) ((int64_t) __builtin_bswap64(x))
 # define SWAPU64(x) ((uint64_t) __builtin_bswap64(x))
 #endif
 
