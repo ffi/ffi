@@ -3,7 +3,7 @@ require 'mkmf'
 require 'rbconfig'
 dir_config("ffi_c")
 
-unless Config::CONFIG['host_os'] =~ /mswin32|mingw32/
+unless RbConfig::CONFIG['host_os'] =~ /mswin32|mingw32/
   if pkg_config("libffi") || find_header("ffi.h", "/usr/local/include")
 
     # We need at least ffi_call and ffi_prep_closure
@@ -25,16 +25,16 @@ $defs << "-DRUBY_1_9" if RUBY_VERSION >= "1.9.0"
 
 create_header
 
-$CFLAGS << " -mwin32 " if Config::CONFIG['host_os'] =~ /cygwin/
+$CFLAGS << " -mwin32 " if RbConfig::CONFIG['host_os'] =~ /cygwin/
 #$CFLAGS << " -Werror -Wunused -Wformat -Wimplicit -Wreturn-type "
 
 create_makefile("ffi_c")
 unless libffi_ok
   File.open("Makefile", "a") do |mf|
-    mf.puts "LIBFFI_HOST=--host=#{Config::CONFIG['host_alias']}" if Config::CONFIG.has_key?("host_alias")
-    if Config::CONFIG['host_os'].downcase =~ /darwin/
+    mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
+    if RbConfig::CONFIG['host_os'].downcase =~ /darwin/
       mf.puts "include ${srcdir}/libffi.darwin.mk"
-    elsif Config::CONFIG['host_os'].downcase =~ /bsd/
+    elsif RbConfig::CONFIG['host_os'].downcase =~ /bsd/
       mf.puts '.include "${srcdir}/libffi.bsd.mk"'
     else
       mf.puts "include ${srcdir}/libffi.mk"
