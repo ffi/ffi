@@ -162,13 +162,19 @@ ptr_slice(VALUE self, VALUE rbOffset, VALUE rbLength)
 static VALUE
 ptr_inspect(VALUE self)
 {
+    char buf[100];
     Pointer* ptr;
     
     Data_Get_Struct(self, Pointer, ptr);
 
-    return ptr->memory.size != LONG_MAX
-        ? rb_sprintf("#<%s address=%p size=%lu>", rb_obj_classname(self), ptr->memory.address, ptr->memory.size)
-        : rb_sprintf("#<%s address=%p>", rb_obj_classname(self), ptr->memory.address);
+    if (ptr->memory.size != LONG_MAX) {
+        snprintf(buf, sizeof(buf), "#<%s address=%p size=%lu>",
+                rb_obj_classname(self), ptr->memory.address, ptr->memory.size);
+    } else {
+        snprintf(buf, sizeof(buf), "#<%s address=%p>", rb_obj_classname(self), ptr->memory.address);
+    }
+
+    return rb_str_new2(buf);
 }
 
 static VALUE

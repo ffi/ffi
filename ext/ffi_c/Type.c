@@ -95,12 +95,15 @@ type_alignment(VALUE self)
 static VALUE
 type_inspect(VALUE self)
 {
+    char buf[100];
     Type *type;
 
     Data_Get_Struct(self, Type, type);
 
-    return rb_sprintf("#<%s:%p size=%d alignment=%d>",
+    snprintf(buf, sizeof(buf), "#<%s:%p size=%d alignment=%d>",
             rb_obj_classname(self), type, (int) type->ffiType->size, (int) type->ffiType->alignment);
+
+    return rb_str_new2(buf);
 }
 
 static VALUE
@@ -128,11 +131,14 @@ builtin_type_free(BuiltinType *type)
 static VALUE
 builtin_type_inspect(VALUE self)
 {
+    char buf[100];
     BuiltinType *type;
 
     Data_Get_Struct(self, BuiltinType, type);
-    return rb_sprintf("#<%s:%s size=%d alignment=%d>",
+    snprintf(buf, sizeof(buf), "#<%s:%s size=%d alignment=%d>",
             rb_obj_classname(self), type->name, (int) type->type.ffiType->size, type->type.ffiType->alignment);
+
+    return rb_str_new2(buf);
 }
 
 int
