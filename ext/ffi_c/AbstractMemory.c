@@ -133,10 +133,10 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     long count = NUM2LONG(length); \
     long off = NUM2LONG(offset); \
     AbstractMemory* memory = MEMORY(self); \
+    VALUE retVal = rb_ary_new2(count); \
     long i; \
     checkRead(memory); \
     checkBounds(memory, off, count * sizeof(type)); \
-    VALUE retVal = rb_ary_new2(count); \
     for (i = 0; i < count; ++i) { \
         type tmp; \
         memcpy(&tmp, memory->address + off + (i * sizeof(type)), sizeof(tmp)); \
@@ -209,9 +209,9 @@ SWAPU64(uint64_t x)
 
 #else
 # define SWAPU32(x) __builtin_bswap32(x)
-# define SWAPS32(x) __builtin_bswap32(x)
+# define SWAPS32(x) ((uint32_t) __builtin_bswap32(x))
 # define SWAPS64(x) __builtin_bswap64(x)
-# define SWAPU64(x) __builtin_bswap64(x)
+# define SWAPU64(x) ((uint64_t) __builtin_bswap64(x))
 #endif
 
 #if LONG_MAX > INT_MAX
