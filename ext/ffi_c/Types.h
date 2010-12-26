@@ -76,7 +76,7 @@ typedef enum {
 #include <ffi.h>
 #include "Type.h"
 
-VALUE rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums);
+VALUE rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr);
 void rbffi_Types_Init(VALUE moduleFFI);
 
 #ifdef	__cplusplus

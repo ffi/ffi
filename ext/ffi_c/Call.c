@@ -295,8 +295,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         rbffi_save_errno();
     }
 
-    return rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval,
-        fnInfo->rbEnums);
+    return rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval);
 }
 
 static inline void*

@@ -234,7 +234,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
     rbffi_save_errno();
 
-    return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, retval, invoker->rbEnums);
+    return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, retval);
 }
 
 

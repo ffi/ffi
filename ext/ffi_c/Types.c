@@ -41,7 +41,7 @@ static ID id_from_native = 0;
 
 
 VALUE
-rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
+rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
 {
     switch (type->nativeType) {
         case NATIVE_VOID:
@@ -100,11 +100,10 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr, VALUE enums)
         case NATIVE_MAPPED: {
             // For mapped types, first convert to the real native type, then upcall to
             // ruby to convert to the expected return type
-            MappedType* m;
+            MappedType* m = (MappedType *) type;
             VALUE values[2];
 
-            Data_Get_Struct(rbType, MappedType, m);
-            values[0] = rbffi_NativeValue_ToRuby(m->type, m->rbType, ptr, enums);
+            values[0] = rbffi_NativeValue_ToRuby(m->type, m->rbType, ptr);
             values[1] = Qnil;
 
             return rb_funcall2(m->rbConverter, id_from_native, 2, values);

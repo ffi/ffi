@@ -624,7 +624,7 @@ callback_with_gvl(void* data)
             case NATIVE_FUNCTION:
             case NATIVE_CALLBACK:
             case NATIVE_STRUCT:
-                param = rbffi_NativeValue_ToRuby(paramType, rbParamType, parameters[i], Qnil);
+                param = rbffi_NativeValue_ToRuby(paramType, rbParamType, parameters[i]);
                 break;
 
             default:
