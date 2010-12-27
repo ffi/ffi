@@ -24,6 +24,7 @@
 # include <pthread.h>
 # include <errno.h>
 #endif
+#include <fcntl.h>
 #include "Thread.h"
 
 
@@ -86,8 +87,6 @@ rbffi_blocking_thread(void* args)
     thr->retval = retval;
     
     write(thr->wrfd, &c, sizeof(c));
-    close(thr->wrfd);
-
 
     return NULL;
 }
@@ -96,11 +95,14 @@ static VALUE
 wait_for_thread(void *data)
 {
     struct BlockingThread* thr = (struct BlockingThread *) data;
-    fd_set rfds;
-
-    FD_ZERO(&rfds);
-    FD_SET(thr->rdfd, &rfds);
-    rb_thread_select(thr->rdfd + 1, &rfds, NULL, NULL, NULL);
+    char c;
+    
+    if (read(thr->rdfd, &c, 1) < 1) {
+        rb_thread_wait_fd(thr->rdfd);
+        while (read(thr->rdfd, &c, 1) < 1 && rb_io_wait_readable(thr->rdfd) == Qtrue) {
+            ;
+        }
+    }
 
     return Qnil;
 }
@@ -130,6 +132,7 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
         rb_raise(rb_eSystemCallError, "pipe(2) failed");
         return Qnil;
     }
+    fcntl(fd[0], F_SETFL, fcntl(fd[0], F_GETFL) | O_NONBLOCK);
 
     thr = ALLOC_N(struct BlockingThread, 1);
     thr->rdfd = fd[0];
@@ -143,19 +146,18 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
     if (pthread_create(&thr->tid, NULL, rbffi_blocking_thread, thr) != 0) {
         close(fd[0]);
         close(fd[1]);
-        free(thr);
+        xfree(thr);
         rb_raise(rb_eSystemCallError, "pipe(2) failed");
         return Qnil;
     }
 
     exc = rb_rescue2(wait_for_thread, (VALUE) thr, cleanup_blocking_thread, (VALUE) thr,
         rb_eException);
-    if (exc != Qnil) {
-        close(fd[1]);
-    }
+    
     pthread_join(thr->tid, NULL);
+    close(fd[1]);
     close(fd[0]);
-    free(thr);
+    xfree(thr);
 
     if (exc != Qnil) {
         rb_exc_raise(exc);

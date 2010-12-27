@@ -405,8 +405,6 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         pthread_mutex_init(&cb.async_mutex, NULL);
         pthread_cond_init(&cb.async_cond, NULL);
 
-        pthread_mutex_lock(&cb.async_mutex);
-
         // Now signal the async callback thread
         pthread_mutex_lock(&async_cb_mutex);
         empty = async_cb_list == NULL;
@@ -425,11 +423,14 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 #endif
 
         // Wait for the thread executing the ruby callback to signal it is done
+        pthread_mutex_lock(&cb.async_mutex);
         while (!cb.done) {
             pthread_cond_wait(&cb.async_cond, &cb.async_mutex);
         }
         pthread_mutex_unlock(&cb.async_mutex);
+        pthread_cond_destroy(&cb.async_cond);
         pthread_mutex_destroy(&cb.async_mutex);
+
 #elif defined(DEFER_ASYNC_CALLBACK) && defined(_WIN32)
     } else {
         cb.async_event = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -484,14 +485,20 @@ async_cb_event(void* unused)
         struct gvl_callback* cb;
         char buf[64];
 
-        while (read(async_cb_pipe[0], buf, sizeof(buf)) < 0) {
-            rb_io_wait_readable(async_cb_pipe[0]);
+        if (read(async_cb_pipe[0], buf, sizeof(buf)) < 0) {
+            rb_thread_wait_fd(async_cb_pipe[0]);
+            while (read(async_cb_pipe[0], buf, sizeof (buf)) < 0) {
+                if (rb_io_wait_readable(async_cb_pipe[0]) != Qtrue) {
+                    return Qfalse;
+                }
+            }
         }
 
         pthread_mutex_lock(&async_cb_mutex);
         cb = async_cb_list;
         async_cb_list = NULL;
         pthread_mutex_unlock(&async_cb_mutex);
+
         while (cb != NULL) {
             struct gvl_callback* next = cb->next;
             // Start up a new ruby thread to run the ruby callback

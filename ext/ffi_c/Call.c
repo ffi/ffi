@@ -273,10 +273,10 @@ cleanup_blocking_call(void *data)
     BlockingCall* bc = (BlockingCall *) data;
 
     memcpy(bc->stkretval, bc->retval, MAX(bc->info->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
-    free(bc->params);
-    free(bc->ffiValues);
-    free(bc->retval);
-    free(bc);
+    xfree(bc->params);
+    xfree(bc->ffiValues);
+    xfree(bc->retval);
+    xfree(bc);
 
     return Qnil;
 }
@@ -307,7 +307,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         bc->function = function;
         bc->ffiValues = ffiValues;
         bc->params = params;
-        bc->retval = malloc(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
+        bc->retval = xmalloc(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
         bc->stkretval = retval;
 
         rbffi_SetupCallParams(argc, argv,
