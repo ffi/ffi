@@ -43,6 +43,7 @@
 #include "LastError.h"
 #include "Call.h"
 #include "MappedType.h"
+#include "Thread.h"
 
 #ifdef USE_RAW
 #  ifndef __i386__
@@ -265,6 +266,9 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     void* retval;
     void** ffiValues;
     FFIStorage* params;
+#if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+    rbffi_thread_t oldThread;
+#endif
 
     ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
     params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
@@ -274,7 +278,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
         fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
-#if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#if defined(HAVE_RB_THREAD_BLOCKING_REGION)
     if (unlikely(fnInfo->blocking)) {
         BlockingCall bc;
 
@@ -288,7 +292,13 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
     }
 #else
+    oldThread = rbffi_active_thread;
+    rbffi_active_thread = rbffi_thread_self();
+
     ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
+
+    rbffi_active_thread = oldThread;
+
 #endif
 
     if (unlikely(!fnInfo->ignoreErrno)) {

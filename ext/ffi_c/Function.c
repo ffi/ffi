@@ -49,6 +49,7 @@
 #include "ClosurePool.h"
 #include "Function.h"
 #include "MappedType.h"
+#include "Thread.h"
 
 typedef struct Function_ {
     AbstractMemory memory;
@@ -381,11 +382,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
     cb.retval = retval;
     cb.parameters = parameters;
 
-#ifdef HAVE_RUBY_THREAD_HAS_GVL_P
-    if (ruby_thread_has_gvl_p()) {
-#else
-    if (1) {
-#endif
+    if (rbffi_thread_has_gvl_p()) {
         callback_with_gvl(&cb);
     
 #if defined(HAVE_RUBY_NATIVE_THREAD_P) && defined (HAVE_RB_THREAD_CALL_WITH_GVL)
