@@ -23,6 +23,7 @@
 #ifndef _WIN32
 # include <pthread.h>
 # include <errno.h>
+# include <signal.h>
 #endif
 #include <fcntl.h>
 #include "Thread.h"
