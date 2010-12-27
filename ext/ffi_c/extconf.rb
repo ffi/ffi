@@ -27,6 +27,7 @@ create_header
 
 $CFLAGS << " -mwin32 " if RbConfig::CONFIG['host_os'] =~ /cygwin/
 #$CFLAGS << " -Werror -Wunused -Wformat -Wimplicit -Wreturn-type "
+$CFLAGS << " -Wno-declaration-after-statement "
 
 create_makefile("ffi_c")
 unless libffi_ok
