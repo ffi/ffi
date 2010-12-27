@@ -1,3 +1,18 @@
+#
+# This file is part of ruby-ffi.
+#
+# This code is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+# version 3 for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+#
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 require 'delegate'
 require 'java' if RUBY_PLATFORM =~ /java/
@@ -49,19 +64,19 @@ describe "Pointer" do
 
   describe "pointer type methods" do
 
-    describe "#read_pointer" do
+    it "#read_pointer" do
       memory = FFI::MemoryPointer.new :pointer
       LibTest.ptr_set_pointer(memory, 0, LibTest.ptr_from_address(0xdeadbeef))
       memory.read_pointer.address.should == 0xdeadbeef
     end
 
-    describe "#write_pointer" do
+    it "#write_pointer" do
       memory = FFI::MemoryPointer.new :pointer
       memory.write_pointer(LibTest.ptr_from_address(0xdeadbeef))
       LibTest.ptr_ret_pointer(memory, 0).address.should == 0xdeadbeef
     end
 
-    describe "#read_array_of_pointer" do
+    it "#read_array_of_pointer" do
       values = [0x12345678, 0xfeedf00d, 0xdeadbeef]
       memory = FFI::MemoryPointer.new :pointer, values.size
       values.each_with_index do |address, j|
@@ -73,7 +88,7 @@ describe "Pointer" do
       end
     end
 
-    describe "#write_array_of_pointer" do
+    it "#write_array_of_pointer" do
       values = [0x12345678, 0xfeedf00d, 0xdeadbeef]
       memory = FFI::MemoryPointer.new :pointer, values.size
       memory.write_array_of_pointer(values.map { |address| LibTest.ptr_from_address(address) })
