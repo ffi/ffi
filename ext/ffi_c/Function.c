@@ -405,7 +405,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 
         // Wait for the thread executing the ruby callback to signal it is done
         pthread_cond_wait(&cb.async_cond, &cb.async_mutex);
-#elif defined(DEFER_ASYNC_CALLBACK) && !defined(_WIN32)
+#elif defined(DEFER_ASYNC_CALLBACK) && defined(_WIN32)
     } else {
         cb.async_event = CreateEvent(NULL, FALSE, FALSE, NULL);
         
