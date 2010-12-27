@@ -1,28 +1,20 @@
 /*
- * Copyright (c) 2009, Wayne Meissner
+ * Copyright (c) 2009, 2010 Wayne Meissner
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This file is part of ruby-ffi.
  *
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * The name of the author or authors may not be used to endorse or promote
- *   products derived from this software without specific prior written permission.
+ * This code is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License version 3 only, as
+ * published by the Free Software Foundation.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * version 3 for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <sys/param.h>
@@ -40,9 +32,6 @@
 #endif
 #include <errno.h>
 #include <ruby.h>
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
-# include <pthread.h>
-#endif
 
 #include <ffi.h>
 #include "rbffi.h"
@@ -56,10 +45,6 @@
 
 #include "ClosurePool.h"
 
-
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32) && !defined(__WIN32__)
-#  define USE_PTHREAD_LOCAL
-#endif
 
 #ifndef roundup
 #  define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
@@ -78,21 +63,10 @@ struct ClosurePool_ {
     void* ctx;
     int closureSize;
     bool (*prep)(void* ctx, void *code, Closure* closure, char* errbuf, size_t errbufsize);
-#if defined (HAVE_NATIVETHREAD) && !defined(_WIN32)
-    pthread_mutex_t mutex;
-#endif
     struct Memory* blocks; /* Keeps track of all the allocated memory for this pool */
     Closure* list;
     long refcnt;
 };
-
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
-#  define pool_lock(p) pthread_mutex_lock(&(p)->mutex)
-#  define pool_unlock(p)  pthread_mutex_unlock(&(p)->mutex)
-#else
-#  define pool_lock(p)
-#  define pool_unlock(p)
-#endif
 
 static int pageSize;
 
@@ -113,10 +87,6 @@ rbffi_ClosurePool_New(int closureSize,
     pool->prep = prep;
     pool->refcnt = 1;
     
-#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
-    pthread_mutex_init(&pool->mutex, NULL);
-#endif
-
     return pool;
 }
 
@@ -140,10 +110,7 @@ rbffi_ClosurePool_Free(ClosurePool* pool)
 {
     if (pool != NULL) {
         int refcnt;
-        pool_lock(pool);
         refcnt = --(pool->refcnt);
-        pool_unlock(pool);
-
         if (refcnt == 0) {
             cleanup_closure_pool(pool);
         }
@@ -160,13 +127,11 @@ rbffi_Closure_Alloc(ClosurePool* pool)
     int nclosures, trampolineSize;
     int i;
 
-    pool_lock(pool);
     if (pool->list != NULL) {
         Closure* closure = pool->list;
         pool->list = pool->list->next;
         pool->refcnt++;
-        pool_unlock(pool);
-
+    
         return closure;
     }
 
@@ -177,7 +142,6 @@ rbffi_Closure_Alloc(ClosurePool* pool)
     code = allocatePage();
     
     if (block == NULL || list == NULL || code == NULL) {
-        pool_unlock(pool);
         snprintf(errmsg, sizeof(errmsg), "failed to allocate a page. errno=%d (%s)", errno, strerror(errno));
         goto error;
     }
@@ -208,13 +172,10 @@ rbffi_Closure_Alloc(ClosurePool* pool)
     pool->list = list->next;
     pool->refcnt++;
 
-    pool_unlock(pool);
-
     /* Use the first one as the new handle */
     return list;
 
 error:
-    pool_unlock(pool);
     free(block);
     free(list);
     if (code != NULL) {
@@ -232,13 +193,10 @@ rbffi_Closure_Free(Closure* closure)
     if (closure != NULL) {
         ClosurePool* pool = closure->pool;
         int refcnt;
-        pool_lock(pool);
         // Just push it on the front of the free list
         closure->next = pool->list;
         pool->list = closure;
         refcnt = --(pool->refcnt);
-        pool_unlock(pool);
-
         if (refcnt == 0) {
             cleanup_closure_pool(pool);
         }
