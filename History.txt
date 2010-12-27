@@ -1,3 +1,6 @@
+== 1.0.3 / 2010-12-28
+* Re-add support for ruby 1.8.x
+
 == 1.0.0 / 2010-11-30
 * Major improvements
   * Better handling of non-ruby thread callbacks
