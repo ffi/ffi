@@ -1,3 +1,19 @@
+#
+# This file is part of ruby-ffi.
+#
+# This code is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+# version 3 for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 describe FFI::Function do
@@ -48,14 +64,12 @@ describe FFI::Function do
     foo.add(10, 10).should == 20    
   end
   it 'can wrap a blocking function' do
-    unless RUBY_VERSION =~ /1.8/
-      fp = FFI::Function.new(:void, [ :int ], @libtest.find_function('testBlocking'), :blocking => true)
-      time = Time.now
-      threads = []
-      threads << Thread.new { fp.call(2) }
-      threads << Thread.new(time) { (Time.now - time).should < 1 }
-      threads.each { |t| t.join }
-    end
+    fp = FFI::Function.new(:void, [ :int ], @libtest.find_function('testBlocking'), :blocking => true)
+    time = Time.now
+    threads = []
+    threads << Thread.new { fp.call(2) }
+    threads << Thread.new(time) { (Time.now - time).should < 1 }
+    threads.each { |t| t.join }
   end
   it 'autorelease flag is set to true by default' do
     fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))

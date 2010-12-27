@@ -18,8 +18,14 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <pthread.h>
+#include <stdbool.h>
+
+#ifndef _WIN32
+# include <pthread.h>
+# include <errno.h>
+#endif
 #include "Thread.h"
+
 
 #ifndef HAVE_RUBY_THREAD_HAS_GVL_P
 rbffi_thread_t rbffi_active_thread;
@@ -45,5 +51,117 @@ rbffi_thread_has_gvl_p(void)
 {
     return rbffi_active_thread.valid && pthread_equal(rbffi_active_thread.id, pthread_self());
 }
+#endif // HAVE_RUBY_THREAD_HAS_GVL_P
 
-#endif // HAVE_NATIVETHREAD
+#ifndef HAVE_RB_THREAD_BLOCKING_REGION
+struct BlockingThread {
+    pthread_t tid;
+    VALUE (*fn)(void *);
+    void *data;
+    void (*ubf)(void *);
+    void *data2;
+    VALUE retval;
+    int wrfd;
+    int rdfd;
+};
+
+typedef struct BlockingCall_ {
+    void* function;
+    void* info;
+    void **ffiValues;
+    void* retval;
+} BlockingCall;
+
+static void*
+rbffi_blocking_thread(void* args)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) args;
+    char c = 1;
+    VALUE retval;
+    
+    retval = (*thr->fn)(thr->data);
+    
+    pthread_testcancel();
+
+    thr->retval = retval;
+    
+    write(thr->wrfd, &c, sizeof(c));
+    close(thr->wrfd);
+
+
+    return NULL;
+}
+
+static VALUE
+wait_for_thread(void *data)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) data;
+    fd_set rfds;
+
+    FD_ZERO(&rfds);
+    FD_SET(thr->rdfd, &rfds);
+    rb_thread_select(thr->rdfd + 1, &rfds, NULL, NULL, NULL);
+
+    return Qnil;
+}
+
+static VALUE
+cleanup_blocking_thread(void *data, VALUE exc)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) data;
+
+    if (thr->ubf != (void (*)(void *)) -1) {
+        (*thr->ubf)(thr->data2);
+    } else {
+        pthread_kill(thr->tid, SIGVTALRM);
+    }
+
+    return exc;
+}
+
+VALUE
+rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2)
+{
+    struct BlockingThread* thr;
+    int fd[2];
+    VALUE exc;
+    
+    if (pipe(fd) < 0) {
+        rb_raise(rb_eSystemCallError, "pipe(2) failed");
+        return Qnil;
+    }
+
+    thr = ALLOC_N(struct BlockingThread, 1);
+    thr->rdfd = fd[0];
+    thr->wrfd = fd[1];
+    thr->fn = func;
+    thr->data = data1;
+    thr->ubf = ubf;
+    thr->data2 = data2;
+    thr->retval = Qnil;
+
+    if (pthread_create(&thr->tid, NULL, rbffi_blocking_thread, thr) != 0) {
+        close(fd[0]);
+        close(fd[1]);
+        free(thr);
+        rb_raise(rb_eSystemCallError, "pipe(2) failed");
+        return Qnil;
+    }
+
+    exc = rb_rescue2(wait_for_thread, (VALUE) thr, cleanup_blocking_thread, (VALUE) thr,
+        rb_eException);
+    if (exc != Qnil) {
+        close(fd[1]);
+    }
+    pthread_join(thr->tid, NULL);
+    close(fd[0]);
+    free(thr);
+
+    if (exc != Qnil) {
+        rb_exc_raise(exc);
+    }
+
+    return thr->retval;
+}
+
+#endif // HAVE_RB_THREAD_BLOCKING_REGION

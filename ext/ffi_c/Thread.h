@@ -42,9 +42,16 @@ typedef struct {
 } rbffi_thread_t;
 
 extern rbffi_thread_t rbffi_active_thread;
-extern rbffi_thread_t rbffi_thread_self();
-extern bool rbffi_thread_equal(rbffi_thread_t* lhs, rbffi_thread_t* rhs);
-extern bool rbffi_thread_has_gvl_p(void);
+rbffi_thread_t rbffi_thread_self();
+bool rbffi_thread_equal(rbffi_thread_t* lhs, rbffi_thread_t* rhs);
+bool rbffi_thread_has_gvl_p(void);
+
+#endif
+#ifdef HAVE_RB_THREAD_BLOCKING_REGION
+# define rbffi_thread_blocking_region rb_thread_blocking_region
+#else
+
+VALUE rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2);
 
 #endif
 

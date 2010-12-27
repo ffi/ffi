@@ -240,13 +240,13 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
 }
 
 
-#if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION)
-
 typedef struct BlockingCall_ {
     void* function;
     FunctionType* info;
     void **ffiValues;
-    FFIStorage* retval;
+    void* retval;
+    void* stkretval;
+    void* params;
 } BlockingCall;
 
 static VALUE
@@ -258,7 +258,28 @@ call_blocking_function(void* data)
 
     return Qnil;
 }
-#endif
+
+static VALUE
+do_blocking_call(void *data)
+{
+    rbffi_thread_blocking_region(call_blocking_function, data, (void *) -1, NULL);
+
+    return Qnil;
+}
+
+static VALUE
+cleanup_blocking_call(void *data)
+{
+    BlockingCall* bc = (BlockingCall *) data;
+
+    memcpy(bc->stkretval, bc->retval, MAX(bc->info->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
+    free(bc->params);
+    free(bc->ffiValues);
+    free(bc->retval);
+    free(bc);
+
+    return Qnil;
+}
 
 VALUE
 rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
@@ -266,40 +287,55 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     void* retval;
     void** ffiValues;
     FFIStorage* params;
-#if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+    VALUE rbReturnValue;
+
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
     rbffi_thread_t oldThread;
 #endif
 
-    ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
-    params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
     retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
-
-    rbffi_SetupCallParams(argc, argv,
-        fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
-        fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
-
-#if defined(HAVE_RB_THREAD_BLOCKING_REGION)
+    
     if (unlikely(fnInfo->blocking)) {
-        BlockingCall bc;
+        BlockingCall* bc;
 
-        bc.info = fnInfo;
-        bc.function = function;
-        bc.ffiValues = ffiValues;
-        bc.retval = retval;
+        // due to the way thread switching works on older ruby variants, we
+        // cannot allocate anything passed to the blocking function on the stack
+        ffiValues = ALLOC_N(void *, fnInfo->parameterCount);
+        params = ALLOC_N(FFIStorage, fnInfo->parameterCount);
+        bc = ALLOC_N(BlockingCall, 1);
+        bc->info = fnInfo;
+        bc->function = function;
+        bc->ffiValues = ffiValues;
+        bc->params = params;
+        bc->retval = malloc(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
+        bc->stkretval = retval;
 
-        rb_thread_blocking_region(call_blocking_function, &bc, (void *) -1, NULL);
+        rbffi_SetupCallParams(argc, argv,
+            fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
+            fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
+        
+        rb_ensure(do_blocking_call, (VALUE) bc, cleanup_blocking_call, (VALUE) bc);
+        
     } else {
-        ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
-    }
-#else
-    oldThread = rbffi_active_thread;
-    rbffi_active_thread = rbffi_thread_self();
 
-    ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
+        ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
+        params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
 
-    rbffi_active_thread = oldThread;
+        rbffi_SetupCallParams(argc, argv,
+            fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
+            fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+        oldThread = rbffi_active_thread;
+        rbffi_active_thread = rbffi_thread_self();
 #endif
+        retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
+        ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
+
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+        rbffi_active_thread = oldThread;
+#endif
+    }
 
     if (unlikely(!fnInfo->ignoreErrno)) {
         rbffi_save_errno();
