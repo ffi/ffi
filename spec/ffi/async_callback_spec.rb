@@ -10,7 +10,7 @@ describe "async callback" do
     attach_function :testAsyncCallback, [ AsyncIntCallback, :int ], :void, :blocking => true
   end
 
-  unless RUBY_VERSION =~ /1.8/
+#  unless RUBY_VERSION =~ /1.8/
     it ":int (0x7fffffff) argument" do
       v = 0xdeadbeef
       called = false
@@ -19,5 +19,5 @@ describe "async callback" do
       called.should be_true
       v.should == 0x7fffffff
     end
-  end
+#  end
 end
