@@ -116,23 +116,23 @@ TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
   desc "Run all specs"
   task :specs => TEST_DEPS do
-    sh %{#{Gem.ruby} -S spec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -S rspec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
-    sh %{#{Gem.ruby} -S spec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
   end
 else
   TEST_DEPS.unshift :compile
   desc "Run all specs"
   task :specs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -Ilib -I#{BUILD_EXT_DIR} -S spec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -Ilib -I#{BUILD_EXT_DIR} -S spec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
   end
 end
 
