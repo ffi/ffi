@@ -155,3 +155,4 @@ rbffi_MemoryPointer_Init(VALUE moduleFFI)
     rb_define_method(rbffi_MemoryPointerClass, "autorelease=", memptr_autorelease, 1);
     rb_define_method(rbffi_MemoryPointerClass, "free", memptr_free, 0);
 }
+

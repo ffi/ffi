@@ -281,3 +281,4 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rbffi_NullPointerSingleton = rb_class_new_instance(1, &rbNullAddress, rbffi_PointerClass);
     rb_define_const(rbffi_PointerClass, "NULL", rbffi_NullPointerSingleton);
 }
+

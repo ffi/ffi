@@ -157,3 +157,4 @@ rbffi_LastError_Init(VALUE moduleFFI)
     id_thread_data = rb_intern("ffi_thread_local_data");
 #endif /* USE_PTHREAD_LOCAL */
 }
+

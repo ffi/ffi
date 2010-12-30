@@ -65,3 +65,4 @@ rbffi_Platform_Init(VALUE moduleFFI)
     rb_define_const(PlatformModule, "CPU", rb_str_new2(CPU));
     export_primitive_types(PlatformModule);
 }
+

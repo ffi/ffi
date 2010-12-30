@@ -241,3 +241,4 @@ rbffi_Buffer_Init(VALUE moduleFFI)
     rb_define_method(BufferClass, "+", buffer_plus, 1);
     rb_define_method(BufferClass, "slice", buffer_slice, 2);
 }
+

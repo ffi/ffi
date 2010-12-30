@@ -168,3 +168,4 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
 }
 
 #endif // HAVE_RB_THREAD_BLOCKING_REGION
+

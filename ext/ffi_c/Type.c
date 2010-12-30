@@ -287,3 +287,4 @@ rbffi_Type_Init(VALUE moduleFFI)
     T(BOOL, &ffi_type_uchar);
     T(VARARGS, &ffi_type_void);
 }
+

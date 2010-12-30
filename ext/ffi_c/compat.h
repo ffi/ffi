@@ -70,3 +70,4 @@
 #endif
 
 #endif /* RBFFI_COMPAT_H */
+

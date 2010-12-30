@@ -629,3 +629,4 @@ rbffi_Struct_Init(VALUE moduleFFI)
     id_to_ptr = rb_intern("to_ptr");
     id_to_s = rb_intern("to_s");
 }
+

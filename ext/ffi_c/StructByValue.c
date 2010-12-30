@@ -138,3 +138,4 @@ rbffi_StructByValue_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructByValueClass, "layout", sbv_layout, 0);
     rb_define_method(rbffi_StructByValueClass, "struct_class", sbv_struct_class, 0);
 }
+

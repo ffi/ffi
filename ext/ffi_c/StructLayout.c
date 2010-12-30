@@ -496,3 +496,4 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructLayoutClass, "to_a", struct_layout_to_a, 0);
 
 }
+
