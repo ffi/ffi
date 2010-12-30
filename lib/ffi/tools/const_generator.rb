@@ -117,7 +117,7 @@ module FFI
 
     def dump_constants(io)
       @constants.each do |name, constant|
-        name = [@prefix, name].join '.'
+        name = [@prefix, name].join '.' if @prefix
         io.puts "#{name} = #{constant.converted_value}"
       end
     end
