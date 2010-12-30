@@ -229,7 +229,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     rbffi_active_thread = rbffi_thread_self();
 #endif
 
-    ffi_call(&cif, invoker->function, retval, ffiValues);
+    ffi_call(&cif, FFI_FN(invoker->function), retval, ffiValues);
 
 #ifndef HAVE_RUBY_THREAD_HAS_GVL_P
     rbffi_active_thread = oldThread;

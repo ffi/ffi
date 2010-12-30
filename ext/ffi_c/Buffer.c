@@ -23,6 +23,7 @@
 #include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"
+#include "endian.h"
 #include "AbstractMemory.h"
 
 typedef struct Buffer {

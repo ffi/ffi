@@ -15,19 +15,25 @@ static VALUE PlatformModule = Qnil;
  * on intel.
  */
 #ifdef __i386__
-#define CPU "i386"
+# define CPU "i386"
+
 #elif defined(__ppc__) || defined(__powerpc__)
-#define CPU "powerpc"
+# define CPU "powerpc"
+
 #elif defined(__x86_64__)
-#define CPU "x86_64"
-#elif defined(__sparc__)
-#define CPU "sparc"
-#elif defined(__sparcv9__)
-#define CPU "sparcv9"
+# define CPU "x86_64"
+
+/* Need to check for __sparcv9 first, because __sparc will be defined either way. */
+#elif defined(__sparcv9__) || defined(__sparcv9)
+# define CPU "sparcv9"
+
+#elif defined(__sparc__) || defined(__sparc)
+# define CPU "sparc"
+
 #elif defined(__arm__)
-#define CPU "arm"
+# define CPU "arm"
 #else
-#error "Unknown cpu type"
+# error "Unknown cpu type"
 #endif
 
 static void

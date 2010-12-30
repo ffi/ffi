@@ -165,7 +165,7 @@ SWAPU16(uint16_t x)
     return bswap16(x);
 }
 
-#if __GNUC__ < 4
+#if !defined(__GNUC__) || __GNUC__ < 4
 #define bswap32(x) \
        (((x << 24) & 0xff000000) | \
         ((x <<  8) & 0x00ff0000) | \
