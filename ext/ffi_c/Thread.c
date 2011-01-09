@@ -24,6 +24,8 @@
 # include <pthread.h>
 # include <errno.h>
 # include <signal.h>
+#else
+# include <windows.h>
 #endif
 #include <fcntl.h>
 #include "Thread.h"
@@ -36,26 +38,42 @@ rbffi_thread_t
 rbffi_thread_self()
 {
     rbffi_thread_t self;
+#ifdef _WIN32
+    self.id = GetCurrentThreadId();
+#else
     self.id = pthread_self();
+#endif
     self.valid = true;
 
     return self;
 }
 
 bool
-rbffi_thread_equal(rbffi_thread_t* lhs, rbffi_thread_t* rhs)
+rbffi_thread_equal(const rbffi_thread_t* lhs, const rbffi_thread_t* rhs)
 {
-    return lhs->valid && rhs->valid && pthread_equal(lhs->id, rhs->id);
+    return lhs->valid && rhs->valid && 
+#ifdef _WIN32
+            lhs->id == rhs->id;
+#else
+            pthread_equal(lhs->id, rhs->id);
+#endif
 }
 
 bool
 rbffi_thread_has_gvl_p(void)
 {
+#ifdef _WIN32
+    return rbffi_active_thread.valid && rbffi_active_thread.id == GetCurrentThreadId();
+#else
     return rbffi_active_thread.valid && pthread_equal(rbffi_active_thread.id, pthread_self());
+#endif
 }
 #endif // HAVE_RUBY_THREAD_HAS_GVL_P
 
 #ifndef HAVE_RB_THREAD_BLOCKING_REGION
+
+#if !defined(_WIN32)
+
 struct BlockingThread {
     pthread_t tid;
     VALUE (*fn)(void *);
@@ -66,13 +84,6 @@ struct BlockingThread {
     int wrfd;
     int rdfd;
 };
-
-typedef struct BlockingCall_ {
-    void* function;
-    void* info;
-    void **ffiValues;
-    void* retval;
-} BlockingCall;
 
 static void*
 rbffi_blocking_thread(void* args)
@@ -166,6 +177,20 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
 
     return thr->retval;
 }
+
+#else
+
+/*
+ * FIXME: someone needs to implement something similar to the posix pipe based
+ * blocking region implementation above for ruby1.8.x on win32
+ */
+VALUE
+rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2)
+{
+    return (*func)(data1);
+}
+
+#endif /* !_WIN32 */
 
 #endif // HAVE_RB_THREAD_BLOCKING_REGION
 

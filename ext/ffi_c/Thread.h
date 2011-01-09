@@ -31,19 +31,28 @@ extern "C" {
 
 
 #ifdef HAVE_RUBY_THREAD_HAS_GVL_P
+    extern int ruby_thread_has_gvl_p(void);
 # define rbffi_thread_has_gvl_p ruby_thread_has_gvl_p
 #else
 
-#include <pthread.h>
+#ifdef _WIN32
+# include <windows.h>
+#else
+# include <pthread.h>
+#endif
 
 typedef struct {
+#ifdef _WIN32
+    DWORD id;
+#else
     pthread_t id;
+#endif
     bool valid;
 } rbffi_thread_t;
 
 extern rbffi_thread_t rbffi_active_thread;
 rbffi_thread_t rbffi_thread_self();
-bool rbffi_thread_equal(rbffi_thread_t* lhs, rbffi_thread_t* rhs);
+bool rbffi_thread_equal(const rbffi_thread_t* lhs, const rbffi_thread_t* rhs);
 bool rbffi_thread_has_gvl_p(void);
 
 #endif

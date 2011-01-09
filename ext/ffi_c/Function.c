@@ -69,15 +69,14 @@ static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void*
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 static void* callback_with_gvl(void* data);
 
-#define DEFER_ASYNC_CALLBACK 1
+#if !defined(_WIN32) || defined(HAVE_RB_THREAD_BLOCKING_REGION)
+# define DEFER_ASYNC_CALLBACK 1
+#endif
+
 
 #if defined(DEFER_ASYNC_CALLBACK)
 static VALUE async_cb_event(void *);
 static VALUE async_cb_call(void *);
-#endif
-
-#ifdef HAVE_RUBY_THREAD_HAS_GVL_P
-extern int ruby_thread_has_gvl_p(void);
 #endif
 
 #ifdef HAVE_RB_THREAD_CALL_WITH_GVL
@@ -832,7 +831,7 @@ rbffi_Function_Init(VALUE moduleFFI)
     id_cb_ref = rb_intern("@__ffi_callback__");
     id_to_native = rb_intern("to_native");
     id_from_native = rb_intern("from_native");
-#ifdef _WIN32
+#if defined(_WIN32) && defined(HAVE_RB_THREAD_BLOCKING_REGION)
     InitializeCriticalSection(&async_cb_lock);
     async_cb_cond = CreateEvent(NULL, FALSE, FALSE, NULL);
 #endif
