@@ -268,12 +268,12 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         }
 
 #if defined(DEFER_ASYNC_CALLBACK)
-# if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
-        pipe(async_cb_pipe);
-        fcntl(async_cb_pipe[0], F_SETFL, fcntl(async_cb_pipe[0], F_GETFL) | O_NONBLOCK);
-        fcntl(async_cb_pipe[1], F_SETFL, fcntl(async_cb_pipe[1], F_GETFL) | O_NONBLOCK);
-# endif
         if (async_cb_thread == Qnil) {
+#if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+            pipe(async_cb_pipe);
+            fcntl(async_cb_pipe[0], F_SETFL, fcntl(async_cb_pipe[0], F_GETFL) | O_NONBLOCK);
+            fcntl(async_cb_pipe[1], F_SETFL, fcntl(async_cb_pipe[1], F_GETFL) | O_NONBLOCK);
+#endif
             async_cb_thread = rb_thread_create(async_cb_event, NULL);
         }
 
