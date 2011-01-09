@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 describe FFI::Struct, ' with an initialize function' do

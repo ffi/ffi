@@ -18,8 +18,8 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef THREAD_H
-#define	THREAD_H
+#ifndef RBFFI_THREAD_H
+#define	RBFFI_THREAD_H
 
 #include <stdbool.h>
 #include <ruby.h>
@@ -60,5 +60,5 @@ VALUE rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ub
 }
 #endif
 
-#endif	/* THREAD_H */
+#endif	/* RBFFI_THREAD_H */
 

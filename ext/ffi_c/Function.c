@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2009, 2010 Wayne Meissner
-
+ * Copyright (c) 2009-2011 Wayne Meissner
+ *
  * All rights reserved.
  *
  * This file is part of ruby-ffi.
