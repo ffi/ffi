@@ -29,5 +29,5 @@ Rake::ExtensionTask.new('ffi_c', spec) do |ext|
   # ext.lib_dir = BUILD_DIR                                 # put binaries into this folder.
   ext.tmp_dir = BUILD_DIR                                   # temporary folder used during compilation.
   ext.cross_compile = true                                  # enable cross compilation (requires cross compile toolchain)
-  ext.cross_platform = ['i386-mingw32', 'i386-mswin32']     # forces the Windows platform instead of the default one
+  ext.cross_platform = ['i386-mingw32']     # forces the Windows platform instead of the default one
 end if USE_RAKE_COMPILER
