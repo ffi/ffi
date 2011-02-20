@@ -52,9 +52,11 @@ typedef struct InlineArray_ {
 
 
 static void struct_mark(Struct *);
+static void struct_free(Struct *);
 static VALUE struct_class_layout(VALUE klass);
 static void struct_malloc(Struct* s);
 static void inline_array_mark(InlineArray *);
+static void store_reference_value(StructField* f, Struct* s, VALUE value);
 
 VALUE rbffi_StructClass = Qnil;
 
@@ -74,7 +76,7 @@ static VALUE
 struct_allocate(VALUE klass)
 {
     Struct* s;
-    VALUE obj = Data_Make_Struct(klass, Struct, struct_mark, -1, s);
+    VALUE obj = Data_Make_Struct(klass, Struct, struct_mark, struct_free, s);
     
     s->rbPointer = Qnil;
     s->rbLayout = Qnil;
@@ -183,7 +185,36 @@ struct_mark(Struct *s)
 {
     rb_gc_mark(s->rbPointer);
     rb_gc_mark(s->rbLayout);
+    if (s->rbReferences != NULL) {
+        rb_gc_mark_locations(&s->rbReferences[0], &s->rbReferences[s->layout->referenceFieldCount]);
+    }
 }
+
+static void
+struct_free(Struct* s)
+{
+    xfree(s->rbReferences);
+}
+
+
+static void
+store_reference_value(StructField* f, Struct* s, VALUE value)
+{
+    if (unlikely(f->referenceIndex == -1)) {
+        rb_raise(rb_eRuntimeError, "put_reference_value called for non-reference type");
+        return;
+    }
+    if (s->rbReferences == NULL) {
+        int i;
+        s->rbReferences = ALLOC_N(VALUE, s->layout->referenceFieldCount);
+        for (i = 0; i < s->layout->referenceFieldCount; ++i) {
+            s->rbReferences[i] = Qnil;
+        }
+    }
+
+    s->rbReferences[f->referenceIndex] = value;
+}
+
 
 static VALUE
 struct_field(Struct* s, VALUE fieldName)
@@ -254,6 +285,10 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
         argv[0] = s->rbPointer;
         argv[1] = value;
         rb_funcall2(rbField, id_put, 2, argv);
+    }
+
+    if (f->referenceRequired) {
+        store_reference_value(f, s, value);
     }
     
     return value;

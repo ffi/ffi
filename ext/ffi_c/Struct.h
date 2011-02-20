@@ -44,6 +44,9 @@ extern "C" {
         Type* type;
         unsigned int offset;
 
+        int referenceIndex;
+
+        bool referenceRequired;
         VALUE rbType;
         VALUE rbName;
 
@@ -61,6 +64,10 @@ extern "C" {
         int align;
         ffi_type** ffiTypes;
         struct st_table* fieldSymbolTable;
+
+        /** The number of reference tracking fields in this struct */
+        int referenceFieldCount;
+        
         VALUE rbFieldNames;
         VALUE rbFieldMap;
         VALUE rbFields;
@@ -69,6 +76,8 @@ extern "C" {
     struct Struct_ {
         StructLayout* layout;
         AbstractMemory* pointer;
+        VALUE* rbReferences;
+
         VALUE rbLayout;
         VALUE rbPointer;
     };

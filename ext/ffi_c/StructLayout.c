@@ -36,6 +36,7 @@
 #include "Struct.h"
 #include "StructByValue.h"
 #include "ArrayType.h"
+#include "MappedType.h"
 
 #define FFI_ALIGN(v, a)  (((((size_t) (v))-1) | ((a)-1))+1)
 
@@ -99,7 +100,23 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     field->rbType = rbType;
     Data_Get_Struct(field->rbType, Type, field->type);
     field->memoryOp = get_memory_op(field->type);
+    field->referenceIndex = -1;
 
+    switch (field->type->nativeType == NATIVE_MAPPED ? ((MappedType *) field->type)->type->nativeType : field->type->nativeType) {
+        case NATIVE_FUNCTION:
+        case NATIVE_CALLBACK:
+        case NATIVE_POINTER:
+            field->referenceRequired = true;
+            break;
+
+        default:
+            field->referenceRequired = (rb_respond_to(self, rb_intern("reference_required?"))
+                    && RTEST(rb_funcall2(self, rb_intern("reference_required?"), 0, NULL)))
+                    || (rb_respond_to(rbType, rb_intern("reference_required?"))
+                        && RTEST(rb_funcall2(rbType, rb_intern("reference_required?"), 0, NULL)));
+            break;
+    }
+    
     return self;
 }
 
@@ -339,6 +356,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     layout->fields = xcalloc(layout->fieldCount, sizeof(StructField *));
     layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
     layout->rbFields = rb_ary_new2(layout->fieldCount);
+    layout->referenceFieldCount = 0;
     layout->base.ffiType->elements = layout->ffiTypes;
     layout->base.ffiType->size = layout->size;
     layout->base.ffiType->alignment = layout->align;
@@ -365,6 +383,10 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
         ftype = field->type->ffiType;
         if (ftype->size == 0) {
             rb_raise(rb_eTypeError, "type of field %d has zero size", i);
+        }
+
+        if (field->referenceRequired) {
+            field->referenceIndex = layout->referenceFieldCount++;
         }
 
         layout->ffiTypes[i] = ftype;
