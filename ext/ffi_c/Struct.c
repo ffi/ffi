@@ -194,6 +194,7 @@ static void
 struct_free(Struct* s)
 {
     xfree(s->rbReferences);
+    xfree(s);
 }
 
 
