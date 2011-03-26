@@ -27,16 +27,12 @@
 #include "AbstractMemory.h"
 #include "Pointer.h"
 
-typedef struct Pointer {
-    AbstractMemory memory;
-    VALUE parent;
-} Pointer;
-
 #define POINTER(obj) rbffi_AbstractMemory_Cast((obj), rbffi_PointerClass)
 
 VALUE rbffi_PointerClass = Qnil;
 VALUE rbffi_NullPointerSingleton = Qnil;
 
+static void ptr_release(Pointer* ptr);
 static void ptr_mark(Pointer* ptr);
 
 VALUE
@@ -54,7 +50,7 @@ rbffi_Pointer_NewInstance(void* addr)
     p->memory.size = LONG_MAX;
     p->memory.flags = (addr == NULL) ? 0 : (MEM_RD | MEM_WR);
     p->memory.typeSize = 1;
-    p->parent = Qnil;
+    p->rbParent = Qnil;
 
     return obj;
 }
@@ -65,8 +61,8 @@ ptr_allocate(VALUE klass)
     Pointer* p;
     VALUE obj;
 
-    obj = Data_Make_Struct(klass, Pointer, ptr_mark, -1, p);
-    p->parent = Qnil;
+    obj = Data_Make_Struct(klass, Pointer, ptr_mark, ptr_release, p);
+    p->rbParent = Qnil;
     p->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
@@ -107,7 +103,7 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
             if (rb_obj_is_kind_of(rbAddress, rbffi_PointerClass)) {
                 Pointer* orig;
 
-                p->parent = rbAddress;
+                p->rbParent = rbAddress;
                 Data_Get_Struct(rbAddress, Pointer, orig);
                 p->memory = orig->memory;
             } else {
@@ -121,6 +117,33 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
+static VALUE
+ptr_initialize_copy(VALUE self, VALUE other)
+{
+    AbstractMemory* src;
+    Pointer* dst;
+    
+    Data_Get_Struct(self, Pointer, dst);
+    src = POINTER(other);
+    if (dst->storage != NULL) {
+        xfree(dst->storage);
+    }
+    dst->storage = xmalloc(src->size + 7);
+    if (dst->storage == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate memory size=%lu bytes", src->size);
+        return Qnil;
+    }
+    dst->allocated = true;
+    dst->autorelease = true;
+    dst->memory.address = (void *) (((uintptr_t) dst->storage + 0x7) & (uintptr_t) ~0x7UL);
+    dst->memory.size = src->size;
+    dst->memory.typeSize = src->typeSize;
+    
+    // finally, copy the actual memory contents
+    memcpy(dst->memory.address, src->address, src->size);
+
+    return self;
+}
 
 static VALUE
 slice(VALUE self, long offset, long size)
@@ -138,7 +161,7 @@ slice(VALUE self, long offset, long size)
     p->memory.size = size;
     p->memory.flags = ptr->flags;
     p->memory.typeSize = ptr->typeSize;
-    p->parent = self;
+    p->rbParent = self;
 
     return retval;
 }
@@ -252,10 +275,51 @@ ptr_order(int argc, VALUE* argv, VALUE self)
     }
 }
 
+
+static VALUE
+ptr_free(VALUE self)
+{
+    Pointer* ptr;
+
+    Data_Get_Struct(self, Pointer, ptr);
+
+    if (ptr->allocated) {
+        if (ptr->storage != NULL) {
+            xfree(ptr->storage);
+            ptr->storage = NULL;
+        }
+        ptr->allocated = false;
+    }
+
+    return self;
+}
+
+static VALUE
+ptr_autorelease(VALUE self, VALUE autorelease)
+{
+    Pointer* ptr;
+
+    Data_Get_Struct(self, Pointer, ptr);
+    ptr->autorelease = autorelease == Qtrue;
+
+    return autorelease;
+}
+
+
+static void
+ptr_release(Pointer* ptr)
+{
+    if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
+        xfree(ptr->storage);
+        ptr->storage = NULL;
+    }
+    xfree(ptr);
+}
+
 static void
 ptr_mark(Pointer* ptr)
 {
-    rb_gc_mark(ptr->parent);
+    rb_gc_mark(ptr->rbParent);
 }
 
 void
@@ -268,6 +332,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(rbffi_PointerClass, ptr_allocate);
     rb_define_method(rbffi_PointerClass, "initialize", ptr_initialize, -1);
+    rb_define_method(rbffi_PointerClass, "initialize_copy", ptr_initialize_copy, 1);
     rb_define_method(rbffi_PointerClass, "inspect", ptr_inspect, 0);
     rb_define_method(rbffi_PointerClass, "to_s", ptr_inspect, 0);
     rb_define_method(rbffi_PointerClass, "+", ptr_plus, 1);
@@ -277,6 +342,8 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_alias(rbffi_PointerClass, "to_i", "address");
     rb_define_method(rbffi_PointerClass, "==", ptr_equals, 1);
     rb_define_method(rbffi_PointerClass, "order", ptr_order, -1);
+    rb_define_method(rbffi_PointerClass, "autorelease=", ptr_autorelease, 1);
+    rb_define_method(rbffi_PointerClass, "free", ptr_free, 0);
 
     rbffi_NullPointerSingleton = rb_class_new_instance(1, &rbNullAddress, rbffi_PointerClass);
     rb_define_const(rbffi_PointerClass, "NULL", rbffi_NullPointerSingleton);

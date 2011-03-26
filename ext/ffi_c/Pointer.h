@@ -21,6 +21,8 @@
 #ifndef RBFFI_POINTER_H
 #define	RBFFI_POINTER_H
 
+#include <stdbool.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -32,6 +34,13 @@ extern VALUE rbffi_Pointer_NewInstance(void* addr);
 extern VALUE rbffi_PointerClass;
 extern VALUE rbffi_NullPointerSingleton;
 
+typedef struct Pointer {
+    AbstractMemory memory;
+    VALUE rbParent;
+    char* storage; /* start of malloc area */
+    bool autorelease;
+    bool allocated;
+} Pointer;
 
 #ifdef	__cplusplus
 }

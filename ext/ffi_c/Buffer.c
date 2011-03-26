@@ -98,6 +98,33 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
+buffer_initialize_copy(VALUE self, VALUE other)
+{
+    AbstractMemory* src;
+    Buffer* dst;
+    
+    Data_Get_Struct(self, Buffer, dst);
+    src = rbffi_AbstractMemory_Cast(other, BufferClass);
+    if (dst->storage != NULL) {
+        xfree(dst->storage);
+    }
+    dst->storage = xmalloc(src->size + 7);
+    if (dst->storage == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate memory size=%lu bytes", src->size);
+        return Qnil;
+    }
+    
+    dst->memory.address = (void *) (((uintptr_t) dst->storage + 0x7) & (uintptr_t) ~0x7UL);
+    dst->memory.size = src->size;
+    dst->memory.typeSize = src->typeSize;
+    
+    // finally, copy the actual buffer contents
+    memcpy(dst->memory.address, src->address, src->size);
+
+    return self;
+}
+
+static VALUE
 buffer_alloc_inout(int argc, VALUE* argv, VALUE klass)
 {
     return buffer_initialize(argc, argv, buffer_allocate(klass));
@@ -235,6 +262,7 @@ rbffi_Buffer_Init(VALUE moduleFFI)
     rb_define_alias(rb_singleton_class(BufferClass), "new_inout", "alloc_inout");
     
     rb_define_method(BufferClass, "initialize", buffer_initialize, -1);
+    rb_define_method(BufferClass, "initialize_copy", buffer_initialize_copy, 1);
     rb_define_method(BufferClass, "order", buffer_order, -1);
     rb_define_method(BufferClass, "inspect", buffer_inspect, 0);
     rb_define_alias(BufferClass, "length", "total");

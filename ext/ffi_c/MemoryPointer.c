@@ -28,15 +28,10 @@
 #include "Pointer.h"
 #include "MemoryPointer.h"
 
-typedef struct MemoryPointer {
-    AbstractMemory memory;
-    char* storage; /* start of malloc area */
-    bool autorelease;
-    bool allocated;
-} MemoryPointer;
 
 static VALUE memptr_allocate(VALUE klass);
-static void memptr_release(MemoryPointer* ptr);
+static void memptr_mark(Pointer* ptr);
+static void memptr_release(Pointer* ptr);
 static VALUE memptr_malloc(VALUE self, long size, long count, bool clear);
 static VALUE memptr_free(VALUE self);
 
@@ -53,8 +48,9 @@ rbffi_MemoryPointer_NewInstance(long size, long count, bool clear)
 static VALUE
 memptr_allocate(VALUE klass)
 {
-    MemoryPointer* p;
-    VALUE obj = Data_Make_Struct(klass, MemoryPointer, NULL, memptr_release, p);
+    Pointer* p;
+    VALUE obj = Data_Make_Struct(klass, Pointer, NULL, memptr_release, p);
+    p->rbParent = Qnil;
     p->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
@@ -79,10 +75,10 @@ memptr_initialize(int argc, VALUE* argv, VALUE self)
 static VALUE
 memptr_malloc(VALUE self, long size, long count, bool clear)
 {
-    MemoryPointer* p;
+    Pointer* p;
     unsigned long msize;
 
-    Data_Get_Struct(self, MemoryPointer, p);
+    Data_Get_Struct(self, Pointer, p);
 
     msize = size * count;
 
@@ -108,9 +104,9 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
 static VALUE
 memptr_free(VALUE self)
 {
-    MemoryPointer* ptr;
+    Pointer* ptr;
 
-    Data_Get_Struct(self, MemoryPointer, ptr);
+    Data_Get_Struct(self, Pointer, ptr);
 
     if (ptr->allocated) {
         if (ptr->storage != NULL) {
@@ -123,19 +119,8 @@ memptr_free(VALUE self)
     return self;
 }
 
-static VALUE
-memptr_autorelease(VALUE self, VALUE autorelease)
-{
-    MemoryPointer* ptr;
-
-    Data_Get_Struct(self, MemoryPointer, ptr);
-    ptr->autorelease = autorelease == Qtrue;
-
-    return autorelease;
-}
-
 static void
-memptr_release(MemoryPointer* ptr)
+memptr_release(Pointer* ptr)
 {
     if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
         xfree(ptr->storage);
@@ -143,6 +128,13 @@ memptr_release(MemoryPointer* ptr)
     }
     xfree(ptr);
 }
+
+static void
+memptr_mark(Pointer* ptr)
+{
+    rb_gc_mark(ptr->rbParent);
+}
+
 
 void
 rbffi_MemoryPointer_Init(VALUE moduleFFI)
@@ -152,7 +144,5 @@ rbffi_MemoryPointer_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(rbffi_MemoryPointerClass, memptr_allocate);
     rb_define_method(rbffi_MemoryPointerClass, "initialize", memptr_initialize, -1);
-    rb_define_method(rbffi_MemoryPointerClass, "autorelease=", memptr_autorelease, 1);
-    rb_define_method(rbffi_MemoryPointerClass, "free", memptr_free, 0);
 }
 
