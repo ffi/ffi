@@ -126,7 +126,7 @@ module FFI
     native_type Type::POINTER
 
     def self.from_native(val, ctx)
-      [ val.null? ? Qnil : val.get_string(0), val ]
+      [ val.null? ? nil : val.get_string(0), val ]
     end
 
   end
