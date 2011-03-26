@@ -53,7 +53,7 @@
 #include "Thread.h"
 
 typedef struct Function_ {
-    AbstractMemory memory;
+    Pointer base;
     FunctionType* info;
     MethodHandle* methodHandle;
     bool autorelease;
@@ -131,8 +131,8 @@ function_allocate(VALUE klass)
 
     obj = Data_Make_Struct(klass, Function, function_mark, function_free, fn);
 
-    fn->memory.flags = MEM_RD;
-
+    fn->base.memory.flags = MEM_RD;
+    fn->base.rbParent = Qnil;
     fn->rbProc = Qnil;
     fn->rbFunctionInfo = Qnil;
     fn->autorelease = true;
@@ -143,6 +143,7 @@ function_allocate(VALUE klass)
 static void
 function_mark(Function *fn)
 {
+    rb_gc_mark(fn->base.rbParent);
     rb_gc_mark(fn->rbProc);
     rb_gc_mark(fn->rbFunctionInfo);
 }
@@ -201,6 +202,13 @@ function_initialize(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
+static VALUE
+function_initialize_copy(VALUE self, VALUE other)
+{
+    rb_raise(rb_eRuntimeError, "cannot duplicate function instances");
+    return Qnil;
+}
+
 VALUE
 rbffi_Function_NewInstance(VALUE rbFunctionInfo, VALUE rbProc)
 {
@@ -254,9 +262,10 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
     Data_Get_Struct(fn->rbFunctionInfo, FunctionType, fn->info);
 
     if (rb_obj_is_kind_of(rbProc, rbffi_PointerClass)) {
-        AbstractMemory* memory;
-        Data_Get_Struct(rbProc, AbstractMemory, memory);
-        fn->memory = *memory;
+        Pointer* orig;
+        Data_Get_Struct(rbProc, Pointer, orig);
+        fn->base.memory = orig->memory;
+        fn->base.rbParent = rbProc;
 
     } else if (rb_obj_is_kind_of(rbProc, rb_cProc) || rb_respond_to(rbProc, id_call)) {
         if (fn->info->closurePool == NULL) {
@@ -280,8 +289,8 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
         fn->closure = rbffi_Closure_Alloc(fn->info->closurePool);
         fn->closure->info = fn;
-        fn->memory.address = fn->closure->code;
-        fn->memory.size = sizeof(*fn->closure);
+        fn->base.memory.address = fn->closure->code;
+        fn->base.memory.size = sizeof(*fn->closure);
         fn->autorelease = true;
 
     } else {
@@ -301,7 +310,7 @@ function_call(int argc, VALUE* argv, VALUE self)
 
     Data_Get_Struct(self, Function, fn);
 
-    return (*fn->info->invoke)(argc, argv, fn->memory.address, fn->info);
+    return (*fn->info->invoke)(argc, argv, fn->base.memory.address, fn->info);
 }
 
 static VALUE
@@ -323,7 +332,7 @@ function_attach(VALUE self, VALUE module, VALUE name)
     }
 
     if (fn->methodHandle == NULL) {
-        fn->methodHandle = rbffi_MethodHandle_Alloc(fn->info, fn->memory.address);
+        fn->methodHandle = rbffi_MethodHandle_Alloc(fn->info, fn->base.memory.address);
     }
 
     //
@@ -819,6 +828,7 @@ rbffi_Function_Init(VALUE moduleFFI)
     rb_define_alloc_func(rbffi_FunctionClass, function_allocate);
 
     rb_define_method(rbffi_FunctionClass, "initialize", function_initialize, -1);
+    rb_define_method(rbffi_FunctionClass, "initialize_copy", function_initialize_copy, 1);
     rb_define_method(rbffi_FunctionClass, "call", function_call, -1);
     rb_define_method(rbffi_FunctionClass, "attach", function_attach, 2);
     rb_define_method(rbffi_FunctionClass, "free", function_release, 0);

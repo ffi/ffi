@@ -37,7 +37,7 @@
 #include "DynamicLibrary.h"
 
 typedef struct LibrarySymbol_ {
-    AbstractMemory memory;
+    Pointer base;
     VALUE library;
     VALUE name;
 } LibrarySymbol;
@@ -163,8 +163,17 @@ symbol_allocate(VALUE klass)
     VALUE obj = Data_Make_Struct(klass, LibrarySymbol, NULL, -1, sym);
     sym->name = Qnil;
     sym->library = Qnil;
+    sym->base.rbParent = Qnil;
 
     return obj;
+}
+
+
+static VALUE
+symbol_initialize_copy(VALUE self, VALUE other)
+{
+    rb_raise(rb_eRuntimeError, "cannot duplicate symbol");
+    return Qnil;
 }
 
 static VALUE
@@ -173,10 +182,10 @@ symbol_new(VALUE library, void* address, VALUE name)
     LibrarySymbol* sym;
     VALUE obj = Data_Make_Struct(SymbolClass, LibrarySymbol, symbol_mark, -1, sym);
 
-    sym->memory.address = address;
-    sym->memory.size = LONG_MAX;
-    sym->memory.typeSize = 1;
-    sym->memory.flags = MEM_RD | MEM_WR;
+    sym->base.memory.address = address;
+    sym->base.memory.size = LONG_MAX;
+    sym->base.memory.typeSize = 1;
+    sym->base.memory.flags = MEM_RD | MEM_WR;
     sym->library = library;
     sym->name = name;
 
@@ -198,7 +207,7 @@ symbol_inspect(VALUE self)
 
     Data_Get_Struct(self, LibrarySymbol, sym);
     snprintf(buf, sizeof(buf), "#<FFI::Library::Symbol name=%s address=%p>",
-             StringValueCStr(sym->name), sym->memory.address);
+             StringValueCStr(sym->name), sym->base.memory.address);
     return rb_str_new2(buf);
 }
 
@@ -224,6 +233,8 @@ rbffi_DynamicLibrary_Init(VALUE moduleFFI)
     rb_define_alloc_func(SymbolClass, symbol_allocate);
     rb_undef_method(SymbolClass, "new");
     rb_define_method(SymbolClass, "inspect", symbol_inspect, 0);
+    rb_define_method(SymbolClass, "initialize_copy", symbol_initialize_copy, 1);
+    
 
 #define DEF(x) rb_define_const(LibraryClass, "RTLD_" #x, UINT2NUM(RTLD_##x))
     DEF(LAZY);

@@ -125,14 +125,27 @@ ptr_initialize_copy(VALUE self, VALUE other)
     
     Data_Get_Struct(self, Pointer, dst);
     src = POINTER(other);
+    if (src->size == LONG_MAX) {
+        rb_raise(rb_eRuntimeError, "cannot duplicate unbounded memory area");
+        return Qnil;
+    }
+    
+    if ((dst->memory.flags & (MEM_RD | MEM_WR)) != (MEM_RD | MEM_WR)) {
+        rb_raise(rb_eRuntimeError, "cannot duplicate unreadable/unwritable memory area");
+        return Qnil;
+    }
+
     if (dst->storage != NULL) {
         xfree(dst->storage);
+        dst->storage = NULL;
     }
+
     dst->storage = xmalloc(src->size + 7);
     if (dst->storage == NULL) {
         rb_raise(rb_eNoMemError, "failed to allocate memory size=%lu bytes", src->size);
         return Qnil;
     }
+    
     dst->allocated = true;
     dst->autorelease = true;
     dst->memory.address = (void *) (((uintptr_t) dst->storage + 0x7) & (uintptr_t) ~0x7UL);
@@ -305,6 +318,16 @@ ptr_autorelease(VALUE self, VALUE autorelease)
     return autorelease;
 }
 
+static VALUE
+ptr_autorelease_p(VALUE self)
+{
+    Pointer* ptr;
+
+    Data_Get_Struct(self, Pointer, ptr);
+    
+    return ptr->autorelease ? Qtrue : Qfalse;
+}
+
 
 static void
 ptr_release(Pointer* ptr)
@@ -343,6 +366,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_method(rbffi_PointerClass, "==", ptr_equals, 1);
     rb_define_method(rbffi_PointerClass, "order", ptr_order, -1);
     rb_define_method(rbffi_PointerClass, "autorelease=", ptr_autorelease, 1);
+    rb_define_method(rbffi_PointerClass, "autorelease?", ptr_autorelease_p, 0);
     rb_define_method(rbffi_PointerClass, "free", ptr_free, 0);
 
     rbffi_NullPointerSingleton = rb_class_new_instance(1, &rbNullAddress, rbffi_PointerClass);
