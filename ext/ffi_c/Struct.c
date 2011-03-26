@@ -119,6 +119,47 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
+struct_initialize_copy(VALUE self, VALUE other)
+{
+    Struct* src;
+    Struct* dst;
+    VALUE memargs[3];
+    
+    Data_Get_Struct(self, Struct, dst);
+    Data_Get_Struct(other, Struct, src);
+    if (dst == src) {
+        return self;
+    }
+    
+    dst->rbLayout = src->rbLayout;
+    dst->layout = src->layout;
+    
+    //
+    // A new MemoryPointer instance is allocated here instead of just calling 
+    // #dup on rbPointer, since the Pointer may not know its length, or may
+    // be longer than just this struct.
+    //
+    if (src->pointer->address != NULL) {
+        memargs[0] = INT2FIX(1);
+        memargs[1] = INT2FIX(src->layout->size);
+        memargs[2] = Qfalse;
+        dst->rbPointer = rb_class_new_instance(2, memargs, rbffi_MemoryPointerClass);
+        dst->pointer = MEMORY(dst->rbPointer);
+        memcpy(dst->pointer->address, src->pointer->address, src->layout->size);
+    } else {
+        dst->rbPointer = src->rbPointer;
+        dst->pointer = src->pointer;
+    }
+
+    if (src->layout->referenceFieldCount > 0) {
+        dst->rbReferences = ALLOC_N(VALUE, dst->layout->referenceFieldCount);
+        memcpy(dst->rbReferences, src->rbReferences, dst->layout->referenceFieldCount * sizeof(VALUE));
+    }
+        
+    return self;
+}
+
+static VALUE
 struct_class_layout(VALUE klass)
 {
     VALUE layout;
@@ -617,6 +658,7 @@ rbffi_Struct_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(StructClass, struct_allocate);
     rb_define_method(StructClass, "initialize", struct_initialize, -1);
+    rb_define_method(StructClass, "initialize_copy", struct_initialize_copy, 1);
     rb_define_method(StructClass, "order", struct_order, -1);
     
     rb_define_alias(rb_singleton_class(StructClass), "alloc_in", "new");
