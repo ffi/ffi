@@ -3,3 +3,4 @@
 --markup markdown
 --private
 lib/**/*.rb
+ext/**/*.c
