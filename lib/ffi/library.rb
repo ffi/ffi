@@ -135,9 +135,12 @@ module FFI
     # @option options [Boolean] :blocking (false) set to true the C function is a blocking call
     # @return [FFI::VariadicInvoker, FFI::Function]
     def attach_function(name, func, args, returns = nil, options = nil)
-      mname, a2, a3, a4, a5 = name, func, args, returns, options
-      cname, arg_types, ret_type, opts = (a4 && (a2.is_a?(String) || a2.is_a?(Symbol))) ? [ a2, a3, a4, a5 ] : [ mname.to_s, a2, a3, a4 ]
-
+      # allow for overloaded version
+      args = [name, func, args, returns, options].compact
+      args.unshift name.to_s if func.is_a?(Array)
+      
+      mname, cname, arg_types, ret_type, opts = args
+      
       # Convert :foo to the native type
       arg_types.map! { |e| find_type(e) }
       options = {
