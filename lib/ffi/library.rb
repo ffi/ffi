@@ -107,9 +107,35 @@ module FFI
 
     
     ##
-    # Attach C function to this module.
-    #
-    def attach_function(mname, a2, a3, a4=nil, a5 = nil)
+    # @overload attach_function(func, args, returns, options = {})
+    # @overload attach_function(name, func, args, returns, options = {})
+    # 
+    # Attach C function +func+ to this module.
+    # 
+    # @example attach function without an explicit name
+    #   module Foo
+    #     extend FFI::Library
+    #     ffi_lib FFI::Library::LIBC
+    #     attach_function :malloc, [:size_t], :pointer
+    #   end
+    #   # now callable via Foo.malloc
+    # 
+    # @example attach function with an explicit name
+    #   module Bar
+    #     extend FFI::Library
+    #     ffi_lib FFI::Library::LIBC
+    #     attach_function :c_malloc, :malloc, [:size_t], :pointer
+    #   end
+    #   # now callable via Bar.c_malloc
+    #   
+    # @param [#to_s] name name of ruby method to attach as
+    # @param [#to_s] func name of C function to attach
+    # @param [Array<Symbol>] args an array of types
+    # @param [Symbol] returns type of return value
+    # @option options [Boolean] :blocking (false) set to true the C function is a blocking call
+    # @return [FFI::VariadicInvoker, FFI::Function]
+    def attach_function(name, func, args, returns = nil, options = nil)
+      mname, a2, a3, a4, a5 = name, func, args, returns, options
       cname, arg_types, ret_type, opts = (a4 && (a2.is_a?(String) || a2.is_a?(Symbol))) ? [ a2, a3, a4, a5 ] : [ mname.to_s, a2, a3, a4 ]
 
       # Convert :foo to the native type
