@@ -55,7 +55,7 @@ typedef struct {
     MemoryOp* int64;
     MemoryOp* uint64;
     MemoryOp* slong;
-    MemoryOp* ulong;
+    MemoryOp* unslong;
     MemoryOp* float32;
     MemoryOp* float64;
     MemoryOp* pointer;
@@ -127,7 +127,7 @@ get_memory_op(Type* type)
         case NATIVE_LONG:
             return rbffi_AbstractMemoryOps.slong;
         case NATIVE_ULONG:
-            return rbffi_AbstractMemoryOps.ulong;
+            return rbffi_AbstractMemoryOps.unslong;
         case NATIVE_FLOAT32:
             return rbffi_AbstractMemoryOps.float32;
         case NATIVE_FLOAT64:
