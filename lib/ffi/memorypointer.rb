@@ -31,3 +31,11 @@ module FFI
 
   end
 end
+
+unless ''.respond_to?(:bytesize)
+  class String
+    alias bytesize size
+  end
+end
+
+
