@@ -2,6 +2,8 @@ require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 
 module Posix
   extend FFI::Library
+  ffi_lib FFI::Library::LIBC
+
   attach_function :gettimeofday, [ :buffer_out, :pointer ], :int
 end
 class Timeval < FFI::Struct

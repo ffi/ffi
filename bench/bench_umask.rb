@@ -1,13 +1,13 @@
-require 'benchmark'
-require 'ffi'
+require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 
-iter = 100000
 module Posix
   extend FFI::Library
+  ffi_lib 'c'
   attach_function 'umask', [ :int ], :int
 end
 module NativeFile
   extend FFI::Library
+  ffi_lib 'c'
   # Attaching the function to this module is about 10% faster than calling Posix.umask
   if FFI::Platform.windows?
     attach_function :_umask, '_umask', [ :int ], :int
@@ -25,36 +25,36 @@ module NativeFile
   end
 end
 puts "FFI umask=#{NativeFile.umask} File.umask=#{File.umask}"
-puts "Benchmark File.umask(0777) performance, #{iter}x"
+puts "Benchmark File.umask(0777) performance, #{ITER}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { File.umask(0777) }
+    ITER.times { File.umask(0777) }
   }
 }
-puts "Benchmark FFI File.umask(0777) performance, #{iter}x"
+puts "Benchmark FFI File.umask(0777) performance, #{ITER}x"
 
 10.times {
   puts Benchmark.measure {
-    iter.times { NativeFile.umask(0777) }
+    ITER.times { NativeFile.umask(0777) }
   }
 }
-puts "Benchmark FFI Posix.umask(0777) performance, #{iter}x"
+puts "Benchmark FFI Posix.umask(0777) performance, #{ITER}x"
 
 10.times {
   puts Benchmark.measure {
-    iter.times { Posix.umask(0777) }
+    ITER.times { Posix.umask(0777) }
   }
 }
-puts "Benchmark File.umask() performance, #{iter}x"
+puts "Benchmark File.umask() performance, #{ITER}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { File.umask }
+    ITER.times { File.umask }
   }
 }
-puts "Benchmark FFI File.umask() performance, #{iter}x"
+puts "Benchmark FFI File.umask() performance, #{ITER}x"
 
 10.times {
   puts Benchmark.measure {
-    iter.times { NativeFile.umask }
+    ITER.times { NativeFile.umask }
   }
 }

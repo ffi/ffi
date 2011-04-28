@@ -28,7 +28,6 @@ puts "Benchmark [ :int, :int, :int ], :void performance, #{ITER}x calls"
     ITER.times { LibTest.ffi_bench(0, 1, 2) }
   }
 }
-puts "Benchmark Invoker.call [ :int, :int, :int ], :void performance, #{ITER}x calls"
 
 puts "Benchmark ruby method(3 arg)  performance, #{ITER}x calls"
 10.times {
