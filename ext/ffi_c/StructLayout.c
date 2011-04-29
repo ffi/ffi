@@ -374,7 +374,8 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
         }
         rbName = rb_funcall2(rbField, rb_intern("name"), 0, NULL);
 
-        Data_Get_Struct(rbField, StructField, field = layout->fields[i]);
+        field = layout->fields[i];
+        Data_Get_Struct(rbField, StructField, field);
 
         if (field->type == NULL || field->type->ffiType == NULL) {
             rb_raise(rb_eRuntimeError, "type of field %d not supported", i);
