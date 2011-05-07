@@ -243,7 +243,7 @@ get_pointer_value(VALUE value)
     } else if (type == T_NIL) {
         return NULL;
     } else if (type == T_FIXNUM) {
-        return (void *) (uintptr_t) FIX2INT(value);
+        return (void *) (uintptr_t) FIX2ULONG(value);
     } else if (type == T_BIGNUM) {
         return (void *) (uintptr_t) NUM2ULL(value);
     } else if (rb_respond_to(value, id_to_ptr)) {
