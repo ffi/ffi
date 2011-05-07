@@ -485,7 +485,7 @@ inline_array_size(VALUE self)
 
     Data_Get_Struct(self, InlineArray, array);
 
-    return UINT2NUM(array->field->type->ffiType->size);
+    return UINT2NUM(((ArrayType *) array->field->type)->length);
 }
 
 static int

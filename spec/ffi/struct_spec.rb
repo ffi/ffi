@@ -584,9 +584,9 @@ describe FFI::Struct, ' with an array field'  do
 #  it 'should cache array object for successive calls' do
 #    @s[:a].object_id.should == @s[:a].object_id
 #  end
-  it 'should return the size of the array field in bytes' do
+  it 'should return the number of elements in the array field' do
     @s = LibTest::StructWithArray.new(LibTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
-    @s[:a].size.should == 20
+    @s[:a].size.should == 5
   end
   it 'should allow iteration through the array elements' do
     @s = LibTest::StructWithArray.new(LibTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
