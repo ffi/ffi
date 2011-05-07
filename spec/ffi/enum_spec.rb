@@ -196,4 +196,32 @@ describe "All enums" do
     enum[424242].should == :c15
     enum[42424242].should == :c16
   end
+  it "return nil for values that don't have a symbol" do
+    enum = TestEnum3.enum_type(:enum_type1)
+    enum[-1].should == nil
+    enum[4].should == nil
+
+    enum = TestEnum3.enum_type(:enum_type2)
+    enum[0].should == nil
+    enum[41].should == nil
+    enum[46].should == nil
+
+    enum = TestEnum3.enum_type(:enum_type3)
+    enum[0].should == nil
+    enum[41].should == nil
+    enum[44].should == nil
+    enum[4241].should == nil
+    enum[4244].should == nil
+
+    enum = TestEnum3.enum_type(:enum_type4)
+    enum[0].should == nil
+    enum[41].should == nil
+    enum[43].should == nil
+    enum[4241].should == nil
+    enum[4243].should == nil
+    enum[424241].should == nil
+    enum[424243].should == nil
+    enum[42424241].should == nil
+    enum[42424243].should == nil
+  end
 end
