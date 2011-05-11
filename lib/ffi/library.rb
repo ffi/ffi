@@ -132,7 +132,11 @@ module FFI
     # @param [#to_s] func name of C function to attach
     # @param [Array<Symbol>] args an array of types
     # @param [Symbol] returns type of return value
-    # @option options [Boolean] :blocking (false) set to true the C function is a blocking call
+    # @option options [Boolean] :blocking (@blocking) true if the C function is a blocking call
+    # @option options [Symbol] :convention (:default) calling convention (see #ffi_convention)
+    # @option options :enums
+    # @option options :type_map
+    # 
     # @return [FFI::VariadicInvoker, FFI::Function]
     def attach_function(name, func, args, returns = nil, options = nil)
       # allow for overloaded version
