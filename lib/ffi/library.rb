@@ -150,6 +150,8 @@ module FFI
     # @option options :type_map
     # 
     # @return [FFI::VariadicInvoker, FFI::Function]
+    # 
+    # @raise [FFI::NotFoundError] if +func+ cannot be found in the attached libraries (see {#ffi_lib})
     def attach_function(name, func, args, returns = nil, options = nil)
       mname, a2, a3, a4, a5 = name, func, args, returns, options
       cname, arg_types, ret_type, opts = (a4 && (a2.is_a?(String) || a2.is_a?(Symbol))) ? [ a2, a3, a4, a5 ] : [ mname.to_s, a2, a3, a4 ]
