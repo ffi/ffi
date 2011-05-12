@@ -102,6 +102,10 @@ module FFI
       @ffi_libs
     end
 
+    # Flags used in {#ffi_lib}.
+    # 
+    # This map allows you to supply symbols to {#ffi_lib_flags} instead of
+    # the actual constants.
     FlagsMap = {
       :global => DynamicLibrary::RTLD_GLOBAL,
       :local => DynamicLibrary::RTLD_LOCAL,
