@@ -93,8 +93,13 @@ module FFI
     def ffi_convention(convention)
       @ffi_convention = convention
     end
-
-
+    
+    # Retrieve the loaded FFI libraries
+    # 
+    # @see #ffi_lib
+    # @return [Array<FFI::DynamicLibrary>]
+    # 
+    # @raise [LoadError] if no libraries have been loaded (using {#ffi_lib})
     def ffi_libraries
       raise LoadError.new("no library specified") if !defined?(@ffi_libs) || @ffi_libs.empty?
       @ffi_libs
