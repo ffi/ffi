@@ -83,7 +83,13 @@ module FFI
       @ffi_libs = ffi_libs
     end
 
-
+    # Set the calling convention for {#attach_function} and {#callback}
+    # 
+    # @see http://en.wikipedia.org/wiki/Stdcall#stdcall
+    # @note +:stdcall+ is typically used for attaching Windows API functions
+    # 
+    # @param [Symbol] convention one of +:default+, +:stdcall+
+    # @return [Symbol] the new calling convention
     def ffi_convention(convention)
       @ffi_convention = convention
     end
