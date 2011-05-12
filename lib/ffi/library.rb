@@ -95,7 +95,7 @@ module FFI
     end
     
     # @see #ffi_lib
-    # @return [Array<FFI::DynamicLibrary>] currently loaded FFI libraries
+    # @return [Array<FFI::DynamicLibrary>] array of currently loaded FFI libraries
     # @raise [LoadError] if no libraries have been loaded (using {#ffi_lib})
     def ffi_libraries
       raise LoadError.new("no library specified") if !defined?(@ffi_libs) || @ffi_libs.empty?
