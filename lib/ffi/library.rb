@@ -125,7 +125,7 @@ module FFI
       :now => DynamicLibrary::RTLD_NOW
     }
 
-    # Allows setting library flags for {#ffi_lib}
+    # Sets library flags for {#ffi_lib}
     # 
     # @example
     #   ffi_lib_flags(:lazy, :local) # => 5
