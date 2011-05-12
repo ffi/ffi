@@ -113,6 +113,13 @@ module FFI
       :now => DynamicLibrary::RTLD_NOW
     }
 
+    # Allows setting library flags for {#ffi_lib}
+    # 
+    # @example
+    #   ffi_lib_flags(:lazy, :local) # => 5
+    # 
+    # @param [Symbol, …] flags (see {FlagsMap})
+    # @return [Fixnum] the new value
     def ffi_lib_flags(*flags)
       @ffi_lib_flags = flags.inject(0) { |result, f| result | FlagsMap[f] }
     end
