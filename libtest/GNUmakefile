@@ -57,14 +57,15 @@ ifneq ($(strip $(findstring $(OS), win32, mingw, cygwin)),)
 endif
 
 ifeq ($(OS), darwin)
-  ARCHFLAGS = -arch ppc
+  ifneq ($(findstring $(CPU),ppc),)
+    ARCHFLAGS += -arch ppc
+  endif
   ifneq ($(findstring $(CPU),i386 x86_64),)
     ARCHFLAGS += -arch i386 -arch x86_64
   endif
   CFLAGS += $(ARCHFLAGS) -DTARGET_RT_MAC_CFM=0
   CFLAGS += -fno-common
-  MACSDK = /Developer/SDKs/MacOSX10.4u.sdk
-  LDFLAGS = $(ARCHFLAGS) -dynamiclib -Wl,-syslibroot,$(MACSDK) -mmacosx-version-min=10.4
+  LDFLAGS = $(ARCHFLAGS) -dynamiclib
   # link against the universal libraries on ppc machines
   LDFLAGS += -L$(MACSDK)/usr/lib
   LIBEXT = dylib
