@@ -166,7 +166,7 @@ slice(VALUE self, long offset, long size)
     VALUE retval;
     
     Data_Get_Struct(self, AbstractMemory, ptr);
-    checkBounds(ptr, offset, 1);
+    checkBounds(ptr, offset, size == LONG_MAX ? 1 : size);
 
     retval = Data_Make_Struct(rbffi_PointerClass, Pointer, ptr_mark, -1, p);
 
