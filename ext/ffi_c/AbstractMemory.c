@@ -333,6 +333,21 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
     return retVal;
 }
 
+static VALUE 
+memory_read_array_of_string(int argc, VALUE* argv, VALUE self)
+{
+    VALUE* rargv = ALLOCA_N(VALUE, argc + 1);
+    int i;
+
+    rargv[0] = INT2FIX(0);
+    for (i = 0; i < argc; i++) {
+        rargv[i + 1] = argv[i];
+    }
+
+    return memory_get_array_of_string(argc + 1, rargv, self);
+}
+
+
 static VALUE
 memory_put_string(VALUE self, VALUE offset, VALUE str)
 {
@@ -404,6 +419,26 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     memcpy(ptr->address + off, RSTRING_PTR(str) + idx, len);
 
     return self;
+}
+
+static VALUE 
+memory_read_bytes(VALUE self, VALUE length)
+{
+    return memory_get_bytes(self, INT2FIX(0), length);
+}
+
+static VALUE 
+memory_write_bytes(int argc, VALUE* argv, VALUE self)
+{
+    VALUE* wargv = ALLOCA_N(VALUE, argc + 1);
+    int i;
+
+    wargv[0] = INT2FIX(0);
+    for (i = 0; i < argc; i++) {
+        wargv[i + 1] = argv[i];
+    }
+
+    return memory_put_bytes(argc + 1, wargv, self);
 }
 
 static VALUE
@@ -599,6 +634,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "put_string", memory_put_string, 2);
     rb_define_method(classMemory, "get_bytes", memory_get_bytes, 2);
     rb_define_method(classMemory, "put_bytes", memory_put_bytes, -1);
+    rb_define_method(classMemory, "read_bytes", memory_read_bytes, 1);
+    rb_define_method(classMemory, "write_bytes", memory_write_bytes, -1);
     rb_define_method(classMemory, "get_array_of_string", memory_get_array_of_string, -1);
 
     rb_define_method(classMemory, "clear", memory_clear, 0);
