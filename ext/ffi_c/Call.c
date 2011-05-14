@@ -361,6 +361,8 @@ getPointer(VALUE value, int type)
         if (rb_safe_level() >= 1 && OBJ_TAINTED(value)) {
             rb_raise(rb_eSecurityError, "Unsafe string parameter");
         }
+        rb_str_modify(value);
+
         return StringValuePtr(value);
 
     } else if (type == T_NIL) {
@@ -388,6 +390,7 @@ getString(VALUE value, int type)
         if (rb_safe_level() >= 1 && OBJ_TAINTED(value)) {
             rb_raise(rb_eSecurityError, "Unsafe string parameter");
         }
+        rb_str_modify(value);
 
         return StringValueCStr(value);
 
