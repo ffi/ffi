@@ -13,7 +13,7 @@ spec = Gem::Specification.new do |s|
   s.extensions = %w(ext/ffi_c/extconf.rb gen/Rakefile)
   s.require_path = 'lib'
   s.files = PROJ.gem.files
-  s.add_dependency *PROJ.gem.dependencies.flatten
+  s.add_dependency *PROJ.gem.dependencies.flatten unless PROJ.gem.dependencies.empty?
   PROJ.gem.extras.each do |msg, val|
     case val
     when Proc
