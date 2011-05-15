@@ -34,14 +34,17 @@ static VALUE PlatformModule = Qnil;
  * system installed ruby incorrectly reports 'host_cpu' as 'powerpc' when running
  * on intel.
  */
-#ifdef __i386__
+#if defined(__x86_64__) || defined(__x86_64) || defined(__amd64)
+# define CPU "x86_64"
+
+#elif defined(__i386__) || defined(__i386)
 # define CPU "i386"
 
-#elif defined(__ppc__) || defined(__powerpc__)
-# define CPU "powerpc"
+#elif defined(__ppc64__) || defined(__powerpc64__)
+# define CPU "ppc64"
 
-#elif defined(__x86_64__)
-# define CPU "x86_64"
+#elif defined(__ppc__) || defined(__powerpc__) || defined(__powerpc)
+# define CPU "ppc"
 
 /* Need to check for __sparcv9 first, because __sparc will be defined either way. */
 #elif defined(__sparcv9__) || defined(__sparcv9)
@@ -50,10 +53,17 @@ static VALUE PlatformModule = Qnil;
 #elif defined(__sparc__) || defined(__sparc)
 # define CPU "sparc"
 
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__arm)
 # define CPU "arm"
+
+#elif defined(__mips__) || defined(__mips)
+# define CPU "mips"
+
+#elif defined(__s390__)
+# define CPU "s390"
+
 #else
-# error "Unknown cpu type"
+# define CPU "unknown"
 #endif
 
 static void

@@ -64,7 +64,7 @@ module FFI
     IS_OPENBSD = is_os("openbsd")
     IS_WINDOWS = is_os("windows")
     IS_BSD = IS_MAC || IS_FREEBSD || IS_OPENBSD
-    CONF_DIR = File.dirname(__FILE__)
+    CONF_DIR = File.join(File.dirname(__FILE__), 'platform', ARCH.to_s + "-" + OS.to_s)
     public
 
     
