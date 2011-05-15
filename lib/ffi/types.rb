@@ -148,6 +148,7 @@ module FFI
         end
       }
     end
+    typedef :pointer, :caddr_t
   rescue Errno::ENOENT
   end
 end
