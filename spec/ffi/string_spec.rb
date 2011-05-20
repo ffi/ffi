@@ -24,7 +24,6 @@ describe "String tests" do
     attach_function :string_equals, [ :string, :string ], :int
     attach_function :string_dummy, [ :string ], :void
     attach_function :string_null, [ ], :string
-    attach_function :string_set, [ :string, :string ], :void
   end
   it "MemoryPointer#get_string returns a tainted string" do
     mp = FFI::MemoryPointer.new 1024
@@ -116,12 +115,5 @@ describe "String tests" do
     end
     ptrary.write_array_of_pointer(ary)
     lambda { ptrary.get_array_of_string(-1) }.should raise_error
-  end
-  it "does not alias copy-on-write string" do
-    str1 = "hello"
-    str2 = str1.dup   # shared underlying storage
-    StrLibTest.string_set(str2, "ok")
-    str1.should == "hello"
-    str2.should == "ok\000lo"
   end
 end
