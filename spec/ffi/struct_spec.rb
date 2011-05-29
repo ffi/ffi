@@ -669,4 +669,14 @@ describe "Struct allocation" do
     end
     S.new(FFI::MemoryPointer.new(S)).null?.should be_false
   end
+
+  it "supports :bool as a struct member" do
+    lambda do
+      c = Class.new(FFI::Struct) do
+        layout :b, :bool
+      end
+      c.new
+    end.should_not raise_error
+  end
+
 end

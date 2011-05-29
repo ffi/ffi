@@ -256,6 +256,21 @@ get_pointer_value(VALUE value)
 
 NUM_OP(pointer, void *, get_pointer_value, rbffi_Pointer_NewInstance, NOSWAP);
 
+static inline uint8_t
+rbffi_bool_value(VALUE value)
+{
+    return RTEST(value);
+}
+
+static inline VALUE
+rbffi_bool_new(uint8_t value)
+{
+    return (value & 1) != 0 ? Qtrue : Qfalse;
+}
+
+NUM_OP(bool, unsigned char, rbffi_bool_value, rbffi_bool_new, NOSWAP);
+
+
 static VALUE
 memory_clear(VALUE self)
 {

@@ -60,6 +60,7 @@ typedef struct {
     MemoryOp* float64;
     MemoryOp* pointer;
     MemoryOp* strptr;
+    MemoryOp* boolOp;
 } MemoryOps;
 
 struct AbstractMemory_ {
@@ -136,6 +137,8 @@ get_memory_op(Type* type)
             return rbffi_AbstractMemoryOps.pointer;
         case NATIVE_STRING:
             return rbffi_AbstractMemoryOps.strptr;
+        case NATIVE_BOOL:
+            return rbffi_AbstractMemoryOps.boolOp;
         default:
             return NULL;
     }
