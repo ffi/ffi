@@ -2,6 +2,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 str = "test"
 module LibC
   extend FFI::Library
+  ffi_lib 'c'
   attach_function :strlen, [ :string ], :int
 end
 
