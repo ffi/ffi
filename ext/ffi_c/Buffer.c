@@ -26,10 +26,15 @@
 #include "endian.h"
 #include "AbstractMemory.h"
 
+#define BUFFER_EMBED_MAXLEN (8)
 typedef struct Buffer {
     AbstractMemory memory;
-    char* storage; /* start of malloc area */
-    VALUE rbParent;
+    
+    union {
+        VALUE rbParent; /* link to parent buffer */
+        char* storage; /* start of malloc area */
+        long embed[BUFFER_EMBED_MAXLEN / sizeof(long)]; // storage for tiny allocations
+    } data;
 } Buffer;
 
 static VALUE buffer_allocate(VALUE klass);
@@ -47,7 +52,7 @@ buffer_allocate(VALUE klass)
     VALUE obj;
 
     obj = Data_Make_Struct(klass, Buffer, NULL, buffer_release, buffer);
-    buffer->rbParent = Qnil;
+    buffer->data.rbParent = Qnil;
     buffer->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
@@ -56,9 +61,9 @@ buffer_allocate(VALUE klass)
 static void
 buffer_release(Buffer* ptr)
 {
-    if (ptr->storage != NULL) {
-        xfree(ptr->storage);
-        ptr->storage = NULL;
+    if ((ptr->memory.flags & MEM_EMBED) == 0 && ptr->data.storage != NULL) {
+        xfree(ptr->data.storage);
+        ptr->data.storage = NULL;
     }
     
     xfree(ptr);
@@ -77,17 +82,23 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     p->memory.typeSize = rbffi_type_size(rbSize);
     p->memory.size = p->memory.typeSize * (nargs > 1 ? NUM2LONG(rbCount) : 1);
 
-    p->storage = xmalloc(p->memory.size + 7);
-    if (p->storage == NULL) {
-        rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", p->memory.size);
-        return Qnil;
-    }
+    if (p->memory.size > BUFFER_EMBED_MAXLEN) {
+        p->data.storage = xmalloc(p->memory.size + 7);
+        if (p->data.storage == NULL) {
+            rb_raise(rb_eNoMemError, "Failed to allocate memory size=%lu bytes", p->memory.size);
+            return Qnil;
+        }
 
-    /* ensure the memory is aligned on at least a 8 byte boundary */
-    p->memory.address = (void *) (((uintptr_t) p->storage + 0x7) & (uintptr_t) ~0x7UL);
+        /* ensure the memory is aligned on at least a 8 byte boundary */
+        p->memory.address = (void *) (((uintptr_t) p->data.storage + 0x7) & (uintptr_t) ~0x7UL);
     
-    if (nargs > 2 && (RTEST(rbClear) || rbClear == Qnil) && p->memory.size > 0) {
-        memset(p->memory.address, 0, p->memory.size);
+        if (p->memory.size > 0 && (nargs < 3 || RTEST(rbClear))) {
+            memset(p->memory.address, 0, p->memory.size);
+        }
+    
+    } else {
+        p->memory.flags |= MEM_EMBED;
+        p->memory.address = (void *) &p->data.embed[0];
     }
 
     if (rb_block_given_p()) {
@@ -105,16 +116,16 @@ buffer_initialize_copy(VALUE self, VALUE other)
     
     Data_Get_Struct(self, Buffer, dst);
     src = rbffi_AbstractMemory_Cast(other, BufferClass);
-    if (dst->storage != NULL) {
-        xfree(dst->storage);
+    if ((dst->memory.flags & MEM_EMBED) == 0 && dst->data.storage != NULL) {
+        xfree(dst->data.storage);
     }
-    dst->storage = xmalloc(src->size + 7);
-    if (dst->storage == NULL) {
+    dst->data.storage = xmalloc(src->size + 7);
+    if (dst->data.storage == NULL) {
         rb_raise(rb_eNoMemError, "failed to allocate memory size=%lu bytes", src->size);
         return Qnil;
     }
     
-    dst->memory.address = (void *) (((uintptr_t) dst->storage + 0x7) & (uintptr_t) ~0x7UL);
+    dst->memory.address = (void *) (((uintptr_t) dst->data.storage + 0x7) & (uintptr_t) ~0x7UL);
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
     
@@ -145,7 +156,7 @@ slice(VALUE self, long offset, long len)
     result->memory.size = len;
     result->memory.flags = ptr->memory.flags;
     result->memory.typeSize = ptr->memory.typeSize;
-    result->rbParent = self;
+    result->data.rbParent = self;
 
     return obj;
 }
@@ -232,9 +243,9 @@ buffer_free(VALUE self)
     Buffer* ptr;
 
     Data_Get_Struct(self, Buffer, ptr);
-    if (ptr->storage != NULL) {
-        xfree(ptr->storage);
-        ptr->storage = NULL;
+    if ((ptr->memory.flags & MEM_EMBED) == 0 && ptr->data.storage != NULL) {
+        xfree(ptr->data.storage);
+        ptr->data.storage = NULL;
     }
 
     return self;
@@ -243,7 +254,7 @@ buffer_free(VALUE self)
 static void
 buffer_mark(Buffer* ptr)
 {
-    rb_gc_mark(ptr->rbParent);
+    rb_gc_mark(ptr->data.rbParent);
 }
 
 void

@@ -37,6 +37,7 @@ extern "C" {
 #define MEM_WR   0x02
 #define MEM_CODE 0x04
 #define MEM_SWAP 0x08
+#define MEM_EMBED 0x10
 
 typedef struct AbstractMemory_ AbstractMemory;
 
