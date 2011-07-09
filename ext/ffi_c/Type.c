@@ -145,21 +145,29 @@ int
 rbffi_type_size(VALUE type)
 {
     int t = TYPE(type);
+    
     if (t == T_FIXNUM || t == T_BIGNUM) {
         return NUM2INT(type);
+    
     } else if (t == T_SYMBOL) {
         /*
          * Try looking up directly in the type and size maps
          */
         VALUE nType;
-        if ((nType = rb_hash_aref(typeMap, type)) != Qnil) {
-            VALUE nSize = rb_hash_aref(sizeMap, nType);
-            if (TYPE(nSize) == T_FIXNUM) {
-                return FIX2INT(nSize);
+        if ((nType = rb_hash_lookup(typeMap, type)) != Qnil) {
+            if (rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
+                Type* type;
+                Data_Get_Struct(nType, Type, type);
+                return type->ffiType->size;
+            
+            } else if (rb_respond_to(nType, id_size)) {
+                return NUM2INT(rb_funcall2(nType, id_size, 0, NULL));
             }
         }
+
         // Not found - call up to the ruby version to resolve
         return NUM2INT(rb_funcall2(rbffi_FFIModule, id_type_size, 1, &type));
+    
     } else {
         return NUM2INT(rb_funcall2(type, id_size, 0, NULL));
     }
@@ -174,7 +182,7 @@ rbffi_Type_Lookup(VALUE name)
          * Try looking up directly in the type Map
          */
         VALUE nType;
-        if ((nType = rb_hash_aref(typeMap, name)) != Qnil && rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
+        if ((nType = rb_hash_lookup(typeMap, name)) != Qnil && rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
             return nType;
         }
     } else if (rb_obj_is_kind_of(name, rbffi_TypeClass)) {
