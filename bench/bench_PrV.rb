@@ -51,7 +51,7 @@ puts "Benchmark [ :buffer_in ], :void performance (loop-allocated String param),
 puts "Benchmark [ :buffer_in ], :void performance (loop-allocated MemoryPointer param), #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
-    ITER.times { LibTest.bench(FFI::MemoryPointer.new(:int)) }
+    ITER.times { LibTest.bench(FFI::MemoryPointer.new(4)) }
   }
 }
 
