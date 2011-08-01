@@ -130,7 +130,6 @@ namespace :gem do
                  end
     s.rdoc_options = PROJ.rdoc.opts + ['--main', PROJ.rdoc.main]
     s.extra_rdoc_files = rdoc_files
-    s.has_rdoc = true
 
     if test ?f, PROJ.test.file
       s.test_file = PROJ.test.file

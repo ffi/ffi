@@ -2,7 +2,6 @@ spec = Gem::Specification.new do |s|
   s.name = PROJ.name
   s.version = PROJ.version
   s.platform = Gem::Platform::RUBY
-  s.has_rdoc = true
   s.extra_rdoc_files = ["README.rdoc", "LICENSE"]
   s.summary = PROJ.summary
   s.description = PROJ.description
