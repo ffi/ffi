@@ -68,7 +68,7 @@ struct ClosurePool_ {
     long refcnt;
 };
 
-static int pageSize;
+static long pageSize;
 
 static void* allocatePage(void);
 static bool freePage(void *);
@@ -109,8 +109,7 @@ void
 rbffi_ClosurePool_Free(ClosurePool* pool)
 {
     if (pool != NULL) {
-        int refcnt;
-        refcnt = --(pool->refcnt);
+        long refcnt = --(pool->refcnt);
         if (refcnt == 0) {
             cleanup_closure_pool(pool);
         }
@@ -124,7 +123,8 @@ rbffi_Closure_Alloc(ClosurePool* pool)
     Memory* block = NULL;
     caddr_t code = NULL;
     char errmsg[256];
-    int nclosures, trampolineSize;
+    int nclosures;
+    long trampolineSize;
     int i;
 
     if (pool->list != NULL) {
@@ -136,7 +136,7 @@ rbffi_Closure_Alloc(ClosurePool* pool)
     }
 
     trampolineSize = roundup(pool->closureSize, 8);
-    nclosures = pageSize / trampolineSize;
+    nclosures = (int) (pageSize / trampolineSize);
     block = calloc(1, sizeof(*block));
     list = calloc(nclosures, sizeof(*list));
     code = allocatePage();
@@ -192,7 +192,7 @@ rbffi_Closure_Free(Closure* closure)
 {
     if (closure != NULL) {
         ClosurePool* pool = closure->pool;
-        int refcnt;
+        long refcnt;
         // Just push it on the front of the free list
         closure->next = pool->list;
         pool->list = closure;
@@ -210,7 +210,7 @@ rbffi_Closure_CodeAddress(Closure* handle)
 }
 
 
-static int
+static long
 getPageSize()
 {
 #if defined(_WIN32) || defined(__WIN32__)

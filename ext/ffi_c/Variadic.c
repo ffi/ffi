@@ -159,7 +159,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     Check_Type(parameterValues, T_ARRAY);
 
     Data_Get_Struct(self, VariadicInvoker, invoker);
-    paramCount = RARRAY_LEN(parameterTypes);
+    paramCount = (int) RARRAY_LEN(parameterTypes);
     paramTypes = ALLOCA_N(Type *, paramCount);
     ffiParamTypes = ALLOCA_N(ffi_type *, paramCount);
     params = ALLOCA_N(FFIStorage, paramCount);
@@ -201,7 +201,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
         
         ffiParamTypes[i] = paramTypes[i]->ffiType;
         if (ffiParamTypes[i] == NULL) {
-            rb_raise(rb_eArgError, "Invalid parameter type #%x", paramTypes[i]);
+            rb_raise(rb_eArgError, "Invalid parameter type #%x", paramTypes[i]->nativeType);
         }
         argv[i] = rb_ary_entry(parameterValues, i);
     }

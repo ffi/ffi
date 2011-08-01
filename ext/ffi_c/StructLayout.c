@@ -348,7 +348,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     int i;
 
     Data_Get_Struct(self, StructLayout, layout);
-    layout->fieldCount = RARRAY_LEN(fields);
+    layout->fieldCount = (int) RARRAY_LEN(fields);
     layout->rbFieldMap = rb_hash_new();
     layout->rbFieldNames = rb_ary_new2(layout->fieldCount);
     layout->size = NUM2INT(size);

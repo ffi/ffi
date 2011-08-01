@@ -67,7 +67,7 @@
 
 
 static bool prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
-static int trampoline_size(void);
+static long trampoline_size(void);
 
 #if defined(__x86_64__) && defined(__GNUC__)
 # define CUSTOM_TRAMPOLINE 1
@@ -258,11 +258,11 @@ custom_trampoline(caddr_t args, Closure* handle)
 
 extern void ffi_trampoline(int argc, VALUE* argv, VALUE self);
 extern void ffi_trampoline_end(void);
-static int trampoline_offsets(int *, int *);
+static int trampoline_offsets(long *, long *);
 
-static int trampoline_ctx_offset, trampoline_func_offset;
+static long trampoline_ctx_offset, trampoline_func_offset;
 
-static int
+static long
 trampoline_offset(int off, const long value)
 {
     caddr_t ptr;
@@ -276,7 +276,7 @@ trampoline_offset(int off, const long value)
 }
 
 static int
-trampoline_offsets(int* ctxOffset, int* fnOffset)
+trampoline_offsets(long* ctxOffset, long* fnOffset)
 {
     *ctxOffset = trampoline_offset(0, TRAMPOLINE_CTX_MAGIC);
     if (*ctxOffset == -1) {
@@ -304,7 +304,7 @@ prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t er
     return true;
 }
 
-static int
+static long
 trampoline_size(void)
 {
     return (caddr_t) &ffi_trampoline_end - (caddr_t) &ffi_trampoline;
@@ -316,7 +316,7 @@ trampoline_size(void)
 void
 rbffi_MethodHandle_Init(VALUE module)
 {
-    defaultClosurePool = rbffi_ClosurePool_New(trampoline_size(), prep_trampoline, NULL);
+    defaultClosurePool = rbffi_ClosurePool_New((int) trampoline_size(), prep_trampoline, NULL);
 
 #if defined(CUSTOM_TRAMPOLINE)
     if (trampoline_offsets(&trampoline_ctx_offset, &trampoline_func_offset) != 0) {

@@ -88,7 +88,7 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
         return Qnil;
     }
     p->autorelease = true;
-    p->memory.typeSize = size;
+    p->memory.typeSize = (int) size;
     p->memory.size = msize;
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (char *) (((uintptr_t) p->storage + 0x7) & (uintptr_t) ~0x7UL);;

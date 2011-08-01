@@ -47,7 +47,7 @@ typedef struct InlineArray_ {
     MemoryOp *op;
     Type* componentType;
     ArrayType* arrayType;
-    unsigned int length;
+    int length;
 } InlineArray;
 
 
@@ -97,7 +97,7 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 
     /* Call up into ruby code to adjust the layout */
     if (nargs > 1) {
-        s->rbLayout = rb_funcall2(CLASS_OF(self), id_layout, RARRAY_LEN(rest), RARRAY_PTR(rest));
+        s->rbLayout = rb_funcall2(CLASS_OF(self), id_layout, (int) RARRAY_LEN(rest), RARRAY_PTR(rest));
     } else {
         s->rbLayout = struct_class_layout(klass);
     }
@@ -354,7 +354,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
     Data_Get_Struct(pointer, AbstractMemory, memory);
     layout = struct_layout(self);
 
-    if (layout->base.ffiType->size > memory->size) {
+    if ((int) layout->base.ffiType->size > memory->size) {
         rb_raise(rb_eArgError, "memory of %ld bytes too small for struct %s (expected at least %ld)",
                 memory->size, rb_obj_classname(self), (long) layout->base.ffiType->size);
     }
@@ -495,7 +495,7 @@ inline_array_offset(InlineArray* array, int index)
         rb_raise(rb_eIndexError, "index %d out of bounds", index);
     }
 
-    return array->field->offset + (index * array->componentType->ffiType->size);
+    return (int) array->field->offset + (index * (int) array->componentType->ffiType->size);
 }
 
 static VALUE

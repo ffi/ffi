@@ -158,7 +158,7 @@ rbffi_type_size(VALUE type)
             if (rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
                 Type* type;
                 Data_Get_Struct(nType, Type, type);
-                return type->ffiType->size;
+                return (int) type->ffiType->size;
             
             } else if (rb_respond_to(nType, id_size)) {
                 return NUM2INT(rb_funcall2(nType, id_size, 0, NULL));

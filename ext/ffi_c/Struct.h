@@ -59,7 +59,7 @@ extern "C" {
     struct StructLayout_ {
         Type base;
         StructField** fields;
-        unsigned int fieldCount;
+        int fieldCount;
         int size;
         int align;
         ffi_type** ffiTypes;
