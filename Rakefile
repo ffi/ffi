@@ -14,7 +14,7 @@ require 'rbconfig'
 
 load 'tasks/setup.rb'
 
-LIBEXT = case Config::CONFIG['host_os'].downcase
+LIBEXT = case RbConfig::CONFIG['host_os'].downcase
   when /darwin/
     "dylib"
   when /mswin|mingw/
@@ -23,7 +23,7 @@ LIBEXT = case Config::CONFIG['host_os'].downcase
     Config::CONFIG['DLEXT']
   end
 
-CPU = case Config::CONFIG['host_cpu'].downcase
+CPU = case RbConfig::CONFIG['host_cpu'].downcase
   when /i[3456]86/
     # Darwin always reports i686, even when running in 64bit mode
     if Config::CONFIG['host_os'] =~ /darwin/ && 0xfee1deadbeef.is_a?(Fixnum)
@@ -75,7 +75,7 @@ PROJ.name = 'ffi'
 PROJ.authors = 'Wayne Meissner'
 PROJ.email = 'wmeissner@gmail.com'
 PROJ.url = 'http://wiki.github.com/ffi/ffi'
-PROJ.version = '1.0.9'
+PROJ.version = '1.0.10'
 PROJ.rubyforge.name = 'ffi'
 PROJ.readme_file = 'README.rdoc'
 
