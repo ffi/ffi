@@ -129,6 +129,17 @@ builtin_type_free(BuiltinType *type)
 }
 
 static VALUE
+builtin_type_name(VALUE self)
+{
+    BuiltinType *type;
+
+    Data_Get_Struct(self, BuiltinType, type);
+
+    return rb_str_new2(type->name);
+}
+
+
+static VALUE
 builtin_type_inspect(VALUE self)
 {
     char buf[100];
@@ -241,6 +252,7 @@ rbffi_Type_Init(VALUE moduleFFI)
     // Make Type::Builtin non-allocatable
     rb_undef_method(CLASS_OF(classBuiltinType), "new");
     rb_define_method(classBuiltinType, "inspect", builtin_type_inspect, 0);
+    rb_define_method(classBuiltinType, "name", builtin_type_name, 0);
     
     rb_global_variable(&rbffi_TypeClass);
     rb_global_variable(&classBuiltinType);
