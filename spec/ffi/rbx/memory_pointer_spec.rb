@@ -12,12 +12,14 @@ end
 describe "MemoryPointer" do
   it "makes a pointer from a string" do
     m = FFI::MemoryPointer.from_string("FFI is Awesome")
-    m.type_size.should == 15
+    m.total.should == 15
+    m.type_size.should == 1
   end
 
   it "makes a pointer from a string with multibyte characters" do
     m = FFI::MemoryPointer.from_string("ぱんだ")
-    m.type_size.should == 10
+    m.total.should == 10
+    m.type_size.should == 1
   end
 
   it "reads back a string" do
