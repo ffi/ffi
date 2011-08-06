@@ -78,14 +78,10 @@ module FFI
     def typecast (type)
       type = FFI.find_type(type) if type.is_a?(Symbol)
 
-      if type.is_a?(Class) && type.ancestors.member?(FFI::Struct)
+      if type.is_a?(Class) && type.ancestors.member?(FFI::Struct) && !type.is_a?(FFI::ManagedStruct)
         type.new(self)
       elsif type.is_a?(Type::Builtin)
-        if type.name == :STRING
-          read_string
-        else
-          send "read_#{type.name.downcase}"
-        end
+        send "read_#{type.name.downcase}"
       elsif type.respond_to? :from_native
         type.from_native(typecast(type.native_type), nil)
       else
@@ -94,7 +90,7 @@ module FFI
     end
 
     def read_array_of (type, number)
-      type = FFI.find_type(type) if type.is_a?(Symbol)
+      type = FFI.find_type(type) if type.is_a? Symbol
       type = type.native_type    if type.respond_to? :native_type
 
       unless respond_to? "read_array_of_#{type.name.downcase}"
