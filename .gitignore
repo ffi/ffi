@@ -12,3 +12,4 @@ core
 lib/ffi/types.conf
 lib/ffi_c.bundle
 lib/ffi_c.so
+Gemfile.lock
