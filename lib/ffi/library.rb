@@ -95,17 +95,29 @@ module FFI
       @ffi_libs = ffi_libs
     end
 
-
+    # Set the calling convention for {#attach_function} and {#callback}
+    # 
+    # @see http://en.wikipedia.org/wiki/Stdcall#stdcall
+    # @note +:stdcall+ is typically used for attaching Windows API functions
+    # 
+    # @param [Symbol] convention one of +:default+, +:stdcall+
+    # @return [Symbol] the new calling convention
     def ffi_convention(convention)
       @ffi_convention = convention
     end
-
-
+    
+    # @see #ffi_lib
+    # @return [Array<FFI::DynamicLibrary>] array of currently loaded FFI libraries
+    # @raise [LoadError] if no libraries have been loaded (using {#ffi_lib})
     def ffi_libraries
       raise LoadError.new("no library specified") if !defined?(@ffi_libs) || @ffi_libs.empty?
       @ffi_libs
     end
 
+    # Flags used in {#ffi_lib}.
+    # 
+    # This map allows you to supply symbols to {#ffi_lib_flags} instead of
+    # the actual constants.
     FlagsMap = {
       :global => DynamicLibrary::RTLD_GLOBAL,
       :local => DynamicLibrary::RTLD_LOCAL,
@@ -113,17 +125,59 @@ module FFI
       :now => DynamicLibrary::RTLD_NOW
     }
 
+    # Sets library flags for {#ffi_lib}
+    # 
+    # @example
+    #   ffi_lib_flags(:lazy, :local) # => 5
+    # 
+    # @param [Symbol, …] flags (see {FlagsMap})
+    # @return [Fixnum] the new value
     def ffi_lib_flags(*flags)
       @ffi_lib_flags = flags.inject(0) { |result, f| result | FlagsMap[f] }
     end
 
     
     ##
-    # Attach C function to this module.
-    #
-    def attach_function(mname, a2, a3, a4=nil, a5 = nil)
-      cname, arg_types, ret_type, opts = (a4 && (a2.is_a?(String) || a2.is_a?(Symbol))) ? [ a2, a3, a4, a5 ] : [ mname.to_s, a2, a3, a4 ]
-
+    # @overload attach_function(func, args, returns, options = {})
+    # @overload attach_function(name, func, args, returns, options = {})
+    # 
+    # Attach C function +func+ to this module.
+    # 
+    # @example attach function without an explicit name
+    #   module Foo
+    #     extend FFI::Library
+    #     ffi_lib FFI::Library::LIBC
+    #     attach_function :malloc, [:size_t], :pointer
+    #   end
+    #   # now callable via Foo.malloc
+    # 
+    # @example attach function with an explicit name
+    #   module Bar
+    #     extend FFI::Library
+    #     ffi_lib FFI::Library::LIBC
+    #     attach_function :c_malloc, :malloc, [:size_t], :pointer
+    #   end
+    #   # now callable via Bar.c_malloc
+    #   
+    # @param [#to_s] name name of ruby method to attach as
+    # @param [#to_s] func name of C function to attach
+    # @param [Array<Symbol>] args an array of types
+    # @param [Symbol] returns type of return value
+    # @option options [Boolean] :blocking (@blocking) set to true if the C function is a blocking call
+    # @option options [Symbol] :convention (:default) calling convention (see {#ffi_convention})
+    # @option options :enums
+    # @option options :type_map
+    # 
+    # @return [FFI::VariadicInvoker, FFI::Function]
+    # 
+    # @raise [FFI::NotFoundError] if +func+ cannot be found in the attached libraries (see {#ffi_lib})
+    def attach_function(name, func, args, returns = nil, options = nil)
+      # allow for overloaded version
+      args = [name, func, args, returns, options].compact
+      args.unshift name.to_s if func.is_a?(Array)
+      
+      mname, cname, arg_types, ret_type, opts = args
+      
       # Convert :foo to the native type
       arg_types.map! { |e| find_type(e) }
       options = {
