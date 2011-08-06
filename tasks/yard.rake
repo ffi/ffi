@@ -5,6 +5,7 @@ begin
     YARD::Rake::YardocTask.new do |yard|
     end
   end
-rescue
+rescue LoadError
   warn "[warn] YARD unavailable"
 end
+
