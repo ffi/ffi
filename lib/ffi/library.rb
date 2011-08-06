@@ -67,12 +67,24 @@ module FFI
               break if lib
 
             rescue Exception => ex
-              errors[libname] = ex
+              ldscript = false
+              if ex.message =~ /(([^ \t()])+\.so([^ \t:()])*):([ \t])*invalid ELF header/
+                if File.read($1) =~ /GROUP *\( *([^ \)]+) *\)/
+                  libname = $1
+                  ldscript = true
+                end
+              end
+
+              if ldscript
+                retry
+              else
+                errors[libname] = ex
+              end
             end
           end
 
           if lib.nil?
-            raise LoadError.new(errors.values.join('. '))
+            raise LoadError.new(errors.values.join(".\n"))
           end
 
           # return the found lib
