@@ -143,7 +143,7 @@ prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t er
 }
 
 
-static int
+static long
 trampoline_size(void)
 {
     return sizeof(METHOD_CLOSURE);
