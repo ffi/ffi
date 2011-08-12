@@ -20,6 +20,9 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#ifndef _WIN32
+# include <pthread.h>
+#endif
 
 #define R(T, rtype) rtype testClosureVr##T(rtype (*closure)(void)) { \
     return closure != NULL ? (*closure)() : (rtype) 0; \
@@ -63,6 +66,44 @@ void testOptionalClosureBrV(void (*closure)(char), char a1)
     if (closure) {
         (*closure)(a1);
     }
+}
+
+
+struct ThreadVrV {
+    void (*closure)(void);
+    int count;
+};
+static void *
+threadVrV(void *arg)
+{
+    struct ThreadVrV* t = (struct ThreadVrV *) arg;
+    
+    int i;
+    for (i = 0; i < t->count; i++) {
+        (*t->closure)();
+    }
+    
+    return NULL;
+}
+
+void testThreadedClosureVrV(void (*closure)(void), int n)
+{
+#ifndef _WIN32
+    pthread_t t;
+    struct ThreadVrV arg;
+    
+    arg.closure = closure;
+    arg.count = n;
+    
+    pthread_create(&t, NULL, threadVrV, &arg);
+    
+    pthread_join(t, NULL);
+#else
+    int i;
+    for (i = 0; i < t->count; i++) {
+        (*closure)();
+    }
+#endif
 }
 
 struct s8f32s32 {

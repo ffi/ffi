@@ -136,3 +136,9 @@ TEST2(u64)
 
 TEST3(s64)
 
+void 
+foo6(intptr_t i1, intptr_t i2, intptr_t i3, intptr_t i4, intptr_t i5, intptr_t i6) { }
+
+void 
+foo5(intptr_t i1, intptr_t i2, intptr_t i3, intptr_t i4, intptr_t i5) { }
+
