@@ -35,7 +35,7 @@ module FFI
       "openbsd"
     when /sunos|solaris/
       "solaris"
-    when /win|mingw/
+    when /mingw|mswin/
       "windows"
     else
       RbConfig::CONFIG['host_os'].downcase
