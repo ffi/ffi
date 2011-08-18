@@ -6,6 +6,7 @@ module LibTest
   callback :closureVrV, [ ], :void
   
   attach_function :ffi_bench, :testClosureVrV, [ :closureVrV ], :void
+  @blocking = true
   attach_function :threaded_bench, :testThreadedClosureVrV, [ :closureVrV, :int ], :void
   
   def self.rb_bench(&block)
