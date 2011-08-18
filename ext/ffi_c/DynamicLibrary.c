@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #if defined(_WIN32) || defined(__WIN32__)
+# define _WINSOCKAPI_
 # include <windows.h>
 #else
 # include <dlfcn.h>
@@ -144,7 +145,7 @@ dl_open(const char* name, int flags)
     if (name == NULL) {
         return GetModuleHandle(NULL);
     } else {
-        return LoadLibraryEx(name, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+        return LoadLibraryExA(name, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
     }
 }
 

@@ -25,6 +25,7 @@
 # include <errno.h>
 # include <signal.h>
 #else
+# define _WINSOCKAPI_
 # include <windows.h>
 #endif
 #include <fcntl.h>
