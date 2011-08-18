@@ -22,6 +22,7 @@
 #ifndef RBFFI_STRUCT_H
 #define	RBFFI_STRUCT_H
 
+#include "extconf.h"
 #include "AbstractMemory.h"
 #include "Type.h"
 #ifdef RUBY_1_9

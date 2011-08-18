@@ -536,20 +536,21 @@ static MemoryOp memory_op_strptr = { memory_op_get_strptr, memory_op_put_strptr 
 //static MemoryOp memory_op_pointer = { memory_op_get_pointer, memory_op_put_pointer };
 
 MemoryOps rbffi_AbstractMemoryOps = {
-    .int8 = &memory_op_int8,
-    .uint8 = &memory_op_uint8,
-    .int16 = &memory_op_int16,
-    .uint16 = &memory_op_uint16,
-    .int32 = &memory_op_int32,
-    .uint32 = &memory_op_uint32,
-    .int64 = &memory_op_int64,
-    .uint64 = &memory_op_uint64,
-    .slong = &memory_op_long,
-    .uslong = &memory_op_ulong,
-    .float32 = &memory_op_float32,
-    .float64 = &memory_op_float64,
-    .pointer = &memory_op_pointer,
-    .strptr = &memory_op_strptr,
+    &memory_op_int8, //.int8
+    &memory_op_uint8, //.uint8
+    &memory_op_int16, //.int16
+    &memory_op_uint16, //.uint16
+    &memory_op_int32, //.int32
+    &memory_op_uint32, //.uint32
+    &memory_op_int64, //.int64
+    &memory_op_uint64, //.uint64
+    &memory_op_long, //.slong
+    &memory_op_ulong, //.uslong
+    &memory_op_float32, //.float32
+    &memory_op_float64, //.float64
+    &memory_op_pointer, //.pointer
+    &memory_op_strptr, //.strptr
+	NULL //.boolOp
 };
 
 void

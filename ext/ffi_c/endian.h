@@ -33,6 +33,12 @@
 # endif
 #endif
 
+#if defined(_MSC_VER)
+# define LITTLE_ENDIAN 1234
+# define BIG_ENDIAN 4321
+# define BYTE_ORDER LITTLE_ENDIAN
+#endif
+
 #if !defined(BYTE_ORDER) || !defined(LITTLE_ENDIAN) || !defined(BIG_ENDIAN)
 #  error "Cannot determine the endian-ness of this platform"
 #endif
