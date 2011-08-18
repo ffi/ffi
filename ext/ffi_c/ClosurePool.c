@@ -28,6 +28,7 @@
 #ifndef _WIN32
 #  include <unistd.h>
 #else
+#  define _WINSOCKAPI_
 #  include <windows.h>
 #endif
 #include <errno.h>

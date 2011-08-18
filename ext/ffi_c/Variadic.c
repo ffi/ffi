@@ -86,7 +86,8 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     VALUE retval = Qnil;
     VALUE convention = Qnil;
     VALUE fixed = Qnil;
-    int i;
+	VALUE rbConventionStr;
+	int i;
 
     Check_Type(options, T_HASH);
     convention = rb_hash_aref(options, ID2SYM(rb_intern("convention")));
@@ -97,7 +98,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     invoker->function = rbffi_AbstractMemory_Cast(rbFunction, rbffi_PointerClass)->address;
 
 #if defined(_WIN32) || defined(__WIN32__)
-    VALUE rbConventionStr = rb_funcall2(convention, rb_intern("to_s"), 0, NULL);
+    rbConventionStr = rb_funcall2(convention, rb_intern("to_s"), 0, NULL);
     invoker->abi = (RTEST(convention) && strcmp(StringValueCStr(rbConventionStr), "stdcall") == 0)
             ? FFI_STDCALL : FFI_DEFAULT_ABI;
 #else

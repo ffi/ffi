@@ -150,7 +150,7 @@ trampoline_size(void)
 }
 
 /*
- * attached_method_vinvoke is used functions with more than 6 parameters, or
+ * attached_method_invoke is used functions with more than 6 parameters, or
  * with struct param or return values
  */
 static void
@@ -316,6 +316,7 @@ trampoline_size(void)
 void
 rbffi_MethodHandle_Init(VALUE module)
 {
+    ffi_status ffiStatus;
     defaultClosurePool = rbffi_ClosurePool_New((int) trampoline_size(), prep_trampoline, NULL);
 
 #if defined(CUSTOM_TRAMPOLINE)
@@ -323,7 +324,7 @@ rbffi_MethodHandle_Init(VALUE module)
         rb_raise(rb_eFatal, "Could not locate offsets in trampoline code");
     }
 #else
-    ffi_status ffiStatus = ffi_prep_cif(&mh_cif, FFI_DEFAULT_ABI, 3, &ffi_type_ulong,
+    ffiStatus = ffi_prep_cif(&mh_cif, FFI_DEFAULT_ABI, 3, &ffi_type_ulong,
             methodHandleParamTypes);
     if (ffiStatus != FFI_OK) {
         rb_raise(rb_eFatal, "ffi_prep_cif failed.  status=%#x", ffiStatus);

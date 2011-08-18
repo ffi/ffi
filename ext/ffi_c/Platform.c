@@ -34,13 +34,13 @@ static VALUE PlatformModule = Qnil;
  * system installed ruby incorrectly reports 'host_cpu' as 'powerpc' when running
  * on intel.
  */
-#if defined(__x86_64__) || defined(__x86_64) || defined(__amd64)
+#if defined(__x86_64__) || defined(__x86_64) || defined(__amd64) || defined(_M_X64) || defined(_M_AMD64)
 # define CPU "x86_64"
 
-#elif defined(__i386__) || defined(__i386)
+#elif defined(__i386__) || defined(__i386) || defined(_M_IX86)
 # define CPU "i386"
 
-#elif defined(__ppc64__) || defined(__powerpc64__)
+#elif defined(__ppc64__) || defined(__powerpc64__) || defined(_M_PPC)
 # define CPU "ppc64"
 
 #elif defined(__ppc__) || defined(__powerpc__) || defined(__powerpc)
