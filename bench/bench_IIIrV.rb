@@ -3,7 +3,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 module LibTest
   extend FFI::Library
   ffi_lib LIBTEST_PATH
-  attach_function :ffi_bench, :bench_s32s32s32_v, [ :int, :int, :int ], :void
+  attach_function :ffi_bench, :bench_s32s32s32_v, [ :int, :int, :int ], :void, :save_errno => false
   def self.rb_bench(i0, i1, i2); nil; end
 end
 

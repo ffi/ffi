@@ -4,7 +4,7 @@ module LibTest
   extend FFI::Library
   ffi_lib LIBTEST_PATH
 
-  attach_function :bench, :bench_P_v, [ :buffer_in ], :void
+  attach_function :bench, :bench_P_v, [ :buffer_in ], :void, :save_errno => false
 end
 
 
