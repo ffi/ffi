@@ -103,7 +103,7 @@ cleanup_closure_pool(ClosurePool* pool)
         free(memory);
         memory = next;
     }
-    free(pool);
+    xfree(pool);
 }
 
 void
