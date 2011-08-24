@@ -96,16 +96,16 @@ module FFI
     end
 
     # Set the calling convention for {#attach_function} and {#callback}
-    # 
+    #
     # @see http://en.wikipedia.org/wiki/Stdcall#stdcall
     # @note +:stdcall+ is typically used for attaching Windows API functions
-    # 
+    #
     # @param [Symbol] convention one of +:default+, +:stdcall+
     # @return [Symbol] the new calling convention
     def ffi_convention(convention)
       @ffi_convention = convention
     end
-    
+
     # @see #ffi_lib
     # @return [Array<FFI::DynamicLibrary>] array of currently loaded FFI libraries
     # @raise [LoadError] if no libraries have been loaded (using {#ffi_lib})
@@ -115,7 +115,7 @@ module FFI
     end
 
     # Flags used in {#ffi_lib}.
-    # 
+    #
     # This map allows you to supply symbols to {#ffi_lib_flags} instead of
     # the actual constants.
     FlagsMap = {
@@ -126,23 +126,23 @@ module FFI
     }
 
     # Sets library flags for {#ffi_lib}
-    # 
+    #
     # @example
     #   ffi_lib_flags(:lazy, :local) # => 5
-    # 
+    #
     # @param [Symbol, …] flags (see {FlagsMap})
     # @return [Fixnum] the new value
     def ffi_lib_flags(*flags)
       @ffi_lib_flags = flags.inject(0) { |result, f| result | FlagsMap[f] }
     end
 
-    
+
     ##
     # @overload attach_function(func, args, returns, options = {})
     # @overload attach_function(name, func, args, returns, options = {})
-    # 
+    #
     # Attach C function +func+ to this module.
-    # 
+    #
     # @example attach function without an explicit name
     #   module Foo
     #     extend FFI::Library
@@ -150,7 +150,7 @@ module FFI
     #     attach_function :malloc, [:size_t], :pointer
     #   end
     #   # now callable via Foo.malloc
-    # 
+    #
     # @example attach function with an explicit name
     #   module Bar
     #     extend FFI::Library
@@ -158,7 +158,7 @@ module FFI
     #     attach_function :c_malloc, :malloc, [:size_t], :pointer
     #   end
     #   # now callable via Bar.c_malloc
-    #   
+    #
     # @param [#to_s] name name of ruby method to attach as
     # @param [#to_s] func name of C function to attach
     # @param [Array<Symbol>] args an array of types
@@ -167,9 +167,9 @@ module FFI
     # @option options [Symbol] :convention (:default) calling convention (see {#ffi_convention})
     # @option options :enums
     # @option options :type_map
-    # 
+    #
     # @return [FFI::VariadicInvoker, FFI::Function]
-    # 
+    #
     # @raise [FFI::NotFoundError] if +func+ cannot be found in the attached libraries (see {#ffi_lib})
     def attach_function(name, func, args, returns = nil, options = nil)
       mname, a2, a3, a4, a5 = name, func, args, returns, options
@@ -183,7 +183,7 @@ module FFI
         :blocking => defined?(@blocking) && @blocking,
         :enums => defined?(@ffi_enums) ? @ffi_enums : nil,
       }
-      
+
       @blocking = false
       options.merge!(opts) if opts && opts.is_a?(Hash)
 
@@ -192,7 +192,10 @@ module FFI
       ffi_libraries.each do |lib|
         if invokers.empty?
           begin
-            function = lib.find_function(cname.to_s)
+            function = nil
+            function_names(cname, arg_types).find do |name|
+              function = lib.find_function(name)
+            end
             raise LoadError unless function
 
             invokers << if arg_types.length > 0 && arg_types[arg_types.length - 1] == FFI::NativeType::VARARGS
@@ -213,6 +216,25 @@ module FFI
       invoker
     end
 
+    def function_names(name, arg_types)
+      # Function names on windows may be decorated if they are using stdcall. See
+      #  http://en.wikipedia.org/wiki/Name_mangling#C_name_decoration_in_Microsoft_Windows
+      #  http://msdn.microsoft.com/en-us/library/zxk0tw93%28v=VS.100%29.aspx
+      # Note that names can be overriden via def files and the windows api, although using
+      # stdcall, does't have mangled names.  As a result, return an array of potential
+      # function names that can be looked up.
+
+      result = [name.to_s]
+      if @ffi_convention == :stdcall
+        # Todo - check for win64 and don't add underscore
+        size = arg_types.inject(0) do |mem, arg|
+          mem + arg.size
+        end
+        result << "_#{name.to_s}@#{size}" # win32
+        result << "#{name.to_s}@#{size}" # win64
+      end
+      result
+    end
 
     def attach_variable(mname, a1, a2 = nil)
       cname, type = a2 ? [ a1, a2 ] : [ mname.to_s, a1 ]
@@ -336,7 +358,7 @@ module FFI
     def find_type(t)
       if t.kind_of?(Type)
         t
-      
+
       elsif defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(t)
         @ffi_typedefs[t]
 
@@ -346,7 +368,7 @@ module FFI
       elsif t.is_a?(DataConverter)
         # Add a typedef so next time the converter is used, it hits the cache
         typedef Type::Mapped.new(t), t
-      
+
       end || FFI.find_type(t)
     end
   end
