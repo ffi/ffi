@@ -8,16 +8,36 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
   if pkg_config("libffi") ||
      have_header("ffi.h") ||
      find_header("ffi.h", "/usr/local/include")
+  else
+    puts <<-EOL
+      Cannot find the include file <ffi.h>. Please specify its location by using one
+      of the following options:
 
-    # We need at least ffi_call and ffi_prep_closure
-    libffi_ok = have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
-                have_library("libffi", "ffi_call", [ "ffi.h" ])
-    libffi_ok &&= have_func("ffi_prep_closure")
-
-    # Check if the raw api is available.
-    $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")
+      --with-ffi_c-dir=/path/to/ffi
+      --with-ffi_c-lib=/path/to/ffi/include
+    EOL
+    exit 1
   end
   
+  # We need at least ffi_call and ffi_prep_closure
+  libffi_ok = have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
+              have_library("libffi", "ffi_call", [ "ffi.h" ])
+  libffi_ok &&= have_func("ffi_prep_closure")
+
+  unless libffi_ok
+    puts <<-EOL
+      Cannot find the library libffi. Please specify its location by using one
+      of the following options:
+
+      --with-ffi_c-dir=/path/to/ffi
+      --with-ffi_c-lib=/path/to/ffi/lib
+    EOL
+    exit 1
+  end
+
+  # Check if the raw api is available.
+  $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")
+
   have_func('rb_thread_blocking_region')
   have_func('ruby_thread_has_gvl_p') unless RUBY_VERSION >= "1.9.3"
   have_func('ruby_native_thread_p')
