@@ -218,18 +218,26 @@ module FFI
 
     def function_names(name, arg_types)
       # Function names on windows may be decorated if they are using stdcall. See
+      #
       #  http://en.wikipedia.org/wiki/Name_mangling#C_name_decoration_in_Microsoft_Windows
       #  http://msdn.microsoft.com/en-us/library/zxk0tw93%28v=VS.100%29.aspx
-      # Note that names can be overriden via def files and the windows api, although using
-      # stdcall, does't have mangled names.  As a result, return an array of potential
-      # function names that can be looked up.
+      #  http://en.wikibooks.org/wiki/X86_Disassembly/Calling_Conventions#STDCALL
+      #
+      # Note that decorated names can be overridden via def files.  Also note that the
+      # windows api, although using, doesn't have decorated names.
+      #
+      # This function returns a list of possible names to lookup.
 
       result = [name.to_s]
       if @ffi_convention == :stdcall
-        # Todo - check for win64 and don't add underscore
+        # Get the size of each parameter
         size = arg_types.inject(0) do |mem, arg|
           mem + arg.size
         end
+
+        # Next, the size must be a multiple of 4
+        size += (4 - size) % 4
+
         result << "_#{name.to_s}@#{size}" # win32
         result << "#{name.to_s}@#{size}" # win64
       end
