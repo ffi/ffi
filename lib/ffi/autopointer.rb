@@ -84,11 +84,12 @@ module FFI
 
       def free
         raise RuntimeError.new("pointer already freed") unless @ptr
+        @proc.release(@ptr)
         @autorelease = false
         @ptr = nil
         @proc = nil
       end
-      
+
       def autorelease=(autorelease)
         raise RuntimeError.new("pointer already freed") unless @ptr
         @autorelease = autorelease
