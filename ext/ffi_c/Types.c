@@ -86,6 +86,8 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
 
             Data_Get_Struct(rbMemory, AbstractMemory, mem);
             memcpy(mem->address, ptr, sbv->base.ffiType->size);
+            RB_GC_GUARD(rbMemory);
+            RB_GC_GUARD(rbType);
 
             return rb_class_new_instance(1, &rbMemory, sbv->rbStructClass);
         }
@@ -94,12 +96,17 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
             // For mapped types, first convert to the real native type, then upcall to
             // ruby to convert to the expected return type
             MappedType* m = (MappedType *) type;
-            VALUE values[2];
+            VALUE values[2], rbReturnValue;
 
             values[0] = rbffi_NativeValue_ToRuby(m->type, m->rbType, ptr);
             values[1] = Qnil;
+            
 
-            return rb_funcall2(m->rbConverter, id_from_native, 2, values);
+            rbReturnValue = rb_funcall2(m->rbConverter, id_from_native, 2, values);
+            RB_GC_GUARD(values[0]);
+            RB_GC_GUARD(rbType);
+            
+            return rbReturnValue;
         }
     
         default:

@@ -288,7 +288,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     void** ffiValues;
     FFIStorage* params;
     VALUE rbReturnValue;
-
+    
 #if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
     rbffi_thread_t oldThread;
 #endif
@@ -339,9 +339,12 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
 
     if (unlikely(!fnInfo->ignoreErrno)) {
         rbffi_save_errno();
-    }
-
-    return rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval);
+    }    
+    
+    RB_GC_GUARD(rbReturnValue) = rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval);
+    RB_GC_GUARD(fnInfo->rbReturnType);
+    
+    return rbReturnValue;
 }
 
 static inline void*
@@ -423,6 +426,7 @@ callback_param(VALUE proc, VALUE cbInfo)
 
     //callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
     callback = rbffi_Function_ForProc(cbInfo, proc);
+    RB_GC_GUARD(callback);
 
     return ((AbstractMemory *) DATA_PTR(callback))->address;
 }

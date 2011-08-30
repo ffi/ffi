@@ -211,7 +211,13 @@ static VALUE
 custom_trampoline(int argc, VALUE* argv, VALUE self, Closure* handle)
 {
     FunctionType* fnInfo = (FunctionType *) handle->info;
-    return (*fnInfo->invoke)(argc, argv, handle->function, fnInfo);
+    VALUE rbReturnValue;
+    
+    RB_GC_GUARD(rbReturnValue) = (*fnInfo->invoke)(argc, argv, handle->function, fnInfo);
+    RB_GC_GUARD_PTR(argv);
+    RB_GC_GUARD(self);
+
+    return rbReturnValue;
 }
 
 #elif defined(__i386__) && 0

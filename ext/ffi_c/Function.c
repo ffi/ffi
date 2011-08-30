@@ -709,6 +709,7 @@ callback_with_gvl(void* data)
     }
 
     rbReturnValue = rb_funcall2(fn->rbProc, id_call, cbInfo->parameterCount, rbParams);
+    RB_GC_GUARD_PTR(rbParams);
     
     if (unlikely(returnType->nativeType == NATIVE_MAPPED)) {
         VALUE values[] = { rbReturnValue, Qnil };
