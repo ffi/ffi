@@ -83,28 +83,33 @@ module FFI
       end
 
       def free
-        raise RuntimeError.new("pointer already freed") unless @ptr
-        @autorelease = false
-        @ptr = nil
-        @proc = nil
+        if @ptr
+          release(@ptr)
+          @autorelease = false
+          @ptr = nil
+          @proc = nil
+        end
       end
       
       def autorelease=(autorelease)
-        raise RuntimeError.new("pointer already freed") unless @ptr
-        @autorelease = autorelease
+        @autorelease = autorelease if @ptr
+      end
+      
+      def call(*args)
+        release(@ptr) if @autorelease && @ptr
       end
 
     end
 
     class DefaultReleaser < Releaser
-      def call(*args)
-        @proc.release(@ptr) if @autorelease && @ptr
+      def release(ptr)
+        @proc.release(ptr)
       end
     end
 
     class CallableReleaser < Releaser
-      def call(*args)
-        @proc.call(@ptr) if @autorelease && @ptr
+      def release(ptr)
+        @proc.call(ptr)
       end
     end
 
