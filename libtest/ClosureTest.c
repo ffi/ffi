@@ -100,7 +100,7 @@ void testThreadedClosureVrV(void (*closure)(void), int n)
     pthread_join(t, NULL);
 #else
     int i;
-    for (i = 0; i < t->count; i++) {
+    for (i = 0; i < n; i++) {
         (*closure)();
     }
 #endif
