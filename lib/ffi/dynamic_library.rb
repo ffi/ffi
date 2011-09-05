@@ -1,6 +1,5 @@
-#
-# Copyright (C) 2008-2010 JRuby project
-#
+# Copyright (C) 2008, 2009 Wayne Meissner
+# Copyright (c) 2007, 2008 Evan Phoenix
 # All rights reserved.
 #
 # This file is part of ruby-ffi.
@@ -16,21 +15,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-require 'ffi/platform'
-require 'ffi/types'
-require 'ffi/library'
-require 'ffi/errno'
-require 'ffi/pointer'
-require 'ffi/memorypointer'
-require 'ffi/struct'
-require 'ffi/union'
-require 'ffi/managedstruct'
-require 'ffi/callback'
-require 'ffi/io'
-require 'ffi/autopointer'
-require 'ffi/variadic'
-require 'ffi/enum'
-require 'ffi/version'
-require 'ffi/not_implemented'
-require 'ffi/dynamic_library'
+module FFI
+  class DynamicLibrary
+    def version
+      @version ||= Version.new(nil)
+    end
+
+    def version=(value)
+      @version = (value.nil? ? Gem::Version.new(value) : Gem::Version.create(value))
+    end
+  end
+end

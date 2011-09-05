@@ -186,37 +186,44 @@ module FFI
 
       @blocking = false
       options.merge!(opts) if opts && opts.is_a?(Hash)
+      required_version = Version.new(options[:version])
 
       # Try to locate the function in any of the libraries
-      invokers = []
-      ffi_libraries.each do |lib|
-        if invokers.empty?
-          begin
-            function = nil
-            function_names(cname, arg_types).find do |name|
-              function = lib.find_function(name)
-            end
-            raise LoadError unless function
-
-            invokers << if arg_types.length > 0 && arg_types[arg_types.length - 1] == FFI::NativeType::VARARGS
-              VariadicInvoker.new(function, arg_types, find_type(ret_type), options)
-
+      invoker = nil
+      ffi_libraries.find do |lib|
+        begin
+          invoker =
+            if lib.version < required_version
+              NotImplemented.new(cname, required_version, lib.version)
             else
-              Function.new(find_type(ret_type), arg_types, function, options)
-            end
+              function = find_decorated_function(lib, cname, arg_types)
+              raise LoadError unless function
 
-          rescue LoadError => ex
-          end
+              if arg_types.length > 0 && arg_types[arg_types.length - 1] == FFI::NativeType::VARARGS
+                VariadicInvoker.new(function, arg_types, find_type(ret_type), options)
+
+              else
+                Function.new(find_type(ret_type), arg_types, function, options)
+              end
+            end
+        rescue LoadError => ex
         end
       end
-      invoker = invokers.compact.shift
       raise FFI::NotFoundError.new(cname.to_s, ffi_libraries.map { |lib| lib.name }) unless invoker
 
       invoker.attach(self, mname.to_s)
       invoker
     end
 
-    def function_names(name, arg_types)
+    def find_decorated_function(lib, name, arg_types)
+      result = nil
+      map_function_name(name, arg_types).find do |decorated_name|
+        result = lib.find_function(decorated_name)
+      end
+      result
+    end
+
+    def map_function_name(name, arg_types)
       # Function names on windows may be decorated if they are using stdcall. See
       #
       #  http://en.wikipedia.org/wiki/Name_mangling#C_name_decoration_in_Microsoft_Windows
