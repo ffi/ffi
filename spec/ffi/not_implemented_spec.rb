@@ -57,12 +57,26 @@ describe FFI::NotImplemented do
   end
 end
 
+describe "Library has no version" do
+  before do
+    module LibTest
+      extend FFI::Library
+      ffi_lib TestLibrary::PATH
+    end
+  end
+
+  it 'has a nil version' do
+    lib = LibTest.ffi_libraries.first
+    lib.version.should == FFI::Version.new(nil)
+  end
+end
+
 describe "Library version is too old" do
   before do
     module LibTest
       extend FFI::Library
-      libs = ffi_lib TestLibrary::PATH
-      libs.first.version = FFI::Version.new('1.1.0')
+      ffi_lib TestLibrary::PATH
+      ffi_libraries.first.version = FFI::Version.new('1.1.0')
       attach_function :testFunctionAdd, [:int, :int, :pointer], :int, :version => '1.2.3'
     end
   end
@@ -79,8 +93,8 @@ describe "Library version is good" do
   before do
     module LibTest
       extend FFI::Library
-      libs = ffi_lib TestLibrary::PATH
-      libs.first.version = FFI::Version.new('1.2.3')
+      ffi_lib TestLibrary::PATH
+      ffi_libraries.first.version = FFI::Version.new('1.2.3')
       attach_function :testFunctionAdd, [:int, :int, :pointer], :int, :version => '1.1.1'
     end
   end

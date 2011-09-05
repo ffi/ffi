@@ -24,7 +24,7 @@ module FFI
     end
 
     def version=(value)
-      @version = (value.nil? ? Gem::Version.new(value) : Gem::Version.create(value))
+      @version = Version.new(value)
     end
   end
 end
