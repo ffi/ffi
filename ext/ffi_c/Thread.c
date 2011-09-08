@@ -188,8 +188,23 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
 VALUE
 rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2)
 {
-    return (*func)(data1);
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+    rbffi_thread_t oldThread;
+#endif
+    VALUE res;
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+    oldThread = rbffi_active_thread;
+    rbffi_active_thread = rbffi_thread_self();
+#endif
+
+    res = (*func)(data1);
+
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+    rbffi_active_thread = oldThread;
+#endif
+  return res;
 }
+#endif
 
 #endif /* !_WIN32 */
 
