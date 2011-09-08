@@ -69,9 +69,7 @@ static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void*
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 static void* callback_with_gvl(void* data);
 
-#if !defined(_WIN32) || defined(HAVE_RB_THREAD_BLOCKING_REGION)
-# define DEFER_ASYNC_CALLBACK 1
-#endif
+#define DEFER_ASYNC_CALLBACK 1
 
 
 #if defined(DEFER_ASYNC_CALLBACK)
@@ -117,8 +115,11 @@ static struct gvl_callback* async_cb_list = NULL;
     static int async_cb_pipe[2];
 #  endif
 # else
-static HANDLE async_cb_cond;
-static CRITICAL_SECTION async_cb_lock;
+    static HANDLE async_cb_cond;
+    static CRITICAL_SECTION async_cb_lock;
+#  if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+    static int async_cb_pipe[2];
+#  endif
 # endif
 #endif
 
@@ -277,7 +278,9 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
 #if defined(DEFER_ASYNC_CALLBACK)
         if (async_cb_thread == Qnil) {
-#if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#if !defined(HAVE_RB_THREAD_BLOCKING_REGION) && defined(_WIN32)
+            _pipe(async_cb_pipe, 1024, O_BINARY);
+#elif !defined(HAVE_RB_THREAD_BLOCKING_REGION)
             pipe(async_cb_pipe);
             fcntl(async_cb_pipe[0], F_SETFL, fcntl(async_cb_pipe[0], F_GETFL) | O_NONBLOCK);
             fcntl(async_cb_pipe[1], F_SETFL, fcntl(async_cb_pipe[1], F_GETFL) | O_NONBLOCK);
@@ -441,16 +444,27 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 
 #elif defined(DEFER_ASYNC_CALLBACK) && defined(_WIN32)
     } else {
+        bool empty = false;
+
         cb.async_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-        
+
         // Now signal the async callback thread
         EnterCriticalSection(&async_cb_lock);
+        empty = async_cb_list == NULL;
         cb.next = async_cb_list;
         async_cb_list = &cb;
         LeaveCriticalSection(&async_cb_lock);
 
+#if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+        // Only signal if the list was empty
+        if (empty) {
+            char c;
+            write(async_cb_pipe[1], &c, 1);
+        }
+#else
         SetEvent(async_cb_cond);
-        
+#endif
+
         // Wait for the thread executing the ruby callback to signal it is done
         WaitForSingleObject(cb.async_event, INFINITE);
         CloseHandle(cb.async_event);
@@ -481,10 +495,39 @@ async_cb_event(void* unused)
             rb_thread_create(async_cb_call, w.cb);
         }
     }
-    
+
     return Qnil;
 }
 
+#elif defined(_WIN32)
+static VALUE
+async_cb_event(void* unused)
+{
+    while (true) {
+        struct gvl_callback* cb;
+        char buf[64];
+        fd_set rfds;
+
+        FD_ZERO(&rfds);
+        FD_SET(async_cb_pipe[0], &rfds);
+        rb_thread_select(async_cb_pipe[0] + 1, &rfds, NULL, NULL, NULL);
+        read(async_cb_pipe[0], buf, sizeof(buf));
+
+        EnterCriticalSection(&async_cb_lock);
+        cb = async_cb_list;
+        async_cb_list = NULL;
+        LeaveCriticalSection(&async_cb_lock);
+
+        while (cb != NULL) {
+            struct gvl_callback* next = cb->next;
+            // Start up a new ruby thread to run the ruby callback
+            rb_thread_create(async_cb_call, cb);
+            cb = next;
+        }
+    }
+
+    return Qnil;
+}
 #else
 static VALUE
 async_cb_event(void* unused)
@@ -842,7 +885,7 @@ rbffi_Function_Init(VALUE moduleFFI)
     id_cb_ref = rb_intern("@__ffi_callback__");
     id_to_native = rb_intern("to_native");
     id_from_native = rb_intern("from_native");
-#if defined(_WIN32) && defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#if defined(_WIN32)
     InitializeCriticalSection(&async_cb_lock);
     async_cb_cond = CreateEvent(NULL, FALSE, FALSE, NULL);
 #endif
