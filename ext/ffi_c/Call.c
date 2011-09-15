@@ -329,7 +329,6 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         oldThread = rbffi_active_thread;
         rbffi_active_thread = rbffi_thread_self();
 #endif
-        retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
         ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
 
 #if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
