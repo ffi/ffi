@@ -9,8 +9,6 @@ ifeq ($(CPU),)
   CPU := $(shell uname -m | sed -e 's/i[345678]86/i386/')
 endif
 
-MODEL = 32 # Default to 32bit compiles
-
 PLATFORM = $(CPU)-$(OS)
 
 ifeq ($(OS), sunos)
@@ -94,34 +92,6 @@ ifneq ($(findstring bsd, $(OS)),)
   SOFLAGS = -shared -static-libgcc
   CFLAGS += -pthread
   LDFLAGS += -pthread
-endif
-
-ifeq ($(CPU), sparcv9)
-  MODEL = 64
-endif
-
-ifeq ($(CPU), amd64)
-  MODEL = 64
-endif
-
-ifeq ($(CPU), x86_64)
-  MODEL = 64
-endif
-
-ifeq ($(CPU), ppc64)
-  MODEL = 64
-endif
-
-ifeq ($(CPU), powerpc64)
-  MODEL = 64
-endif
-
-# On platforms (linux, solaris) that support both 32bit and 64bit, force building for one or the other
-ifneq ($(or $(findstring linux, $(OS)), $(findstring solaris, $(OS))),)
-  # Change the CC/LD instead of CFLAGS/LDFLAGS, incase other things in the flags
-  # makes the libffi build choke
-  CC += -m$(MODEL)
-  LD += -m$(MODEL)
 endif
 
 LIBTEST = $(BUILD_DIR)/$(LIBNAME)
