@@ -271,6 +271,11 @@ rbffi_bool_new(uint8_t value)
 NUM_OP(bool, unsigned char, rbffi_bool_value, rbffi_bool_new, NOSWAP);
 
 
+/*
+ * call-seq: memory.clear
+ * Set the memory to all-zero.
+ * @return [self]
+ */
 static VALUE
 memory_clear(VALUE self)
 {
@@ -279,6 +284,11 @@ memory_clear(VALUE self)
     return self;
 }
 
+/*
+ * call-seq: memory.size
+ * Return memory size in bytes (alias: #total)
+ * @return [Numeric]
+ */
 static VALUE
 memory_size(VALUE self) 
 {
@@ -289,6 +299,15 @@ memory_size(VALUE self)
     return LONG2NUM(ptr->size);
 }
 
+/*
+ * call-seq: memory.get_string(offset, length=nil)
+ * Return string contained in memory.
+ * @param [Numeric] offset point in buffer to start from
+ * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
+ * @return [String]
+ * @raise {IndexError} if +length+ is too great
+ * @raise {NullPointerError} if memory not initialized
+ */
 static VALUE
 memory_get_string(int argc, VALUE* argv, VALUE self)
 {
@@ -308,6 +327,15 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
             (end != NULL ? end - ptr->address - off : len));
 }
 
+/*
+ * call-seq: memory.get_array_of_string(offset, count=nil)
+ * Return an array of strings contained in memory.
+ * @param [Numeric] offset point in memory to start from
+ * @param [Numeric] count number of strings to get. If nil, return all strings
+ * @return [Array<String>]
+ * @raise {IndexError} if +offset+ is too great
+ * @raise {NullPointerError} if memory not initialized
+ */
 static VALUE
 memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
 {
@@ -348,6 +376,13 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
     return retVal;
 }
 
+/*
+ * call-seq: memory.read_array_of_string(count=nil)
+ * Return an array of strings contained in memory. Same as:
+ *  memory.get_array_of_string(0, count)
+ * @param [Numeric] count number of strings to get. If nil, return all strings
+ * @return [Array<String>]
+ */
 static VALUE 
 memory_read_array_of_string(int argc, VALUE* argv, VALUE self)
 {
@@ -363,6 +398,16 @@ memory_read_array_of_string(int argc, VALUE* argv, VALUE self)
 }
 
 
+/*
+ * call-seq: memory.put_string(offset, str)
+ * @param [Numeric] offset
+ * @param [String] str
+ * @return [self]
+ * @raise {SecurityError} when writing unsafe string to memory
+ * @raise {IndexError} if +offset+ is too great
+ * @raise {NullPointerError} if memory not initialized
+ * Put a string in memory.
+ */
 static VALUE
 memory_put_string(VALUE self, VALUE offset, VALUE str)
 {
@@ -387,6 +432,15 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
     return self;
 }
 
+/*
+ * call-seq: memory.get_bytes(offset, length)
+ * Return string contained in memory.
+ * @param [Numeric] offset point in buffer to start from
+ * @param [Numeric] length string's length in bytes.
+ * @return [String]
+ * @raise {IndexError} if +length+ is too great
+ * @raise {NullPointerError} if memory not initialized
+ */
 static VALUE
 memory_get_bytes(VALUE self, VALUE offset, VALUE length)
 {
@@ -402,6 +456,19 @@ memory_get_bytes(VALUE self, VALUE offset, VALUE length)
     return rb_tainted_str_new((char *) ptr->address + off, len);
 }
 
+/*
+ * call-seq: memory.put_bytes(offset, str, index=0, length=nil)
+ * Return string contained in memory.
+ * @param [Numeric] offset point in buffer to start from
+ * @param [String] str string to put to memory
+ * @param [Numeric] index
+ * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
+ * @return [String]
+ * @raise {IndexError} if +length+ is too great
+ * @raise {NullPointerError} if memory not initialized
+ * @raise {RangeError} if +index+ is negative, or if index+length is greater than size of string
+ * @raise {SecurityError} when writing unsafe string to memory
+ */
 static VALUE
 memory_put_bytes(int argc, VALUE* argv, VALUE self)
 {
@@ -436,12 +503,28 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
+/*
+ * call-seq: memory.read_bytes(length)
+ * @param [Numeric] length of string to return
+ * @return [String]
+ * equivalent to :
+ *  memory.get_bytes(0, length)
+ */
 static VALUE 
 memory_read_bytes(VALUE self, VALUE length)
 {
     return memory_get_bytes(self, INT2FIX(0), length);
 }
 
+/*
+ * call-seq: memory.write_bytes(str, index=0, length=nil)
+ * @param [String] str string to put to memory
+ * @param [Numeric] index
+ * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
+ * @return [String]
+ * equivalent to :
+ *  memory.put_bytes(0, str, index, length)
+ */
 static VALUE 
 memory_write_bytes(int argc, VALUE* argv, VALUE self)
 {
@@ -456,6 +539,11 @@ memory_write_bytes(int argc, VALUE* argv, VALUE self)
     return memory_put_bytes(argc + 1, wargv, self);
 }
 
+/*
+ * call-seq: memory.type_size
+ * @return [Numeric] type size in bytes
+ * Get the memory's type size.
+ */
 static VALUE
 memory_type_size(VALUE self)
 {
@@ -466,6 +554,13 @@ memory_type_size(VALUE self)
     return INT2NUM(ptr->typeSize);
 }
 
+/*
+ * Document-method: []
+ * call-seq: memory[idx]
+ * @param [Numeric] idx index to access in memory
+ * @return 
+ * Memory read accessor.
+ */
 static VALUE
 memory_aref(VALUE self, VALUE idx)
 {
@@ -556,12 +651,42 @@ MemoryOps rbffi_AbstractMemoryOps = {
 void
 rbffi_AbstractMemory_Init(VALUE moduleFFI)
 {
+    /* 
+     * Document-class: FFI::AbstractMemory
+     * 
+     * {AbstractMemory} is the base class for many memory management classes such as {Buffer}.
+     *
+     * This class has a lot of methods to work with integers :
+     * * put_int<i>size</i>(offset, value)
+     * * get_int<i>size</i>(offset)
+     * * put_uint<i>size</i>(offset, value)
+     * * get_uint<i>size</i>(offset)
+     * * writeuint<i>size</i>(value)
+     * * read_int<i>size</i>
+     * * write_uint<i>size</i>(value)
+     * * read_uint<i>size</i>
+     * * put_array_of_int<i>size</i>(offset, ary)
+     * * get_array_of_int<i>size</i>(offset, length)
+     * * put_array_of_uint<i>size</i>(offset, ary)
+     * * get_array_of_uint<i>size</i>(offset, length)
+     * * write_array_of_int<i>size</i>(ary)
+     * * read_array_of_int<i>size</i>(length)
+     * * write_array_of_uint<i>size</i>(ary)
+     * * read_array_of_uint<i>size</i>(length)
+     * where _size_ is 8, 16, 32 or 64. Same methods exist for long type.
+     *
+     * Aliases exist : _char_ for _int8_, _short_ for _int16_, _int_ for _int32_ and <i>long_long</i> for _int64_.
+     *
+     * Others methods are listed below.
+     */
     VALUE classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
     rbffi_AbstractMemoryClass = classMemory;
+    /* Document-variable: FFI::AbstractMemory */
     rb_global_variable(&rbffi_AbstractMemoryClass);
     rb_define_alloc_func(classMemory, memory_allocate);
 
     NullPointerErrorClass = rb_define_class_under(moduleFFI, "NullPointerError", rb_eRuntimeError);
+    /* Document-variable: NullPointerError */
     rb_global_variable(&NullPointerErrorClass);
 
 
@@ -613,37 +738,247 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     ALIAS(int, int32);
     ALIAS(long_long, int64);
     
+    /*
+     * Document-method: put_float32
+     * call-seq: memory.put_float32offset, value)
+     * @param [Numeric] offset
+     * @param [Numeric] value
+     * @return [self]
+     * Put +value+ as a 32-bit float in memory at offset +offset+ (alias: #put_float).
+     */
     rb_define_method(classMemory, "put_float32", memory_put_float32, 2);
+    /*
+     * Document-method: get_float32
+     * call-seq: memory.get_float32(offset)
+     * @param [Numeric] offset
+     * @return [Float]
+     * Get a 32-bit float from memory at offset +offset+ (alias: #get_float).
+     */
     rb_define_method(classMemory, "get_float32", memory_get_float32, 1);
     rb_define_alias(classMemory, "put_float", "put_float32");
     rb_define_alias(classMemory, "get_float", "get_float32");
+    /*
+     * Document-method: write_float
+     * call-seq: memory.write_float(value)
+     * @param [Numeric] value
+     * @return [self]
+     * Write +value+ as a 32-bit float in memory.
+     *
+     * Same as:
+     *  memory.put_float(0, value)
+     */
     rb_define_method(classMemory, "write_float", memory_write_float32, 1);
+    /*
+     * Document-method: read_float
+     * call-seq: memory.read_float
+     * @return [Float]
+     * Read a 32-bit float from memory.
+     *
+     * Same as:
+     *  memory.get_float(0)
+     */
     rb_define_method(classMemory, "read_float", memory_read_float32, 0);
+    /*
+     * Document-method: put_array_of_float32
+     * call-seq: memory.put_array_of_float32(offset, ary)
+     * @param [Numeric] offset
+     * @param [Array<Numeric>] ary
+     * @return [self]
+     * Put values from +ary+ as 32-bit floats in memory from offset +offset+ (alias: #put_array_of_float).
+     */
     rb_define_method(classMemory, "put_array_of_float32", memory_put_array_of_float32, 2);
+    /*
+     * Document-method: get_array_of_float32
+     * call-seq: memory.get_array_of_float32(offset, length)
+     * @param [Numeric] offset
+     * @param [Numeric] length number of Float to get
+     * @return [Array<Float>]
+     * Get 32-bit floats in memory from offset +offset+ (alias: #get_array_of_float).
+     */
     rb_define_method(classMemory, "get_array_of_float32", memory_get_array_of_float32, 2);
+    /*
+     * Document-method: write_array_of_float
+     * call-seq: memory.write_array_of_float(ary)
+     * @param [Array<Numeric>] ary
+     * @return [self]
+     * Write values from +ary+ as 32-bit floats in memory.
+     *
+     * Same as:
+     *  memory.put_array_of_float(0, ary)
+     */
     rb_define_method(classMemory, "write_array_of_float", memory_write_array_of_float32, 1);
+    /*
+     * Document-method: read_array_of_float
+     * call-seq: memory.read_array_of_float(length)
+     * @param [Numeric] length number of Float to read
+     * @return [Array<Float>]
+     * Read 32-bit floats from memory.
+     *
+     * Same as:
+     *  memory.get_array_of_float(0, ary)
+     */
     rb_define_method(classMemory, "read_array_of_float", memory_read_array_of_float32, 1);
     rb_define_alias(classMemory, "put_array_of_float", "put_array_of_float32");
     rb_define_alias(classMemory, "get_array_of_float", "get_array_of_float32");
+    /*
+     * Document-method: put_float64
+     * call-seq: memory.put_float64(offset, value)
+     * @param [Numeric] offset
+     * @param [Numeric] value
+     * @return [self]
+     * Put +value+ as a 64-bit float (double) in memory at offset +offset+ (alias: #put_double).
+     */
     rb_define_method(classMemory, "put_float64", memory_put_float64, 2);
+    /*
+     * Document-method: get_float64
+     * call-seq: memory.get_float64(offset)
+     * @param [Numeric] offset
+     * @return [Float]
+     * Get a 64-bit float (double) from memory at offset +offset+ (alias: #get_double).
+     */
     rb_define_method(classMemory, "get_float64", memory_get_float64, 1);
     rb_define_alias(classMemory, "put_double", "put_float64");
     rb_define_alias(classMemory, "get_double", "get_float64");
+    /*
+     * Document-method: write_double
+     * call-seq: memory.write_double(value)
+     * @param [Numeric] value
+     * @return [self]
+     * Write +value+ as a 64-bit float (double) in memory.
+     *
+     * Same as:
+     *  memory.put_double(0, value)
+     */
     rb_define_method(classMemory, "write_double", memory_write_float64, 1);
+    /*
+     * Document-method: read_double
+     * call-seq: memory.read_double
+     * @return [Float]
+     * Read a 64-bit float (double) from memory.
+     *
+     * Same as:
+     *  memory.get_double(0)
+     */
     rb_define_method(classMemory, "read_double", memory_read_float64, 0);
+    /*
+     * Document-method: put_array_of_float64
+     * call-seq: memory.put_array_of_float64(offset, ary)
+     * @param [Numeric] offset
+     * @param [Array<Numeric>] ary
+     * @return [self]
+     * Put values from +ary+ as 64-bit floats (doubles) in memory from offset +offset+ (alias: #put_array_of_double).
+     */
     rb_define_method(classMemory, "put_array_of_float64", memory_put_array_of_float64, 2);
+    /*
+     * Document-method: get_array_of_float64
+     * call-seq: memory.get_array_of_float64(offset, length)
+     * @param [Numeric] offset
+     * @param [Numeric] length number of Float to get
+     * @return [Array<Float>]
+     * Get 64-bit floats (doubles) in memory from offset +offset+ (alias: #get_array_of_double).
+     */
     rb_define_method(classMemory, "get_array_of_float64", memory_get_array_of_float64, 2);
+    /*
+     * Document-method: write_array_of_double
+     * call-seq: memory.write_array_of_double(ary)
+     * @param [Array<Numeric>] ary
+     * @return [self]
+     * Write values from +ary+ as 64-bit floats (doubles) in memory.
+     *
+     * Same as:
+     *  memory.put_array_of_double(0, ary)
+     */
     rb_define_method(classMemory, "write_array_of_double", memory_write_array_of_float64, 1);
+    /*
+     * Document-method: read_array_of_double
+     * call-seq: memory.read_array_of_double(length)
+     * @param [Numeric] length number of Float to read
+     * @return [Array<Float>]
+     * Read 64-bit floats (doubles) from memory.
+     *
+     * Same as:
+     *  memory.get_array_of_double(0, ary)
+     */
     rb_define_method(classMemory, "read_array_of_double", memory_read_array_of_float64, 1);
     rb_define_alias(classMemory, "put_array_of_double", "put_array_of_float64");
     rb_define_alias(classMemory, "get_array_of_double", "get_array_of_float64");
+    /*
+     * Document-method: put_pointer
+     * call-seq: memory.put_pointer(offset, value)
+     * @param [Numeric] offset
+     * @param [nil,Pointer, Integer, #to_ptr] value
+     * @return [self]
+     * Put +value+ in memory from +offset+..
+     */
     rb_define_method(classMemory, "put_pointer", memory_put_pointer, 2);
+    /*
+     * Document-method: get_pointer
+     * call-seq: memory.get_pointer(offset)
+     * @param [Numeric] offset
+     * @return [Pointer]
+     * Get a {Pointer} to the memory from +offset+.
+     */
     rb_define_method(classMemory, "get_pointer", memory_get_pointer, 1);
+    /*
+     * Document-method: write_pointer
+     * call-seq: memory.write_pointer(value)
+     * @param [nil,Pointer, Integer, #to_ptr] value
+     * @return [self]
+     * Write +value+ in memory.
+     *
+     * Equivalent to:
+     *  memory.put_pointer(0, value)
+     */
     rb_define_method(classMemory, "write_pointer", memory_write_pointer, 1);
+    /*
+     * Document-method: read_pointer
+     * call-seq: memory.read_pointer
+     * @return [Pointer]
+     * Get a {Pointer} to the memory from base address.
+     *
+     * Equivalent to:
+     *  memory.get_pointer(0)
+     */
     rb_define_method(classMemory, "read_pointer", memory_read_pointer, 0);
+    /*
+     * Document-method: put_array_of_pointer
+     * call-seq: memory.put_array_of_pointer(offset, ary)
+     * @param [Numeric] offset
+     * @param [Array<#to_ptr>] ary
+     * @return [self]
+     * Put an array of {Pointer} into memory from +offset+.
+     */
     rb_define_method(classMemory, "put_array_of_pointer", memory_put_array_of_pointer, 2);
+    /*
+     * Document-method: get_array_of_pointer
+     * call-seq: memory.get_array_of_pointer(offset, length)
+     * @param [Numeric] offset
+     * @param [Numeric] length
+     * @return [Array<Pointer>]
+     * Get an array of {Pointer} of length +length+ from +offset+.
+     */
     rb_define_method(classMemory, "get_array_of_pointer", memory_get_array_of_pointer, 2);
+    /*
+     * Document-method: write_array_of_pointer
+     * call-seq: memory.write_array_of_pointer(ary)
+     * @param [Array<#to_ptr>] ary
+     * @return [self]
+     * Write an array of {Pointer} into memory from +offset+.
+     *
+     * Same as :
+     *  memory.put_array_of_pointer(0, ary)
+     */
     rb_define_method(classMemory, "write_array_of_pointer", memory_write_array_of_pointer, 1);
+    /*
+     * Document-method: read_array_of_pointer
+     * call-seq: memory.read_array_of_pointer(length)
+     * @param [Numeric] length
+     * @return [Array<Pointer>]
+     * Read an array of {Pointer} of length +length+.
+     *
+     * Same as:
+     *  memory.get_array_of_pointer(0, length)
+     */
     rb_define_method(classMemory, "read_array_of_pointer", memory_read_array_of_pointer, 1);
 
     rb_define_method(classMemory, "get_string", memory_get_string, -1);
