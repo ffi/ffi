@@ -458,12 +458,12 @@ memory_get_bytes(VALUE self, VALUE offset, VALUE length)
 
 /*
  * call-seq: memory.put_bytes(offset, str, index=0, length=nil)
- * Return string contained in memory.
+ * Put a string in memory.
  * @param [Numeric] offset point in buffer to start from
  * @param [String] str string to put to memory
  * @param [Numeric] index
  * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
- * @return [String]
+ * @return [self]
  * @raise {IndexError} if +length+ is too great
  * @raise {NullPointerError} if memory not initialized
  * @raise {RangeError} if +index+ is negative, or if index+length is greater than size of string
@@ -521,7 +521,7 @@ memory_read_bytes(VALUE self, VALUE length)
  * @param [String] str string to put to memory
  * @param [Numeric] index
  * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
- * @return [String]
+ * @return [self]
  * equivalent to :
  *  memory.put_bytes(0, str, index, length)
  */
@@ -681,7 +681,9 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
      */
     VALUE classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
     rbffi_AbstractMemoryClass = classMemory;
-    /* Document-variable: FFI::AbstractMemory */
+    /* 
+     * Document-variable: FFI::AbstractMemory 
+     */
     rb_global_variable(&rbffi_AbstractMemoryClass);
     rb_define_alloc_func(classMemory, memory_allocate);
 
