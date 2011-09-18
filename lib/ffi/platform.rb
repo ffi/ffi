@@ -25,8 +25,8 @@ module FFI
 
   module Platform
     OS = case RbConfig::CONFIG['host_os'].downcase
-    when /linux/
-      "linux"
+    when /gnu/
+      "gnu"
     when /darwin/
       "darwin"
     when /freebsd/
@@ -58,7 +58,8 @@ module FFI
     end
     
     NAME = "#{ARCH}-#{OS}"
-    IS_LINUX = is_os("linux")
+    IS_GNU = is_os("gnu")
+    IS_LINUX = IS_GNU
     IS_MAC = is_os("darwin")
     IS_FREEBSD = is_os("freebsd")
     IS_OPENBSD = is_os("openbsd")
@@ -85,8 +86,8 @@ module FFI
 
     LIBC = if IS_WINDOWS
       "msvcrt.dll"
-    elsif IS_LINUX
-      "libc.so.6"
+    elsif IS_GNU
+      GNU_LIBC
     else
       "#{LIBPREFIX}c.#{LIBSUFFIX}"
     end
