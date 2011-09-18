@@ -18,14 +18,13 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <unistd.h>
-
-#ifdef __WIN32__
+#ifdef _WIN32
 #include <windows.h>
 #define sleep(x) Sleep(x)
 #endif
 
-#ifndef __WIN32__
+#ifndef _WIN32
+#include <unistd.h>
 #include <pthread.h>
 #endif
 
@@ -60,7 +59,7 @@ static void* asyncThreadCall(void *data)
 
 void testAsyncCallback(void (*fn)(int), int value)
 {
-#ifndef __WIN32__
+#ifndef _WIN32
     pthread_t t;
     struct async_data d;
     d.fn = fn;
