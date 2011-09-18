@@ -64,7 +64,7 @@ OS = case Config::CONFIG['host_os'].downcase
 
 CC=ENV['CC'] || Config::CONFIG['CC'] || "gcc"
 
-GMAKE = Config::CONFIG['host_os'].downcase =~ /bsd|solaris/ ? "gmake" : "make"
+GMAKE = system('which gmake >/dev/null') && 'gmake' || 'make'
 
 LIBTEST = "build/libtest.#{LIBEXT}"
 BUILD_DIR = "build"
