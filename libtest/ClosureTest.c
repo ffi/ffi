@@ -77,7 +77,7 @@ struct ThreadVrV {
     int count;
 };
 
-static void
+static void *
 threadVrV(void *arg)
 {
     struct ThreadVrV* t = (struct ThreadVrV *) arg;
@@ -86,6 +86,8 @@ threadVrV(void *arg)
     for (i = 0; i < t->count; i++) {
         (*t->closure)();
     }
+    
+    return NULL;
 }
 
 void testThreadedClosureVrV(void (*closure)(void), int n)
@@ -96,7 +98,7 @@ void testThreadedClosureVrV(void (*closure)(void), int n)
     pthread_create(&t, NULL, threadVrV, &arg);
     pthread_join(t, NULL);
 #else
-    HANDLE hThread = (HANDLE) _beginthread(threadVrV, 0, &arg);
+    HANDLE hThread = (HANDLE) _beginthread((void (*)(void *))threadVrV, 0, &arg);
     WaitForSingleObject(hThread, INFINITE);	
 #endif
 }
