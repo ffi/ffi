@@ -50,6 +50,12 @@ mapped_allocate(VALUE klass)
     return obj;
 }
 
+/*
+ * call-seq: initialize(converter)
+ * @param [#native_type, #to_native, #from_native] converter +converter+ must respond to
+ *  all these methods
+ * @return [self]
+ */
 static VALUE
 mapped_initialize(VALUE self, VALUE rbConverter)
 {
@@ -88,6 +94,11 @@ mapped_mark(MappedType* m)
     rb_gc_mark(m->rbConverter);
 }
 
+/*
+ * call-seq: mapped_type.native_type
+ * @return [Type]
+ * Get native type of mapped type.
+ */
 static VALUE
 mapped_native_type(VALUE self)
 {
@@ -97,6 +108,10 @@ mapped_native_type(VALUE self)
     return m->rbType;
 }
 
+/*
+ * call-seq: mapped_type.to_native(*args)
+ * @param args depends on {FFI::DataConverter} used to initialize +self+
+ */
 static VALUE
 mapped_to_native(int argc, VALUE* argv, VALUE self)
 {
@@ -107,6 +122,10 @@ mapped_to_native(int argc, VALUE* argv, VALUE self)
     return rb_funcall2(m->rbConverter, id_to_native, argc, argv);
 }
 
+/*
+ * call-seq: mapped_type.from_native(*args)
+ * @param args depends on {FFI::DataConverter} used to initialize +self+
+ */
 static VALUE
 mapped_from_native(int argc, VALUE* argv, VALUE self)
 {
@@ -121,6 +140,9 @@ void
 rbffi_MappedType_Init(VALUE moduleFFI)
 {
     
+    /* 
+     * Document-class: FFI::Type::Mapped
+     */
     rbffi_MappedTypeClass = rb_define_class_under(rbffi_TypeClass, "Mapped", rbffi_TypeClass);
     
     rb_global_variable(&rbffi_MappedTypeClass);

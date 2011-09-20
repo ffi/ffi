@@ -50,6 +50,11 @@ static VALUE moduleFFI = Qnil;
 
 void
 Init_ffi_c(void) {
+    /* 
+     * Document-module: FFI
+     *
+     * This module embbed type constants from {FFI::NativeType}.
+     */
     rbffi_FFIModule = moduleFFI = rb_define_module("FFI");
     rb_global_variable(&moduleFFI);
 

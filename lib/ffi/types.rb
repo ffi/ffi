@@ -17,17 +17,29 @@
 # version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# see {file:README}
 module FFI
 
+  # @param [Type, DataConverter, Symbol] old type definition used by {FFI.find_type}
+  # @param [Symbol] add new type definition's name to add
+  # @return [Type]
+  # Add a definition type to type definitions.
   def self.typedef(old, add)
     TypeDefs[add] = self.find_type(old)
   end
 
+  # (see FFI.typedef)
   def self.add_typedef(old, add)
     typedef old, add
   end
 
 
+  # @param [Type, DataConverter, Symbol] name
+  # @param [Hash] type_map if nil, {FFI::TypeDefs} is used
+  # @return [Type]
+  # Find a type in +type_map+ ({FFI::TypeDefs}, by default) from
+  # a type objet, a type name (symbol). If +name+ is a {DataConverter},
+  # a new {Type::Mapped} is created.
   def self.find_type(name, type_map = nil)
     if name.is_a?(Type)
       name
@@ -46,6 +58,7 @@ module FFI
     end
   end
 
+  # List of type definitions
   TypeDefs.merge!({
       # The C void type; only useful for function return types
       :void => Type::VOID,
@@ -120,11 +133,15 @@ module FFI
       :varargs => Type::VARARGS,
   })
 
-  # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
+  
   class StrPtrConverter
     extend DataConverter
     native_type Type::POINTER
 
+    # @param [Pointer] val
+    # @param [] ctx
+    # @return [Array<String, Pointer>]
+    # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
     def self.from_native(val, ctx)
       [ val.null? ? nil : val.get_string(0), val ]
     end
@@ -133,6 +150,9 @@ module FFI
 
   typedef(StrPtrConverter, :strptr)
 
+  # @param type +type+ is an instance of class accepted by {FFI.find_type}
+  # @return [Numeric]
+  # Get +type+ size, in bytes.
   def self.type_size(type)
     find_type(type).size
   end
