@@ -23,6 +23,8 @@ require 'rbconfig'
 module FFI
   class PlatformError < LoadError; end
 
+  # This module defines different constants and class methods to play with
+  # various platforms.
   module Platform
     OS = case RbConfig::CONFIG['host_os'].downcase
     when /linux/
@@ -53,6 +55,9 @@ module FFI
     end
 
     private
+    # @param [String) os
+    # @return [Boolean]
+    # Test if current OS is +os+.
     def self.is_os(os)
       OS == os
     end
@@ -91,18 +96,26 @@ module FFI
       "#{LIBPREFIX}c.#{LIBSUFFIX}"
     end
 
+    # Test if current OS is a *BSD (include MAC)
+    # @return [Boolean]
     def self.bsd?
       IS_BSD
     end
 
+    # Test if current OS is Windows
+    # @return [Boolean]
     def self.windows?
       IS_WINDOWS
     end
 
+    # Test if current OS is Mac OS
+    # @return [Boolean]
     def self.mac?
       IS_MAC
     end
 
+    # Test if current OS is a unix OS
+    # @return [Boolean]
     def self.unix?
       !IS_WINDOWS
     end

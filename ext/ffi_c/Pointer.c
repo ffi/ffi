@@ -69,11 +69,15 @@ ptr_allocate(VALUE klass)
 }
 
 /*
- * call-seq: initialize(type, address)
- * @param [Type] type type for pointer
- * @param [Integer, Pointer] address base address for pointer, or another pointer
+ * @overload initialize(pointer)
+ *  @param [Pointer] pointer another pointer to initialize from
+ *  Create a new pointer from another {Pointer}.
+ * @overload initialize(type, address)
+ *  @param [Type] type type for pointer
+ *  @param [Integer] address base address for pointer
+ *  Create a new pointer from a {Type} and a base adresse
  * @return [self]
- * Create a new pointer from a {Type} and a base adresse or another {Pointer}.
+ * A new instance of Pointer.
  */
 static VALUE
 ptr_initialize(int argc, VALUE* argv, VALUE self)
