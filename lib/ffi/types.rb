@@ -140,7 +140,7 @@ module FFI
 
     # @param [Pointer] val
     # @param [] ctx
-    # @return [Array<String, Pointer>]
+    # @return [Array(String, Pointer)]
     # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
     def self.from_native(val, ctx)
       [ val.null? ? nil : val.get_string(0), val ]

@@ -201,6 +201,9 @@ fntype_param_types(VALUE self)
 void
 rbffi_FunctionInfo_Init(VALUE moduleFFI)
 {
+    /*
+     * Document-class: FFI::FunctionType < FFI::Type
+     */
     rbffi_FunctionTypeClass = rb_define_class_under(moduleFFI, "FunctionType", rbffi_TypeClass);
     rb_global_variable(&rbffi_FunctionTypeClass);
     rb_define_const(moduleFFI, "CallbackInfo", rbffi_FunctionTypeClass);

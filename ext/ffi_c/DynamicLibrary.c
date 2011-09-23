@@ -215,8 +215,14 @@ symbol_inspect(VALUE self)
 void
 rbffi_DynamicLibrary_Init(VALUE moduleFFI)
 {
+    /*
+     * Document-class: FFI::DynamicLibrary
+     */
     LibraryClass = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
     rb_global_variable(&LibraryClass);
+    /*
+     * Document-class: FFI::DynamicLibrary::Symbol < FFI::Pointer
+     */
     SymbolClass = rb_define_class_under(LibraryClass, "Symbol", rbffi_PointerClass);
     rb_global_variable(&SymbolClass);
 
