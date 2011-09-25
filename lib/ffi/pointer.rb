@@ -21,6 +21,8 @@
 require 'ffi/platform'
 module FFI
   class Pointer
+    
+    # Pointer size
     SIZE = Platform::ADDRESS_SIZE / 8
 
     # Return the size of a pointer on the current platform, in bytes

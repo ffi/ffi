@@ -162,6 +162,20 @@ function_free(Function *fn)
     xfree(fn);
 }
 
+/*
+ * @param [Type, Symbol] return_type return type for the function
+ * @param [Array<Type, Symbol>] param_types array of parameters types
+ * @param [Hash] options see {FFI::FunctionType} for available options
+ * @return [self]
+ * A new Function instance.
+ *
+ * Define a function from a Proc or a block.
+ *
+ * @overload initialize(return_type, param_types, options = {}) { |i| ... }
+ *  @yieldparam i parameters for the function
+ * @overload initialize(return_type, param_types, proc, options = {})
+ *  @param [Proc] proc
+ */
 static VALUE
 function_initialize(int argc, VALUE* argv, VALUE self)
 {
@@ -202,6 +216,11 @@ function_initialize(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
+/*
+ * call-seq: initialize_copy(other)
+ * @return [nil]
+ * DO NOT CALL THIS METHOD
+ */
 static VALUE
 function_initialize_copy(VALUE self, VALUE other)
 {
@@ -303,6 +322,12 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
     return self;
 }
 
+/*
+ * call-seq: call(*args)
+ * @param [Array] args function arguments
+ * @return [FFI::Type]
+ * Call the function
+ */
 static VALUE
 function_call(int argc, VALUE* argv, VALUE self)
 {
@@ -313,6 +338,13 @@ function_call(int argc, VALUE* argv, VALUE self)
     return (*fn->info->invoke)(argc, argv, fn->base.memory.address, fn->info);
 }
 
+/*
+ * call-seq: attach(m, name)
+ * @param [Module] m
+ * @param [String] name
+ * @return [self]
+ * Attach a Function to the Module +m+ as +name+.
+ */
 static VALUE
 function_attach(VALUE self, VALUE module, VALUE name)
 {
@@ -351,6 +383,12 @@ function_attach(VALUE self, VALUE module, VALUE name)
     return self;
 }
 
+/*
+ * call-seq: autorelease = autorelease
+ * @param [Boolean] autorelease
+ * @return [self]
+ * Set +autorelease+ attribute (See {Pointer}).
+ */
 static VALUE
 function_set_autorelease(VALUE self, VALUE autorelease)
 {
@@ -373,6 +411,11 @@ function_autorelease_p(VALUE self)
     return fn->autorelease ? Qtrue : Qfalse;
 }
 
+/*
+ * call-seq: free
+ * @return [self]
+ * Free memory allocated by Function.
+ */
 static VALUE
 function_release(VALUE self)
 {
@@ -823,6 +866,9 @@ void
 rbffi_Function_Init(VALUE moduleFFI)
 {
     rbffi_FunctionInfo_Init(moduleFFI);
+    /*
+     * Document-class: FFI::Function < FFI::Pointer
+     */
     rbffi_FunctionClass = rb_define_class_under(moduleFFI, "Function", rbffi_PointerClass);
     
     rb_global_variable(&rbffi_FunctionClass);
@@ -834,7 +880,18 @@ rbffi_Function_Init(VALUE moduleFFI)
     rb_define_method(rbffi_FunctionClass, "attach", function_attach, 2);
     rb_define_method(rbffi_FunctionClass, "free", function_release, 0);
     rb_define_method(rbffi_FunctionClass, "autorelease=", function_set_autorelease, 1);
+    /*
+     * call-seq: autorelease
+     * @return [Boolean]
+     * Get +autorelease+ attribute.
+     * Synonymous for {#autorelease?}.
+     */
     rb_define_method(rbffi_FunctionClass, "autorelease", function_autorelease_p, 0);
+    /*
+     * call-seq: autorelease?
+     * @return [Boolean] +autorelease+ attribute
+     * Get +autorelease+ attribute.
+     */
     rb_define_method(rbffi_FunctionClass, "autorelease?", function_autorelease_p, 0);
 
     id_call = rb_intern("call");
