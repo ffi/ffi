@@ -434,7 +434,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     VALUE rbNullAddress = ULL2NUM(0);
 
     /* 
-     * Document-class: FFI::Pointer
+     * Document-class: FFI::Pointer < FFI::AbstractMemory
      * Pointer class is used to manage C pointers with ease. A {Pointer} object is defined by his
      * {#address} (as a C pointer). It permits additions with an integer for pointer arithmetic.
      *
@@ -465,6 +465,9 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_method(rbffi_PointerClass, "free", ptr_free, 0);
 
     rbffi_NullPointerSingleton = rb_class_new_instance(1, &rbNullAddress, rbffi_PointerClass);
+    /*
+     * NULL pointer
+     */
     rb_define_const(rbffi_PointerClass, "NULL", rbffi_NullPointerSingleton);
 }
 

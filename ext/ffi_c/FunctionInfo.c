@@ -206,8 +206,17 @@ rbffi_FunctionInfo_Init(VALUE moduleFFI)
      */
     rbffi_FunctionTypeClass = rb_define_class_under(moduleFFI, "FunctionType", rbffi_TypeClass);
     rb_global_variable(&rbffi_FunctionTypeClass);
+    /*
+     * Document-const: FFI::CallbackInfo = FFI::FunctionType
+     */
     rb_define_const(moduleFFI, "CallbackInfo", rbffi_FunctionTypeClass);
+    /*
+     * Document-const: FFI::FunctionInfo = FFI::FunctionType
+     */
     rb_define_const(moduleFFI, "FunctionInfo", rbffi_FunctionTypeClass);
+    /*
+     * Document-const: FFI::Type::Function = FFI::FunctionType
+     */
     rb_define_const(rbffi_TypeClass, "Function", rbffi_FunctionTypeClass);
 
     rb_define_alloc_func(rbffi_FunctionTypeClass, fntype_allocate);
