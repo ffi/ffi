@@ -62,6 +62,13 @@ array_type_free(ArrayType *array)
 }
 
 
+/*
+ * call-seq: initialize(component_type, length)
+ * @param [Type] component_type
+ * @param [Numeric] length
+ * @return [self]
+ * A new instance of ArrayType.
+ */
 static VALUE
 array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
 {
@@ -86,6 +93,11 @@ array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
     return self;
 }
 
+/*
+ * call-seq: length
+ * @return [Numeric]
+ * Get array's length
+ */
 static VALUE
 array_type_length(VALUE self)
 {
@@ -96,6 +108,11 @@ array_type_length(VALUE self)
     return UINT2NUM(array->length);
 }
 
+/*
+ * call-seq: element_type
+ * @return [Type]
+ * Get element type.
+ */
 static VALUE
 array_type_element_type(VALUE self)
 {
@@ -109,8 +126,19 @@ array_type_element_type(VALUE self)
 void
 rbffi_ArrayType_Init(VALUE moduleFFI)
 {
+    /*
+     * Document-class: FFI::ArrayType < FFI::Type
+     *
+     * This is a typed array. The type is a {NativeType native type}.
+     */
     rbffi_ArrayTypeClass = rb_define_class_under(moduleFFI, "ArrayType", rbffi_TypeClass);
+    /*
+     * Document-variable: FFI::ArrayType
+     */
     rb_global_variable(&rbffi_ArrayTypeClass);
+    /*
+     * Document-constant: FFI::Type::Array
+     */
     rb_define_const(rbffi_TypeClass, "Array", rbffi_ArrayTypeClass);
 
     rb_define_alloc_func(rbffi_ArrayTypeClass, array_type_s_allocate);
