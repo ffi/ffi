@@ -27,8 +27,8 @@ module FFI
   # various platforms.
   module Platform
     OS = case RbConfig::CONFIG['host_os'].downcase
-    when /gnu/
-      "gnu"
+    when /linux/
+      "linux"
     when /darwin/
       "darwin"
     when /freebsd/
