@@ -1,6 +1,9 @@
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 require 'fileutils'
-require "#{File.join(File.dirname(__FILE__), '..', 'lib', 'ffi', 'tools', 'types_generator.rb')}"
-types_conf = File.join(File.dirname(__FILE__), '..', 'lib', 'ffi', 'types.conf')
+require 'ffi'
+require 'ffi/platform'
+require 'ffi/tools/types_generator'
+types_conf = File.join(FFI::Platform::CONF_DIR, 'types.conf')
 
 file types_conf do |task|
   options = {}
