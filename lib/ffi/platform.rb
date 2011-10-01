@@ -63,7 +63,7 @@ module FFI
     end
     
     NAME = "#{ARCH}-#{OS}"
-    IS_GNU = RbConfig::CONFIG['host_os'] =~ /gnu/
+    IS_GNU = defined?(GNU_LIBC)
     IS_LINUX = is_os("linux")
     IS_MAC = is_os("darwin")
     IS_FREEBSD = is_os("freebsd")

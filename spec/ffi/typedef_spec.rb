@@ -75,4 +75,15 @@ describe "Custom type definitions" do
       end
     end.should_not raise_error
   end
+
+  it "detects the correct type for size_t" do
+    lambda do
+      Module.new do
+        extend FFI::Library
+        ffi_lib "c"
+        # read(2) is a standard UNIX function
+        attach_function :read, [:int, :pointer, :size_t], :ssize_t
+      end
+    end.should_not raise_error
+  end
 end
