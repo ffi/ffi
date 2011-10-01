@@ -38,7 +38,7 @@ module FFI
 
     if lib && File.basename(lib) == lib
       lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
-      r = Platform::IS_LINUX ? "\\.so($|\\.[1234567890]+)" : "\\.#{Platform::LIBSUFFIX}$"
+      r = Platform::IS_GNU ? "\\.so($|\\.[1234567890]+)" : "\\.#{Platform::LIBSUFFIX}$"
       lib += ".#{Platform::LIBSUFFIX}" unless lib =~ /#{r}/
     end
 
