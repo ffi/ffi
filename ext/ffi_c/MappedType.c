@@ -139,9 +139,8 @@ mapped_from_native(int argc, VALUE* argv, VALUE self)
 void
 rbffi_MappedType_Init(VALUE moduleFFI)
 {
-    
     /* 
-     * Document-class: FFI::Type::Mapped
+     * Document-class: FFI::Type::Mapped < FFI::Type
      */
     rbffi_MappedTypeClass = rb_define_class_under(rbffi_TypeClass, "Mapped", rbffi_TypeClass);
     

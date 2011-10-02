@@ -56,6 +56,14 @@ memptr_allocate(VALUE klass)
     return obj;
 }
 
+/*
+ * call-seq: initialize(size, count=1, clear=true)
+ * @param [Fixnum, Bignum, Symbol, FFI::Type] size size of a memory cell (in bytes, or type whom size will be used)
+ * @param [Numeric] count number of cells in memory
+ * @param [Boolean] clear set memory to all-zero if +true+
+ * @return [self]
+ * A new instance of FFI::MeoryPointer.
+ */
 static VALUE
 memptr_initialize(int argc, VALUE* argv, VALUE self)
 {
@@ -135,6 +143,12 @@ memptr_mark(Pointer* ptr)
     rb_gc_mark(ptr->rbParent);
 }
 
+/*
+ * call-seq: from_string(s)
+ * @param [String] s string
+ * @return [MemoryPointer]
+ * Create a {MemoryPointer} with +s+ inside.
+ */
 static VALUE
 memptr_s_from_string(VALUE klass, VALUE s)
 {
@@ -148,7 +162,24 @@ memptr_s_from_string(VALUE klass, VALUE s)
 void
 rbffi_MemoryPointer_Init(VALUE moduleFFI)
 {
-    rbffi_MemoryPointerClass = rb_define_class_under(moduleFFI, "MemoryPointer", rbffi_PointerClass);
+    VALUE ffi_Pointer;
+
+    ffi_Pointer = rbffi_PointerClass;
+
+    /*
+     * Document-class: FFI::MemoryPointer < FFI::Pointer
+     * A MemoryPointer is a specific {Pointer}. It points to a memory composed of cells. All cells have the
+     * same size.
+     *
+     * @example Create a new MemoryPointer
+     *  mp = FFI::MemoryPointer.new(:long, 16)   # Create a pointer on a memory of 16 long ints.
+     * @example Create a new MemoryPointer from a String
+     *  mp1 = FFI::MemoryPointer.from_string("this is a string")
+     *  # same as:
+     *  mp2 = FFI::MemoryPointer.new(:char,16)
+     *  mp2.put_string("this is a string")
+     */
+    rbffi_MemoryPointerClass = rb_define_class_under(moduleFFI, "MemoryPointer", ffi_Pointer);
     rb_global_variable(&rbffi_MemoryPointerClass);
 
     rb_define_alloc_func(rbffi_MemoryPointerClass, memptr_allocate);

@@ -1,6 +1,8 @@
 require 'tempfile'
 
 module FFI
+  
+  # @private
   class TypesGenerator
 
     ##

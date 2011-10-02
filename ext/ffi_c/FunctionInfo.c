@@ -83,6 +83,17 @@ fntype_free(FunctionType* fnInfo)
     xfree(fnInfo);
 }
 
+/*
+ * call-seq: initialize(return_type, param_types, options={})
+ * @param [Type, Symbol] return_type return type for the function
+ * @param [Array<Type, Symbol>] param_types array of parameters types
+ * @param [Hash] options
+ * @option options [Boolean] :blocking set to true if the C function is a blocking call
+ * @option options [Symbol] :convention calling convention see {FFI::Library#calling_convention}
+ * @option options [FFI::Enums] :enums
+ * @return [self]
+ * A new FunctionType instance.
+ */
 static VALUE
 fntype_initialize(int argc, VALUE* argv, VALUE self)
 {
@@ -178,6 +189,11 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
+/*
+ * call-seq: result_type
+ * @return [Type]
+ * Get the return type of the function type
+ */
 static VALUE
 fntype_result_type(VALUE self)
 {
@@ -188,6 +204,11 @@ fntype_result_type(VALUE self)
     return ft->rbReturnType;
 }
 
+/*
+ * call-seq: param_types
+ * @return [Array<Type>]
+ * Get parameters types.
+ */
 static VALUE
 fntype_param_types(VALUE self)
 {
@@ -201,10 +222,14 @@ fntype_param_types(VALUE self)
 void
 rbffi_FunctionInfo_Init(VALUE moduleFFI)
 {
+    VALUE ffi_Type;
+
+    ffi_Type = rbffi_TypeClass;
+
     /*
      * Document-class: FFI::FunctionType < FFI::Type
      */
-    rbffi_FunctionTypeClass = rb_define_class_under(moduleFFI, "FunctionType", rbffi_TypeClass);
+    rbffi_FunctionTypeClass = rb_define_class_under(moduleFFI, "FunctionType",ffi_Type);
     rb_global_variable(&rbffi_FunctionTypeClass);
     /*
      * Document-const: FFI::CallbackInfo = FFI::FunctionType
@@ -217,7 +242,7 @@ rbffi_FunctionInfo_Init(VALUE moduleFFI)
     /*
      * Document-const: FFI::Type::Function = FFI::FunctionType
      */
-    rb_define_const(rbffi_TypeClass, "Function", rbffi_FunctionTypeClass);
+    rb_define_const(ffi_Type, "Function", rbffi_FunctionTypeClass);
 
     rb_define_alloc_func(rbffi_FunctionTypeClass, fntype_allocate);
     rb_define_method(rbffi_FunctionTypeClass, "initialize", fntype_initialize, -1);
