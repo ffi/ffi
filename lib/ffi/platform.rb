@@ -27,8 +27,8 @@ module FFI
   # various platforms.
   module Platform
     OS = case RbConfig::CONFIG['host_os'].downcase
-    when /gnu/
-      "gnu"
+    when /linux/
+      "linux"
     when /darwin/
       "darwin"
     when /freebsd/
@@ -63,14 +63,14 @@ module FFI
     end
     
     NAME = "#{ARCH}-#{OS}"
-    IS_GNU = is_os("gnu")
-    IS_LINUX = IS_GNU
+    IS_GNU = defined?(GNU_LIBC)
+    IS_LINUX = is_os("linux")
     IS_MAC = is_os("darwin")
     IS_FREEBSD = is_os("freebsd")
     IS_OPENBSD = is_os("openbsd")
     IS_WINDOWS = is_os("windows")
     IS_BSD = IS_MAC || IS_FREEBSD || IS_OPENBSD
-    CONF_DIR = File.join(File.dirname(__FILE__), 'platform', ARCH.to_s + "-" + OS.to_s)
+    CONF_DIR = File.join(File.dirname(__FILE__), 'platform', NAME)
     public
 
     
