@@ -118,5 +118,30 @@ module FFI
       }
       self
     end
+
+    def typecast (type)
+      type = FFI.find_type(type) if type.is_a?(Symbol)
+
+      if type.is_a?(Class) && type.ancestors.member?(FFI::Struct) && !type.is_a?(FFI::ManagedStruct)
+        type.new(self)
+      elsif type.is_a?(Type::Builtin)
+        send "read_#{type.name.downcase}"
+      elsif type.respond_to? :from_native
+        type.from_native(typecast(type.native_type), nil)
+      else
+        raise ArgumentError, 'you have to pass a Struct, a Builtin type or a Symbol'
+      end
+    end
+
+    def read_array_of (type, number)
+      type = FFI.find_type(type) if type.is_a? Symbol
+      type = type.native_type    if type.respond_to? :native_type
+
+      unless respond_to? "read_array_of_#{type.name.downcase}"
+        raise ArgumentError, "can't read array of #{type.name}"
+      end
+
+      send "read_array_of_#{type.name.downcase}", number
+    end
   end
 end

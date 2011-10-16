@@ -154,7 +154,15 @@ module FFI
   # @return [Numeric]
   # Get +type+ size, in bytes.
   def self.type_size(type)
-    find_type(type).size
+    type = FFI.find_type(type) if type.is_a?(Symbol)
+
+    if type.is_a?(Class) && (type.ancestors.member?(FFI::Struct) && !type.is_a?(FFI::ManagedStruct)) || type.is_a?(Type::Builtin)
+      type.size
+    elsif type.respond_to? :from_native
+      type.native_type.size
+    else
+      raise ArgumentError, 'you have to pass a Struct, a Builtin type or a Symbol'
+    end
   end
 
   # Load all the platform dependent types
