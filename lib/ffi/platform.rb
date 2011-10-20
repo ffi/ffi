@@ -20,6 +20,8 @@
 #
 
 require 'rbconfig'
+require 'ffi_c'
+
 module FFI
   class PlatformError < LoadError; end
 
