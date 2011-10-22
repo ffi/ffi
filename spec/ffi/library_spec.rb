@@ -16,6 +16,24 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 describe "Library" do
+  describe "#ffi_convention" do
+    it "defaults to :default" do
+      Module.new do
+        extend FFI::Library
+        ffi_convention.should == :default
+      end
+    end
+
+    it "should be settable" do
+      Module.new do
+        extend FFI::Library
+
+        ffi_convention.should == :default
+        ffi_convention :stdcall
+        ffi_convention.should == :stdcall
+      end
+    end
+  end
 
   unless Config::CONFIG['target_os'] =~ /mswin|mingw/
     it "attach_function with no library specified" do
