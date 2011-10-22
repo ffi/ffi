@@ -136,8 +136,10 @@ module FFI
     #
     # @param [Symbol] convention one of +:default+, +:stdcall+
     # @return [Symbol] the new calling convention
-    def ffi_convention(convention)
-      @ffi_convention = convention
+    def ffi_convention(convention = nil)
+      @ffi_convention ||= :default
+      @ffi_convention = convention if convention
+      @ffi_convention
     end
 
     # @see #ffi_lib
@@ -212,7 +214,7 @@ module FFI
       # Convert :foo to the native type
       arg_types.map! { |e| find_type(e) }
       options = {
-        :convention => defined?(@ffi_convention) ? @ffi_convention : :default,
+        :convention => ffi_convention,
         :type_map => defined?(@ffi_typedefs) ? @ffi_typedefs : nil,
         :blocking => defined?(@blocking) && @blocking,
         :enums => defined?(@ffi_enums) ? @ffi_enums : nil,
@@ -262,7 +264,7 @@ module FFI
     #   windows api, although using, doesn't have decorated names.
     def function_names(name, arg_types)
       result = [name.to_s]
-      if @ffi_convention == :stdcall
+      if ffi_convention == :stdcall
         # Get the size of each parameter
         size = arg_types.inject(0) do |mem, arg|
           mem + arg.size
@@ -360,7 +362,7 @@ code
       end
 
       options = Hash.new
-      options[:convention] = defined?(@ffi_convention) ? @ffi_convention : :default
+      options[:convention] = ffi_convention
       options[:enums] = @ffi_enums if defined?(@ffi_enums)
       cb = FFI::CallbackInfo.new(find_type(ret), params.map { |e| find_type(e) }, options)
 
