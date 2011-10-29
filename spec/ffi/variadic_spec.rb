@@ -25,30 +25,31 @@ describe "Function with variadic arguments" do
     it "call variadic with (:char (#{i})) argument" do
       buf = FFI::Buffer.new :long_long
       LibTest.pack_varargs(buf, "c", :char, i)
-      buf.get_int64(0).should == i
+      buf.get_int64(0).should eq i
     end
   end
   [ 0, 0x7f, 0x80, 0xff ].each do |i|
     it "call variadic with (:uchar (#{i})) argument" do
       buf = FFI::Buffer.new :long_long
       LibTest.pack_varargs(buf, "C", :uchar, i)
-      buf.get_int64(0).should == i
+      buf.get_int64(0).should eq i
     end
   end
   [ 0, 1.234567, 9.87654321 ].each do |v|
     it "call variadic with (:float (#{v})) argument" do
       buf = FFI::Buffer.new :long_long
       LibTest.pack_varargs(buf, "f", :float, v.to_f)
-      buf.get_float64(0).should == v
+      buf.get_float64(0).should eq v
     end
   end
   [ 0, 1.234567, 9.87654321 ].each do |v|
     it "call variadic with (:double (#{v})) argument" do
       buf = FFI::Buffer.new :long_long
       LibTest.pack_varargs(buf, "f", :double, v.to_f)
-      buf.get_float64(0).should == v
+      buf.get_float64(0).should eq v
     end
   end
+
   module Varargs
     PACK_VALUES = {
       'c' => [ 0x12  ],
@@ -68,14 +69,16 @@ describe "Function with variadic arguments" do
       'i' => :int, 'I' => :uint, 'j' => :long_long, 'J' => :ulong_long,
       'l' => :long, 'L' => :ulong, 'f' => :float, 'd' => :double
     }
-    def self.verify(p, off, v)
-      if v.kind_of?(Float)
-        p.get_float64(off).should == v
-      else
-        p.get_int64(off).should == v
-      end
+  end
+
+  def verify(p, off, v)
+    if v.kind_of?(Float)
+      p.get_float64(off).should eq v
+    else
+      p.get_int64(off).should eq v
     end
   end
+
   Varargs::PACK_VALUES.keys.each do |t1|
     Varargs::PACK_VALUES.keys.each do |t2|
       Varargs::PACK_VALUES.keys.each do |t3|
@@ -87,9 +90,9 @@ describe "Function with variadic arguments" do
               it "call(#{fmt}, #{params.join(',')})" do
                 buf = FFI::Buffer.new :long_long, 3
                 LibTest.pack_varargs(buf, fmt, *params)
-                Varargs.verify(buf, 0, v1)
-                Varargs.verify(buf, 8, v2)
-                Varargs.verify(buf, 16, v3)
+                verify(buf, 0, v1)
+                verify(buf, 8, v2)
+                verify(buf, 16, v3)
               end
             end
           end
