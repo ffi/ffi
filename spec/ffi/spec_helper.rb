@@ -21,7 +21,7 @@ if RUBY_PLATFORM =~/java/
   $:.reject! { |p| p == libdir }
 else
   $:.unshift File.join(File.dirname(__FILE__), "..", "..", "lib"),
-    File.join(File.dirname(__FILE__), "..", "..", "build", "#{Config::CONFIG['host_cpu''arch']}", "ffi_c", RUBY_VERSION)
+    File.join(File.dirname(__FILE__), "..", "..", "build", "#{RbConfig::CONFIG['host_cpu''arch']}", "ffi_c", RUBY_VERSION)
 end
 # puts "loadpath=#{$:.join(':')}"
 require "ffi"

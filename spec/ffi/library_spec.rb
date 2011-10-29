@@ -35,7 +35,7 @@ describe "Library" do
     end
   end
 
-  unless Config::CONFIG['target_os'] =~ /mswin|mingw/
+  unless RbConfig::CONFIG['target_os'] =~ /mswin|mingw/
     it "attach_function with no library specified" do
       lambda {
         Module.new do |m|
