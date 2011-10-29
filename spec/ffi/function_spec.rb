@@ -17,12 +17,12 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 describe FFI::Function do
+  module LibTest
+    extend FFI::Library
+    ffi_lib TestLibrary::PATH
+    attach_function :testFunctionAdd, [:int, :int, :pointer], :int
+  end
   before do
-    module LibTest
-      extend FFI::Library
-      ffi_lib TestLibrary::PATH
-      attach_function :testFunctionAdd, [:int, :int, :pointer], :int
-    end
     @libtest = FFI::DynamicLibrary.open(TestLibrary::PATH, 
                                         FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_GLOBAL)
   end

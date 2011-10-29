@@ -194,21 +194,18 @@ describe "AutoPointer" do
       end
     end.should_not raise_error
   end
-end
 
-describe "AutoPointer#new" do
-  class AutoPointerSubclass < FFI::AutoPointer
-    def self.release(ptr); end
-  end
-  it "MemoryPointer argument raises TypeError" do
-    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(::TypeError)
-  end
-  it "AutoPointer argument raises TypeError" do
-    lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(PointerTestLib.ptr_from_address(0))) }.should raise_error(::TypeError)
-  end
-  it "Buffer argument raises TypeError" do
-    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(::TypeError)
-  end
+  describe "#new" do
+    it "MemoryPointer argument raises TypeError" do
+      lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(::TypeError)
+    end
+    it "AutoPointer argument raises TypeError" do
+      lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(PointerTestLib.ptr_from_address(0))) }.should raise_error(::TypeError)
+    end
+    it "Buffer argument raises TypeError" do
+      lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(::TypeError)
+    end
 
+  end
 end
 

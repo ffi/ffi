@@ -87,7 +87,6 @@ describe "Callback" do
     attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
     attach_function :testCallbackVrY, :testClosureVrP, [ :cbVrY ], S8F32S32.ptr
-    attach_function :testCallbackCrV, :testClosureBrV, [ :cbCrV, :char ], :void
     attach_function :testCallbackVrT, :testClosureVrT, [ :cbVrT ], S8F32S32.by_value
     attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32.ptr ], :void
     attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
@@ -95,9 +94,6 @@ describe "Callback" do
     attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
     attach_function :testOptionalCallbackCrV, :testOptionalClosureBrV, [ :cbCrV, :char ], :void
 
-  end
-  it "function with Callback plus another arg should raise error if no arg given" do
-    lambda { LibTest.testCallbackCrV { |*a| }}.should raise_error
   end
   it "returning :char (0)" do
     LibTest.testCallbackVrS8 { 0 }.should eq 0
@@ -288,9 +284,9 @@ describe "Callback" do
       module LibTest
         extend FFI::Library
         ffi_lib TestLibrary::PATH
-        attach_function :testCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
+        attach_function :testAnonymousCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
       end
-      LibTest.testCallbackVrS8 { 0 }.should eq 0
+      LibTest.testAnonymousCallbackVrS8 { 0 }.should eq 0
     end
   end
 
@@ -339,7 +335,7 @@ describe "Callback" do
         ffi_lib TestLibrary::PATH
         callback :cb_return_type, [ :int ], :int
         callback :cb_lookup, [ ], :cb_return_type
-        attach_function :testReturnsCallback, :testReturnsClosure, [ :cb_lookup, :int ], :int
+        attach_function :testReturnsCallback_2, :testReturnsClosure, [ :cb_lookup, :int ], :int
       end
       module MethodCallback
         def self.lookup
@@ -350,7 +346,7 @@ describe "Callback" do
         end
       end
 
-      LibTest.testReturnsCallback(MethodCallback.method(:lookup), 0x1234).should eq 0x2468
+      LibTest.testReturnsCallback_2(MethodCallback.method(:lookup), 0x1234).should eq 0x2468
     end
 
     it 'should not blow up when a callback takes a callback as argument' do
@@ -359,7 +355,7 @@ describe "Callback" do
         ffi_lib TestLibrary::PATH
         callback :cb_argument, [ :int ], :int
         callback :cb_with_cb_argument, [ :cb_argument, :int ], :int
-        attach_function :testCallbackAsArgument, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
+        attach_function :testCallbackAsArgument_2, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
       end   
     end
     it 'should be able to use the callback argument' do
@@ -443,6 +439,9 @@ describe "Callback with " do
     attach_function :testCallbackArV, :testClosurePrV, [ :cbArV, :string ], :void
     attach_function :testCallbackPrV, :testClosurePrV, [ :cbPrV, :pointer], :void
     attach_function :testCallbackYrV, :testClosurePrV, [ :cbYrV, S8F32S32.in ], :void
+  end
+  it "function with Callback plus another arg should raise error if no arg given" do
+    lambda { LibTest.testCallbackCrV { |*a| }}.should raise_error
   end
   it ":char (0) argument" do
     v = 0xdeadbeef

@@ -19,14 +19,14 @@ require 'java' if RUBY_PLATFORM =~ /java/
 
 describe "Managed Struct" do
   include FFI
-  module LibTest
+  module ManagedStructTestLib
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], :pointer
   end
   it "should raise an error if release() is not defined" do
     class NoRelease < FFI::ManagedStruct ; layout :i, :int; end
-    lambda { NoRelease.new(LibTest.ptr_from_address(0x12345678)) }.should raise_error(NoMethodError)
+    lambda { NoRelease.new(ManagedStructTestLib.ptr_from_address(0x12345678)) }.should raise_error(NoMethodError)
   end
 
   it "should be the right class" do
@@ -36,7 +36,7 @@ describe "Managed Struct" do
       end
     end    
 
-    WhatClassAmI.new(LibTest.ptr_from_address(0x12345678)).class.should eq WhatClassAmI
+    WhatClassAmI.new(ManagedStructTestLib.ptr_from_address(0x12345678)).class.should eq WhatClassAmI
   end
 
   it "should release memory properly" do
@@ -65,7 +65,7 @@ describe "Managed Struct" do
 
     PleaseReleaseMe.should_receive(:release).at_least(loop_count-wiggle_room).times
     loop_count.times do
-      PleaseReleaseMe.new(LibTest.ptr_from_address(0x12345678))
+      PleaseReleaseMe.new(ManagedStructTestLib.ptr_from_address(0x12345678))
     end
     PleaseReleaseMe.wait_gc loop_count
   end

@@ -177,7 +177,7 @@ describe "Struct tests" do
     end
   end
   it "Can use Struct subclass as IN parameter type" do
-    module StructParam
+    module StructParam2
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       class TestStruct < FFI::Struct
@@ -187,7 +187,7 @@ describe "Struct tests" do
     end
   end
   it "Can use Struct subclass as OUT parameter type" do
-    module StructParam
+    module StructParam3
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       class TestStruct < FFI::Struct
