@@ -149,7 +149,7 @@ describe "AutoPointer" do
       # note that if we called
       # AutoPointerTestHelper.method(:release).to_proc inline, we'd
       # have a reference to the pointer and it would never get GC'd.
-      ap = AutoPointerSubclass.new(PointerTestLib.ptr_from_address(magic))
+      AutoPointerSubclass.new(PointerTestLib.ptr_from_address(magic))
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -166,8 +166,8 @@ describe "AutoPointer" do
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
-      ap = FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
-                                AutoPointerTestHelper.finalizer)
+      FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
+                           AutoPointerTestHelper.finalizer)
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -176,8 +176,8 @@ describe "AutoPointer" do
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
-      ap = FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
-                                AutoPointerTestHelper.method(:release))
+      FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
+                           AutoPointerTestHelper.method(:release))
     end
     AutoPointerTestHelper.gc_everything loop_count
   end

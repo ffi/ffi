@@ -70,7 +70,6 @@ describe "Struct tests" do
     smp.get_pointer(0).should == mp
   end
   it "Struct#[:pointer]=struct" do
-    magic = 0x12345678
     smp = FFI::MemoryPointer.new :pointer
     s = PointerMember.new smp
     lambda { s[:pointer] = s }.should_not raise_error

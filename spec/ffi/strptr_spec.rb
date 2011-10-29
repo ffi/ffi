@@ -20,7 +20,7 @@ describe "functions returning :strptr" do
 
   it "can attach function with :strptr return type" do
     lambda do
-      m = Module.new do
+      Module.new do
         extend FFI::Library
         ffi_lib FFI::Library::LIBC
         if !FFI::Platform.windows?

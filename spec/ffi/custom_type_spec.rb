@@ -47,7 +47,7 @@ describe "functions with custom types" do
 
   it "can attach with custom return type" do
     lambda do
-      m = Module.new do
+      Module.new do
         extend FFI::Library
         ffi_lib TestLibrary::PATH
         attach_function :ret_s32, [ :int ], Custom_enum

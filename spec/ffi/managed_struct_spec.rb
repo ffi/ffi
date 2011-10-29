@@ -65,7 +65,7 @@ describe "Managed Struct" do
 
     PleaseReleaseMe.should_receive(:release).at_least(loop_count-wiggle_room).times
     loop_count.times do
-      s = PleaseReleaseMe.new(LibTest.ptr_from_address(0x12345678))
+      PleaseReleaseMe.new(LibTest.ptr_from_address(0x12345678))
     end
     PleaseReleaseMe.wait_gc loop_count
   end

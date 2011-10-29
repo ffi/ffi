@@ -50,7 +50,7 @@ describe "String tests" do
     str.taint
     begin
       LibTest.string_equals(str, str).should == false
-    rescue SecurityError => e
+    rescue SecurityError
     end
   end if false
   it "casts nil as NULL pointer" do
