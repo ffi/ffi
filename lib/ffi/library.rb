@@ -241,7 +241,7 @@ module FFI
               Function.new(find_type(ret_type), arg_types, function, options)
             end
 
-          rescue LoadError => ex
+          rescue LoadError
           end
         end
       end

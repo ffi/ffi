@@ -224,7 +224,7 @@ module FFI
         begin
           mod = self.name.split("::")[0..-2].inject(Object) { |obj, c| obj.const_get(c) }
           mod.respond_to?(:find_type) ? mod : nil
-        rescue Exception => ex
+        rescue Exception
           nil
         end
       end
