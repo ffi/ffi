@@ -123,10 +123,6 @@ module FFI
       @layout.alignment
     end
 
-    def self.align
-      @layout.alignment
-    end
-
     def self.members
       @layout.members
     end
