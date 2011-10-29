@@ -62,11 +62,11 @@
 #  define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-#ifndef RB_GC_GUARD(x)
+#ifndef RB_GC_GUARD
 #  define RB_GC_GUARD(x) (x)
 #endif
 
-#ifndef RB_GC_GUARD_PTR(x)
+#ifndef RB_GC_GUARD_PTR
 #  define RB_GC_GUARD_PTR(x) (x)
 #endif
 
