@@ -18,24 +18,24 @@ require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 describe "Library" do
   describe "#ffi_convention" do
     it "defaults to :default" do
-      Module.new do
+      m = Module.new do
         extend FFI::Library
-        ffi_convention.should == :default
       end
+      m.ffi_convention.should eq :default
     end
 
     it "should be settable" do
-      Module.new do
+      m = Module.new do
         extend FFI::Library
-
-        ffi_convention.should == :default
-        ffi_convention :stdcall
-        ffi_convention.should == :stdcall
       end
+
+      m.ffi_convention.should eq :default
+      m.ffi_convention :stdcall
+      m.ffi_convention.should eq :stdcall
     end
   end
 
-  unless Config::CONFIG['target_os'] =~ /mswin|mingw/
+  unless RbConfig::CONFIG['target_os'] =~ /mswin|mingw/
     it "attach_function with no library specified" do
       lambda {
         Module.new do |m|
@@ -50,7 +50,7 @@ describe "Library" do
           m.extend FFI::Library
           ffi_lib FFI::Library::CURRENT_PROCESS
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
+        end.getpid.should eq Process.pid
       }.should_not raise_error
     end
     it "attach_function :getpid from [ 'c', 'libc.so.6'] " do
@@ -59,7 +59,7 @@ describe "Library" do
           m.extend FFI::Library
           ffi_lib [ 'c', 'libc.so.6' ]
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
+        end.getpid.should eq Process.pid
       }.should_not raise_error
     end
     it "attach_function :getpid from [ 'libc.so.6', 'c' ] " do
@@ -68,7 +68,7 @@ describe "Library" do
           m.extend FFI::Library
           ffi_lib [ 'libc.so.6', 'c' ]
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
+        end.getpid.should eq Process.pid
       }.should_not raise_error
     end
     it "attach_function :getpid from [ 'libfubar.so.0xdeadbeef', nil, 'c' ] " do
@@ -77,7 +77,7 @@ describe "Library" do
           m.extend FFI::Library
           ffi_lib [ 'libfubar.so.0xdeadbeef', nil, 'c' ]
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
+        end.getpid.should eq Process.pid
       }.should_not raise_error
     end
     it "attach_function :getpid from [ 'libfubar.so.0xdeadbeef' ] " do
@@ -86,7 +86,7 @@ describe "Library" do
           m.extend FFI::Library
           ffi_lib 'libfubar.so.0xdeadbeef'
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
+        end.getpid.should eq Process.pid
       }.should raise_error(LoadError)
     end
   end
@@ -103,10 +103,10 @@ describe "Library" do
   def gvar_test(name, type, val)
     lib = gvar_lib(name, type)
     lib.set(val)
-    lib.gvar.should == val
+    lib.gvar.should eq val
     lib.set(0)
     lib.gvar = val
-    lib.get.should == val
+    lib.get.should eq val
   end
   [ 0, 127, -128, -1 ].each do |i|
     it ":char variable" do
@@ -175,10 +175,10 @@ describe "Library" do
     lib = gvar_lib("pointer", :pointer)
     val = FFI::MemoryPointer.new :long
     lib.set(val)
-    lib.gvar.should == val
+    lib.gvar.should eq val
     lib.set(nil)
     lib.gvar = val
-    lib.get.should == val
+    lib.get.should eq val
   end
 
   [ 0, 0x7fffffff, -0x80000000, -1 ].each do |i|
@@ -198,11 +198,11 @@ describe "Library" do
       val = GlobalStruct.new
       val[:data] = i
       lib.set(val)
-      lib.gvar[:data].should == i
+      lib.gvar[:data].should eq i
       val[:data] = 0
       lib.gvar[:data] = i
       val = GlobalStruct.new(lib.get)
-      val[:data].should == i
+      val[:data].should eq i
     end
   end
 end
