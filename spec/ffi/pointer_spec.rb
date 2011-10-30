@@ -40,7 +40,7 @@ describe "Pointer" do
     magic = 0x12345678
     memory.put_int32(0, magic)
     tp = ToPtrTest.new(memory)
-    PointerTestLib.ptr_ret_int32_t(tp, 0).should == magic
+    PointerTestLib.ptr_ret_int32_t(tp, 0).should eq magic
   end
   class PointerDelegate < DelegateClass(FFI::Pointer)
     def initialize(ptr)
@@ -55,7 +55,7 @@ describe "Pointer" do
     magic = 0x12345678
     memory.put_int32(0, magic)
     ptr = PointerDelegate.new(memory)
-    PointerTestLib.ptr_ret_int32_t(ptr, 0).should == magic
+    PointerTestLib.ptr_ret_int32_t(ptr, 0).should eq magic
   end
   it "Fixnum cannot be used as a Pointer argument" do
     lambda { PointerTestLib.ptr_ret_int32(0, 0) }.should raise_error
@@ -69,13 +69,13 @@ describe "Pointer" do
     it "#read_pointer" do
       memory = FFI::MemoryPointer.new :pointer
       PointerTestLib.ptr_set_pointer(memory, 0, PointerTestLib.ptr_from_address(0xdeadbeef))
-      memory.read_pointer.address.should == 0xdeadbeef
+      memory.read_pointer.address.should eq 0xdeadbeef
     end
 
     it "#write_pointer" do
       memory = FFI::MemoryPointer.new :pointer
       memory.write_pointer(PointerTestLib.ptr_from_address(0xdeadbeef))
-      PointerTestLib.ptr_ret_pointer(memory, 0).address.should == 0xdeadbeef
+      PointerTestLib.ptr_ret_pointer(memory, 0).address.should eq 0xdeadbeef
     end
 
     it "#read_array_of_pointer" do
@@ -86,7 +86,7 @@ describe "Pointer" do
       end
       array = memory.read_array_of_pointer(values.size)
       values.each_with_index do |address, j|
-        array[j].address.should == address
+        array[j].address.should eq address
       end
     end
     
@@ -149,7 +149,7 @@ describe "AutoPointer" do
       # note that if we called
       # AutoPointerTestHelper.method(:release).to_proc inline, we'd
       # have a reference to the pointer and it would never get GC'd.
-      ap = AutoPointerSubclass.new(PointerTestLib.ptr_from_address(magic))
+      AutoPointerSubclass.new(PointerTestLib.ptr_from_address(magic))
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -166,8 +166,8 @@ describe "AutoPointer" do
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
-      ap = FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
-                                AutoPointerTestHelper.finalizer)
+      FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
+                           AutoPointerTestHelper.finalizer)
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -176,8 +176,8 @@ describe "AutoPointer" do
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
-      ap = FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
-                                AutoPointerTestHelper.method(:release))
+      FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
+                           AutoPointerTestHelper.method(:release))
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -194,21 +194,18 @@ describe "AutoPointer" do
       end
     end.should_not raise_error
   end
-end
 
-describe "AutoPointer#new" do
-  class AutoPointerSubclass < FFI::AutoPointer
-    def self.release(ptr); end
-  end
-  it "MemoryPointer argument raises TypeError" do
-    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(::TypeError)
-  end
-  it "AutoPointer argument raises TypeError" do
-    lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(PointerTestLib.ptr_from_address(0))) }.should raise_error(::TypeError)
-  end
-  it "Buffer argument raises TypeError" do
-    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(::TypeError)
-  end
+  describe "#new" do
+    it "MemoryPointer argument raises TypeError" do
+      lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(::TypeError)
+    end
+    it "AutoPointer argument raises TypeError" do
+      lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(PointerTestLib.ptr_from_address(0))) }.should raise_error(::TypeError)
+    end
+    it "Buffer argument raises TypeError" do
+      lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(::TypeError)
+    end
 
+  end
 end
 

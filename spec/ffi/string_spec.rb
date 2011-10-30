@@ -29,7 +29,7 @@ describe "String tests" do
     mp = FFI::MemoryPointer.new 1024
     mp.put_string(0, "test\0")
     str = mp.get_string(0)
-    str.tainted?.should == true
+    str.tainted?.should eq true
   end
   it "String returned by a method is tainted" do
     mp = FFI::MemoryPointer.new :pointer
@@ -37,8 +37,8 @@ describe "String tests" do
     sp.put_string(0, "test")
     mp.put_pointer(0, sp)
     str = StrLibTest.ptr_ret_pointer(mp, 0)
-    str.should == "test"
-    str.tainted?.should == true
+    str.should eq "test"
+    str.tainted?.should eq true
   end
   it "Poison null byte raises error" do
     s = "123\0abc"
@@ -49,15 +49,15 @@ describe "String tests" do
     str = "test"
     str.taint
     begin
-      LibTest.string_equals(str, str).should == false
-    rescue SecurityError => e
+      LibTest.string_equals(str, str).should eq false
+    rescue SecurityError
     end
   end if false
   it "casts nil as NULL pointer" do
     StrLibTest.string_dummy(nil)
   end
   it "return nil for NULL char*" do
-    StrLibTest.string_null.should == nil
+    StrLibTest.string_null.should eq nil
   end
   it "reads an array of strings until encountering a NULL pointer" do
     strings = ["foo", "bar", "baz", "testing", "ffi"]
@@ -69,7 +69,7 @@ describe "String tests" do
     end
     ary.insert(3, nil)
     ptrary.write_array_of_pointer(ary)
-    ptrary.get_array_of_string(0).should == ["foo", "bar", "baz"]
+    ptrary.get_array_of_string(0).should eq ["foo", "bar", "baz"]
   end
   it "reads an array of strings of the size specified, substituting nil when a pointer is NULL" do
     strings = ["foo", "bar", "baz", "testing", "ffi"]
@@ -81,7 +81,7 @@ describe "String tests" do
     end
     ary.insert(2, nil)
     ptrary.write_array_of_pointer(ary)
-    ptrary.get_array_of_string(0, 4).should == ["foo", "bar", nil, "baz"]
+    ptrary.get_array_of_string(0, 4).should eq ["foo", "bar", nil, "baz"]
   end
   it "reads an array of strings, taking a memory offset parameter" do
     strings = ["foo", "bar", "baz", "testing", "ffi"]
@@ -92,7 +92,7 @@ describe "String tests" do
       a << f
     end
     ptrary.write_array_of_pointer(ary)
-    ptrary.get_array_of_string(2 * FFI.type_size(:pointer), 3).should == ["baz", "testing", "ffi"]
+    ptrary.get_array_of_string(2 * FFI.type_size(:pointer), 3).should eq ["baz", "testing", "ffi"]
   end
   it "raises an IndexError when trying to read an array of strings out of bounds" do
     strings = ["foo", "bar", "baz", "testing", "ffi"]

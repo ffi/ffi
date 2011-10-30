@@ -229,8 +229,8 @@ module FFI
         if invokers.empty?
           begin
             function = nil
-            function_names(cname, arg_types).find do |name|
-              function = lib.find_function(name)
+            function_names(cname, arg_types).find do |fname|
+              function = lib.find_function(fname)
             end
             raise LoadError unless function
 
@@ -241,7 +241,7 @@ module FFI
               Function.new(find_type(ret_type), arg_types, function, options)
             end
 
-          rescue LoadError => ex
+          rescue LoadError
           end
         end
       end

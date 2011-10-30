@@ -20,13 +20,13 @@ LIBEXT = case RbConfig::CONFIG['host_os'].downcase
   when /mswin|mingw/
     "dll"
   else
-    Config::CONFIG['DLEXT']
+    RbConfig::CONFIG['DLEXT']
   end
 
 CPU = case RbConfig::CONFIG['host_cpu'].downcase
   when /i[3456]86/
     # Darwin always reports i686, even when running in 64bit mode
-    if Config::CONFIG['host_os'] =~ /darwin/ && 0xfee1deadbeef.is_a?(Fixnum)
+    if RbConfig::CONFIG['host_os'] =~ /darwin/ && 0xfee1deadbeef.is_a?(Fixnum)
       "x86_64"
     else
       "i386"
@@ -42,10 +42,10 @@ CPU = case RbConfig::CONFIG['host_cpu'].downcase
     "powerpc"
 
   else
-    Config::CONFIG['host_cpu']
+    RbConfig::CONFIG['host_cpu']
   end
 
-OS = case Config::CONFIG['host_os'].downcase
+OS = case RbConfig::CONFIG['host_os'].downcase
   when /linux/
     "linux"
   when /darwin/
@@ -59,16 +59,16 @@ OS = case Config::CONFIG['host_os'].downcase
   when /mswin|mingw/
     "win32"
   else
-    Config::CONFIG['host_os'].downcase
+    RbConfig::CONFIG['host_os'].downcase
   end
 
-CC=ENV['CC'] || Config::CONFIG['CC'] || "gcc"
+CC=ENV['CC'] || RbConfig::CONFIG['CC'] || "gcc"
 
 GMAKE = system('which gmake >/dev/null') && 'gmake' || 'make'
 
 LIBTEST = "build/libtest.#{LIBEXT}"
 BUILD_DIR = "build"
-BUILD_EXT_DIR = File.join(BUILD_DIR, "#{Config::CONFIG['arch']}", 'ffi_c', RUBY_VERSION)
+BUILD_EXT_DIR = File.join(BUILD_DIR, "#{RbConfig::CONFIG['arch']}", 'ffi_c', RUBY_VERSION)
 
 # Project general information
 PROJ.name = 'ffi'
@@ -116,23 +116,23 @@ TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
   desc "Run all specs"
   task :specs => TEST_DEPS do
-    sh %{#{Gem.ruby} -S rspec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -S rspec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
-    sh %{#{Gem.ruby} -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
   end
 else
   TEST_DEPS.unshift :compile
   desc "Run all specs"
   task :specs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
   end
 end
 
@@ -146,7 +146,7 @@ task :install => 'gem:install'
 desc "Clean all built files"
 task :distclean => :clobber do
   FileUtils.rm_rf('build')
-  FileUtils.rm_rf(Dir["lib/**/ffi_c.#{Config::CONFIG['DLEXT']}"])
+  FileUtils.rm_rf(Dir["lib/**/ffi_c.#{RbConfig::CONFIG['DLEXT']}"])
   FileUtils.rm_rf('lib/1.8')
   FileUtils.rm_rf('lib/1.9')
   FileUtils.rm_rf('lib/ffi/types.conf')
