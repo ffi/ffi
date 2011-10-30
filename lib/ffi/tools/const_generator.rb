@@ -61,10 +61,10 @@ module FFI
       @options
     end
     # @param [String] name
-    # @return constant value
+    # @return constant value (converted if a +converter+ was defined).
     # Access a constant by name.
     def [](name)
-      @constants[name].value
+      @constants[name].converted_value
     end
 
     # Request the value for C constant +name+.
