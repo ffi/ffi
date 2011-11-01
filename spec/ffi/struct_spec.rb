@@ -674,7 +674,8 @@ describe "Struct allocation" do
       c = Class.new(FFI::Struct) do
         layout :b, :bool
       end
-      c.new
+      struct = c.new
+      struct[:b] = ! struct[:b]
     end.should_not raise_error
   end
 
