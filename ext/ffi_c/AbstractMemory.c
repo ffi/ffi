@@ -645,7 +645,7 @@ MemoryOps rbffi_AbstractMemoryOps = {
     &memory_op_float64, //.float64
     &memory_op_pointer, //.pointer
     &memory_op_strptr, //.strptr
-	NULL //.boolOp
+    &memory_op_bool //.boolOp
 };
 
 void
