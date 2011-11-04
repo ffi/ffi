@@ -20,9 +20,13 @@
 #
 
 require 'rbconfig'
+require 'ffi_c'
+
 module FFI
   class PlatformError < LoadError; end
 
+  # This module defines different constants and class methods to play with
+  # various platforms.
   module Platform
     OS = case RbConfig::CONFIG['host_os'].downcase
     when /linux/
@@ -53,18 +57,22 @@ module FFI
     end
 
     private
+    # @param [String) os
+    # @return [Boolean]
+    # Test if current OS is +os+.
     def self.is_os(os)
       OS == os
     end
     
     NAME = "#{ARCH}-#{OS}"
+    IS_GNU = defined?(GNU_LIBC)
     IS_LINUX = is_os("linux")
     IS_MAC = is_os("darwin")
     IS_FREEBSD = is_os("freebsd")
     IS_OPENBSD = is_os("openbsd")
     IS_WINDOWS = is_os("windows")
     IS_BSD = IS_MAC || IS_FREEBSD || IS_OPENBSD
-    CONF_DIR = File.join(File.dirname(__FILE__), 'platform', ARCH.to_s + "-" + OS.to_s)
+    CONF_DIR = File.join(File.dirname(__FILE__), 'platform', NAME)
     public
 
     
@@ -85,24 +93,32 @@ module FFI
 
     LIBC = if IS_WINDOWS
       "msvcrt.dll"
-    elsif IS_LINUX
-      "libc.so.6"
+    elsif IS_GNU
+      GNU_LIBC
     else
       "#{LIBPREFIX}c.#{LIBSUFFIX}"
     end
 
+    # Test if current OS is a *BSD (include MAC)
+    # @return [Boolean]
     def self.bsd?
       IS_BSD
     end
 
+    # Test if current OS is Windows
+    # @return [Boolean]
     def self.windows?
       IS_WINDOWS
     end
 
+    # Test if current OS is Mac OS
+    # @return [Boolean]
     def self.mac?
       IS_MAC
     end
 
+    # Test if current OS is a unix OS
+    # @return [Boolean]
     def self.unix?
       !IS_WINDOWS
     end

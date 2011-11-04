@@ -99,6 +99,11 @@ thread_data_get()
 #endif
 
 
+/*
+ * call-seq: error
+ * @return [Numeric]
+ * Get +errno+ value.
+ */
 static VALUE
 get_last_error(VALUE self)
 {
@@ -106,6 +111,12 @@ get_last_error(VALUE self)
 }
 
 
+/*
+ * call-seq: error(error)
+ * @param [Numeric] error
+ * @return [nil]
+ * Set +errno+ value.
+ */
 static VALUE
 set_last_error(VALUE self, VALUE error)
 {
@@ -138,6 +149,11 @@ rbffi_save_errno(void)
 void
 rbffi_LastError_Init(VALUE moduleFFI)
 {
+    /*
+     * Document-module: FFI::LastError
+     * This module defines a couple of method to set and get +errno+
+     * for current thread.
+     */
     VALUE moduleError = rb_define_module_under(moduleFFI, "LastError");
 
     rb_define_module_function(moduleError, "error", get_last_error, 0);

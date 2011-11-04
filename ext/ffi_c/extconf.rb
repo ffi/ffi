@@ -5,9 +5,9 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
   require 'rbconfig'
   dir_config("ffi_c")
   
-  if pkg_config("libffi") ||
+  if ENV['RUBY_CC_VERSION'].nil? && (pkg_config("libffi") ||
      have_header("ffi.h") ||
-     find_header("ffi.h", "/usr/local/include")
+     find_header("ffi.h", "/usr/local/include"))
 
     # We need at least ffi_call and ffi_prep_closure
     libffi_ok = have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
@@ -43,7 +43,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
         mf.puts "include ${srcdir}/libffi.darwin.mk"
       elsif RbConfig::CONFIG['host_os'].downcase =~ /bsd/
         mf.puts '.include "${srcdir}/libffi.bsd.mk"'
-      elsif RbConfig::CONFIG['host_os'] !~ /mswin32|mingw32/
+      else
         mf.puts "include ${srcdir}/libffi.mk"
       end
     end

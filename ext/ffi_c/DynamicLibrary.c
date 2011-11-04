@@ -76,12 +76,28 @@ library_allocate(VALUE klass)
     return Data_Make_Struct(klass, Library, NULL, library_free, library);
 }
 
+/*
+ * call-seq: DynamicLibrary.open(libname, libflags)
+ * @param libname (see #initialize)
+ * @param libflags (see #initialize)
+ * @return [FFI::DynamicLibrary]
+ * @raise {LoadError} if +libname+ cannot be opened
+ * Open a library.
+ */
 static VALUE
 library_open(VALUE klass, VALUE libname, VALUE libflags)
 {
     return library_initialize(library_allocate(klass), libname, libflags);
 }
 
+/*
+ * call-seq: initialize(libname, libflags)
+ * @param [String] libname name of library to open
+ * @param [Fixnum] libflags flags for library to open
+ * @return [FFI::DynamicLibrary]
+ * @raise {LoadError} if +libname+ cannot be opened
+ * A new DynamicLibrary instance.
+ */
 static VALUE
 library_initialize(VALUE self, VALUE libname, VALUE libflags)
 {
@@ -118,6 +134,10 @@ library_dlsym(VALUE self, VALUE name)
     return address != NULL ? symbol_new(self, address, name) : Qnil;
 }
 
+/*
+ * call-seq: last_error
+ * @return [String] library's last error string
+ */
 static VALUE
 library_dlerror(VALUE self)
 {
@@ -170,6 +190,12 @@ symbol_allocate(VALUE klass)
 }
 
 
+/*
+ * call-seq: initialize_copy(other)
+ * @param [Object] other
+ * @return [nil]
+ * DO NOT CALL THIS METHOD
+ */
 static VALUE
 symbol_initialize_copy(VALUE self, VALUE other)
 {
@@ -200,6 +226,11 @@ symbol_mark(LibrarySymbol* sym)
     rb_gc_mark(sym->name);
 }
 
+/*
+ * call-seq: inspect
+ * @return [String]
+ * Inspect.
+ */
 static VALUE
 symbol_inspect(VALUE self)
 {
@@ -215,18 +246,49 @@ symbol_inspect(VALUE self)
 void
 rbffi_DynamicLibrary_Init(VALUE moduleFFI)
 {
+    /*
+     * Document-class: FFI::DynamicLibrary
+     */
     LibraryClass = rb_define_class_under(moduleFFI, "DynamicLibrary", rb_cObject);
     rb_global_variable(&LibraryClass);
+    /*
+     * Document-class: FFI::DynamicLibrary::Symbol < FFI::Pointer
+     *
+     * An instance of this class represents a library symbol. It may be a {Pointer pointer} to
+     * a function or to a variable.
+     */
     SymbolClass = rb_define_class_under(LibraryClass, "Symbol", rbffi_PointerClass);
     rb_global_variable(&SymbolClass);
 
+    /*
+     * Document-const: FFI::NativeLibrary
+     * Backward compatibility for FFI::DynamicLibrary
+     */
     rb_define_const(moduleFFI, "NativeLibrary", LibraryClass); // backwards compat library
     rb_define_alloc_func(LibraryClass, library_allocate);
     rb_define_singleton_method(LibraryClass, "open", library_open, 2);
     rb_define_singleton_method(LibraryClass, "last_error", library_dlerror, 0);
     rb_define_method(LibraryClass, "initialize", library_initialize, 2);
+    /*
+     * Document-method: find_symbol
+     * call-seq: find_symbol(name)
+     * @param [String] name library symbol's name
+     * @return [FFI::DynamicLibrary::Symbol] library symbol
+     */
     rb_define_method(LibraryClass, "find_symbol", library_dlsym, 1);
+    /*
+     * Document-method: find_function
+     * call-seq: find_function(name)
+     * @param [String] name library function's name
+     * @return [FFI::DynamicLibrary::Symbol] library function symbol
+     */
     rb_define_method(LibraryClass, "find_function", library_dlsym, 1);
+    /*
+     * Document-method: find_variable
+     * call-seq: find_variable(name)
+     * @param [String] name library variable's name
+     * @return [FFI::DynamicLibrary::Symbol] library variable symbol
+     */
     rb_define_method(LibraryClass, "find_variable", library_dlsym, 1);
     rb_define_method(LibraryClass, "last_error", library_dlerror, 0);
     rb_define_attr(LibraryClass, "name", 1, 0);

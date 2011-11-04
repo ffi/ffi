@@ -22,6 +22,9 @@
 #include <stdbool.h>
 #ifndef _WIN32
 # include <pthread.h>
+#else
+# include <windows.h>
+# include <process.h>
 #endif
 
 #define R(T, rtype) rtype testClosureVr##T(rtype (*closure)(void)) { \
@@ -73,6 +76,7 @@ struct ThreadVrV {
     void (*closure)(void);
     int count;
 };
+
 static void *
 threadVrV(void *arg)
 {
@@ -88,21 +92,14 @@ threadVrV(void *arg)
 
 void testThreadedClosureVrV(void (*closure)(void), int n)
 {
+	struct ThreadVrV arg = {closure, n};
 #ifndef _WIN32
     pthread_t t;
-    struct ThreadVrV arg;
-    
-    arg.closure = closure;
-    arg.count = n;
-    
     pthread_create(&t, NULL, threadVrV, &arg);
-    
     pthread_join(t, NULL);
 #else
-    int i;
-    for (i = 0; i < n; i++) {
-        (*closure)();
-    }
+    HANDLE hThread = (HANDLE) _beginthread((void (*)(void *))threadVrV, 0, &arg);
+    WaitForSingleObject(hThread, INFINITE);	
 #endif
 }
 
