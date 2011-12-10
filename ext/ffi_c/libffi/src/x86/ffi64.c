@@ -1,7 +1,8 @@
 /* -----------------------------------------------------------------------
-   ffi64.c - Copyright (c) 2002, 2007  Bo Thorsen <bo@suse.de>
-             Copyright (c) 2008  Red Hat, Inc.
-   
+   ffi64.c - Copyright (c) 20011  Anthony Green
+             Copyright (c) 2008, 2010  Red Hat, Inc.
+             Copyright (c) 2002, 2007  Bo Thorsen <bo@suse.de>
+             
    x86-64 Foreign Function Interface 
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -50,9 +51,10 @@ extern void ffi_call_unix64 (void *args, unsigned long bytes, unsigned flags,
    gcc/config/i386/i386.c. Do *not* change one without the other.  */
 
 /* Register class used for passing given 64bit part of the argument.
-   These represent classes as documented by the PS ABI, with the exception
-   of SSESF, SSEDF classes, that are basically SSE class, just gcc will
-   use SF or DFmode move instead of DImode to avoid reformating penalties.
+   These represent classes as documented by the PS ABI, with the
+   exception of SSESF, SSEDF classes, that are basically SSE class,
+   just gcc will use SF or DFmode move instead of DImode to avoid
+   reformatting penalties.
 
    Similary we play games with INTEGERSI_CLASS to use cheaper SImode moves
    whenever possible (upper half does contain padding).  */
@@ -377,7 +379,7 @@ ffi_prep_cif_machdep (ffi_cif *cif)
 	  if (align < 8)
 	    align = 8;
 
-	  bytes = ALIGN(bytes, align);
+	  bytes = ALIGN (bytes, align);
 	  bytes += cif->arg_types[i]->size;
 	}
       else
@@ -389,7 +391,7 @@ ffi_prep_cif_machdep (ffi_cif *cif)
   if (ssecount)
     flags |= 1 << 11;
   cif->flags = flags;
-  cif->bytes = bytes;
+  cif->bytes = ALIGN (bytes, 8);
 
   return FFI_OK;
 }
@@ -496,6 +498,13 @@ ffi_prep_closure_loc (ffi_closure* closure,
 		      void *codeloc)
 {
   volatile unsigned short *tramp;
+
+  /* Sanity check on the cif ABI.  */
+  {
+    int abi = cif->abi;
+    if (UNLIKELY (! (abi > FFI_FIRST_ABI && abi < FFI_LAST_ABI)))
+      return FFI_BAD_ABI;
+  }
 
   tramp = (volatile unsigned short *) &closure->tramp[0];
 
