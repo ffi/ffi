@@ -32,7 +32,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
   $CFLAGS << " -mwin32 " if RbConfig::CONFIG['host_os'] =~ /cygwin/
   #$CFLAGS << " -Werror -Wunused -Wformat -Wimplicit -Wreturn-type "
   if (ENV['CC'] || RbConfig::MAKEFILE_CONFIG['CC'])  =~ /gcc/
-    $CFLAGS << " -Wno-declaration-after-statement "
+#    $CFLAGS << " -Wno-declaration-after-statement "
   end
   
   create_makefile("ffi_c")
