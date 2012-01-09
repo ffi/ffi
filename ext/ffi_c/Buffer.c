@@ -18,8 +18,16 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
+#ifndef _MSC_VER
 #include <stdint.h>
+#endif
 #include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"

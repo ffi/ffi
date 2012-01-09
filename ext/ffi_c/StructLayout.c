@@ -22,9 +22,15 @@
 #include <sys/types.h>
 
 #include "Function.h"
+#ifndef _MSC_VER
 #include <sys/param.h>
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ruby.h>
 #include "rbffi.h"
 #include "compat.h"

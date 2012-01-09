@@ -21,9 +21,13 @@
 #ifndef RBFFI_ABSTRACTMEMORY_H
 #define	RBFFI_ABSTRACTMEMORY_H
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
+#ifndef _MSC_VER
 #include <stdint.h>
+#endif
 
 #include "compat.h"
 #include "Types.h"
