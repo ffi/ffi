@@ -44,7 +44,9 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
         mf.puts "include ${srcdir}/libffi.darwin.mk"
       elsif RbConfig::CONFIG['host_os'].downcase =~ /bsd/
         mf.puts '.include "${srcdir}/libffi.bsd.mk"'
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin/
+      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin64/
+        mf.puts '!include $(srcdir)/libffi.vc64.mk'
+      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin32/
         mf.puts '!include $(srcdir)/libffi.vc.mk'
       else
         mf.puts "include ${srcdir}/libffi.mk"
