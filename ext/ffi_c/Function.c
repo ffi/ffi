@@ -20,16 +20,26 @@
 
 #include "MethodHandle.h"
 
-
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
 #ifndef _WIN32
 # include <sys/mman.h>
 #endif
 #include <stdio.h>
+#ifndef _MSC_VER
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ruby.h>
+#if defined(_MSC_VER) && !defined(INT8_MIN)
+#  include <stdint.h>
+#endif
 
 #include <ffi.h>
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)

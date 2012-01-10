@@ -25,7 +25,13 @@
 extern "C" {
 #endif
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ffi.h>
 
 typedef struct FunctionType_ FunctionType;

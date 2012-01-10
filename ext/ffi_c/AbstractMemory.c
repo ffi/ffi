@@ -19,11 +19,20 @@
  */
 
 #include <sys/types.h>
+#ifndef _MSC_VER
 #include <sys/param.h>
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <limits.h>
 #include <ruby.h>
+#if defined(_MSC_VER) && !defined(INT8_MIN)
+#  include <stdint.h>
+#endif
 #include "rbffi.h"
 #include "compat.h"
 #include "AbstractMemory.h"
