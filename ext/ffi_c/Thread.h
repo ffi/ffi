@@ -21,7 +21,13 @@
 #ifndef RBFFI_THREAD_H
 #define	RBFFI_THREAD_H
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ruby.h>
 #include "extconf.h"
 

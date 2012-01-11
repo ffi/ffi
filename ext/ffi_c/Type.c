@@ -16,7 +16,10 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
+
 #include <sys/types.h>
 #include <ruby.h>
 #include <ffi.h>

@@ -20,14 +20,22 @@
 
 #include <sys/types.h>
 #include <stdio.h>
-#include <stdint.h>
+#ifndef _MSC_VER
+#  include <stdint.h>
+#endif
 #if defined(_WIN32) || defined(__WIN32__)
+#ifdef _MSC_VER
+#  include <winsock2.h>
+#endif
 # define _WINSOCKAPI_
 # include <windows.h>
 #else
 # include <dlfcn.h>
 #endif
 #include <ruby.h>
+#if defined(_MSC_VER) && !defined(INT8_MIN)
+#  include <stdint.h>
+#endif
 
 #include <ffi.h>
 

@@ -18,13 +18,22 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 
 #ifndef _WIN32
 # include <pthread.h>
 # include <errno.h>
 # include <signal.h>
 #else
+#ifdef _MSC_VER
+#  include <winsock2.h>
+#endif
 # define _WINSOCKAPI_
 # include <windows.h>
 #endif

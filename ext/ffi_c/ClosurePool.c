@@ -17,23 +17,37 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
 #ifndef _WIN32
 #  include <sys/mman.h>
 #endif
 #include <stdio.h>
+#ifndef _MSC_VER
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #ifndef _WIN32
 #  include <unistd.h>
 #else
+#  ifdef _MSC_VER
+#    include <winsock2.h>
+#  endif
 #  define _WINSOCKAPI_
 #  include <windows.h>
 #endif
 #include <errno.h>
 #include <ruby.h>
 
+#if defined(_MSC_VER) && !defined(INT8_MIN)
+#  include <stdint.h>
+#endif
 #include <ffi.h>
 #include "rbffi.h"
 #include "compat.h"
