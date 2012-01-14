@@ -31,7 +31,7 @@ typedef int bool;
 #include <limits.h>
 #include <ruby.h>
 #if defined(_MSC_VER) && !defined(INT8_MIN)
-#  include <stdint.h>
+#  include "win32/stdint.h"
 #endif
 #include "rbffi.h"
 #include "compat.h"
