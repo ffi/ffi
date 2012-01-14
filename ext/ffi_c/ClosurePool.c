@@ -46,7 +46,7 @@ typedef int bool;
 #include <ruby.h>
 
 #if defined(_MSC_VER) && !defined(INT8_MIN)
-#  include <stdint.h>
+#  include "win32/stdint.h"
 #endif
 #include <ffi.h>
 #include "rbffi.h"
