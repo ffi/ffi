@@ -24,9 +24,7 @@
 #  include <stdint.h>
 #endif
 #if defined(_WIN32) || defined(__WIN32__)
-#ifdef _MSC_VER
-#  include <winsock2.h>
-#endif
+# include <winsock2.h>
 # define _WINSOCKAPI_
 # include <windows.h>
 #else

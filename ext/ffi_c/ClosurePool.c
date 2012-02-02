@@ -36,9 +36,7 @@ typedef int bool;
 #ifndef _WIN32
 #  include <unistd.h>
 #else
-#  ifdef _MSC_VER
-#    include <winsock2.h>
-#  endif
+#  include <winsock2.h>
 #  define _WINSOCKAPI_
 #  include <windows.h>
 #endif

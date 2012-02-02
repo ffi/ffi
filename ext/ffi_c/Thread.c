@@ -31,9 +31,7 @@ typedef int bool;
 # include <errno.h>
 # include <signal.h>
 #else
-#ifdef _MSC_VER
-#  include <winsock2.h>
-#endif
+# include <winsock2.h>
 # define _WINSOCKAPI_
 # include <windows.h>
 #endif
