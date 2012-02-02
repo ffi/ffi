@@ -37,7 +37,7 @@ JFLAGS = -fno-omit-frame-pointer -fno-strict-aliasing
 OFLAGS = -O2 $(JFLAGS)
 WFLAGS = -W -Werror -Wall -Wno-unused -Wno-parentheses
 PICFLAGS = -fPIC
-SOFLAGS = -shared -mimpure-text -Wl,-O1
+SOFLAGS = -shared
 LDFLAGS += $(SOFLAGS)
 
 IFLAGS = -I"$(BUILD_DIR)"
