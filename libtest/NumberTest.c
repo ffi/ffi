@@ -23,7 +23,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#ifdef __sparc
+#if defined(__sparc) && defined(__sun__)
     #define fix_mem_access __asm("ta 6")
 #else
     #define fix_mem_access
