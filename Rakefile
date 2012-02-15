@@ -14,19 +14,19 @@ require 'rbconfig'
 
 load 'tasks/setup.rb'
 
-LIBEXT = case RbConfig::CONFIG['host_os'].downcase
+LIBEXT = case Config::CONFIG['host_os'].downcase
   when /darwin/
     "dylib"
   when /mswin|mingw/
     "dll"
   else
-    RbConfig::CONFIG['DLEXT']
+    Config::CONFIG['DLEXT']
   end
 
-CPU = case RbConfig::CONFIG['host_cpu'].downcase
+CPU = case Config::CONFIG['host_cpu'].downcase
   when /i[3456]86/
     # Darwin always reports i686, even when running in 64bit mode
-    if RbConfig::CONFIG['host_os'] =~ /darwin/ && 0xfee1deadbeef.is_a?(Fixnum)
+    if Config::CONFIG['host_os'] =~ /darwin/ && 0xfee1deadbeef.is_a?(Fixnum)
       "x86_64"
     else
       "i386"
@@ -42,10 +42,10 @@ CPU = case RbConfig::CONFIG['host_cpu'].downcase
     "powerpc"
 
   else
-    RbConfig::CONFIG['host_cpu']
+    Config::CONFIG['host_cpu']
   end
 
-OS = case RbConfig::CONFIG['host_os'].downcase
+OS = case Config::CONFIG['host_os'].downcase
   when /linux/
     "linux"
   when /darwin/
@@ -59,16 +59,16 @@ OS = case RbConfig::CONFIG['host_os'].downcase
   when /mswin|mingw/
     "win32"
   else
-    RbConfig::CONFIG['host_os'].downcase
+    Config::CONFIG['host_os'].downcase
   end
 
-CC=ENV['CC'] || RbConfig::CONFIG['CC'] || "gcc"
+CC=ENV['CC'] || Config::CONFIG['CC'] || "gcc"
 
 GMAKE = system('which gmake >/dev/null') && 'gmake' || 'make'
 
 LIBTEST = "build/libtest.#{LIBEXT}"
 BUILD_DIR = "build"
-BUILD_EXT_DIR = File.join(BUILD_DIR, "#{RbConfig::CONFIG['arch']}", 'ffi_c', RUBY_VERSION)
+BUILD_EXT_DIR = File.join(BUILD_DIR, "#{Config::CONFIG['arch']}", 'ffi_c', RUBY_VERSION)
 
 # Project general information
 PROJ.name = 'ffi'
@@ -146,7 +146,7 @@ task :install => 'gem:install'
 desc "Clean all built files"
 task :distclean => :clobber do
   FileUtils.rm_rf('build')
-  FileUtils.rm_rf(Dir["lib/**/ffi_c.#{RbConfig::CONFIG['DLEXT']}"])
+  FileUtils.rm_rf(Dir["lib/**/ffi_c.#{Config::CONFIG['DLEXT']}"])
   FileUtils.rm_rf('lib/1.8')
   FileUtils.rm_rf('lib/1.9')
   FileUtils.rm_rf('lib/ffi/types.conf')
