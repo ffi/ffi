@@ -29,24 +29,24 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
 
   create_header
   
-  $CFLAGS << " -mwin32 " if RbConfig::CONFIG['host_os'] =~ /cygwin/
-  $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if RbConfig::CONFIG['host_os'] =~ /mswin/
+  $CFLAGS << " -mwin32 " if Config::CONFIG['host_os'] =~ /cygwin/
+  $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if Config::CONFIG['host_os'] =~ /mswin/
   #$CFLAGS << " -Werror -Wunused -Wformat -Wimplicit -Wreturn-type "
-  if (ENV['CC'] || RbConfig::MAKEFILE_CONFIG['CC'])  =~ /gcc/
+  if (ENV['CC'] || Config::MAKEFILE_CONFIG['CC'])  =~ /gcc/
 #    $CFLAGS << " -Wno-declaration-after-statement "
   end
   
   create_makefile("ffi_c")
   unless libffi_ok
     File.open("Makefile", "a") do |mf|
-      mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
-      if RbConfig::CONFIG['host_os'].downcase =~ /darwin/
+      mf.puts "LIBFFI_HOST=--host=#{Config::CONFIG['host_alias']}" if Config::CONFIG.has_key?("host_alias")
+      if Config::CONFIG['host_os'].downcase =~ /darwin/
         mf.puts "include ${srcdir}/libffi.darwin.mk"
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /bsd/
+      elsif Config::CONFIG['host_os'].downcase =~ /bsd/
         mf.puts '.include "${srcdir}/libffi.bsd.mk"'
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin64/
+      elsif Config::CONFIG['host_os'].downcase =~ /mswin64/
         mf.puts '!include $(srcdir)/libffi.vc64.mk'
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin32/
+      elsif Config::CONFIG['host_os'].downcase =~ /mswin32/
         mf.puts '!include $(srcdir)/libffi.vc.mk'
       else
         mf.puts "include ${srcdir}/libffi.mk"

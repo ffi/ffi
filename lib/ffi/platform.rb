@@ -26,7 +26,7 @@ module FFI
   # This module defines different constants and class methods to play with
   # various platforms.
   module Platform
-    OS = case RbConfig::CONFIG['host_os'].downcase
+    OS = case Config::CONFIG['host_os'].downcase
     when /linux/
       "linux"
     when /darwin/
@@ -40,7 +40,7 @@ module FFI
     when /mingw|mswin/
       "windows"
     else
-      RbConfig::CONFIG['host_os'].downcase
+      Config::CONFIG['host_os'].downcase
     end
 
     ARCH = case CPU.downcase
@@ -51,7 +51,7 @@ module FFI
     when /ppc|powerpc/
       "powerpc"
     else
-      RbConfig::CONFIG['host_cpu']
+      Config::CONFIG['host_cpu']
     end
 
     private
