@@ -41,6 +41,7 @@ typedef signed long sL;
 typedef unsigned long uL;
 typedef float f32;
 typedef double f64;
+typedef long double f128;
 #if !defined(__OpenBSD__)
 typedef unsigned long ulong;
 #endif
@@ -66,6 +67,7 @@ TEST(float);
 TEST(double);
 TEST(long);
 TEST(ulong);
+TEST(f128);
 
 #define ADD2(R, T1, T2) R add_##T1##T2##_##R(T1 arg1, T2 arg2) { return arg1 + arg2; }
 #define SUB2(R, T1, T2) R sub_##T1##T2##_##R(T1 arg1, T2 arg2) { return arg1 - arg2; }

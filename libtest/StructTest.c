@@ -196,6 +196,12 @@ struct_s8s32_get_s32(struct s8s32 s)
     return s.s32;
 }
 
+struct s8s32
+struct_s8s32_ret_s8s32(struct s8s32 s)
+{
+    return s;
+}
+
 // Pass a struct and an int arg, ensure the int arg is passed correctly
 int
 struct_s8s32_s32_ret_s32(struct s8s32 s, int s32)
@@ -208,6 +214,14 @@ long long
 struct_s8s32_s64_ret_s64(struct s8s32 s, long long s64)
 {
     return s64;
+}
+
+// Pass a struct and a long long arg, ensure the long long arg is passed correctly
+int
+struct_s32_ptr_s32_s8s32_ret_s32(int s32a, void *ptr, int s32b, struct s8s32 s)
+{
+    if (ptr != NULL) *(struct s8s32 *) ptr = s;
+    return s.s32;
 }
 
 // Pass a char *, copy into buffer length struct
