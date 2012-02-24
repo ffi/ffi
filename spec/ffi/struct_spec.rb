@@ -513,6 +513,8 @@ describe FFI::Struct, ' by value'  do
     attach_function :struct_s8s32_get_s32, [ S8S32.by_value ], :int
     attach_function :struct_s8s32_s32_ret_s32, [ S8S32.by_value, :int ], :int
     attach_function :struct_s8s32_s64_ret_s64, [ S8S32.by_value, :long_long ], :long_long
+    attach_function :struct_s8s32_ret_s8s32, [ S8S32.by_value ], S8S32.by_value
+    attach_function :struct_s32_ptr_s32_s8s32_ret_s32, [ :int, :pointer, :int, S8S32.by_value ], :int
     attach_function :struct_varargs_ret_struct_string, [ :int, :varargs ], StructString.by_value
   end
 
@@ -548,8 +550,34 @@ describe FFI::Struct, ' by value'  do
     s = LibTest::S8S32.new
     s[:s8] = 0x12
     s[:s32] = 0x34567890
+  end
 
-    LibTest.struct_s8s32_s64_ret_s64(s, 0xdeadcafebabe).should eq 0xdeadcafebabe
+  it 'parameter with preceding s32,ptr,s32' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+    out = LibTest::S8S32.new
+    LibTest.struct_s32_ptr_s32_s8s32_ret_s32(0x1000000, out, 0x1eafbeef, s).should eq 0x34567890
+    out[:s8].should eq s[:s8]
+    out[:s32].should eq s[:s32]
+  end
+
+  it 'parameter with preceding s32,string,s32' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+    out = 0.chr * 32
+    LibTest.struct_s32_ptr_s32_s8s32_ret_s32(0x1000000, out, 0x1eafbeef, s).should eq 0x34567890
+  end
+
+  it 'parameter, returning struct by value' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+
+    ret = LibTest.struct_s8s32_ret_s8s32(s)
+    ret[:s8].should eq s[:s8]
+    ret[:s32].should eq s[:s32]
   end
 
   it 'varargs returning a struct' do
