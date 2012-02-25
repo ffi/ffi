@@ -1,5 +1,4 @@
 ruby-ffi
-    by Wayne Meissner
     http://wiki.github.com/ffi/ffi
 
 == DESCRIPTION:
@@ -28,7 +27,7 @@ using Ruby-FFI here[http://wiki.github.com/ffi/ffi/why-use-ffi].
     attach_function :puts, [ :string ], :int
   end
 
-  MyLib.puts 'Hello boys using libc!'
+  MyLib.puts 'Hello, World using libc!'
 
 For less minimalistic and more sane examples you may look at:
 
@@ -51,19 +50,6 @@ or from the git repository on github:
   git clone git://github.com/ffi/ffi.git
   cd ffi
   rake gem:install
-
-== CREDITS:
-
-Special thanks to:
-
-* Yehuda Katz
-* Luc Heinrich
-* Andrea Fazzi
-* Mike Dalessio
-* Hongli Lai
-* Evan Phoenix
-* Aman Gupta
-* Beoran
 
 == LICENSE:
 
