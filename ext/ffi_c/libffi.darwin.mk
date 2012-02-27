@@ -34,6 +34,8 @@ $(LIBFFI):
 	cd "$(LIBFFI_BUILD_DIR)" && $(MAKE)
 
 else
+LIBTARGETS = $(foreach arch,$(ARCHES),"$(BUILD_DIR)"/libffi-$(arch)/.libs/libffi_convenience.a)
+
 # Build a fat binary and assemble
 build_ffi = \
 	mkdir -p "$(BUILD_DIR)"/libffi-$(1); \
@@ -45,8 +47,23 @@ build_ffi = \
 	fi); \
 	env MACOSX_DEPLOYMENT_TARGET=10.4 $(MAKE) -C "$(BUILD_DIR)"/libffi-$(1)
 
-$(LIBFFI):
-	@for arch in $(ARCHES); do $(call build_ffi,$$arch);done	
+target_ffi = "$(BUILD_DIR)"/libffi-$(1)/.libs/libffi_convenience.a:; $(call build_ffi,$(1))
+
+# Work out which arches we need to compile the lib for
+ifneq ($(findstring ppc,$(ARCHES)),)
+  $(call target_ffi,ppc)
+endif
+
+ifneq ($(findstring i386,$(ARCHES)),)
+  $(call target_ffi,i386)
+endif
+
+ifneq ($(findstring x86_64,$(ARCHES)),)
+  $(call target_ffi,x86_64)
+endif
+
+
+$(LIBFFI):	$(LIBTARGETS)
 	# Assemble into a FAT (x86_64, i386, ppc) library
 	@mkdir -p "$(BUILD_DIR)"/libffi/.libs
 	/usr/bin/libtool -static -o $@ \
