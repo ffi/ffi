@@ -46,8 +46,10 @@ module FFI
       Tempfile.open 'ffi_types_generator' do |io|
         io.puts <<-C
 #include <sys/types.h>
+#if !(defined(WIN32))
 #include <sys/socket.h>
 #include <sys/resource.h>
+#endif
         C
 
         io.close
