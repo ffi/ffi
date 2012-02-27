@@ -373,6 +373,7 @@ rbffi_Type_Init(VALUE moduleFFI)
     A(FLOAT32, FLOAT);
     T(FLOAT64, &ffi_type_double);
     A(FLOAT64, DOUBLE);
+    T(LONGDOUBLE, &ffi_type_longdouble);
     T(POINTER, &ffi_type_pointer);
     T(STRING, &ffi_type_pointer);
     T(BUFFER_IN, &ffi_type_pointer);

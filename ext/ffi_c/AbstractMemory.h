@@ -63,6 +63,7 @@ typedef struct {
     MemoryOp* uslong;
     MemoryOp* float32;
     MemoryOp* float64;
+    MemoryOp* longdouble;
     MemoryOp* pointer;
     MemoryOp* strptr;
     MemoryOp* boolOp;
@@ -138,6 +139,8 @@ get_memory_op(Type* type)
             return rbffi_AbstractMemoryOps.float32;
         case NATIVE_FLOAT64:
             return rbffi_AbstractMemoryOps.float64;
+        case NATIVE_LONGDOUBLE:
+            return rbffi_AbstractMemoryOps.longdouble;
         case NATIVE_POINTER:
             return rbffi_AbstractMemoryOps.pointer;
         case NATIVE_STRING:

@@ -38,6 +38,7 @@ typedef int bool;
 #include "AbstractMemory.h"
 #include "Pointer.h"
 #include "Function.h"
+#include "LongDouble.h"
 
 
 static inline char* memory_address(VALUE self);
@@ -242,6 +243,7 @@ NUM_OP(long, long, NUM2LONG, LONG2NUM, SWAPSLONG);
 NUM_OP(ulong, unsigned long, NUM2ULONG, ULONG2NUM, SWAPULONG);
 NUM_OP(float32, float, NUM2DBL, rb_float_new, NOSWAP);
 NUM_OP(float64, double, NUM2DBL, rb_float_new, NOSWAP);
+NUM_OP(longdouble, long double, rbffi_num2longdouble, rbffi_longdouble_new, NOSWAP);
 
 static inline void*
 get_pointer_value(VALUE value)
@@ -652,6 +654,7 @@ MemoryOps rbffi_AbstractMemoryOps = {
     &memory_op_ulong, //.uslong
     &memory_op_float32, //.float32
     &memory_op_float64, //.float64
+    &memory_op_longdouble, //.longdouble
     &memory_op_pointer, //.pointer
     &memory_op_strptr, //.strptr
     &memory_op_bool //.boolOp

@@ -71,6 +71,7 @@ module FFI
       Type::UINT64,
       Type::FLOAT32,
       Type::FLOAT64,
+      Type::LONGDOUBLE,
       Type::BOOL,
     ]
 

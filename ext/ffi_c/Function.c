@@ -61,6 +61,7 @@ typedef int bool;
 #include "Function.h"
 #include "MappedType.h"
 #include "Thread.h"
+#include "LongDouble.h"
 
 typedef struct Function_ {
     Pointer base;
@@ -773,6 +774,9 @@ callback_with_gvl(void* data)
                 break;
             case NATIVE_FLOAT64:
                 param = rb_float_new(*(double *) parameters[i]);
+                break;
+            case NATIVE_LONGDOUBLE:
+	      param = rbffi_longdouble_new(*(long double *) parameters[i]);
                 break;
             case NATIVE_STRING:
                 param = (*(void **) parameters[i] != NULL) ? rb_tainted_str_new2(*(char **) parameters[i]) : Qnil;

@@ -29,6 +29,7 @@
 #include "Struct.h"
 #include "MappedType.h"
 #include "MemoryPointer.h"
+#include "LongDouble.h"
 
 static ID id_from_native = 0;
 
@@ -65,6 +66,10 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
             return rb_float_new(*(float *) ptr);
         case NATIVE_FLOAT64:
             return rb_float_new(*(double *) ptr);
+
+        case NATIVE_LONGDOUBLE:
+	  return rbffi_longdouble_new(*(long double *) ptr);
+
         case NATIVE_STRING:
             return (*(void **) ptr != NULL) ? rb_tainted_str_new2(*(char **) ptr) : Qnil;
         case NATIVE_POINTER:

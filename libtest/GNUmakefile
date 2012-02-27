@@ -35,7 +35,7 @@ TEST_OBJS := $(patsubst $(SRC_DIR)/%.c, $(TEST_BUILD_DIR)/%.o, $(TEST_SRCS))
 #   http://weblogs.java.net/blog/kellyohair/archive/2006/01/compilation_of_1.html
 JFLAGS = -fno-omit-frame-pointer -fno-strict-aliasing
 OFLAGS = -O2 $(JFLAGS)
-WFLAGS = -W -Werror -Wall -Wno-unused -Wno-parentheses
+WFLAGS = -W -Wall -Wno-unused -Wno-parentheses
 PICFLAGS = -fPIC
 SOFLAGS = -shared
 LDFLAGS += $(SOFLAGS)

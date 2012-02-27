@@ -57,6 +57,7 @@ typedef union {
     void* ptr;
     float f32;
     double f64;
+    long double ld;
 } FFIStorage;
 
 

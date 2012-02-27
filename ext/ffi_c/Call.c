@@ -52,6 +52,7 @@ typedef int bool;
 #include "Call.h"
 #include "MappedType.h"
 #include "Thread.h"
+#include "LongDouble.h"
 
 #ifdef USE_RAW
 #  ifndef __i386__
@@ -66,6 +67,7 @@ typedef int bool;
 #define FLOAT32_ADJ (4)
 #define FLOAT64_ADJ (8)
 #define ADDRESS_ADJ (sizeof(void *))
+#define LONGDOUBLE_ADJ (ffi_type_longdouble.alignment)
 
 #endif /* USE_RAW */
 
@@ -208,6 +210,12 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
             case NATIVE_FLOAT64:
                 param->f64 = NUM2DBL(argv[argidx]);
                 ADJ(param, FLOAT64);
+                ++argidx;
+                break;
+
+            case NATIVE_LONGDOUBLE:
+                param->ld = rbffi_num2longdouble(argv[argidx]);
+                ADJ(param, LONGDOUBLE);
                 ++argidx;
                 break;
 
