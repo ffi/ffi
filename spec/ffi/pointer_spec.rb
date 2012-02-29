@@ -105,6 +105,9 @@ describe "Pointer" do
       lambda { null_ptr.read_int }.should raise_error(FFI::NullPointerError)
       lambda { null_ptr.write_int(0xff1) }.should raise_error(FFI::NullPointerError)
     end
+    it 'returns true when compared with nil' do
+      (FFI::Pointer::NULL == nil).should be_true
+    end
   end
 
 end
