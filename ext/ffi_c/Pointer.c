@@ -292,6 +292,9 @@ ptr_equals(VALUE self, VALUE other)
     
     Data_Get_Struct(self, Pointer, ptr);
 
+    if (NIL_P(other))
+	return ptr->memory.address == NULL ? Qtrue : Qfalse;
+
     return ptr->memory.address == POINTER(other)->address ? Qtrue : Qfalse;
 }
 
