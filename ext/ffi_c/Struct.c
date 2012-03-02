@@ -146,10 +146,7 @@ struct_initialize_copy(VALUE self, VALUE other)
     // be longer than just this struct.
     //
     if (src->pointer->address != NULL) {
-        memargs[0] = INT2FIX(1);
-        memargs[1] = INT2FIX(src->layout->size);
-        memargs[2] = Qfalse;
-        dst->rbPointer = rb_class_new_instance(2, memargs, rbffi_MemoryPointerClass);
+        dst->rbPointer = rbffi_MemoryPointer_NewInstance(1, src->layout->size, false);
         dst->pointer = MEMORY(dst->rbPointer);
         memcpy(dst->pointer->address, src->pointer->address, src->layout->size);
     } else {
