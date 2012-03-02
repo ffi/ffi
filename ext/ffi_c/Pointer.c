@@ -386,6 +386,11 @@ ptr_free(VALUE self)
             ptr->storage = NULL;
         }
         ptr->allocated = false;
+
+    } else {
+        VALUE caller = rb_funcall(rb_funcall(Qnil, rb_intern("caller"), 0), rb_intern("first"), 0);
+        
+        rb_warn("calling free on non allocated pointer %s from %s", RSTRING_PTR(ptr_inspect(self)), RSTRING_PTR(rb_str_to_str(caller)));
     }
 
     return self;
