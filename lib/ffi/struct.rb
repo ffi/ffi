@@ -52,9 +52,10 @@ module FFI
         type.struct_class.new(ptr.slice(self.offset, self.size))
       end
 
-#      def put(ptr, value)
-#        raise TypeError, "wrong value type (expected #{type.struct_class}" unless value.is_a(type.struct_class)
-#      end
+     def put(ptr, value)
+       raise TypeError, "wrong value type (expected #{type.struct_class}" unless value.is_a?(type.struct_class)
+       ptr.slice(self.offset, self.size).__copy_from__(value.pointer, self.size)
+     end
     end
 
     class Mapped < Field

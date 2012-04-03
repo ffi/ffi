@@ -591,6 +591,18 @@ memory_address(VALUE obj)
     return ((AbstractMemory *) DATA_PTR(obj))->address;
 }
 
+static VALUE
+memory_copy_from(VALUE self, VALUE rbsrc, VALUE rblen)
+{
+    AbstractMemory* dst;
+
+    Data_Get_Struct(self, AbstractMemory, dst);
+
+    memcpy(dst->address, rbffi_AbstractMemory_Cast(rbsrc, rbffi_AbstractMemoryClass)->address, NUM2INT(rblen));
+
+    return self;
+}
+
 AbstractMemory*
 rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass)
 {
@@ -1008,6 +1020,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_alias(classMemory, "size", "total");
     rb_define_method(classMemory, "type_size", memory_type_size, 0);
     rb_define_method(classMemory, "[]", memory_aref, 1);
+    rb_define_method(classMemory, "__copy_from__", memory_copy_from, 2);
 
     id_to_ptr = rb_intern("to_ptr");
     id_call = rb_intern("call");

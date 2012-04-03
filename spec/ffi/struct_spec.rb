@@ -442,6 +442,15 @@ describe FFI::Struct, ' with a nested struct field'  do
     @cs[:ns][:i] = 456
     LibTest.struct_align_nested_struct(@cs.to_ptr).should eq 456
   end
+
+  it 'should be able to assign struct instance to nested field' do 
+    cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
+    ns = LibTest::NestedStruct.new
+    ns[:i] = 567
+    cs[:ns] = ns
+    cs[:ns][:i].should eq 567
+    LibTest.struct_align_nested_struct(cs.to_ptr).should eq 567
+  end
 end
 
 describe FFI::Struct, ' with a nested array of structs'  do
