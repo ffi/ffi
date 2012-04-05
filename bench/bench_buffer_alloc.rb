@@ -18,3 +18,10 @@ puts "Benchmark Buffer.new(4, 1, true)) performance, #{iter}x"
   }
 }
 
+puts "Benchmark Buffer.new(256, 1, true)) performance, #{iter}x"
+10.times {
+  puts Benchmark.measure {
+    iter.times { FFI::Buffer.new(256, 1, true) }
+  }
+}
+

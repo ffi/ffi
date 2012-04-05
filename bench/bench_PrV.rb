@@ -8,7 +8,7 @@ module LibTest
 end
 
 
-puts "Benchmark [ :buffer_in ], :void performance, #{ITER}x calls"
+puts "Benchmark [ :buffer_in ], :void performance (pre allocated pointer), #{ITER}x calls"
 ptr = FFI::MemoryPointer.new :int
 10.times {
   puts Benchmark.measure {
@@ -31,9 +31,10 @@ ptr = FFI::Buffer.new :int
   }
 }
 puts "Benchmark [ :buffer_in ], :void performance (const String param), #{ITER}x calls"
+str = 'test'
 10.times {
   puts Benchmark.measure {
-    ITER.times { LibTest.bench('test') }
+    ITER.times { LibTest.bench(str) }
   }
 }
 puts "Benchmark [ :buffer_in ], :void performance (loop-allocated Buffer param), #{ITER}x calls"
