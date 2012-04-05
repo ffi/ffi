@@ -22,6 +22,7 @@ ifneq ($(findstring -arch x86_64,$(CFLAGS)),)
 endif
 
 ifeq ($(strip $(ARCHES)),)
+LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi-$(arch)
 # Just build the one (default) architecture
 $(LIBFFI):		
 	@mkdir -p "$(LIBFFI_BUILD_DIR)"

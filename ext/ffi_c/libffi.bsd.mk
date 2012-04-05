@@ -7,7 +7,7 @@ INCFLAGS += -I${LIBFFI_BUILD_DIR}/include
 LOCAL_LIBS += ${LIBFFI} -lpthread
 
 LIBFFI_CFLAGS = ${FFI_MMAP_EXEC} -pthread
-LIBFFI_BUILD_DIR = ${.CURDIR}/libffi
+LIBFFI_BUILD_DIR = ${.CURDIR}/libffi-${arch}
 
 .if ${srcdir} == "."
   LIBFFI_SRC_DIR := ${.CURDIR}/libffi

@@ -9,7 +9,7 @@ INCFLAGS += -I"$(LIBFFI_BUILD_DIR)"/include
 LOCAL_LIBS += $(LIBFFI)
 BUILD_DIR = $(shell pwd)
 LIBFFI_CFLAGS = $(FFI_MMAP_EXEC)
-LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi
+LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi-$(arch)
 
 ifeq ($(srcdir),.)
   LIBFFI_SRC_DIR := $(shell pwd)/libffi
