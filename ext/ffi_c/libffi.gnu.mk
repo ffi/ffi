@@ -13,8 +13,10 @@ LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi
 
 ifeq ($(srcdir),.)
   LIBFFI_SRC_DIR := $(shell pwd)/libffi
+else ifeq ($(srcdir),..)
+  LIBFFI_SRC_DIR := $(shell pwd)/../libffi
 else
-  LIBFFI_SRC_DIR := $(abspath $(srcdir)/libffi)
+  LIBFFI_SRC_DIR := $(realpath $(srcdir)/libffi)
 endif
 
 LIBFFI = "$(LIBFFI_BUILD_DIR)"/.libs/libffi_convenience.a
