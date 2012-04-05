@@ -5,7 +5,6 @@ USE_RAKE_COMPILER = (RUBY_PLATFORM =~ /java/) ? false : true
 if USE_RAKE_COMPILER
   gem 'rake-compiler', '>=0.6.0'
   require 'rake/extensiontask'
-  ENV['RUBY_CC_VERSION'] = '1.8.7:1.9.3'
 end
 
 require 'date'
@@ -189,3 +188,6 @@ task 'spec:specdoc' => TEST_DEPS
 
 task :default => :specs
 
+task 'gem:win32' do
+  sh("rake cross native gem RUBY_CC_VERSION='1.8.7:1.9.3'") || raise("win32 build failed!")
+end
