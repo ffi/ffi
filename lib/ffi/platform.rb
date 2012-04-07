@@ -90,7 +90,7 @@ module FFI
     end
 
     LIBC = if IS_WINDOWS
-      "msvcrt.dll"
+      RbConfig::CONFIG['RUBY_SO_NAME'].split('-')[-2] + '.dll'
     elsif IS_GNU
       GNU_LIBC
     else
