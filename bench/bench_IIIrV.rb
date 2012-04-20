@@ -25,21 +25,30 @@ end
 puts "Benchmark [ :int, :int, :int ], :void performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
-    ITER.times { LibTest.ffi_bench(0, 1, 2) }
+    i = 0; while i < ITER
+      LibTest.ffi_bench(0, 1, 2)
+      i += 1
+    end
   }
 }
 
 puts "Benchmark ruby method(3 arg)  performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
-    ITER.times { LibTest.rb_bench(0, 1, 2) }
+    i = 0; while i < ITER
+      LibTest.rb_bench(0, 1, 2)
+      i += 1
+    end
   }
 }
 unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
 puts "Benchmark DL void bench(int, int, int) performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
-    ITER.times { LibTest.bench_s32s32s32_v(0, 1, 2) }
+    i = 0; while i < ITER
+      LibTest.bench_s32s32s32_v(0, 1, 2)
+      i += 1
+    end
   }
 }
 end

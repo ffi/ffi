@@ -12,14 +12,26 @@ puts "Benchmark [ :float ], :void performance, #{ITER}x calls"
 f = 1.0
 10.times {
   puts Benchmark.measure {
-    ITER.times { LibTest.bench_f32_v(f) }
+    i = 0; while i < ITER
+      LibTest.bench_f32_v(f)
+      LibTest.bench_f32_v(f)
+      LibTest.bench_f32_v(f)
+      LibTest.bench_f32_v(f)
+      i += 4
+    end
   }
 }
 
 puts "Benchmark ruby method(1 arg)  performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
-    ITER.times { LibTest.rb_bench(f) }
+    i = 0; while i < ITER
+      LibTest.rb_bench(f)
+      LibTest.rb_bench(f)
+      LibTest.rb_bench(f)
+      LibTest.rb_bench(f)
+      i += 4
+    end
   }
 }
 
@@ -38,7 +50,13 @@ unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
   puts "Benchmark DL void bench(float) performance, #{ITER}x calls"
   10.times {
     puts Benchmark.measure {
-      ITER.times { LibTest.bench_f32_v(0) }
+      i = 0; while i < ITER
+        LibTest.bench_f32_v(0)
+        LibTest.bench_f32_v(0)
+        LibTest.bench_f32_v(0)
+        LibTest.bench_f32_v(0)
+        i += 4
+      end
     }
   }
 end

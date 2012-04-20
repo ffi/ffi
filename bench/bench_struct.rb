@@ -2,7 +2,6 @@ require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
 
 require 'benchmark'
 require 'ffi'
-iter = 100_000
 
 module StructBench
   extend FFI::Library
@@ -16,21 +15,33 @@ end
 class TestStruct < FFI::Struct
   layout :i, :int, :p, :pointer
 end
-puts "Benchmark FFI call(Struct.alloc_in) performance, #{iter}x"
+
+puts "Benchmark FFI call(Struct.alloc_in) performance, #{ITER}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { StructBench.bench_struct_in(TestStruct.alloc_in, 0) }
+    i = 0; while i < ITER
+      StructBench.bench_struct_in(TestStruct.alloc_in, 0)
+      i += 1
+    end
   }
 }
-puts "Benchmark FFI call(Struct.alloc_out) performance, #{iter}x"
+
+puts "Benchmark FFI call(Struct.alloc_out) performance, #{ITER}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { StructBench.bench_struct_out(TestStruct.alloc_out, 0) }
+    i = 0; while i < ITER
+      StructBench.bench_struct_out(TestStruct.alloc_out, 0)
+      i += 1
+    end
   }
 }
-puts "Benchmark FFI call(Struct.alloc_inout) performance, #{iter}x"
+
+puts "Benchmark FFI call(Struct.alloc_inout) performance, #{ITER}x"
 10.times {
   puts Benchmark.measure {
-    iter.times { StructBench.bench_struct_inout(TestStruct.alloc_inout, 0) }
+    i = 0; while i < ITER
+      StructBench.bench_struct_inout(TestStruct.alloc_inout, 0)
+      i += 1
+    end
   }
 }
