@@ -357,7 +357,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     layout->fieldCount = (int) RARRAY_LEN(fields);
     layout->rbFieldMap = rb_hash_new();
     layout->rbFieldNames = rb_ary_new2(layout->fieldCount);
-    layout->size = NUM2INT(size);
+    layout->size = FFI_ALIGN(NUM2INT(size),  NUM2INT(align));
     layout->align = NUM2INT(align);
     layout->fields = xcalloc(layout->fieldCount, sizeof(StructField *));
     layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
@@ -405,6 +405,40 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
 
     if (ltype->size == 0) {
         rb_raise(rb_eRuntimeError, "Struct size is zero");
+    }
+
+    return self;
+}
+
+static VALUE
+struct_layout_union_bang(VALUE self) 
+{
+    static const ffi_type *alignment_types[] = { &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64,
+                                                 &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
+    StructLayout* layout;
+    ffi_type *t = NULL;
+    int count, i;
+
+    Data_Get_Struct(self, StructLayout, layout);
+
+    for (i = 0; alignment_types[i] != NULL; ++i) {
+        if (alignment_types[i]->alignment == layout->align) {
+            t = alignment_types[i];
+            break;
+        }
+    }
+    if (t == NULL) {
+        rb_raise(rb_eRuntimeError, "cannot create libffi union representation for alignment %d", layout->align);
+        return Qnil;
+    }
+
+    count = layout->size / t->size;
+    xfree(layout->ffiTypes);
+    layout->ffiTypes = xcalloc(count + 1, sizeof(ffi_type *));
+    layout->base.ffiType->elements = layout->ffiTypes;
+
+    for (i = 0; i < count; ++i) {
+        layout->ffiTypes[i] = t;
     }
 
     return self;
@@ -515,6 +549,7 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructLayoutClass, "fields", struct_layout_fields, 0);
     rb_define_method(rbffi_StructLayoutClass, "members", struct_layout_members, 0);
     rb_define_method(rbffi_StructLayoutClass, "to_a", struct_layout_to_a, 0);
+    rb_define_method(rbffi_StructLayoutClass, "__union!", struct_layout_union_bang, 0);
 
 }
 
