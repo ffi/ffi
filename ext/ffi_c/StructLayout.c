@@ -168,7 +168,7 @@ static VALUE
 struct_field_put(VALUE self, VALUE pointer, VALUE value)
 {
     StructField* f;
-    
+
     Data_Get_Struct(self, StructField, f);
     if (f->memoryOp == NULL) {
         rb_raise(rb_eArgError, "put not supported for %s", rb_obj_classname(f->rbType));
@@ -184,7 +184,7 @@ static VALUE
 function_field_get(VALUE self, VALUE pointer)
 {
     StructField* f;
-    
+
     Data_Get_Struct(self, StructField, f);
 
     return rbffi_Function_NewInstance(f->rbType, (*rbffi_AbstractMemoryOps.pointer->get)(MEMORY(pointer), f->offset));
@@ -240,11 +240,11 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
 {
     StructField* f;
     ArrayType* array;
-    
+
 
     Data_Get_Struct(self, StructField, f);
     Data_Get_Struct(f->rbType, ArrayType, array);
-    
+
     if (isCharArray(array) && rb_obj_is_instance_of(value, rb_cString)) {
         VALUE argv[2];
 
@@ -360,7 +360,8 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
             rb_raise(rb_eTypeError, "wrong type for field %d.", i);
         }
 
-        Data_Get_Struct(rbField, StructField, field = layout->fields[i]);
+        field = layout->fields[i];
+        Data_Get_Struct(rbField, StructField, field);
 
         if (field->type == NULL || field->type->ffiType == NULL) {
             rb_raise(rb_eRuntimeError, "type of field %d not supported", i);
@@ -451,7 +452,7 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
 {
     rbffi_StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", rbffi_TypeClass);
     rb_global_variable(&rbffi_StructLayoutClass);
-    
+
     rbffi_StructLayoutFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Field", rb_cObject);
     rb_global_variable(&rbffi_StructLayoutFieldClass);
 
