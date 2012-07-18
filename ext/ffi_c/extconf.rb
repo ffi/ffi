@@ -7,7 +7,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
   
   if ENV['RUBY_CC_VERSION'].nil? && (pkg_config("libffi") ||
      have_header("ffi.h") ||
-     find_header("ffi.h", "/usr/local/include"))
+     find_header("ffi.h", "/usr/local/include", "/usr/include/ffi"))
 
     # We need at least ffi_call and ffi_prep_closure
     libffi_ok = have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
