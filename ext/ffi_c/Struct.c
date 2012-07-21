@@ -129,7 +129,6 @@ struct_initialize_copy(VALUE self, VALUE other)
 {
     Struct* src;
     Struct* dst;
-    VALUE memargs[3];
     
     Data_Get_Struct(self, Struct, dst);
     Data_Get_Struct(other, Struct, src);
