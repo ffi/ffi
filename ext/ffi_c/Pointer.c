@@ -31,7 +31,7 @@ typedef int bool;
 #include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"
-#include "endian.h"
+#include "rbffi_endian.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
 

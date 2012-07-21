@@ -8,7 +8,7 @@
 #include <sys/types.h>
 
 #if defined(__linux__) || defined(__CYGWIN__) || defined(__GNU__) || defined(__GLIBC__)
-#  include_next <endian.h>
+#  include <endian.h>
 #endif
 
 #ifdef __sun

@@ -32,7 +32,7 @@ typedef int bool;
 #endif
 #include <ruby.h>
 #include <ctype.h>
-#include "endian.h"
+#include "rbffi_endian.h"
 #include "Platform.h"
 #if defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
   #include <gnu/lib-names.h>
