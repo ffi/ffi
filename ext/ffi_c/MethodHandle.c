@@ -200,7 +200,7 @@ static VALUE custom_trampoline(int argc, VALUE* argv, VALUE self, Closure*);
  *
  * This results in approx a 30% speedup for x86_64 FFI dispatch
  */
-asm(
+__asm__(
     ".text\n\t"
     ".globl ffi_trampoline\n\t"
     ".globl _ffi_trampoline\n\t"
@@ -241,7 +241,7 @@ static VALUE custom_trampoline(caddr_t args, Closure*);
  * This does not make a discernable difference vs a raw closure, so for now,
  * it is not enabled.
  */
-asm(
+__asm__(
     ".text\n\t"
     ".globl ffi_trampoline\n\t"
     ".globl _ffi_trampoline\n\t"
