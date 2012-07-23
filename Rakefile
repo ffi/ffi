@@ -1,4 +1,4 @@
-cequire 'rubygems'
+require 'rubygems'
 require 'rbconfig'
 
 USE_RAKE_COMPILER = (RUBY_PLATFORM =~ /java/) ? false : true
