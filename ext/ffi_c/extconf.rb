@@ -19,7 +19,6 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
   end
   
   have_func('rb_thread_blocking_region')
-  have_func('ruby_thread_has_gvl_p') unless RUBY_VERSION >= "1.9.3"
   have_func('ruby_native_thread_p')
   have_func('rb_thread_call_with_gvl')
   
