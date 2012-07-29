@@ -40,6 +40,9 @@ CPU = case RbConfig::CONFIG['host_cpu'].downcase
   when /ppc|powerpc/
     "powerpc"
 
+  when /^arm/
+    "arm"
+
   else
     RbConfig::CONFIG['host_cpu']
   end
@@ -74,7 +77,7 @@ PROJ.name = 'ffi'
 PROJ.authors = 'Wayne Meissner'
 PROJ.email = 'wmeissner@gmail.com'
 PROJ.url = 'http://wiki.github.com/ffi/ffi'
-PROJ.version = '1.1.1'
+PROJ.version = '1.1.2.dev'
 PROJ.rubyforge.name = 'ffi'
 PROJ.readme_file = 'README.rdoc'
 

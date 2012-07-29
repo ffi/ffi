@@ -51,7 +51,12 @@ module FFI
     when /ppc|powerpc/
       "powerpc"
     else
-      RbConfig::CONFIG['host_cpu']
+      case RbConfig::CONFIG['host_cpu']
+      when /^arm/
+        "arm"
+      else
+        RbConfig::CONFIG['host_cpu']
+      end
     end
 
     private
