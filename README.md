@@ -1,7 +1,6 @@
-ruby-ffi
-    http://wiki.github.com/ffi/ffi
+# ruby-ffi http://wiki.github.com/ffi/ffi
 
-== DESCRIPTION:
+## Description
 
 Ruby-FFI is a ruby extension for programmatically loading dynamic
 libraries, binding functions within them, and calling those functions
@@ -9,25 +8,27 @@ from Ruby code. Moreover, a Ruby-FFI extension works without changes
 on Ruby and JRuby. Discover why should you write your next extension
 using Ruby-FFI here[http://wiki.github.com/ffi/ffi/why-use-ffi].
 
-== FEATURES/PROBLEMS:
+## Features/problems
 
-* It has a very intuitive DSL
-* It supports all C native types
-* It supports C structs (also nested), enums and global variables
-* It supports callbacks
-* It has smart methods to handle memory management of pointers and structs
+* Intuitive DSL
+* Supports all C native types
+* C structs (also nested), enums and global variables
+* Callbacks from C to ruby
+* Automatic garbage collection of native memory
 
-== SYNOPSIS:
+## Synopsis
 
-  require 'ffi'
+```ruby
+require 'ffi'
 
-  module MyLib
-    extend FFI::Library
-    ffi_lib 'c'
-    attach_function :puts, [ :string ], :int
-  end
+module MyLib
+extend FFI::Library
+ffi_lib 'c'
+attach_function :puts, [ :string ], :int
+end
 
-  MyLib.puts 'Hello, World using libc!'
+MyLib.puts 'Hello, World using libc!'
+```
 
 For less minimalistic and more sane examples you may look at:
 
@@ -35,11 +36,11 @@ For less minimalistic and more sane examples you may look at:
 * the examples on the wiki[http://wiki.github.com/ffi/ffi]
 * the projects using FFI listed on this page[http://wiki.github.com/ffi/ffi/projects-using-ffi]
 
-== REQUIREMENTS:
+## Requirements
 
 * You need a sane building environment in order to compile the extension.
 
-== DOWNLOAD/INSTALL:
+## Installation
 
 From rubygems:
 
@@ -51,11 +52,11 @@ or from the git repository on github:
   cd ffi
   rake gem:install
 
-== LICENSE:
+## License
 
 See LICENSE file.
 
-== CREDITS
+## Credits
 
 The following people have submitted code, bug reports, or otherwide contributed to the success of this project:
 
