@@ -6,7 +6,7 @@ Ruby-FFI is a ruby extension for programmatically loading dynamic
 libraries, binding functions within them, and calling those functions
 from Ruby code. Moreover, a Ruby-FFI extension works without changes
 on Ruby and JRuby. Discover why should you write your next extension
-using Ruby-FFI here[http://wiki.github.com/ffi/ffi/why-use-ffi].
+using Ruby-FFI [here](http://wiki.github.com/ffi/ffi/why-use-ffi).
 
 ## Features/problems
 
@@ -33,8 +33,8 @@ MyLib.puts 'Hello, World using libc!'
 For less minimalistic and more sane examples you may look at:
 
 * the samples/ folder
-* the examples on the wiki[http://wiki.github.com/ffi/ffi]
-* the projects using FFI listed on this page[http://wiki.github.com/ffi/ffi/projects-using-ffi]
+* the examples on the [wiki](http://wiki.github.com/ffi/ffi)
+* the projects using FFI listed on this page (http://wiki.github.com/ffi/ffi/projects-using-ffi)
 
 ## Requirements
 
@@ -44,13 +44,13 @@ For less minimalistic and more sane examples you may look at:
 
 From rubygems:
 
-  [sudo] gem install ffi
+    [sudo] gem install ffi
 
 or from the git repository on github:
 
-  git clone git://github.com/ffi/ffi.git
-  cd ffi
-  rake gem:install
+    git clone git://github.com/ffi/ffi.git
+    cd ffi
+    rake gem:install
 
 ## License
 
