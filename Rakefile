@@ -110,6 +110,11 @@ task :package => 'gem:package'
 desc "Install the gem locally"
 task :install => 'gem:install'
 
+namespace :gem do
+  task :install => :gem do
+    ruby %{ -S gem install pkg/ffi-#{gem_spec.version}.gem }
+  end
+end
 
 desc "Clean all built files"
 task :distclean => :clobber do
