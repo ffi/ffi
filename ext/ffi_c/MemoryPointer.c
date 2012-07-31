@@ -144,8 +144,9 @@ memptr_mark(Pointer* ptr)
 }
 
 static VALUE
-memptr_s_from_string(VALUE klass, VALUE s)
+memptr_s_from_string(VALUE klass, VALUE to_str)
 {
+    VALUE s = StringValue(to_str);
     VALUE args[] = { INT2FIX(1), LONG2NUM(RSTRING_LEN(s) + 1), Qfalse };
     VALUE obj = rb_class_new_instance(3, args, klass);
     rb_funcall(obj, rb_intern("put_string"), 2, INT2FIX(0), s);
