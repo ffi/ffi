@@ -72,7 +72,7 @@ LIBTEST = "build/libtest.#{LIBEXT}"
 BUILD_DIR = "build"
 BUILD_EXT_DIR = File.join(BUILD_DIR, "#{RbConfig::CONFIG['arch']}", 'ffi_c', RUBY_VERSION)
 
-gem_spec = eval(IO.read('ffi.gemspec'))
+gem_spec = Gem::Specification.load('ffi.gemspec')
 
 Gem::PackageTask.new(gem_spec) do |pkg|
   pkg.need_zip = true
