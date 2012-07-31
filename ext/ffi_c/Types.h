@@ -69,10 +69,6 @@ typedef enum {
 #include <ffi.h>
 #include "Type.h"
 
-#ifndef FFI_STDCALL
-#define FFI_STDCALL FFI_DEFAULT_ABI
-#endif
-
 VALUE rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr);
 void rbffi_Types_Init(VALUE moduleFFI);
 
