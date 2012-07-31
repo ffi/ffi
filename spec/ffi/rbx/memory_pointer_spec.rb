@@ -16,6 +16,10 @@ describe "MemoryPointer" do
     m.type_size.should eq 1
   end
 
+  it "does not make a pointer from non-strings" do
+    expect { FFI::MemoryPointer.from_string(nil) }.to raise_error(TypeError)
+  end
+
   it "makes a pointer from a string with multibyte characters" do
     m = FFI::MemoryPointer.from_string("ぱんだ")
     m.total.should eq 10
