@@ -281,7 +281,7 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
             rb_raise(rb_eIndexError, "array too large");
         }
 
-        // clear the contents in case of a short write
+        /* clear the contents in case of a short write */
         checkWrite(memory);
         checkBounds(memory, f->offset, f->type->ffiType->size);
         if (count < array->length) {
@@ -289,7 +289,7 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
                     0, (array->length - count) * array->componentType->ffiType->size);
         }
 
-        // now copy each element in
+        /* now copy each element in */
         if ((op = get_memory_op(array->componentType)) != NULL) {
 
             for (i = 0; i < count; ++i) {

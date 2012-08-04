@@ -206,7 +206,7 @@ rbffi_Closure_Free(Closure* closure)
     if (closure != NULL) {
         ClosurePool* pool = closure->pool;
         long refcnt;
-        // Just push it on the front of the free list
+        /* Just push it on the front of the free list */
         closure->next = pool->list;
         pool->list = closure;
         refcnt = --(pool->refcnt);

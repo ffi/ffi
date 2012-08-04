@@ -87,7 +87,7 @@ sbv_initialize(VALUE self, VALUE rbStructClass)
     sbv->rbStructClass = rbStructClass;
     sbv->rbStructLayout = rbLayout;
 
-    // We can just use everything from the ffi_type directly
+    /* We can just use everything from the ffi_type directly */
     *sbv->base.ffiType = *layout->base.ffiType;
     
     return self;

@@ -311,7 +311,7 @@ prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t er
     caddr_t ptr = (caddr_t) code;
 
     memcpy(ptr, &ffi_trampoline, trampoline_size());
-    // Patch the context and function addresses into the stub code
+    /* Patch the context and function addresses into the stub code */
     *(intptr_t *)(ptr + trampoline_ctx_offset) = (intptr_t) closure;
     *(intptr_t *)(ptr + trampoline_func_offset) = (intptr_t) custom_trampoline;
 

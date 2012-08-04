@@ -139,11 +139,11 @@ struct_initialize_copy(VALUE self, VALUE other)
     dst->rbLayout = src->rbLayout;
     dst->layout = src->layout;
     
-    //
-    // A new MemoryPointer instance is allocated here instead of just calling 
-    // #dup on rbPointer, since the Pointer may not know its length, or may
-    // be longer than just this struct.
-    //
+    /*
+     * A new MemoryPointer instance is allocated here instead of just calling
+     * #dup on rbPointer, since the Pointer may not know its length, or may
+     * be longer than just this struct.
+     */
     if (src->pointer->address != NULL) {
         dst->rbPointer = rbffi_MemoryPointer_NewInstance(1, src->layout->size, false);
         dst->pointer = MEMORY(dst->rbPointer);

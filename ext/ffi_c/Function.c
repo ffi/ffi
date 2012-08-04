@@ -199,11 +199,11 @@ function_initialize(int argc, VALUE* argv, VALUE self)
 
     nargs = rb_scan_args(argc, argv, "22", &rbReturnType, &rbParamTypes, &rbProc, &rbOptions);
 
-    //
-    // Callback with block,
-    // e.g. Function.new(:int, [ :int ]) { |i| blah }
-    // or   Function.new(:int, [ :int ], { :convention => :stdcall }) { |i| blah }
-    //
+    /*
+     * Callback with block,
+     * e.g. Function.new(:int, [ :int ]) { |i| blah }
+     * or   Function.new(:int, [ :int ], { :convention => :stdcall }) { |i| blah }
+     */
     if (rb_block_given_p()) {
         if (nargs > 3) {
             rb_raise(rb_eArgError, "cannot create function with both proc/address and block");
@@ -211,11 +211,12 @@ function_initialize(int argc, VALUE* argv, VALUE self)
         rbOptions = rbProc;
         rbProc = rb_block_proc();
     } else {
-        // Callback with proc, or Function with address
-        // e.g. Function.new(:int, [ :int ], Proc.new { |i| })
-        //      Function.new(:int, [ :int ], Proc.new { |i| }, { :convention => :stdcall })
-        //      Function.new(:int, [ :int ], addr)
-        //      Function.new(:int, [ :int ], addr, { :convention => :stdcall })
+        /* Callback with proc, or Function with address
+         * e.g. Function.new(:int, [ :int ], Proc.new { |i| })
+         *      Function.new(:int, [ :int ], Proc.new { |i| }, { :convention => :stdcall })
+         *      Function.new(:int, [ :int ], addr)
+         *      Function.new(:int, [ :int ], addr, { :convention => :stdcall })
+         */
     }
     
     infoArgv[0] = rbReturnType;
@@ -381,9 +382,9 @@ function_attach(VALUE self, VALUE module, VALUE name)
         fn->methodHandle = rbffi_MethodHandle_Alloc(fn->info, fn->base.memory.address);
     }
 
-    //
-    // Stash the Function in a module variable so it does not get garbage collected
-    //
+    /*
+     * Stash the Function in a module variable so it does not get garbage collected
+     */
     snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
     rb_cv_set(module, var, self);
 
@@ -470,7 +471,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         pthread_mutex_init(&cb.async_mutex, NULL);
         pthread_cond_init(&cb.async_cond, NULL);
 
-        // Now signal the async callback thread
+        /* Now signal the async callback thread */
         pthread_mutex_lock(&async_cb_mutex);
         empty = async_cb_list == NULL;
         cb.next = async_cb_list;
@@ -478,7 +479,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         pthread_mutex_unlock(&async_cb_mutex);
 
 #if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
-        // Only signal if the list was empty
+        /* Only signal if the list was empty */
         if (empty) {
             char c;
             write(async_cb_pipe[1], &c, 1);
@@ -487,7 +488,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         pthread_cond_signal(&async_cb_cond);
 #endif
 
-        // Wait for the thread executing the ruby callback to signal it is done
+        /* Wait for the thread executing the ruby callback to signal it is done */
         pthread_mutex_lock(&cb.async_mutex);
         while (!cb.done) {
             pthread_cond_wait(&cb.async_cond, &cb.async_mutex);
@@ -502,7 +503,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 
         cb.async_event = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-        // Now signal the async callback thread
+        /* Now signal the async callback thread */
         EnterCriticalSection(&async_cb_lock);
         empty = async_cb_list == NULL;
         cb.next = async_cb_list;
@@ -510,7 +511,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         LeaveCriticalSection(&async_cb_lock);
 
 #if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
-        // Only signal if the list was empty
+        /* Only signal if the list was empty */
         if (empty) {
             char c;
             write(async_cb_pipe[1], &c, 1);
@@ -519,7 +520,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         SetEvent(async_cb_cond);
 #endif
 
-        // Wait for the thread executing the ruby callback to signal it is done
+        /* Wait for the thread executing the ruby callback to signal it is done */
         WaitForSingleObject(cb.async_event, INFINITE);
         CloseHandle(cb.async_event);
 #endif
@@ -545,7 +546,7 @@ async_cb_event(void* unused)
     while (!w.stop) {
         rb_thread_blocking_region(async_cb_wait, &w, async_cb_stop, &w);
         if (w.cb != NULL) {
-            // Start up a new ruby thread to run the ruby callback
+            /* Start up a new ruby thread to run the ruby callback */
             rb_thread_create(async_cb_call, w.cb);
         }
     }
@@ -574,7 +575,7 @@ async_cb_event(void* unused)
 
         while (cb != NULL) {
             struct gvl_callback* next = cb->next;
-            // Start up a new ruby thread to run the ruby callback
+            /* Start up a new ruby thread to run the ruby callback */
             rb_thread_create(async_cb_call, cb);
             cb = next;
         }
@@ -606,7 +607,7 @@ async_cb_event(void* unused)
 
         while (cb != NULL) {
             struct gvl_callback* next = cb->next;
-            // Start up a new ruby thread to run the ruby callback
+            /* Start up a new ruby thread to run the ruby callback */
             rb_thread_create(async_cb_call, cb);
             cb = next;
         }
@@ -696,7 +697,7 @@ async_cb_call(void *data)
 
     callback_with_gvl(cb);
 
-    // Signal the original native thread that the ruby code has completed
+    /* Signal the original native thread that the ruby code has completed */
 #ifdef _WIN32
     SetEvent(cb->async_event);
 #else
@@ -799,7 +800,7 @@ callback_with_gvl(void* data)
                 break;
         }
 
-        // Convert the native value into a custom ruby value
+        /* Convert the native value into a custom ruby value */
         if (unlikely(cbInfo->parameterTypes[i]->nativeType == NATIVE_MAPPED)) {
             VALUE values[] = { param, Qnil };
             param = rb_funcall2(((MappedType *) cbInfo->parameterTypes[i])->rbConverter, id_from_native, 2, values);
@@ -853,7 +854,7 @@ callback_with_gvl(void* data)
             if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
             } else {
-                // Default to returning NULL if not a value pointer object.  handles nil case as well
+                /* Default to returning NULL if not a value pointer object.  handles nil case as well */
                 *((void **) retval) = NULL;
             }
             break;

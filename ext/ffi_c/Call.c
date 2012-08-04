@@ -314,8 +314,10 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     if (unlikely(fnInfo->blocking)) {
         BlockingCall* bc;
 
-        // due to the way thread switching works on older ruby variants, we
-        // cannot allocate anything passed to the blocking function on the stack
+        /*
+         * due to the way thread switching works on older ruby variants, we
+         * cannot allocate anything passed to the blocking function on the stack
+         */
         ffiValues = ALLOC_N(void *, fnInfo->parameterCount);
         params = ALLOC_N(FFIStorage, fnInfo->parameterCount);
         bc = ALLOC_N(BlockingCall, 1);
@@ -432,14 +434,13 @@ callback_param(VALUE proc, VALUE cbInfo)
         return NULL ;
     }
 
-    // Handle Function pointers here
+    /* Handle Function pointers here */
     if (rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
         AbstractMemory* ptr;
         Data_Get_Struct(proc, AbstractMemory, ptr);
         return ptr->address;
     }
 
-    //callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
     callback = rbffi_Function_ForProc(cbInfo, proc);
     RB_GC_GUARD(callback);
 

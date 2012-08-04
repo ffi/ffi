@@ -41,7 +41,7 @@ typedef struct FunctionType_ FunctionType;
 #include "ClosurePool.h"
 
 struct FunctionType_ {
-    Type type; // The native type of a FunctionInfo object
+    Type type; /* The native type of a FunctionInfo object */
     VALUE rbReturnType;
     VALUE rbParameterTypes;
 

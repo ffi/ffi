@@ -59,7 +59,7 @@ Init_ffi_c(void) {
     rb_global_variable(&moduleFFI);
 
 
-    // FFI::Type needs to be initialized before most other classes
+    /* FFI::Type needs to be initialized before most other classes */
     rbffi_Type_Init(moduleFFI);
 
     rbffi_DataConverter_Init(moduleFFI);

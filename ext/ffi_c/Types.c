@@ -98,8 +98,10 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
         }
 
         case NATIVE_MAPPED: {
-            // For mapped types, first convert to the real native type, then upcall to
-            // ruby to convert to the expected return type
+            /*
+             * For mapped types, first convert to the real native type, then upcall to
+             * ruby to convert to the expected return type
+             */
             MappedType* m = (MappedType *) type;
             VALUE values[2], rbReturnValue;
 
