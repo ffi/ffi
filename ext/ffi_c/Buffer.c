@@ -41,7 +41,7 @@ typedef struct Buffer {
     union {
         VALUE rbParent; /* link to parent buffer */
         char* storage; /* start of malloc area */
-        long embed[BUFFER_EMBED_MAXLEN / sizeof(long)]; // storage for tiny allocations
+        long embed[BUFFER_EMBED_MAXLEN / sizeof(long)]; /* storage for tiny allocations */
     } data;
 } Buffer;
 
@@ -151,7 +151,7 @@ buffer_initialize_copy(VALUE self, VALUE other)
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
     
-    // finally, copy the actual buffer contents
+    /* finally, copy the actual buffer contents */
     memcpy(dst->memory.address, src->address, src->size);
 
     return self;

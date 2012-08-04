@@ -76,7 +76,7 @@ rbffi_thread_has_gvl_p(void)
     return rbffi_active_thread.valid && pthread_equal(rbffi_active_thread.id, pthread_self());
 #endif
 }
-#endif // HAVE_RUBY_THREAD_HAS_GVL_P
+#endif /* HAVE_RUBY_THREAD_HAS_GVL_P */
 
 #ifndef HAVE_RB_THREAD_BLOCKING_REGION
 
@@ -322,5 +322,5 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
 
 #endif /* !_WIN32 */
 
-#endif // HAVE_RB_THREAD_BLOCKING_REGION
+#endif /* HAVE_RB_THREAD_BLOCKING_REGION */
 

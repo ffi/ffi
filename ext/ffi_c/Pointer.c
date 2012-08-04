@@ -181,7 +181,7 @@ ptr_initialize_copy(VALUE self, VALUE other)
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
     
-    // finally, copy the actual memory contents
+    /* finally, copy the actual memory contents */
     memcpy(dst->memory.address, src->address, src->size);
 
     return self;

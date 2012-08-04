@@ -70,7 +70,7 @@ typedef struct {
 } MemoryOps;
 
 struct AbstractMemory_ {
-    char* address; // Use char* instead of void* to ensure adding to it works correctly
+    char* address; /* Use char* instead of void* to ensure adding to it works correctly */
     long size;
     int flags;
     int typeSize;
