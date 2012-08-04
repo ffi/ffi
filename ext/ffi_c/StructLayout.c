@@ -357,7 +357,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     layout->fieldCount = (int) RARRAY_LEN(fields);
     layout->rbFieldMap = rb_hash_new();
     layout->rbFieldNames = rb_ary_new2(layout->fieldCount);
-    layout->size = FFI_ALIGN(NUM2INT(size),  NUM2INT(align));
+    layout->size = (int) FFI_ALIGN(NUM2INT(size),  NUM2INT(align));
     layout->align = NUM2INT(align);
     layout->fields = xcalloc(layout->fieldCount, sizeof(StructField *));
     layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
@@ -423,7 +423,7 @@ struct_layout_union_bang(VALUE self)
 
     for (i = 0; alignment_types[i] != NULL; ++i) {
         if (alignment_types[i]->alignment == layout->align) {
-            t = alignment_types[i];
+            t = (ffi_type *) alignment_types[i];
             break;
         }
     }
@@ -432,7 +432,7 @@ struct_layout_union_bang(VALUE self)
         return Qnil;
     }
 
-    count = layout->size / t->size;
+    count = (int) layout->size / t->size;
     xfree(layout->ffiTypes);
     layout->ffiTypes = xcalloc(count + 1, sizeof(ffi_type *));
     layout->base.ffiType->elements = layout->ffiTypes;
