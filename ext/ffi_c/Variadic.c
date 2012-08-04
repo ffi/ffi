@@ -219,7 +219,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
     }
-    ffiStatus = ffi_prep_cif(&cif, invoker->abi, paramCount, ffiReturnType, ffiParamTypes);
+    ffiStatus = ffi_prep_cif_var(&cif, invoker->abi, paramCount, paramCount, ffiReturnType, ffiParamTypes);
     switch (ffiStatus) {
         case FFI_BAD_ABI:
             rb_raise(rb_eArgError, "Invalid ABI specified");
