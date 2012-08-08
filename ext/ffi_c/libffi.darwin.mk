@@ -25,7 +25,7 @@ ifeq ($(strip $(ARCHES)),)
 LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi-$(arch)
 # Just build the one (default) architecture
 $(LIBFFI):		
-	@mkdir -p "$(LIBFFI_BUILD_DIR)"
+	@mkdir -p "$(LIBFFI_BUILD_DIR)" "$(@D)"
 	@if [ ! -f "$(LIBFFI_BUILD_DIR)"/Makefile ]; then \
 	    echo "Configuring libffi"; \
 	    cd "$(LIBFFI_BUILD_DIR)" && \
@@ -66,7 +66,7 @@ endif
 
 $(LIBFFI):	$(LIBTARGETS)
 	# Assemble into a FAT (x86_64, i386, ppc) library
-	@mkdir -p "$(BUILD_DIR)"/libffi/.libs
+	@mkdir -p "$(@D)"
 	/usr/bin/libtool -static -o $@ \
 	    $(foreach arch, $(ARCHES),"$(BUILD_DIR)"/libffi-$(arch)/.libs/libffi_convenience.a)
 	@mkdir -p "$(LIBFFI_BUILD_DIR)"/include
