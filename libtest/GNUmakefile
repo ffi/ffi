@@ -33,7 +33,7 @@ TEST_OBJS := $(patsubst $(SRC_DIR)/%.c, $(TEST_BUILD_DIR)/%.o, $(TEST_SRCS))
 #
 # Compiler/linker flags from:
 #   http://weblogs.java.net/blog/kellyohair/archive/2006/01/compilation_of_1.html
-JFLAGS = -fomit-frame-pointer -fno-strict-aliasing
+JFLAGS = -fno-omit-frame-pointer -fno-strict-aliasing
 OFLAGS = -O2 $(JFLAGS)
 WFLAGS = -W -Wall -Wno-unused -Wno-parentheses
 PICFLAGS = -fPIC
