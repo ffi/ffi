@@ -35,7 +35,7 @@ puts "Benchmark [ ], :int performance, #{ITER}x calls"
   }
 }
 
-puts "Benchmark [ ], :int performance, #{ITER}x calls"
+puts "Benchmark ruby method(), nil performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
     i = 0; max = ITER / 4
