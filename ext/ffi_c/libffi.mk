@@ -3,7 +3,7 @@
 include ${srcdir}/libffi.gnu.mk
 
 $(LIBFFI):		
-	@mkdir -p "$(LIBFFI_BUILD_DIR)"
+	@mkdir -p "$(LIBFFI_BUILD_DIR)" "$@(D)"
 	@if [ ! -f "$(LIBFFI_BUILD_DIR)"/Makefile ]; then \
 	    echo "Configuring libffi"; \
 	    cd "$(LIBFFI_BUILD_DIR)" && \
