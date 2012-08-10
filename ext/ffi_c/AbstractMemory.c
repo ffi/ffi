@@ -431,11 +431,6 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
 
     checkWrite(ptr);
     checkBounds(ptr, off, len + 1);
-    
-    if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
-        rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
-        return Qnil;
-    }
 
     memcpy(ptr->address + off, RSTRING_PTR(str), len);
     *((char *) ptr->address + off + len) = '\0';

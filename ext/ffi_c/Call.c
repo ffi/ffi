@@ -377,10 +377,7 @@ getPointer(VALUE value, int type)
         return memory != NULL ? memory->address : NULL;
 
     } else if (type == T_STRING) {
-
-        if (rb_safe_level() >= 1 && OBJ_TAINTED(value)) {
-            rb_raise(rb_eSecurityError, "Unsafe string parameter");
-        }
+        
         return StringValuePtr(value);
 
     } else if (type == T_NIL) {
