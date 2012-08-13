@@ -432,7 +432,7 @@ struct_layout_union_bang(VALUE self)
         return Qnil;
     }
 
-    count = (int) layout->size / t->size;
+    count = (int) layout->size / (int) t->size;
     xfree(layout->ffiTypes);
     layout->ffiTypes = xcalloc(count + 1, sizeof(ffi_type *));
     layout->base.ffiType->elements = layout->ffiTypes;

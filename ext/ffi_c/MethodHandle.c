@@ -330,7 +330,6 @@ trampoline_size(void)
 void
 rbffi_MethodHandle_Init(VALUE module)
 {
-    ffi_status ffiStatus;
     defaultClosurePool = rbffi_ClosurePool_New((int) trampoline_size(), prep_trampoline, NULL);
 
 #if defined(CUSTOM_TRAMPOLINE)

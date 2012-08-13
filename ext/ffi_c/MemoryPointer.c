@@ -38,7 +38,6 @@ typedef int bool;
 
 
 static VALUE memptr_allocate(VALUE klass);
-static void memptr_mark(Pointer* ptr);
 static void memptr_release(Pointer* ptr);
 static VALUE memptr_malloc(VALUE self, long size, long count, bool clear);
 static VALUE memptr_free(VALUE self);
@@ -135,12 +134,6 @@ memptr_release(Pointer* ptr)
         ptr->storage = NULL;
     }
     xfree(ptr);
-}
-
-static void
-memptr_mark(Pointer* ptr)
-{
-    rb_gc_mark(ptr->rbParent);
 }
 
 static VALUE

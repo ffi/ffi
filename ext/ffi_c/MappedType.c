@@ -60,7 +60,6 @@ static VALUE
 mapped_initialize(VALUE self, VALUE rbConverter)
 {
     MappedType* m = NULL;
-    Type* t = NULL;
     
     if (!rb_respond_to(rbConverter, id_native_type)) {
         rb_raise(rb_eNoMethodError, "native_type method not implemented");
