@@ -4,7 +4,12 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
   require 'mkmf'
   require 'rbconfig'
   dir_config("ffi_c")
-  
+
+  # recent versions of ruby add restrictive ansi and warning flags on a whim - kill them all
+  $warnflags = ''
+  $CFLAGS.gsub!(/-ansi/, '')
+  $CFLAGS.gsub!(/-std=[^\s]+/, '')
+
   if ENV['RUBY_CC_VERSION'].nil? && (pkg_config("libffi") ||
      have_header("ffi.h") ||
      find_header("ffi.h", "/usr/local/include", "/usr/include/ffi"))
@@ -31,11 +36,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
   
   $CFLAGS << " -mwin32 " if RbConfig::CONFIG['host_os'] =~ /cygwin/
   $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if RbConfig::CONFIG['host_os'] =~ /mswin/
-  #$CFLAGS << " -Werror -Wunused -Wformat -Wimplicit -Wreturn-type "
-  if (ENV['CC'] || RbConfig::MAKEFILE_CONFIG['CC'])  =~ /gcc/
-#    $CFLAGS << " -Wno-declaration-after-statement "
-  end
-  
+
   create_makefile("ffi_c")
   unless libffi_ok
     File.open("Makefile", "a") do |mf|
