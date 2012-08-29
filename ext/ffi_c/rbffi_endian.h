@@ -8,7 +8,16 @@
 #include <sys/types.h>
 
 #if defined(__linux__) || defined(__CYGWIN__) || defined(__GNU__) || defined(__GLIBC__)
-#  include <endian.h>
+# include <endian.h>
+# if !defined(LITTLE_ENDIAN) && defined(__LITTLE_ENDIAN)
+#  define LITTLE_ENDIAN __LITTLE_ENDIAN
+# endif
+# if !defined(BIG_ENDIAN) && defined(__BIG_ENDIAN)
+#  define BIG_ENDIAN __BIG_ENDIAN
+# endif
+# if !defined(BYTE_ORDER) && defined(__BYTE_ORDER)
+#  define BYTE_ORDER __BYTE_ORDER
+# endif
 #endif
 
 #ifdef __sun

@@ -94,8 +94,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     VALUE retval = Qnil;
     VALUE convention = Qnil;
     VALUE fixed = Qnil;
-	VALUE rbConventionStr;
-	int i;
+    int i;
 
     Check_Type(options, T_HASH);
     convention = rb_hash_aref(options, ID2SYM(rb_intern("convention")));
