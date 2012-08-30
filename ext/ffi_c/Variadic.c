@@ -94,6 +94,9 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     VALUE retval = Qnil;
     VALUE convention = Qnil;
     VALUE fixed = Qnil;
+#if defined(_WIN32) || defined(__WIN32__)
+    VALUE rbConventionStr;
+#endif
     int i;
 
     Check_Type(options, T_HASH);
