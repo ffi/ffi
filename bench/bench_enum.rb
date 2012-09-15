@@ -4,8 +4,8 @@ module LibTest
   extend FFI::Library
   ffi_lib LIBTEST_PATH
   enum :foo, [ :a, :b, :c ]
-  attach_function :ffi_bench, :bench_s32_v, [ :foo ], :void, :save_errno => true
-  attach_function :ffi_bench_i, :bench_s32_v, [ :int ], :void, :save_errno => true
+  attach_function :ffi_bench, :bench_s32_v, [ :foo ], :void, :save_errno => false
+  attach_function :ffi_bench_i, :bench_s32_v, [ :int ], :void, :save_errno => false
   def self.rb_bench(i0); nil; end
 end
 
