@@ -3,6 +3,12 @@
 #include <stdarg.h>
 #include <float.h>
 
+#if defined (__CYGWIN__) || defined(__INTERIX)
+
+#define strtold(str, endptr)    ((long double)strtod((str),(endptr)))
+
+#endif /* defined (__CYGWIN__) */
+
 static VALUE rb_cBigDecimal = Qnil;
 static VALUE bigdecimal_load(VALUE unused);
 static VALUE bigdecimal_failed(VALUE value);
