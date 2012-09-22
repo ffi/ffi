@@ -9,15 +9,17 @@ INCFLAGS += -I"$(BUILD_DIR)"
 
 # Work out which arches we need to compile the lib for
 ARCHES := 
-ifneq ($(findstring -arch ppc,$(CFLAGS)),)
+ARCHFLAGS ?= $(filter -arch %, $(CFLAGS))
+
+ifneq ($(findstring -arch ppc,$(ARCHFLAGS)),)
   ARCHES += ppc
 endif
 
-ifneq ($(findstring -arch i386,$(CFLAGS)),)
+ifneq ($(findstring -arch i386,$(ARCHFLAGS)),)
   ARCHES += i386
 endif
 
-ifneq ($(findstring -arch x86_64,$(CFLAGS)),)
+ifneq ($(findstring -arch x86_64,$(ARCHFLAGS)),)
   ARCHES += x86_64
 endif
 
