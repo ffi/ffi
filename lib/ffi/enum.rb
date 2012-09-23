@@ -86,6 +86,7 @@ module FFI
         info.each do |i|
           case i
           when Symbol
+            raise ArgumentError, "duplicate enum key" if @kv_map.has_key?(i)
             @kv_map[i] = value
             last_cst = i
             value += 1
@@ -95,7 +96,7 @@ module FFI
           end
         end
       end
-      @vk_map = Hash[@kv_map.map{|k,v| [v,k]}]
+      @vk_map = @kv_map.invert
     end
 
     # @return [Array] enum symbol names
