@@ -94,11 +94,19 @@ module FFI
       @releaser.autorelease=(autorelease)
     end
 
+    # @return [Boolean] +autorelease+
+    # Get +autorelease+ property. See {Pointer Autorelease section at Pointer}.
+    def autorelease?
+      @releaser.autorelease
+    end
+
     # @abstract Base class for {AutoPointer}'s releasers.
     #  
     #  All subclasses of Releaser should define a +#release(ptr)+ method.
     # A releaser is an object in charge of release an {AutoPointer}.
     class Releaser
+      attr_accessor :autorelease
+
       # @param [Pointer] ptr
       # @param [#call] proc
       # @return [nil]
@@ -119,14 +127,7 @@ module FFI
           @proc = nil
         end
       end
-      
-      # @param [Boolean] autorelease
-      # @return [Boolean] autorelease
-      # Set +autorelease+ attribute for pointer managed by Releaser.
-      def autorelease=(autorelease)
-        @autorelease = autorelease if @ptr
-      end
-      
+
       # @param args
       # Release pointer if +autorelease+ is set.
       def call(*args)
