@@ -31,7 +31,7 @@ $(LIBFFI):
 	@if [ ! -f "$(LIBFFI_BUILD_DIR)"/Makefile ]; then \
 	    echo "Configuring libffi"; \
 	    cd "$(LIBFFI_BUILD_DIR)" && \
-		/usr/bin/env CC="$(CC)" LD="$(LD)" CFLAGS="$(LIBFFI_CFLAGS)" \
+		/usr/bin/env CC="$(CC)" LD="$(LD)" CFLAGS="$(LIBFFI_CFLAGS)" GREP_OPTIONS="" \
 		/bin/sh $(LIBFFI_CONFIGURE) $(LIBFFI_HOST) > /dev/null; \
 	fi
 	cd "$(LIBFFI_BUILD_DIR)" && $(MAKE)
