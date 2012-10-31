@@ -77,7 +77,7 @@ typedef int bool;
 static bool prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 static long trampoline_size(void);
 
-#if defined(__x86_64__) && defined(__GNUC__)
+#if defined(__x86_64__) && defined(__GNUC__) && !defined(__sun)
 # define CUSTOM_TRAMPOLINE 1
 #endif
 
