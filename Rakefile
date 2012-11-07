@@ -167,6 +167,32 @@ task 'gem:win32' do
 end
 
 
+namespace 'java' do
+
+  java_gem_spec = Gem::Specification.new do |s|
+    s.name = gem_spec.name
+    s.version = gem_spec.version
+    s.author = gem_spec.author
+    s.email = gem_spec.email
+    s.homepage = gem_spec.homepage
+    s.summary = gem_spec.summary
+    s.description = gem_spec.description
+    s.files = %w(History.txt LICENSE COPYING COPYING.LESSER README.md Rakefile)
+    s.has_rdoc = false
+    s.license = gem_spec.license
+    s.platform = 'java'
+  end
+
+  Gem::PackageTask.new(java_gem_spec) do |pkg|
+    pkg.need_zip = true
+    pkg.need_tar = true
+    pkg.package_dir = 'pkg'
+  end
+end
+
+task 'gem:java' => 'java:gem'
+
+
 if USE_RAKE_COMPILER
   Rake::ExtensionTask.new('ffi_c', gem_spec) do |ext|
     ext.name = 'ffi_c'                                        # indicate the name of the extension.
