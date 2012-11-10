@@ -493,7 +493,7 @@ inline_array_size(VALUE self)
 static int
 inline_array_offset(InlineArray* array, int index)
 {
-    if (index < 0 || index >= array->length) {
+    if (index < 0 || (index >= array->length && array->length > 0)) {
         rb_raise(rb_eIndexError, "index %d out of bounds", index);
     }
 

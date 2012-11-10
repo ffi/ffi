@@ -388,7 +388,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
         }
 
         ftype = field->type->ffiType;
-        if (ftype->size == 0) {
+        if (ftype->size == 0 && i < ((int) layout->fieldCount - 1)) {
             rb_raise(rb_eTypeError, "type of field %d has zero size", i);
         }
 
@@ -396,7 +396,8 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
             field->referenceIndex = layout->referenceFieldCount++;
         }
 
-        layout->ffiTypes[i] = ftype;
+
+        layout->ffiTypes[i] = ftype->size > 0 ? ftype : NULL;
         st_insert(layout->fieldSymbolTable, rbName, rbField);
         rb_hash_aset(layout->rbFieldMap, rbName, rbField);
         rb_ary_push(layout->rbFields, rbField);
