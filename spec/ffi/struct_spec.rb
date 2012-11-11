@@ -717,3 +717,43 @@ describe "Struct allocation" do
   end
 
 end
+
+describe "variable-length arrays" do
+  it "zero length array should be accepted as last field" do
+    lambda {
+      Class.new(FFI::Struct) do
+        layout :count, :int, :data, [ :char, 0 ]
+      end
+    }.should_not raise_error
+  end
+
+  it "zero length array before last element should raise error" do
+    lambda {
+      Class.new(FFI::Struct) do
+        layout :data, [ :char, 0 ], :count, :int
+      end
+    }.should raise_error
+  end
+
+  it "can access elements of array" do
+    struct_class = Class.new(FFI::Struct) do
+      layout :count, :int, :data, [ :long, 0 ]
+    end
+    s = struct_class.new(FFI::MemoryPointer.new(1024))
+    s[:data][0] = 0xdeadbeef
+    s[:data][1] = 0xfee1dead
+    s[:data][0].should eq 0xdeadbeef
+    s[:data][1].should eq 0xfee1dead
+  end
+
+  it "non-variable length array is bounds checked" do
+    struct_class = Class.new(FFI::Struct) do
+      layout :count, :int, :data, [ :long, 1 ]
+    end
+    s = struct_class.new(FFI::MemoryPointer.new(1024))
+    s[:data][0] = 0xdeadbeef
+    lambda { s[:data][1] = 0xfee1dead }.should raise_error
+    s[:data][0].should eq 0xdeadbeef
+    lambda { s[:data][1].should eq 0xfee1dead }.should raise_error
+  end
+end
