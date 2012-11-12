@@ -665,4 +665,14 @@ describe "Callback with " do
     v.pointer.should eq FFI::Pointer::NULL
   end
 
-end # unless true
+  it "varargs parameters are rejected" do
+    lambda {
+      Module.new do
+        extend FFI::Library
+        ffi_lib TestLibrary::PATH
+        callback :cbVrL, [ :varargs ], :long
+      end
+    }.should raise_error(ArgumentError)
+  end
+
+end
