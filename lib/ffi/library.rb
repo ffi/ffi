@@ -212,7 +212,7 @@ module FFI
       cname, arg_types, ret_type, opts = (a4 && (a2.is_a?(String) || a2.is_a?(Symbol))) ? [ a2, a3, a4, a5 ] : [ mname.to_s, a2, a3, a4 ]
 
       # Convert :foo to the native type
-      arg_types.map! { |e| find_type(e) }
+      arg_types = arg_types.map { |e| find_type(e) }
       options = {
         :convention => ffi_convention,
         :type_map => defined?(@ffi_typedefs) ? @ffi_typedefs : nil,
