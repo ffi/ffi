@@ -13,7 +13,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
 
   require 'ffi/ffi'
 
-elsif defined?(RUBY_ENGINE) && RUBY_ENGINE == 'jruby'
+elsif defined?(RUBY_ENGINE) && (RUBY_ENGINE == 'jruby' || RUBY_ENGINE == 'rbx')
   $LOAD_PATH.delete(File.dirname(__FILE__))
   $LOAD_PATH.delete(File.join(File.dirname(__FILE__), 'ffi'))
   unless $LOADED_FEATURES.nil?
