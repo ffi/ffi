@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'ffi'
-  s.version = '1.2.0.pre4'
+  s.version = '1.2.0.pre5'
   s.author = 'Wayne Meissner'
   s.email = 'wmeissner@gmail.com'
   s.homepage = 'http://wiki.github.com/ffi/ffi'
@@ -10,7 +10,6 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/ffi_c/extconf.rb'
   s.has_rdoc = false
   s.license = 'LGPL-3'
-  s.require_paths << 'lib/ffi'
   s.require_paths << 'ext/ffi_c'
   s.required_ruby_version = '>= 1.8.7'
   s.add_development_dependency 'rake'
