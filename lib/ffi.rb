@@ -16,6 +16,9 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
 elsif defined?(RUBY_ENGINE) && RUBY_ENGINE == 'jruby'
   $LOAD_PATH.delete(File.dirname(__FILE__))
   $LOAD_PATH.delete(File.join(File.dirname(__FILE__), 'ffi'))
-  $LOADED_FEATURES.delete(__FILE__) unless $LOADED_FEATURES.nil?
+  unless $LOADED_FEATURES.nil?
+    $LOADED_FEATURES.delete(__FILE__)
+    $LOADED_FEATURES.delete('ffi.rb')
+  end
   require 'ffi.rb'
 end
