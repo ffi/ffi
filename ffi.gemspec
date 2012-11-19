@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.homepage = 'http://wiki.github.com/ffi/ffi'
   s.summary = 'Ruby FFI'
   s.description = 'Ruby FFI library'
-  s.files = %w(History.txt LICENSE COPYING COPYING.LESSER README.md Rakefile) + Dir.glob("{ext,gen,lib,spec,libtest}/**/*").reject { |f| f =~ /lib\/1\.[89]/}
+  s.files = %w(ffi.gemspec History.txt LICENSE COPYING COPYING.LESSER README.md Rakefile) + Dir.glob("{ext,gen,lib,spec,libtest}/**/*").reject { |f| f =~ /lib\/1\.[89]/}
   s.extensions << 'ext/ffi_c/extconf.rb'
   s.has_rdoc = false
   s.license = 'LGPL-3'
