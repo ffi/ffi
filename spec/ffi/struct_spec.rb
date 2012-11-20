@@ -740,10 +740,10 @@ describe "variable-length arrays" do
       layout :count, :int, :data, [ :long, 0 ]
     end
     s = struct_class.new(FFI::MemoryPointer.new(1024))
-    s[:data][0] = 0xdeadbeef
-    s[:data][1] = 0xfee1dead
-    s[:data][0].should eq 0xdeadbeef
-    s[:data][1].should eq 0xfee1dead
+    s[:data][0] = 0x1eadbeef
+    s[:data][1] = 0x12345678
+    s[:data][0].should eq 0x1eadbeef
+    s[:data][1].should eq 0x12345678
   end
 
   it "non-variable length array is bounds checked" do
@@ -751,9 +751,9 @@ describe "variable-length arrays" do
       layout :count, :int, :data, [ :long, 1 ]
     end
     s = struct_class.new(FFI::MemoryPointer.new(1024))
-    s[:data][0] = 0xdeadbeef
-    lambda { s[:data][1] = 0xfee1dead }.should raise_error
-    s[:data][0].should eq 0xdeadbeef
-    lambda { s[:data][1].should eq 0xfee1dead }.should raise_error
+    s[:data][0] = 0x1eadbeef
+    lambda { s[:data][1] = 0x12345678 }.should raise_error
+    s[:data][0].should eq 0x1eadbeef
+    lambda { s[:data][1].should eq 0x12345678 }.should raise_error
   end
 end
