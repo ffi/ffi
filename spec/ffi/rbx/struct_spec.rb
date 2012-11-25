@@ -8,6 +8,6 @@ describe FFI::Struct do
   it "allows setting fields" do
     t = Timeval.new
     t[:tv_sec] = 12
-    t[:tv_sec].should eq 12
+    t[:tv_sec].should == 12
   end
 end

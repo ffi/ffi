@@ -56,7 +56,7 @@ describe 'Union' do
       if k == 'f32' or k == 'f64'
         (@u[type[1]] - LibTest.send("union_align_#{k}", @u.to_ptr)).abs.should < 0.00001
       else
-        @u[type[1]].should eq LibTest.send("union_align_#{k}", @u.to_ptr)
+        @u[type[1]].should == LibTest.send("union_align_#{k}", @u.to_ptr)
       end
     end
   end
@@ -66,11 +66,11 @@ describe 'Union' do
       if k == 'f32' or k == 'f64'
         (@u[type[1]] - type[2]).abs.should < 0.00001
       else
-        @u[type[1]].should eq type[2]
+        @u[type[1]].should == type[2]
       end
     end
   end
   it 'should return a size equals to the size of the biggest field' do
-    LibTest::TestUnion.size.should eq LibTest.union_size
+    LibTest::TestUnion.size.should == LibTest.union_size
   end
 end
