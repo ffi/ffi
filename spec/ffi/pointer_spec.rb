@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 require 'delegate'
@@ -40,7 +29,7 @@ describe "Pointer" do
     magic = 0x12345678
     memory.put_int32(0, magic)
     tp = ToPtrTest.new(memory)
-    PointerTestLib.ptr_ret_int32_t(tp, 0).should eq magic
+    PointerTestLib.ptr_ret_int32_t(tp, 0).should == magic
   end
   class PointerDelegate < DelegateClass(FFI::Pointer)
     def initialize(ptr)
@@ -55,7 +44,7 @@ describe "Pointer" do
     magic = 0x12345678
     memory.put_int32(0, magic)
     ptr = PointerDelegate.new(memory)
-    PointerTestLib.ptr_ret_int32_t(ptr, 0).should eq magic
+    PointerTestLib.ptr_ret_int32_t(ptr, 0).should == magic
   end
   it "Fixnum cannot be used as a Pointer argument" do
     lambda { PointerTestLib.ptr_ret_int32(0, 0) }.should raise_error
@@ -69,13 +58,13 @@ describe "Pointer" do
     it "#read_pointer" do
       memory = FFI::MemoryPointer.new :pointer
       PointerTestLib.ptr_set_pointer(memory, 0, PointerTestLib.ptr_from_address(0xdeadbeef))
-      memory.read_pointer.address.should eq 0xdeadbeef
+      memory.read_pointer.address.should == 0xdeadbeef
     end
 
     it "#write_pointer" do
       memory = FFI::MemoryPointer.new :pointer
       memory.write_pointer(PointerTestLib.ptr_from_address(0xdeadbeef))
-      PointerTestLib.ptr_ret_pointer(memory, 0).address.should eq 0xdeadbeef
+      PointerTestLib.ptr_ret_pointer(memory, 0).address.should == 0xdeadbeef
     end
 
     it "#read_array_of_pointer" do
@@ -86,7 +75,7 @@ describe "Pointer" do
       end
       array = memory.read_array_of_pointer(values.size)
       values.each_with_index do |address, j|
-        array[j].address.should eq address
+        array[j].address.should == address
       end
     end
     

@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
@@ -53,7 +42,7 @@ describe FFI::Struct, ' with inline callback functions' do
     ts = CallbackMember2::TestStruct.new
     ts[:add] = StructCallbacks.method(:add)
 
-    CallbackMember2.struct_call_add_cb(ts, 1, 2).should eq 3
+    CallbackMember2.struct_call_add_cb(ts, 1, 2).should == 3
   end
 
   it 'should return callable object from []' do
@@ -74,7 +63,7 @@ describe FFI::Struct, ' with inline callback functions' do
     s[:add] = add
     fn = s[:add]
     fn.respond_to?(:call).should be_true
-    fn.call(1, 2).should eq 3
+    fn.call(1, 2).should == 3
   end
 end
 
