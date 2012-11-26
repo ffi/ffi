@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
@@ -26,7 +15,7 @@ describe FFI::Struct, ' with an initialize function' do
         self.magic = 42
       end
     end
-    StructWithInitialize.new.magic.should eq 42
+    StructWithInitialize.new.magic.should == 42
   end
 end
 
@@ -41,6 +30,6 @@ describe FFI::ManagedStruct, ' with an initialize function' do
       end
       def self.release;end
     end
-    ManagedStructWithInitialize.new.magic.should eq 42
+    ManagedStructWithInitialize.new.magic.should == 42
   end
 end
