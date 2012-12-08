@@ -126,7 +126,7 @@ array_type_element_type(VALUE self)
 void
 rbffi_ArrayType_Init(VALUE moduleFFI)
 {
-    VALUE ffiType;
+    VALUE ffi_Type;
 
     ffi_Type = rbffi_TypeClass;
 
