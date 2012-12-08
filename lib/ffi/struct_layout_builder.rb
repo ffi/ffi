@@ -19,8 +19,11 @@
 #
 
 module FFI
+  
+  # Build a {StructLayout struct layout}.
   class StructLayoutBuilder
-    attr_reader :size, :alignment
+    attr_reader :size
+    attr_reader :alignment
     
     def initialize
       @size = 0
@@ -31,23 +34,42 @@ module FFI
       @fields = Array.new
     end
 
+    # @param [Numeric] size
+    # Set size attribute with +size+ only if +size+ is greater than attribute value.
     def size=(size)
       @size = size if size > @size
     end
 
+    # @param [Numeric] alignment
+    # Set alignment attribute with +alignment+ only if it is greater than attribute value.
     def alignment=(align)
       @alignment = align if align > @alignment
       @min_alignment = align
     end
 
+    # @param [Boolean] is_union
+    # @return [is_union]
+    # Set union attribute.
+    # Set to +true+ to build a {Union} instead of a {Struct}.
     def union=(is_union)
       @union = is_union
     end
 
+    # @return [Boolean]
+    # Building a {Union} or a {Struct} ?
     def union?
       @union
     end
 
+    # Set packed attribute
+    # @overload packed=(packed)
+    #  @param [Fixnum] packed
+    #  @return [packed]
+    #  Set alignment and packed attributes to +packed+.
+    # @overload packed=(packed)
+    #  @param packed
+    #  @return [0,1]
+    #  Set packed attribute.
     def packed=(packed)
       if packed.is_a?(Fixnum)
         @alignment = packed
@@ -58,6 +80,7 @@ module FFI
     end
 
 
+    # List of number types
     NUMBER_TYPES = [
       Type::INT8,
       Type::UINT8,
@@ -75,6 +98,12 @@ module FFI
       Type::BOOL,
     ]
 
+    # @param [String, Symbol] name name of the field
+    # @param [Array, DataConverter, Struct, StructLayout::Field, Symbol, Type] type type of the field
+    # @param [Numeric, nil] offset
+    # @return [self]
+    # Add a field to the builder.
+    # @note Setting +offset+ to +nil+ or +-1+ is equivalent to +0+.
     def add(name, type, offset = nil)
 
       if offset.nil? || offset == -1
@@ -92,18 +121,33 @@ module FFI
       return self
     end
 
+    # @param (see #add)
+    # @return (see #add)
+    # Same as {#add}.
+    # @see #add
     def add_field(name, type, offset = nil)
       add(name, type, offset)
     end
     
+    # @param (see #add)
+    # @return (see #add)
+    # Add a struct as a field to the builder.
     def add_struct(name, type, offset = nil)
       add(name, Type::Struct.new(type), offset)
     end
 
+    # @param name (see #add)
+    # @param type (see #add)
+    # @param [Numeric] count array length
+    # @param offset (see #add)
+    # @return (see #add)
+    # Add an array as a field to the builder.
     def add_array(name, type, count, offset = nil)
       add(name, Type::Array.new(type, count), offset)
     end
 
+    # @return [StructLayout]
+    # Build and return the struct layout.
     def build
       # Add tail padding if the struct is not packed
       size = @packed ? @size : align(@size, @alignment)
@@ -115,10 +159,15 @@ module FFI
 
     private
     
+    # @param [Numeric] offset
+    # @param [Numeric] align
+    # @return [Numeric]
     def align(offset, align)
       align + ((offset - 1) & ~(align - 1));
     end
 
+    # @param (see #add)
+    # @return [StructLayout::Field]
     def field_for_type(name, offset, type)
       field_class = case
       when type.is_a?(Type::Function)

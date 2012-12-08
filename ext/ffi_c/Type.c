@@ -99,6 +99,7 @@ type_size(VALUE self)
 /*
  * call-seq: type.alignment
  * @return [Fixnum]
+ * Get Type alignment.
  */
 static VALUE
 type_alignment(VALUE self)

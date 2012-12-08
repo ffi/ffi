@@ -1,4 +1,6 @@
 module FFI
+
+  # @private
   class Generator
 
     def initialize(ffi_name, rb_name, options = {})

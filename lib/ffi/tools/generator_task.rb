@@ -16,6 +16,7 @@ require 'tempfile'
 ##
 # Rake task that calculates C structs for FFI::Struct.
 
+# @private
 class FFI::Generator::Task < Rake::TaskLib
 
   def initialize(rb_names)

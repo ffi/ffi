@@ -78,6 +78,14 @@ struct_field_mark(StructField* f)
     rb_gc_mark(f->rbName);
 }
 
+/*
+ * call-seq: initialize(name, offset, type)
+ * @param [String,Symbol] name
+ * @param [Fixnum] offset
+ * @param [FFI::Type] type
+ * @return [self]
+ * A new FFI::StructLayout::Field instance.
+ */
 static VALUE
 struct_field_initialize(int argc, VALUE* argv, VALUE self)
 {
@@ -126,6 +134,11 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     return self;
 }
 
+/*
+ * call-seq: offset
+ * @return [Numeric]
+ * Get the field offset.
+ */
 static VALUE
 struct_field_offset(VALUE self)
 {
@@ -134,6 +147,11 @@ struct_field_offset(VALUE self)
     return UINT2NUM(field->offset);
 }
 
+/*
+ * call-seq: size
+ * @return [Numeric]
+ * Get the field size.
+ */
 static VALUE
 struct_field_size(VALUE self)
 {
@@ -142,6 +160,11 @@ struct_field_size(VALUE self)
     return UINT2NUM(field->type->ffiType->size);
 }
 
+/*
+ * call-seq: alignment
+ * @return [Numeric]
+ * Get the field alignment.
+ */
 static VALUE
 struct_field_alignment(VALUE self)
 {
@@ -150,6 +173,11 @@ struct_field_alignment(VALUE self)
     return UINT2NUM(field->type->ffiType->alignment);
 }
 
+/*
+ * call-seq: type
+ * @return [Type]
+ * Get the field type.
+ */
 static VALUE
 struct_field_type(VALUE self)
 {
@@ -159,6 +187,11 @@ struct_field_type(VALUE self)
     return field->rbType;
 }
 
+/*
+ * call-seq: name
+ * @return [Symbol]
+ * Get the field name.
+ */
 static VALUE
 struct_field_name(VALUE self)
 {
@@ -167,6 +200,12 @@ struct_field_name(VALUE self)
     return field->rbName;
 }
 
+/*
+ * call-seq: get(pointer)
+ * @param [AbstractMemory] pointer pointer on a {Struct}
+ * @return [Object]
+ * Get an object of type {#type} from memory pointed by +pointer+.
+ */
 static VALUE
 struct_field_get(VALUE self, VALUE pointer)
 {
@@ -181,6 +220,13 @@ struct_field_get(VALUE self, VALUE pointer)
     return (*f->memoryOp->get)(MEMORY(pointer), f->offset);
 }
 
+/*
+ * call-seq: put(pointer, value)
+ * @param [AbstractMemory] pointer pointer on a {Struct}
+ * @param [Object] value this object must be a kind of {#type}
+ * @return [self]
+ * Put an object to memory pointed by +pointer+.
+ */
 static VALUE
 struct_field_put(VALUE self, VALUE pointer, VALUE value)
 {
@@ -197,6 +243,12 @@ struct_field_put(VALUE self, VALUE pointer, VALUE value)
     return self;
 }
 
+/*
+ * call-seq: get(pointer)
+ * @param [AbstractMemory] pointer pointer on a {Struct}
+ * @return [Function]
+ * Get a {Function} from memory pointed by +pointer+.
+ */
 static VALUE
 function_field_get(VALUE self, VALUE pointer)
 {
@@ -207,6 +259,15 @@ function_field_get(VALUE self, VALUE pointer)
     return rbffi_Function_NewInstance(f->rbType, (*rbffi_AbstractMemoryOps.pointer->get)(MEMORY(pointer), f->offset));
 }
 
+/*
+ * call-seq: put(pointer, proc)
+ * @param [AbstractMemory] pointer pointer to a {Struct}
+ * @param [Function, Proc] proc
+ * @return [Function]
+ * Set a {Function} to memory pointed by +pointer+ as a function. 
+ *
+ * If a Proc is submitted as +proc+, it is automatically transformed to a {Function}.
+ */
 static VALUE
 function_field_put(VALUE self, VALUE pointer, VALUE proc)
 {
@@ -235,6 +296,12 @@ isCharArray(ArrayType* arrayType)
             || arrayType->componentType->nativeType == NATIVE_UINT8;
 }
 
+/*
+ * call-seq: get(pointer)
+ * @param [AbstractMemory] pointer pointer on a {Struct}
+ * @return [FFI::StructLayout::CharArray, FFI::Struct::InlineArray]
+ * Get an array from a {Struct}.
+ */
 static VALUE
 array_field_get(VALUE self, VALUE pointer)
 {
@@ -252,6 +319,13 @@ array_field_get(VALUE self, VALUE pointer)
             ? rbffi_StructLayoutCharArrayClass : rbffi_StructInlineArrayClass);
 }
 
+/*
+ * call-seq: put(pointer, value)
+ * @param [AbstractMemory] pointer pointer on a {Struct}
+ * @param [String, Array] value +value+ may be a String only if array's type is a kind of +int8+
+ * @return [value]
+ * Set an array in a {Struct}.
+ */
 static VALUE
 array_field_put(VALUE self, VALUE pointer, VALUE value)
 {
@@ -346,6 +420,14 @@ struct_layout_allocate(VALUE klass)
     return obj;
 }
 
+/*
+ * call-seq: initialize(fields, size, align)
+ * @param [Array<StructLayout::Field>] fields
+ * @param [Numeric] size
+ * @param [Numeric] align
+ * @return [self]
+ * A new StructLayout instance.
+ */
 static VALUE
 struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
 {
@@ -411,6 +493,12 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     return self;
 }
 
+/* 
+ * call-seq: [](field)
+ * @param [Symbol] field
+ * @return [StructLayout::Field]
+ * Get a field from the layout.
+ */
 static VALUE
 struct_layout_union_bang(VALUE self) 
 {
@@ -455,6 +543,11 @@ struct_layout_aref(VALUE self, VALUE field)
     return rb_hash_aref(layout->rbFieldMap, field);
 }
 
+/*
+ * call-seq: fields
+ * @return [Array<StructLayout::Field>]
+ * Get fields list.
+ */
 static VALUE
 struct_layout_fields(VALUE self)
 {
@@ -465,6 +558,11 @@ struct_layout_fields(VALUE self)
     return rb_ary_dup(layout->rbFields);
 }
 
+/*
+ * call-seq: members
+ * @return [Array<Symbol>]
+ * Get list of field names.
+ */
 static VALUE
 struct_layout_members(VALUE self)
 {
@@ -475,6 +573,11 @@ struct_layout_members(VALUE self)
     return rb_ary_dup(layout->rbFieldNames);
 }
 
+/*
+ * call-seq: to_a
+ * @return [Array<StructLayout::Field>]
+ * Get an array of fields.
+ */
 static VALUE
 struct_layout_to_a(VALUE self)
 {
@@ -507,24 +610,55 @@ struct_layout_free(StructLayout *layout)
 void
 rbffi_StructLayout_Init(VALUE moduleFFI)
 {
-    rbffi_StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", rbffi_TypeClass);
+    VALUE ffi_Type = rbffi_TypeClass;
+
+    /*
+     * Document-class: FFI::StructLayout < FFI::Type
+     *
+     * This class aims at defining a struct layout.
+     */
+    rbffi_StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", ffi_Type);
     rb_global_variable(&rbffi_StructLayoutClass);
     
+    /*
+     * Document-class: FFI::StructLayout::Field
+     * A field in a {StructLayout}.
+     */
     rbffi_StructLayoutFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Field", rb_cObject);
     rb_global_variable(&rbffi_StructLayoutFieldClass);
 
+    /*
+     * Document-class: FFI::StructLayout::Number
+     * A numeric {Field} in a {StructLayout}.
+     */
     rbffi_StructLayoutNumberFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Number", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutNumberFieldClass);
 
+    /*
+     * Document-class: FFI::StructLayout::String
+     * A string {Field} in a {StructLayout}.
+     */
     rbffi_StructLayoutStringFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "String", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutStringFieldClass);
 
+    /*
+     * Document-class: FFI::StructLayout::Pointer
+     * A pointer {Field} in a {StructLayout}.
+     */
     rbffi_StructLayoutPointerFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Pointer", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutPointerFieldClass);
 
+    /*
+     * Document-class: FFI::StructLayout::Function
+     * A function pointer {Field} in a {StructLayout}.
+     */
     rbffi_StructLayoutFunctionFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Function", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutFunctionFieldClass);
 
+    /*
+     * Document-class: FFI::StructLayout::Array
+     * An array {Field} in a {StructLayout}.
+     */
     rbffi_StructLayoutArrayFieldClass = rb_define_class_under(rbffi_StructLayoutClass, "Array", rbffi_StructLayoutFieldClass);
     rb_global_variable(&rbffi_StructLayoutArrayFieldClass);
 
