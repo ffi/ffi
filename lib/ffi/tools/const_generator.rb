@@ -36,7 +36,7 @@ module FFI
     #  When passed a block, {#calculate} is automatically called at the end of
     #  the block, otherwise you must call it yourself.
     def initialize(prefix = nil, options = {})
-      @includes = []
+      @includes = ['stdio.h', 'stddef.h']
       @constants = {}
       @prefix = prefix
 
@@ -61,10 +61,10 @@ module FFI
       @options
     end
     # @param [String] name
-    # @return constant value
+    # @return constant value (converted if a +converter+ was defined).
     # Access a constant by name.
     def [](name)
-      @constants[name].value
+      @constants[name].converted_value
     end
 
     # Request the value for C constant +name+.
@@ -107,14 +107,10 @@ module FFI
       binary = File.join Dir.tmpdir, "rb_const_gen_bin_#{Process.pid}"
 
       Tempfile.open("#{@prefix}.const_generator") do |f|
-        f.puts "#include <stdio.h>"
-
         @includes.each do |inc|
           f.puts "#include <#{inc}>"
         end
-
-        f.puts "#include <stddef.h>\n\n"
-        f.puts "int main(int argc, char **argv)\n{"
+        f.puts "\nint main(int argc, char **argv)\n{"
 
         @constants.each_value do |const|
           f.puts <<-EOF
@@ -175,11 +171,12 @@ module FFI
       end.join "\n"
     end
 
-    # Add a C include file to calculate constants from.
-    # @param [String] i include file
-    # @return [Array<String>] array of include files (stdio.h is omitted)
-    def include(i)
-      @includes << i
+    # Add additional C include file(s) to calculate constants from.
+    # @note +stdio.h+ and +stddef.h+ automatically included
+    # @param [List<String>, Array<String>] i include file(s)
+    # @return [Array<String>] array of include files
+    def include(*i)
+      @includes |= i.flatten
     end
 
   end

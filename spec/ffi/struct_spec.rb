@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
@@ -70,7 +59,6 @@ describe "Struct tests" do
     smp.get_pointer(0).should == mp
   end
   it "Struct#[:pointer]=struct" do
-    magic = 0x12345678
     smp = FFI::MemoryPointer.new :pointer
     s = PointerMember.new smp
     lambda { s[:pointer] = s }.should_not raise_error
@@ -178,7 +166,7 @@ describe "Struct tests" do
     end
   end
   it "Can use Struct subclass as IN parameter type" do
-    module StructParam
+    module StructParam2
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       class TestStruct < FFI::Struct
@@ -188,7 +176,7 @@ describe "Struct tests" do
     end
   end
   it "Can use Struct subclass as OUT parameter type" do
-    module StructParam
+    module StructParam3
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       class TestStruct < FFI::Struct
@@ -443,6 +431,15 @@ describe FFI::Struct, ' with a nested struct field'  do
     @cs[:ns][:i] = 456
     LibTest.struct_align_nested_struct(@cs.to_ptr).should == 456
   end
+
+  it 'should be able to assign struct instance to nested field' do 
+    cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
+    ns = LibTest::NestedStruct.new
+    ns[:i] = 567
+    cs[:ns] = ns
+    cs[:ns][:i].should == 567
+    LibTest.struct_align_nested_struct(cs.to_ptr).should == 567
+  end
 end
 
 describe FFI::Struct, ' with a nested array of structs'  do
@@ -514,6 +511,8 @@ describe FFI::Struct, ' by value'  do
     attach_function :struct_s8s32_get_s32, [ S8S32.by_value ], :int
     attach_function :struct_s8s32_s32_ret_s32, [ S8S32.by_value, :int ], :int
     attach_function :struct_s8s32_s64_ret_s64, [ S8S32.by_value, :long_long ], :long_long
+    attach_function :struct_s8s32_ret_s8s32, [ S8S32.by_value ], S8S32.by_value
+    attach_function :struct_s32_ptr_s32_s8s32_ret_s32, [ :int, :pointer, :int, S8S32.by_value ], :int
     attach_function :struct_varargs_ret_struct_string, [ :int, :varargs ], StructString.by_value
   end
 
@@ -549,8 +548,34 @@ describe FFI::Struct, ' by value'  do
     s = LibTest::S8S32.new
     s[:s8] = 0x12
     s[:s32] = 0x34567890
+  end
 
-    LibTest.struct_s8s32_s64_ret_s64(s, 0xdeadcafebabe).should == 0xdeadcafebabe
+  it 'parameter with preceding s32,ptr,s32' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+    out = LibTest::S8S32.new
+    LibTest.struct_s32_ptr_s32_s8s32_ret_s32(0x1000000, out, 0x1eafbeef, s).should == 0x34567890
+    out[:s8].should == s[:s8]
+    out[:s32].should == s[:s32]
+  end
+
+  it 'parameter with preceding s32,string,s32' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+    out = 0.chr * 32
+    LibTest.struct_s32_ptr_s32_s8s32_ret_s32(0x1000000, out, 0x1eafbeef, s).should == 0x34567890
+  end
+
+  it 'parameter, returning struct by value' do
+    s = LibTest::S8S32.new
+    s[:s8] = 0x12
+    s[:s32] = 0x34567890
+
+    ret = LibTest.struct_s8s32_ret_s8s32(s)
+    ret[:s8].should == s[:s8]
+    ret[:s32].should == s[:s32]
   end
 
   it 'varargs returning a struct' do
@@ -675,8 +700,49 @@ describe "Struct allocation" do
       c = Class.new(FFI::Struct) do
         layout :b, :bool
       end
-      c.new
+      struct = c.new
+      struct[:b] = ! struct[:b]
     end.should_not raise_error
   end
 
+end
+
+describe "variable-length arrays" do
+  it "zero length array should be accepted as last field" do
+    lambda {
+      Class.new(FFI::Struct) do
+        layout :count, :int, :data, [ :char, 0 ]
+      end
+    }.should_not raise_error
+  end
+
+  it "zero length array before last element should raise error" do
+    lambda {
+      Class.new(FFI::Struct) do
+        layout :data, [ :char, 0 ], :count, :int
+      end
+    }.should raise_error
+  end
+
+  it "can access elements of array" do
+    struct_class = Class.new(FFI::Struct) do
+      layout :count, :int, :data, [ :long, 0 ]
+    end
+    s = struct_class.new(FFI::MemoryPointer.new(1024))
+    s[:data][0] = 0x1eadbeef
+    s[:data][1] = 0x12345678
+    s[:data][0].should == 0x1eadbeef
+    s[:data][1].should == 0x12345678
+  end
+
+  it "non-variable length array is bounds checked" do
+    struct_class = Class.new(FFI::Struct) do
+      layout :count, :int, :data, [ :long, 1 ]
+    end
+    s = struct_class.new(FFI::MemoryPointer.new(1024))
+    s[:data][0] = 0x1eadbeef
+    lambda { s[:data][1] = 0x12345678 }.should raise_error
+    s[:data][0].should == 0x1eadbeef
+    lambda { s[:data][1].should == 0x12345678 }.should raise_error
+  end
 end

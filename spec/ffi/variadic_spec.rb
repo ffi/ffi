@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
@@ -49,6 +38,7 @@ describe "Function with variadic arguments" do
       buf.get_float64(0).should == v
     end
   end
+
   module Varargs
     PACK_VALUES = {
       'c' => [ 0x12  ],
@@ -68,14 +58,16 @@ describe "Function with variadic arguments" do
       'i' => :int, 'I' => :uint, 'j' => :long_long, 'J' => :ulong_long,
       'l' => :long, 'L' => :ulong, 'f' => :float, 'd' => :double
     }
-    def self.verify(p, off, v)
-      if v.kind_of?(Float)
-        p.get_float64(off).should == v
-      else
-        p.get_int64(off).should == v
-      end
+  end
+
+  def verify(p, off, v)
+    if v.kind_of?(Float)
+      p.get_float64(off).should == v
+    else
+      p.get_int64(off).should == v
     end
   end
+
   Varargs::PACK_VALUES.keys.each do |t1|
     Varargs::PACK_VALUES.keys.each do |t2|
       Varargs::PACK_VALUES.keys.each do |t3|
@@ -87,9 +79,9 @@ describe "Function with variadic arguments" do
               it "call(#{fmt}, #{params.join(',')})" do
                 buf = FFI::Buffer.new :long_long, 3
                 LibTest.pack_varargs(buf, fmt, *params)
-                Varargs.verify(buf, 0, v1)
-                Varargs.verify(buf, 8, v2)
-                Varargs.verify(buf, 16, v3)
+                verify(buf, 0, v1)
+                verify(buf, 8, v2)
+                verify(buf, 16, v3)
               end
             end
           end

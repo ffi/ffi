@@ -19,16 +19,26 @@
  */
 
 #include <sys/types.h>
+#ifndef _MSC_VER
 #include <sys/param.h>
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <limits.h>
 #include <ruby.h>
+#if defined(_MSC_VER) && !defined(INT8_MIN)
+#  include "win32/stdint.h"
+#endif
 #include "rbffi.h"
 #include "compat.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
 #include "Function.h"
+#include "LongDouble.h"
 
 
 static inline char* memory_address(VALUE self);
@@ -233,6 +243,7 @@ NUM_OP(long, long, NUM2LONG, LONG2NUM, SWAPSLONG);
 NUM_OP(ulong, unsigned long, NUM2ULONG, ULONG2NUM, SWAPULONG);
 NUM_OP(float32, float, NUM2DBL, rb_float_new, NOSWAP);
 NUM_OP(float64, double, NUM2DBL, rb_float_new, NOSWAP);
+NUM_OP(longdouble, long double, rbffi_num2longdouble, rbffi_longdouble_new, NOSWAP);
 
 static inline void*
 get_pointer_value(VALUE value)
@@ -420,11 +431,6 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
 
     checkWrite(ptr);
     checkBounds(ptr, off, len + 1);
-    
-    if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
-        rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
-        return Qnil;
-    }
 
     memcpy(ptr->address + off, RSTRING_PTR(str), len);
     *((char *) ptr->address + off + len) = '\0';
@@ -580,6 +586,18 @@ memory_address(VALUE obj)
     return ((AbstractMemory *) DATA_PTR(obj))->address;
 }
 
+static VALUE
+memory_copy_from(VALUE self, VALUE rbsrc, VALUE rblen)
+{
+    AbstractMemory* dst;
+
+    Data_Get_Struct(self, AbstractMemory, dst);
+
+    memcpy(dst->address, rbffi_AbstractMemory_Cast(rbsrc, rbffi_AbstractMemoryClass)->address, NUM2INT(rblen));
+
+    return self;
+}
+
 AbstractMemory*
 rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass)
 {
@@ -628,24 +646,24 @@ memory_op_put_strptr(AbstractMemory* ptr, long offset, VALUE value)
 
 static MemoryOp memory_op_strptr = { memory_op_get_strptr, memory_op_put_strptr };
 
-//static MemoryOp memory_op_pointer = { memory_op_get_pointer, memory_op_put_pointer };
 
 MemoryOps rbffi_AbstractMemoryOps = {
-    &memory_op_int8, //.int8
-    &memory_op_uint8, //.uint8
-    &memory_op_int16, //.int16
-    &memory_op_uint16, //.uint16
-    &memory_op_int32, //.int32
-    &memory_op_uint32, //.uint32
-    &memory_op_int64, //.int64
-    &memory_op_uint64, //.uint64
-    &memory_op_long, //.slong
-    &memory_op_ulong, //.uslong
-    &memory_op_float32, //.float32
-    &memory_op_float64, //.float64
-    &memory_op_pointer, //.pointer
-    &memory_op_strptr, //.strptr
-	NULL //.boolOp
+    &memory_op_int8, /*.int8 */
+    &memory_op_uint8, /* .uint8 */
+    &memory_op_int16, /* .int16 */
+    &memory_op_uint16, /* .uint16 */
+    &memory_op_int32, /* .int32 */
+    &memory_op_uint32, /* .uint32 */
+    &memory_op_int64, /* .int64 */
+    &memory_op_uint64, /* .uint64 */
+    &memory_op_long, /* .slong */
+    &memory_op_ulong, /* .uslong */
+    &memory_op_float32, /* .float32 */
+    &memory_op_float64, /* .float64 */
+    &memory_op_longdouble, /* .longdouble */
+    &memory_op_pointer, /* .pointer */
+    &memory_op_strptr, /* .strptr */
+    &memory_op_bool /* .boolOp */
 };
 
 void
@@ -996,6 +1014,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_alias(classMemory, "size", "total");
     rb_define_method(classMemory, "type_size", memory_type_size, 0);
     rb_define_method(classMemory, "[]", memory_aref, 1);
+    rb_define_method(classMemory, "__copy_from__", memory_copy_from, 2);
 
     id_to_ptr = rb_intern("to_ptr");
     id_call = rb_intern("call");

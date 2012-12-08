@@ -1,23 +1,30 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 describe "Library" do
+  describe "#ffi_convention" do
+    it "defaults to :default" do
+      m = Module.new do
+        extend FFI::Library
+      end
+      m.ffi_convention.should == :default
+    end
 
-  unless Config::CONFIG['target_os'] =~ /mswin|mingw/
+    it "should be settable" do
+      m = Module.new do
+        extend FFI::Library
+      end
+
+      m.ffi_convention.should == :default
+      m.ffi_convention :stdcall
+      m.ffi_convention.should == :stdcall
+    end
+  end
+
+  unless RbConfig::CONFIG['target_os'] =~ /mswin|mingw/
     it "attach_function with no library specified" do
       lambda {
         Module.new do |m|

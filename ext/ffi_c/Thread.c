@@ -18,13 +18,20 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 
 #ifndef _WIN32
 # include <pthread.h>
 # include <errno.h>
 # include <signal.h>
 #else
+# include <winsock2.h>
 # define _WINSOCKAPI_
 # include <windows.h>
 #endif
@@ -69,7 +76,7 @@ rbffi_thread_has_gvl_p(void)
     return rbffi_active_thread.valid && pthread_equal(rbffi_active_thread.id, pthread_self());
 #endif
 }
-#endif // HAVE_RUBY_THREAD_HAS_GVL_P
+#endif /* HAVE_RUBY_THREAD_HAS_GVL_P */
 
 #ifndef HAVE_RB_THREAD_BLOCKING_REGION
 
@@ -180,6 +187,113 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
 }
 
 #else
+/* win32 implementation */
+
+struct BlockingThread {
+    HANDLE tid;
+    VALUE (*fn)(void *);
+    void *data;
+    void (*ubf)(void *);
+    void *data2;
+    VALUE retval;
+    int wrfd;
+    int rdfd;
+};
+
+static DWORD __stdcall
+rbffi_blocking_thread(LPVOID args)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) args;
+    char c = 1;
+    VALUE retval;
+
+    retval = (*thr->fn)(thr->data);
+    thr->retval = retval;
+
+    write(thr->wrfd, &c, sizeof(c));
+
+    return 0;
+}
+
+static VALUE
+wait_for_thread(void *data)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) data;
+    char c, res;
+    fd_set rfds;
+
+    FD_ZERO(&rfds);
+    FD_SET(thr->rdfd, &rfds);
+    rb_thread_select(thr->rdfd + 1, &rfds, NULL, NULL, NULL);
+    read(thr->rdfd, &c, 1);
+    return Qnil;
+}
+
+static VALUE
+cleanup_blocking_thread(void *data, VALUE exc)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) data;
+
+    if (thr->ubf != (void (*)(void *)) -1) {
+        (*thr->ubf)(thr->data2);
+    } else {
+        TerminateThread(thr->tid, 0);
+    }
+
+    return exc;
+}
+
+VALUE
+rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2)
+{
+    struct BlockingThread* thr;
+    int fd[2];
+    VALUE exc;
+    DWORD state;
+    DWORD res;
+
+    if (_pipe(fd, 1024, O_BINARY) == -1) {
+        rb_raise(rb_eSystemCallError, "_pipe() failed");
+        return Qnil;
+    }
+
+    thr = ALLOC_N(struct BlockingThread, 1);
+    thr->rdfd = fd[0];
+    thr->wrfd = fd[1];
+    thr->fn = func;
+    thr->data = data1;
+    thr->ubf = ubf;
+    thr->data2 = data2;
+    thr->retval = Qnil;
+
+    thr->tid = CreateThread(NULL, 0, rbffi_blocking_thread, thr, 0, NULL);
+    if (!thr->tid) {
+        close(fd[0]);
+        close(fd[1]);
+        xfree(thr);
+        rb_raise(rb_eSystemCallError, "CreateThread() failed");
+        return Qnil;
+    }
+
+    exc = rb_rescue2(wait_for_thread, (VALUE) thr, cleanup_blocking_thread, (VALUE) thr,
+        rb_eException);
+
+    /* The thread should be finished, already. */
+    WaitForSingleObject(thr->tid, INFINITE);
+    CloseHandle(thr->tid);
+    close(fd[1]);
+    close(fd[0]);
+    xfree(thr);
+
+    if (exc != Qnil) {
+        rb_exc_raise(exc);
+    }
+
+    return thr->retval;
+}
+
+
+#if 0
 
 /*
  * FIXME: someone needs to implement something similar to the posix pipe based
@@ -188,10 +302,25 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
 VALUE
 rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2)
 {
-    return (*func)(data1);
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+    rbffi_thread_t oldThread;
+#endif
+    VALUE res;
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+    oldThread = rbffi_active_thread;
+    rbffi_active_thread = rbffi_thread_self();
+#endif
+
+    res = (*func)(data1);
+
+#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+    rbffi_active_thread = oldThread;
+#endif
+  return res;
 }
+#endif
 
 #endif /* !_WIN32 */
 
-#endif // HAVE_RB_THREAD_BLOCKING_REGION
+#endif /* HAVE_RB_THREAD_BLOCKING_REGION */
 

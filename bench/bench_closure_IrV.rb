@@ -28,9 +28,17 @@ puts "Benchmark [ ], :void closure block performance, #{ITER}x calls"
   }
 }
 
-puts "Benchmark [ ], :void pre-allocated closure performance, #{ITER}x calls"
+puts "Benchmark [ ], :void pre-allocated function performance, #{ITER}x calls"
 10.times {
   fn = FFI::Function.new(:void, [ :int ]) { |i| }
+  puts Benchmark.measure {
+    ITER.times { LibTest.ffi_bench(fn, 2) }
+  }
+}
+
+puts "Benchmark [ ], :void pre-allocated callable performance, #{ITER}x calls"
+10.times {
+  fn = Proc.new { |i| }
   puts Benchmark.measure {
     ITER.times { LibTest.ffi_bench(fn, 2) }
   }

@@ -1,21 +1,7 @@
 /*
  * Copyright (c) 2007 Wayne Meissner. All rights reserved.
- * 
- * All rights reserved.
  *
- * This file is part of ruby-ffi.
- *
- * This code is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License version 3 only, as
- * published by the Free Software Foundation.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * version 3 for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+ * For licensing, see LICENSE.SPECS
  */
 
 #include <sys/types.h>
@@ -23,7 +9,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#ifdef __sparc
+#if defined(__sparc) && defined(__sun__)
     #define fix_mem_access __asm("ta 6")
 #else
     #define fix_mem_access
@@ -41,6 +27,7 @@ typedef signed long sL;
 typedef unsigned long uL;
 typedef float f32;
 typedef double f64;
+typedef long double f128;
 #if !defined(__OpenBSD__)
 typedef unsigned long ulong;
 #endif
@@ -66,6 +53,7 @@ TEST(float);
 TEST(double);
 TEST(long);
 TEST(ulong);
+TEST(f128);
 
 #define ADD2(R, T1, T2) R add_##T1##T2##_##R(T1 arg1, T2 arg2) { return arg1 + arg2; }
 #define SUB2(R, T1, T2) R sub_##T1##T2##_##R(T1 arg1, T2 arg2) { return arg1 - arg2; }

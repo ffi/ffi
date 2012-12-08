@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
@@ -214,17 +203,17 @@ describe "Three different size Integer arguments" do
 #    'f32' => [ 1.234567 ],
     'f64' => [ 9.87654321 ]
   }
-  module Number
-    def self.verify(p, off, t, v)
-      if t == 'f32'
-        p.get_float32(off).should == v
-      elsif t == 'f64'
-        p.get_float64(off).should == v
-      else
-        p.get_int64(off).should == v
-      end
+
+  def verify(p, off, t, v)
+    if t == 'f32'
+      p.get_float32(off).should == v
+    elsif t == 'f64'
+      p.get_float64(off).should == v
+    else
+      p.get_int64(off).should == v
     end
   end
+
   PACK_VALUES.keys.each do |t1|
     PACK_VALUES.keys.each do |t2|
       PACK_VALUES.keys.each do |t3|
@@ -234,9 +223,9 @@ describe "Three different size Integer arguments" do
               it "call(#{TYPE_MAP[t1]} (#{v1}), #{TYPE_MAP[t2]} (#{v2}), #{TYPE_MAP[t3]} (#{v3}))" do
                 p = FFI::Buffer.new :long_long, 3
                 LibTest.send("pack_#{t1}#{t2}#{t3}_s64", v1, v2, v3, p)
-                Number.verify(p, 0, t1, v1)
-                Number.verify(p, 8, t2, v2)
-                Number.verify(p, 16, t3, v3)
+                verify(p, 0, t1, v1)
+                verify(p, 8, t2, v2)
+                verify(p, 16, t3, v3)
               end
             end
           end

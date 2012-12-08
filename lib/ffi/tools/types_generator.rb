@@ -48,12 +48,22 @@ module FFI
       Tempfile.open 'ffi_types_generator' do |io|
         io.puts <<-C
 #include <sys/types.h>
+#if !(defined(WIN32))
 #include <sys/socket.h>
 #include <sys/resource.h>
+#endif
         C
 
         io.close
-        typedefs = `gcc -E -x c #{options[:cppflags]} -D_DARWIN_USE_64_BIT_INODE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -c #{io.path}`
+        cc = ENV['CC'] || 'gcc'
+        cmd = "#{cc} -E -x c #{options[:cppflags]} -D_DARWIN_USE_64_BIT_INODE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -c"
+        if options[:input]
+          typedefs = File.read(options[:input])
+        elsif options[:remote]
+          typedefs = `ssh #{options[:remote]} #{cmd} - < #{io.path}`
+        else
+          typedefs = `#{cmd} #{io.path}`
+        end
       end
       
       code = ""

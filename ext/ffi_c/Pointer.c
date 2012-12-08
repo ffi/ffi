@@ -18,12 +18,20 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
+#ifndef _MSC_VER
 #include <stdint.h>
+#endif
 #include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"
-#include "endian.h"
+#include "rbffi_endian.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
 
@@ -173,7 +181,7 @@ ptr_initialize_copy(VALUE self, VALUE other)
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
     
-    // finally, copy the actual memory contents
+    /* finally, copy the actual memory contents */
     memcpy(dst->memory.address, src->address, src->size);
 
     return self;
@@ -284,6 +292,10 @@ ptr_equals(VALUE self, VALUE other)
     
     Data_Get_Struct(self, Pointer, ptr);
 
+    if (NIL_P(other)) {
+        return ptr->memory.address == NULL ? Qtrue : Qfalse;
+    }
+
     return ptr->memory.address == POINTER(other)->address ? Qtrue : Qfalse;
 }
 
@@ -374,6 +386,11 @@ ptr_free(VALUE self)
             ptr->storage = NULL;
         }
         ptr->allocated = false;
+
+    } else {
+        VALUE caller = rb_funcall(rb_funcall(Qnil, rb_intern("caller"), 0), rb_intern("first"), 0);
+        
+        rb_warn("calling free on non allocated pointer %s from %s", RSTRING_PTR(ptr_inspect(self)), RSTRING_PTR(rb_str_to_str(caller)));
     }
 
     return self;

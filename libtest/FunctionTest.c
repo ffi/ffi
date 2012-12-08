@@ -1,31 +1,16 @@
 /*
- * Copyright (c) 2009 Wayne Meissner. All rights reserved.
- * 
- * All rights reserved.
+ * Copyright (c) 2007 Wayne Meissner. All rights reserved.
  *
- * This file is part of ruby-ffi.
- *
- * This code is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License version 3 only, as
- * published by the Free Software Foundation.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * version 3 for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+ * For licensing, see LICENSE.SPECS
  */
 
-#include <unistd.h>
-
-#ifdef __WIN32__
+#ifdef _WIN32
 #include <windows.h>
 #define sleep(x) Sleep(x)
 #endif
 
-#ifndef __WIN32__
+#ifndef _WIN32
+#include <unistd.h>
 #include <pthread.h>
 #endif
 
@@ -60,7 +45,7 @@ static void* asyncThreadCall(void *data)
 
 void testAsyncCallback(void (*fn)(int), int value)
 {
-#ifndef __WIN32__
+#ifndef _WIN32
     pthread_t t;
     struct async_data d;
     d.fn = fn;

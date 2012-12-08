@@ -17,12 +17,20 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
 
 #include <stdio.h>
+#ifndef _MSC_VER
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ruby.h>
 
 #include <ffi.h>
@@ -86,8 +94,10 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     VALUE retval = Qnil;
     VALUE convention = Qnil;
     VALUE fixed = Qnil;
-	VALUE rbConventionStr;
-	int i;
+#if defined(_WIN32) || defined(__WIN32__)
+    VALUE rbConventionStr;
+#endif
+    int i;
 
     Check_Type(options, T_HASH);
     convention = rb_hash_aref(options, ID2SYM(rb_intern("convention")));
@@ -211,7 +221,11 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
     }
+#ifdef HAVE_FFI_PREP_CIF_VAR
+    ffiStatus = ffi_prep_cif_var(&cif, invoker->abi, paramCount, paramCount, ffiReturnType, ffiParamTypes);
+#else
     ffiStatus = ffi_prep_cif(&cif, invoker->abi, paramCount, ffiReturnType, ffiParamTypes);
+#endif
     switch (ffiStatus) {
         case FFI_BAD_ABI:
             rb_raise(rb_eArgError, "Invalid ABI specified");

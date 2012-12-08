@@ -94,6 +94,7 @@ module FFI
       Type::UINT64,
       Type::FLOAT32,
       Type::FLOAT64,
+      Type::LONGDOUBLE,
       Type::BOOL,
     ]
 
@@ -151,7 +152,9 @@ module FFI
       # Add tail padding if the struct is not packed
       size = @packed ? @size : align(@size, @alignment)
       
-      StructLayout.new(@fields, size, @alignment)
+      layout = StructLayout.new(@fields, size, @alignment)
+      layout.__union! if @union
+      layout
     end
 
     private

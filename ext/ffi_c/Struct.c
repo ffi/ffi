@@ -22,9 +22,15 @@
 #include <sys/types.h>
 
 #include "Function.h"
+#ifndef _MSC_VER
 #include <sys/param.h>
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ruby.h>
 #include "rbffi.h"
 #include "compat.h"
@@ -135,7 +141,6 @@ struct_initialize_copy(VALUE self, VALUE other)
 {
     Struct* src;
     Struct* dst;
-    VALUE memargs[3];
     
     Data_Get_Struct(self, Struct, dst);
     Data_Get_Struct(other, Struct, src);
@@ -146,16 +151,13 @@ struct_initialize_copy(VALUE self, VALUE other)
     dst->rbLayout = src->rbLayout;
     dst->layout = src->layout;
     
-    //
-    // A new MemoryPointer instance is allocated here instead of just calling 
-    // #dup on rbPointer, since the Pointer may not know its length, or may
-    // be longer than just this struct.
-    //
+    /*
+     * A new MemoryPointer instance is allocated here instead of just calling
+     * #dup on rbPointer, since the Pointer may not know its length, or may
+     * be longer than just this struct.
+     */
     if (src->pointer->address != NULL) {
-        memargs[0] = INT2FIX(1);
-        memargs[1] = INT2FIX(src->layout->size);
-        memargs[2] = Qfalse;
-        dst->rbPointer = rb_class_new_instance(2, memargs, rbffi_MemoryPointerClass);
+        dst->rbPointer = rbffi_MemoryPointer_NewInstance(1, src->layout->size, false);
         dst->pointer = MEMORY(dst->rbPointer);
         memcpy(dst->pointer->address, src->pointer->address, src->layout->size);
     } else {
@@ -555,7 +557,7 @@ inline_array_size(VALUE self)
 static int
 inline_array_offset(InlineArray* array, int index)
 {
-    if (index < 0 || index >= array->length) {
+    if (index < 0 || (index >= array->length && array->length > 0)) {
         rb_raise(rb_eIndexError, "index %d out of bounds", index);
     }
 

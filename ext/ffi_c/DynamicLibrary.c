@@ -20,14 +20,20 @@
 
 #include <sys/types.h>
 #include <stdio.h>
-#include <stdint.h>
+#ifndef _MSC_VER
+#  include <stdint.h>
+#endif
 #if defined(_WIN32) || defined(__WIN32__)
+# include <winsock2.h>
 # define _WINSOCKAPI_
 # include <windows.h>
 #else
 # include <dlfcn.h>
 #endif
 #include <ruby.h>
+#if defined(_MSC_VER) && !defined(INT8_MIN)
+#  include "win32/stdint.h"
+#endif
 
 #include <ffi.h>
 
@@ -149,7 +155,7 @@ library_dlerror(VALUE self)
 static void
 library_free(Library* library)
 {
-    // dlclose() on MacOS tends to segfault - avoid it
+    /* dlclose() on MacOS tends to segfault - avoid it */
 #ifndef __APPLE__
     if (library->handle != NULL) {
         dl_close(library->handle);
@@ -264,7 +270,7 @@ rbffi_DynamicLibrary_Init(VALUE moduleFFI)
      * Document-const: FFI::NativeLibrary
      * Backward compatibility for FFI::DynamicLibrary
      */
-    rb_define_const(moduleFFI, "NativeLibrary", LibraryClass); // backwards compat library
+    rb_define_const(moduleFFI, "NativeLibrary", LibraryClass); /* backwards compat library */
     rb_define_alloc_func(LibraryClass, library_allocate);
     rb_define_singleton_method(LibraryClass, "open", library_open, 2);
     rb_define_singleton_method(LibraryClass, "last_error", library_dlerror, 0);

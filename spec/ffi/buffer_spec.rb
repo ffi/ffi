@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
@@ -171,6 +160,43 @@ describe "Reading/Writing binary strings" do
     str = "hello\0world"
     buf = FFI::Buffer.new 1024
     lambda { buf.put_bytes(0, str, -1, 12); }.should raise_error
+   end
+
+  it "Buffer#write_bytes" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    buf.write_bytes(str)
+    s2 = buf.get_bytes(0, 11)
+    s2.should == str
+  end
+  it "Buffer#write_bytes with index and length" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    buf.write_bytes(str, 5, 6)
+    s2 = buf.get_bytes(0, 6)
+    s2.should == str[5..-1]
+  end
+  it "Buffer#write_bytes with only index" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    buf.write_bytes(str, 5)
+    s2 = buf.get_bytes(0, 6)
+    s2.should == str[5..-1]
+  end
+  it "Buffer#write_bytes with index > str.length" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    lambda { buf.write_bytes(str, 12) }.should raise_error
+  end
+  it "Buffer#put_bytes with length > str.length" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    lambda { buf.put_bytes(0, str, 0, 12) }.should raise_error
+  end
+   it "Buffer#write_bytes with negative index" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 1024
+    lambda { buf.write_bytes(str, -1, 12) }.should raise_error
   end
 end
 describe "Reading/Writing ascii strings" do

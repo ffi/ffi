@@ -1,24 +1,13 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 describe FFI::Struct, ' with inline callback functions' do
   it 'should be able to define inline callback field' do
-    module CallbackMember
+    module CallbackMember1
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       DUMMY_CB = callback :dummy_cb, [ :int ], :int
@@ -33,7 +22,7 @@ describe FFI::Struct, ' with inline callback functions' do
     end
   end
   it 'should take methods as callbacks' do
-    module CallbackMember
+    module CallbackMember2
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       class TestStruct < FFI::Struct
@@ -50,14 +39,14 @@ describe FFI::Struct, ' with inline callback functions' do
       end
     end
 
-    ts = CallbackMember::TestStruct.new
+    ts = CallbackMember2::TestStruct.new
     ts[:add] = StructCallbacks.method(:add)
 
-    CallbackMember.struct_call_add_cb(ts, 1, 2).should == 3
+    CallbackMember2.struct_call_add_cb(ts, 1, 2).should == 3
   end
 
   it 'should return callable object from []' do
-    module CallbackMember
+    module CallbackMember3
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       class TestStruct < FFI::Struct
@@ -69,7 +58,7 @@ describe FFI::Struct, ' with inline callback functions' do
       attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int
     end
 
-    s = CallbackMember::TestStruct.new
+    s = CallbackMember3::TestStruct.new
     add = Proc.new { |a,b| a+b}
     s[:add] = add
     fn = s[:add]

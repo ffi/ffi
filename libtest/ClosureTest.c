@@ -1,27 +1,16 @@
 /*
  * Copyright (c) 2007 Wayne Meissner. All rights reserved.
- * 
- * All rights reserved.
  *
- * This file is part of ruby-ffi.
- *
- * This code is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License version 3 only, as
- * published by the Free Software Foundation.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * version 3 for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+ * For licensing, see LICENSE.SPECS
  */
 
 #include <stdlib.h>
 #include <stdbool.h>
 #ifndef _WIN32
 # include <pthread.h>
+#else
+# include <windows.h>
+# include <process.h>
 #endif
 
 #define R(T, rtype) rtype testClosureVr##T(rtype (*closure)(void)) { \
@@ -73,6 +62,7 @@ struct ThreadVrV {
     void (*closure)(void);
     int count;
 };
+
 static void *
 threadVrV(void *arg)
 {
@@ -88,21 +78,14 @@ threadVrV(void *arg)
 
 void testThreadedClosureVrV(void (*closure)(void), int n)
 {
+	struct ThreadVrV arg = {closure, n};
 #ifndef _WIN32
     pthread_t t;
-    struct ThreadVrV arg;
-    
-    arg.closure = closure;
-    arg.count = n;
-    
     pthread_create(&t, NULL, threadVrV, &arg);
-    
     pthread_join(t, NULL);
 #else
-    int i;
-    for (i = 0; i < n; i++) {
-        (*closure)();
-    }
+    HANDLE hThread = (HANDLE) _beginthread((void (*)(void *))threadVrV, 0, &arg);
+    WaitForSingleObject(hThread, INFINITE);	
 #endif
 }
 

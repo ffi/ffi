@@ -20,11 +20,19 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
 #include <stdio.h>
+#ifndef _MSC_VER
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <errno.h>
 #include <ruby.h>
 #if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION) && !defined(_WIN32)
@@ -44,6 +52,7 @@
 #include "Call.h"
 #include "MappedType.h"
 #include "Thread.h"
+#include "LongDouble.h"
 
 #ifdef USE_RAW
 #  ifndef __i386__
@@ -58,6 +67,7 @@
 #define FLOAT32_ADJ (4)
 #define FLOAT64_ADJ (8)
 #define ADDRESS_ADJ (sizeof(void *))
+#define LONGDOUBLE_ADJ (ffi_type_longdouble.alignment)
 
 #endif /* USE_RAW */
 
@@ -203,6 +213,12 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                 ++argidx;
                 break;
 
+            case NATIVE_LONGDOUBLE:
+                param->ld = rbffi_num2longdouble(argv[argidx]);
+                ADJ(param, LONGDOUBLE);
+                ++argidx;
+                break;
+
 
             case NATIVE_STRING:
                 param->ptr = getString(argv[argidx++], type);
@@ -298,8 +314,10 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     if (unlikely(fnInfo->blocking)) {
         BlockingCall* bc;
 
-        // due to the way thread switching works on older ruby variants, we
-        // cannot allocate anything passed to the blocking function on the stack
+        /*
+         * due to the way thread switching works on older ruby variants, we
+         * cannot allocate anything passed to the blocking function on the stack
+         */
         ffiValues = ALLOC_N(void *, fnInfo->parameterCount);
         params = ALLOC_N(FFIStorage, fnInfo->parameterCount);
         bc = ALLOC_N(BlockingCall, 1);
@@ -329,7 +347,6 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         oldThread = rbffi_active_thread;
         rbffi_active_thread = rbffi_thread_self();
 #endif
-        retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
         ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
 
 #if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
@@ -360,10 +377,7 @@ getPointer(VALUE value, int type)
         return memory != NULL ? memory->address : NULL;
 
     } else if (type == T_STRING) {
-
-        if (rb_safe_level() >= 1 && OBJ_TAINTED(value)) {
-            rb_raise(rb_eSecurityError, "Unsafe string parameter");
-        }
+        
         return StringValuePtr(value);
 
     } else if (type == T_NIL) {
@@ -417,14 +431,13 @@ callback_param(VALUE proc, VALUE cbInfo)
         return NULL ;
     }
 
-    // Handle Function pointers here
+    /* Handle Function pointers here */
     if (rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
         AbstractMemory* ptr;
         Data_Get_Struct(proc, AbstractMemory, ptr);
         return ptr->address;
     }
 
-    //callback = rbffi_NativeCallback_ForProc(proc, cbInfo);
     callback = rbffi_Function_ForProc(cbInfo, proc);
     RB_GC_GUARD(callback);
 

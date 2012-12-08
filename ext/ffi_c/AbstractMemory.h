@@ -21,9 +21,13 @@
 #ifndef RBFFI_ABSTRACTMEMORY_H
 #define	RBFFI_ABSTRACTMEMORY_H
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
+#ifndef _MSC_VER
 #include <stdint.h>
+#endif
 
 #include "compat.h"
 #include "Types.h"
@@ -59,13 +63,14 @@ typedef struct {
     MemoryOp* uslong;
     MemoryOp* float32;
     MemoryOp* float64;
+    MemoryOp* longdouble;
     MemoryOp* pointer;
     MemoryOp* strptr;
     MemoryOp* boolOp;
 } MemoryOps;
 
 struct AbstractMemory_ {
-    char* address; // Use char* instead of void* to ensure adding to it works correctly
+    char* address; /* Use char* instead of void* to ensure adding to it works correctly */
     long size;
     int flags;
     int typeSize;
@@ -134,6 +139,8 @@ get_memory_op(Type* type)
             return rbffi_AbstractMemoryOps.float32;
         case NATIVE_FLOAT64:
             return rbffi_AbstractMemoryOps.float64;
+        case NATIVE_LONGDOUBLE:
+            return rbffi_AbstractMemoryOps.longdouble;
         case NATIVE_POINTER:
             return rbffi_AbstractMemoryOps.pointer;
         case NATIVE_STRING:

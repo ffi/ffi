@@ -18,12 +18,20 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
+#ifndef _MSC_VER
 #include <stdint.h>
+#endif
 #include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"
-#include "endian.h"
+#include "rbffi_endian.h"
 #include "AbstractMemory.h"
 
 #define BUFFER_EMBED_MAXLEN (8)
@@ -33,7 +41,7 @@ typedef struct Buffer {
     union {
         VALUE rbParent; /* link to parent buffer */
         char* storage; /* start of malloc area */
-        long embed[BUFFER_EMBED_MAXLEN / sizeof(long)]; // storage for tiny allocations
+        long embed[BUFFER_EMBED_MAXLEN / sizeof(long)]; /* storage for tiny allocations */
     } data;
 } Buffer;
 
@@ -143,7 +151,7 @@ buffer_initialize_copy(VALUE self, VALUE other)
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
     
-    // finally, copy the actual buffer contents
+    /* finally, copy the actual buffer contents */
     memcpy(dst->memory.address, src->address, src->size);
 
     return self;

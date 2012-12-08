@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 require 'delegate'
@@ -105,6 +94,9 @@ describe "Pointer" do
       lambda { null_ptr.read_int }.should raise_error(FFI::NullPointerError)
       lambda { null_ptr.write_int(0xff1) }.should raise_error(FFI::NullPointerError)
     end
+    it 'returns true when compared with nil' do
+      (FFI::Pointer::NULL == nil).should be_true
+    end
   end
 
 end
@@ -149,7 +141,7 @@ describe "AutoPointer" do
       # note that if we called
       # AutoPointerTestHelper.method(:release).to_proc inline, we'd
       # have a reference to the pointer and it would never get GC'd.
-      ap = AutoPointerSubclass.new(PointerTestLib.ptr_from_address(magic))
+      AutoPointerSubclass.new(PointerTestLib.ptr_from_address(magic))
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -166,8 +158,8 @@ describe "AutoPointer" do
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
-      ap = FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
-                                AutoPointerTestHelper.finalizer)
+      FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
+                           AutoPointerTestHelper.finalizer)
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -176,8 +168,8 @@ describe "AutoPointer" do
     AutoPointerTestHelper.should_receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
-      ap = FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
-                                AutoPointerTestHelper.method(:release))
+      FFI::AutoPointer.new(PointerTestLib.ptr_from_address(magic),
+                           AutoPointerTestHelper.method(:release))
     end
     AutoPointerTestHelper.gc_everything loop_count
   end
@@ -194,20 +186,34 @@ describe "AutoPointer" do
       end
     end.should_not raise_error
   end
-end
 
-describe "AutoPointer#new" do
-  class AutoPointerSubclass < FFI::AutoPointer
-    def self.release(ptr); end
+  describe "#new" do
+    it "MemoryPointer argument raises TypeError" do
+      lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(::TypeError)
+    end
+    it "AutoPointer argument raises TypeError" do
+      lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(PointerTestLib.ptr_from_address(0))) }.should raise_error(::TypeError)
+    end
+    it "Buffer argument raises TypeError" do
+      lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(::TypeError)
+    end
+
   end
-  it "MemoryPointer argument raises TypeError" do
-    lambda { FFI::AutoPointer.new(FFI::MemoryPointer.new(:int))}.should raise_error(::TypeError)
-  end
-  it "AutoPointer argument raises TypeError" do
-    lambda { AutoPointerSubclass.new(AutoPointerSubclass.new(PointerTestLib.ptr_from_address(0))) }.should raise_error(::TypeError)
-  end
-  it "Buffer argument raises TypeError" do
-    lambda { FFI::AutoPointer.new(FFI::Buffer.new(:int))}.should raise_error(::TypeError)
+
+  describe "#autorelease?" do
+    ptr_class = Class.new(FFI::AutoPointer) do
+      def self.release(ptr); end
+    end
+
+    it "should be true by default" do
+      ptr_class.new(FFI::Pointer.new(0xdeadbeef)).autorelease?.should be_true
+    end
+
+    it "should return false when autorelease=(false)" do
+      ptr = ptr_class.new(FFI::Pointer.new(0xdeadbeef))
+      ptr.autorelease = false
+      ptr.autorelease?.should be_false
+    end
   end
 
 end

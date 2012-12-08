@@ -41,7 +41,7 @@ module FFI
 
     # An enum {Field} in a {StructLayout}.
     class Enum < Field
-      
+
       # @param [AbstractMemory] ptr pointer on a {Struct}
       # @return [Object]
       # Get an object of type {#type} from memory pointed by +ptr+.
@@ -64,9 +64,10 @@ module FFI
         type.struct_class.new(ptr.slice(self.offset, self.size))
       end
 
-#      def put(ptr, value)
-#        raise TypeError, "wrong value type (expected #{type.struct_class}" unless value.is_a(type.struct_class)
-#      end
+     def put(ptr, value)
+       raise TypeError, "wrong value type (expected #{type.struct_class}" unless value.is_a?(type.struct_class)
+       ptr.slice(self.offset, self.size).__copy_from__(value.pointer, self.size)
+     end
     end
 
     class Mapped < Field
@@ -153,12 +154,7 @@ module FFI
       @layout.alignment
     end
 
-    # @return (see Struct#alignment)
-    def self.align
-      @layout.alignment
-    end
-
-    # (see FFI::Type#alignment)
+    # (see FFI::Type#members)
     def self.members
       @layout.members
     end
@@ -293,7 +289,7 @@ module FFI
         begin
           mod = self.name.split("::")[0..-2].inject(Object) { |obj, c| obj.const_get(c) }
           mod.respond_to?(:find_type) ? mod : nil
-        rescue Exception => ex
+        rescue Exception
           nil
         end
       end

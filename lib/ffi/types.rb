@@ -102,6 +102,9 @@ module FFI
       # C double precision float
       :double => Type::DOUBLE,
 
+      # C long double
+      :long_double => Type::LONGDOUBLE,
+
       # Native memory address
       :pointer => Type::POINTER,
 

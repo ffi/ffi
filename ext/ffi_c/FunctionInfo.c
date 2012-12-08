@@ -17,11 +17,19 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
 #include <stdio.h>
+#ifndef _MSC_VER
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <errno.h>
 #include <ruby.h>
 

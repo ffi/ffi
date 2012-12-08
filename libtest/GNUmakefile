@@ -9,8 +9,6 @@ ifeq ($(CPU),)
   CPU := $(shell uname -m | sed -e 's/i[345678]86/i386/')
 endif
 
-MODEL = 32 # Default to 32bit compiles
-
 PLATFORM = $(CPU)-$(OS)
 
 ifeq ($(OS), sunos)
@@ -37,9 +35,9 @@ TEST_OBJS := $(patsubst $(SRC_DIR)/%.c, $(TEST_BUILD_DIR)/%.o, $(TEST_SRCS))
 #   http://weblogs.java.net/blog/kellyohair/archive/2006/01/compilation_of_1.html
 JFLAGS = -fno-omit-frame-pointer -fno-strict-aliasing
 OFLAGS = -O2 $(JFLAGS)
-WFLAGS = -W -Werror -Wall -Wno-unused -Wno-parentheses
+WFLAGS = -W -Wall -Wno-unused -Wno-parentheses
 PICFLAGS = -fPIC
-SOFLAGS = -shared -mimpure-text -Wl,-O1
+SOFLAGS = -shared
 LDFLAGS += $(SOFLAGS)
 
 IFLAGS = -I"$(BUILD_DIR)"
@@ -96,6 +94,10 @@ ifneq ($(findstring bsd, $(OS)),)
   LDFLAGS += -pthread
 endif
 
+ifeq ($(CPU), i386)
+  MODEL = 32
+endif
+
 ifeq ($(CPU), sparcv9)
   MODEL = 64
 endif
@@ -116,12 +118,17 @@ ifeq ($(CPU), powerpc64)
   MODEL = 64
 endif
 
+MODELFLAG =
+ifneq ($(MODEL),)
+  MODELFLAG = -m$(MODEL)
+endif
+
 # On platforms (linux, solaris) that support both 32bit and 64bit, force building for one or the other
 ifneq ($(or $(findstring linux, $(OS)), $(findstring solaris, $(OS))),)
   # Change the CC/LD instead of CFLAGS/LDFLAGS, incase other things in the flags
   # makes the libffi build choke
-  CC += -m$(MODEL)
-  LD += -m$(MODEL)
+  CC += $(MODELFLAG)
+  LD += $(MODELFLAG)
 endif
 
 LIBTEST = $(BUILD_DIR)/$(LIBNAME)

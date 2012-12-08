@@ -25,7 +25,13 @@
 extern "C" {
 #endif
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ffi.h>
 
 typedef struct FunctionType_ FunctionType;
@@ -35,7 +41,7 @@ typedef struct FunctionType_ FunctionType;
 #include "ClosurePool.h"
 
 struct FunctionType_ {
-    Type type; // The native type of a FunctionInfo object
+    Type type; /* The native type of a FunctionInfo object */
     VALUE rbReturnType;
     VALUE rbParameterTypes;
 

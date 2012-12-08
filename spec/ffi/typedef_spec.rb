@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
@@ -72,6 +61,17 @@ describe "Custom type definitions" do
         
         ffi_lib TestLibrary::PATH
         attach_function :ptr_ret_int32_t, [ :string, :foo ], :bar
+      end
+    end.should_not raise_error
+  end
+
+  it "detects the correct type for size_t" do
+    lambda do
+      Module.new do
+        extend FFI::Library
+        ffi_lib "c"
+        # read(2) is a standard UNIX function
+        attach_function :read, [:int, :pointer, :size_t], :ssize_t
       end
     end.should_not raise_error
   end

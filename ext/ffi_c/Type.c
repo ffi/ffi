@@ -16,7 +16,10 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
+
 #include <sys/types.h>
 #include <ruby.h>
 #include <ffi.h>
@@ -191,7 +194,7 @@ rbffi_type_size(VALUE type)
             }
         }
 
-        // Not found - call up to the ruby version to resolve
+        /* Not found - call up to the ruby version to resolve */
         return NUM2INT(rb_funcall2(rbffi_FFIModule, id_type_size, 1, &type));
     
     } else {
@@ -319,14 +322,14 @@ rbffi_Type_Init(VALUE moduleFFI)
     rb_define_method(rbffi_TypeClass, "alignment", type_alignment, 0);
     rb_define_method(rbffi_TypeClass, "inspect", type_inspect, 0);
 
-    // Make Type::Builtin non-allocatable
+    /* Make Type::Builtin non-allocatable */
     rb_undef_method(CLASS_OF(classBuiltinType), "new");
     rb_define_method(classBuiltinType, "inspect", builtin_type_inspect, 0);
     
     rb_global_variable(&rbffi_TypeClass);
     rb_global_variable(&classBuiltinType);
 
-    // Define all the builtin types
+    /* Define all the builtin types */
     #define T(x, ffiType) do { \
         VALUE t = Qnil; \
         rb_define_const(rbffi_TypeClass, #x, t = builtin_type_new(classBuiltinType, NATIVE_##x, ffiType, #x)); \
@@ -371,6 +374,7 @@ rbffi_Type_Init(VALUE moduleFFI)
     A(FLOAT32, FLOAT);
     T(FLOAT64, &ffi_type_double);
     A(FLOAT64, DOUBLE);
+    T(LONGDOUBLE, &ffi_type_longdouble);
     T(POINTER, &ffi_type_pointer);
     T(STRING, &ffi_type_pointer);
     T(BUFFER_IN, &ffi_type_pointer);

@@ -18,14 +18,25 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
+#ifndef _MSC_VER
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ruby.h>
 #include <ctype.h>
-#include "endian.h"
+#include "rbffi_endian.h"
 #include "Platform.h"
+#if defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
+  #include <gnu/lib-names.h>
+#endif
 
 static VALUE PlatformModule = Qnil;
 
@@ -93,6 +104,9 @@ rbffi_Platform_Init(VALUE moduleFFI)
     rb_define_const(PlatformModule, "LITTLE_ENDIAN", INT2FIX(LITTLE_ENDIAN));
     rb_define_const(PlatformModule, "BIG_ENDIAN", INT2FIX(BIG_ENDIAN));
     rb_define_const(PlatformModule, "CPU", rb_str_new2(CPU));
+#if defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
+    rb_define_const(PlatformModule, "GNU_LIBC", rb_str_new2(LIBC_SO));
+#endif
     export_primitive_types(PlatformModule);
 }
 

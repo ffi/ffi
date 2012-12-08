@@ -22,9 +22,15 @@
 #include <sys/types.h>
 
 #include "Function.h"
+#ifndef _MSC_VER
 #include <sys/param.h>
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #include <ruby.h>
 #include "rbffi.h"
 #include "compat.h"
@@ -349,7 +355,7 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
             rb_raise(rb_eIndexError, "array too large");
         }
 
-        // clear the contents in case of a short write
+        /* clear the contents in case of a short write */
         checkWrite(memory);
         checkBounds(memory, f->offset, f->type->ffiType->size);
         if (count < array->length) {
@@ -357,7 +363,7 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
                     0, (array->length - count) * array->componentType->ffiType->size);
         }
 
-        // now copy each element in
+        /* now copy each element in */
         if ((op = get_memory_op(array->componentType)) != NULL) {
 
             for (i = 0; i < count; ++i) {
@@ -433,7 +439,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     layout->fieldCount = (int) RARRAY_LEN(fields);
     layout->rbFieldMap = rb_hash_new();
     layout->rbFieldNames = rb_ary_new2(layout->fieldCount);
-    layout->size = NUM2INT(size);
+    layout->size = (int) FFI_ALIGN(NUM2INT(size),  NUM2INT(align));
     layout->align = NUM2INT(align);
     layout->fields = xcalloc(layout->fieldCount, sizeof(StructField *));
     layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
@@ -464,7 +470,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
         }
 
         ftype = field->type->ffiType;
-        if (ftype->size == 0) {
+        if (ftype->size == 0 && i < ((int) layout->fieldCount - 1)) {
             rb_raise(rb_eTypeError, "type of field %d has zero size", i);
         }
 
@@ -472,7 +478,8 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
             field->referenceIndex = layout->referenceFieldCount++;
         }
 
-        layout->ffiTypes[i] = ftype;
+
+        layout->ffiTypes[i] = ftype->size > 0 ? ftype : NULL;
         st_insert(layout->fieldSymbolTable, rbName, rbField);
         rb_hash_aset(layout->rbFieldMap, rbName, rbField);
         rb_ary_push(layout->rbFields, rbField);
@@ -492,6 +499,40 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
  * @return [StructLayout::Field]
  * Get a field from the layout.
  */
+static VALUE
+struct_layout_union_bang(VALUE self) 
+{
+    static const ffi_type *alignment_types[] = { &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64,
+                                                 &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
+    StructLayout* layout;
+    ffi_type *t = NULL;
+    int count, i;
+
+    Data_Get_Struct(self, StructLayout, layout);
+
+    for (i = 0; alignment_types[i] != NULL; ++i) {
+        if (alignment_types[i]->alignment == layout->align) {
+            t = (ffi_type *) alignment_types[i];
+            break;
+        }
+    }
+    if (t == NULL) {
+        rb_raise(rb_eRuntimeError, "cannot create libffi union representation for alignment %d", layout->align);
+        return Qnil;
+    }
+
+    count = (int) layout->size / (int) t->size;
+    xfree(layout->ffiTypes);
+    layout->ffiTypes = xcalloc(count + 1, sizeof(ffi_type *));
+    layout->base.ffiType->elements = layout->ffiTypes;
+
+    for (i = 0; i < count; ++i) {
+        layout->ffiTypes[i] = t;
+    }
+
+    return self;
+}
+
 static VALUE
 struct_layout_aref(VALUE self, VALUE field)
 {
@@ -643,6 +684,7 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructLayoutClass, "fields", struct_layout_fields, 0);
     rb_define_method(rbffi_StructLayoutClass, "members", struct_layout_members, 0);
     rb_define_method(rbffi_StructLayoutClass, "to_a", struct_layout_to_a, 0);
+    rb_define_method(rbffi_StructLayoutClass, "__union!", struct_layout_union_bang, 0);
 
 }
 

@@ -19,8 +19,16 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
+#ifndef _MSC_VER
 #include <stdint.h>
+#endif
 #include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"
@@ -30,7 +38,6 @@
 
 
 static VALUE memptr_allocate(VALUE klass);
-static void memptr_mark(Pointer* ptr);
 static void memptr_release(Pointer* ptr);
 static VALUE memptr_malloc(VALUE self, long size, long count, bool clear);
 static VALUE memptr_free(VALUE self);
@@ -72,7 +79,7 @@ memptr_initialize(int argc, VALUE* argv, VALUE self)
 
     memptr_malloc(self, rbffi_type_size(size), nargs > 1 ? NUM2LONG(count) : 1,
         RTEST(clear) || clear == Qnil);
-    
+
     if (rb_block_given_p()) {
         return rb_ensure(rb_yield, self, memptr_free, self);
     }
@@ -101,7 +108,7 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
     /* ensure the memory is aligned on at least a 8 byte boundary */
     p->memory.address = (char *) (((uintptr_t) p->storage + 0x7) & (uintptr_t) ~0x7UL);;
     p->allocated = true;
-    
+
     if (clear && p->memory.size > 0) {
         memset(p->memory.address, 0, p->memory.size);
     }
@@ -137,12 +144,6 @@ memptr_release(Pointer* ptr)
     xfree(ptr);
 }
 
-static void
-memptr_mark(Pointer* ptr)
-{
-    rb_gc_mark(ptr->rbParent);
-}
-
 /*
  * call-seq: from_string(s)
  * @param [String] s string
@@ -150,12 +151,13 @@ memptr_mark(Pointer* ptr)
  * Create a {MemoryPointer} with +s+ inside.
  */
 static VALUE
-memptr_s_from_string(VALUE klass, VALUE s)
+memptr_s_from_string(VALUE klass, VALUE to_str)
 {
+    VALUE s = StringValue(to_str);
     VALUE args[] = { INT2FIX(1), LONG2NUM(RSTRING_LEN(s) + 1), Qfalse };
     VALUE obj = rb_class_new_instance(3, args, klass);
     rb_funcall(obj, rb_intern("put_string"), 2, INT2FIX(0), s);
-    
+
     return obj;
 }
 

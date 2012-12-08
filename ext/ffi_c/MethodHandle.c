@@ -17,14 +17,22 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
 #ifndef _WIN32
 #  include <sys/mman.h>
 #endif
 #include <stdio.h>
+#ifndef _MSC_VER
 #include <stdint.h>
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 #ifndef _WIN32
 #  include <unistd.h>
 #endif
@@ -69,7 +77,7 @@
 static bool prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 static long trampoline_size(void);
 
-#if defined(__x86_64__) && defined(__GNUC__)
+#if defined(__x86_64__) && defined(__GNUC__) && !defined(__sun)
 # define CUSTOM_TRAMPOLINE 1
 #endif
 
@@ -192,7 +200,7 @@ static VALUE custom_trampoline(int argc, VALUE* argv, VALUE self, Closure*);
  *
  * This results in approx a 30% speedup for x86_64 FFI dispatch
  */
-asm(
+__asm__(
     ".text\n\t"
     ".globl ffi_trampoline\n\t"
     ".globl _ffi_trampoline\n\t"
@@ -233,7 +241,7 @@ static VALUE custom_trampoline(caddr_t args, Closure*);
  * This does not make a discernable difference vs a raw closure, so for now,
  * it is not enabled.
  */
-asm(
+__asm__(
     ".text\n\t"
     ".globl ffi_trampoline\n\t"
     ".globl _ffi_trampoline\n\t"
@@ -303,7 +311,7 @@ prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t er
     caddr_t ptr = (caddr_t) code;
 
     memcpy(ptr, &ffi_trampoline, trampoline_size());
-    // Patch the context and function addresses into the stub code
+    /* Patch the context and function addresses into the stub code */
     *(intptr_t *)(ptr + trampoline_ctx_offset) = (intptr_t) closure;
     *(intptr_t *)(ptr + trampoline_func_offset) = (intptr_t) custom_trampoline;
 
@@ -322,7 +330,10 @@ trampoline_size(void)
 void
 rbffi_MethodHandle_Init(VALUE module)
 {
+#ifndef CUSTOM_TRAMPOLINE
     ffi_status ffiStatus;
+#endif
+
     defaultClosurePool = rbffi_ClosurePool_New((int) trampoline_size(), prep_trampoline, NULL);
 
 #if defined(CUSTOM_TRAMPOLINE)

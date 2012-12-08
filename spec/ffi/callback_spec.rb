@@ -1,17 +1,6 @@
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# For licensing, see LICENSE.SPECS
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
@@ -87,7 +76,6 @@ describe "Callback" do
     attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
     attach_function :testCallbackVrY, :testClosureVrP, [ :cbVrY ], S8F32S32.ptr
-    attach_function :testCallbackCrV, :testClosureBrV, [ :cbCrV, :char ], :void
     attach_function :testCallbackVrT, :testClosureVrT, [ :cbVrT ], S8F32S32.by_value
     attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32.ptr ], :void
     attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
@@ -95,9 +83,6 @@ describe "Callback" do
     attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
     attach_function :testOptionalCallbackCrV, :testOptionalClosureBrV, [ :cbCrV, :char ], :void
 
-  end
-  it "function with Callback plus another arg should raise error if no arg given" do
-    lambda { LibTest.testCallbackCrV { |*a| }}.should raise_error
   end
   it "returning :char (0)" do
     LibTest.testCallbackVrS8 { 0 }.should == 0
@@ -288,9 +273,9 @@ describe "Callback" do
       module LibTest
         extend FFI::Library
         ffi_lib TestLibrary::PATH
-        attach_function :testCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
+        attach_function :testAnonymousCallbackVrS8, :testClosureVrB, [ callback([ ], :char) ], :char
       end
-      LibTest.testCallbackVrS8 { 0 }.should == 0
+      LibTest.testAnonymousCallbackVrS8 { 0 }.should == 0
     end
   end
 
@@ -339,7 +324,7 @@ describe "Callback" do
         ffi_lib TestLibrary::PATH
         callback :cb_return_type, [ :int ], :int
         callback :cb_lookup, [ ], :cb_return_type
-        attach_function :testReturnsCallback, :testReturnsClosure, [ :cb_lookup, :int ], :int
+        attach_function :testReturnsCallback_2, :testReturnsClosure, [ :cb_lookup, :int ], :int
       end
       module MethodCallback
         def self.lookup
@@ -350,7 +335,7 @@ describe "Callback" do
         end
       end
 
-      LibTest.testReturnsCallback(MethodCallback.method(:lookup), 0x1234).should == 0x2468
+      LibTest.testReturnsCallback_2(MethodCallback.method(:lookup), 0x1234).should == 0x2468
     end
 
     it 'should not blow up when a callback takes a callback as argument' do
@@ -359,7 +344,7 @@ describe "Callback" do
         ffi_lib TestLibrary::PATH
         callback :cb_argument, [ :int ], :int
         callback :cb_with_cb_argument, [ :cb_argument, :int ], :int
-        attach_function :testCallbackAsArgument, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
+        attach_function :testCallbackAsArgument_2, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
       end   
     end
     it 'should be able to use the callback argument' do
@@ -443,6 +428,9 @@ describe "Callback with " do
     attach_function :testCallbackArV, :testClosurePrV, [ :cbArV, :string ], :void
     attach_function :testCallbackPrV, :testClosurePrV, [ :cbPrV, :pointer], :void
     attach_function :testCallbackYrV, :testClosurePrV, [ :cbYrV, S8F32S32.in ], :void
+  end
+  it "function with Callback plus another arg should raise error if no arg given" do
+    lambda { LibTest.testCallbackCrV { |*a| }}.should raise_error
   end
   it ":char (0) argument" do
     v = 0xdeadbeef
@@ -666,4 +654,14 @@ describe "Callback with " do
     v.pointer.should == FFI::Pointer::NULL
   end
 
-end # unless true
+  it "varargs parameters are rejected" do
+    lambda {
+      Module.new do
+        extend FFI::Library
+        ffi_lib TestLibrary::PATH
+        callback :cbVrL, [ :varargs ], :long
+      end
+    }.should raise_error(ArgumentError)
+  end
+
+end
