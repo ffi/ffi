@@ -322,9 +322,9 @@ ptr_address(VALUE self)
 
 /*
  * Get or set +self+'s endianness
- * @overload ptr.order
+ * @overload order
  *  @return [:big, :little] endianness of +self+
- * @overload ptr.order(order)
+ * @overload order(order)
  *  @param  [Symbol] order endianness to set (+:little+, +:big+ or +:network+). +:big+ and +:network+ 
  *   are synonymous.
  *  @return [self]
@@ -449,6 +449,7 @@ void
 rbffi_Pointer_Init(VALUE moduleFFI)
 {
     VALUE rbNullAddress = ULL2NUM(0);
+    VALUE ffi_AbstractMemory =  rbffi_AbstractMemoryClass;
 
     /* 
      * Document-class: FFI::Pointer < FFI::AbstractMemory
@@ -459,7 +460,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
      * A pointer object may autorelease his contents when freed (by default). This behaviour may be
      * changed with {#autorelease=} method.
      */
-    rbffi_PointerClass = rb_define_class_under(moduleFFI, "Pointer", rbffi_AbstractMemoryClass);
+    rbffi_PointerClass = rb_define_class_under(moduleFFI, "Pointer",bffi_AbstractMemory);
     /*
      * Document-variable: Pointer
      */

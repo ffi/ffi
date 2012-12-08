@@ -310,12 +310,14 @@ buffer_mark(Buffer* ptr)
 void
 rbffi_Buffer_Init(VALUE moduleFFI)
 {
+    VALUE ffi_AbstractMemory =  rbffi_AbstractMemoryClass;
+
     /*
      * Document-class: FFI::Buffer < FFI::AbstractMemory
      *
      * A Buffer is a function argument type. It should be use with functions playing with C arrays.
      */
-    BufferClass = rb_define_class_under(moduleFFI, "Buffer", rbffi_AbstractMemoryClass);
+    BufferClass = rb_define_class_under(moduleFFI, "Buffer", ffi_AbstractMemory);
 
     /*
      * Document-variable: FFI::Buffer

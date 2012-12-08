@@ -126,12 +126,16 @@ array_type_element_type(VALUE self)
 void
 rbffi_ArrayType_Init(VALUE moduleFFI)
 {
+    VALUE ffiType;
+
+    ffi_Type = rbffi_TypeClass;
+
     /*
      * Document-class: FFI::ArrayType < FFI::Type
      *
      * This is a typed array. The type is a {NativeType native type}.
      */
-    rbffi_ArrayTypeClass = rb_define_class_under(moduleFFI, "ArrayType", rbffi_TypeClass);
+    rbffi_ArrayTypeClass = rb_define_class_under(moduleFFI, "ArrayType", ffi_Type);
     /*
      * Document-variable: FFI::ArrayType
      */
@@ -139,7 +143,7 @@ rbffi_ArrayType_Init(VALUE moduleFFI)
     /*
      * Document-constant: FFI::Type::Array
      */
-    rb_define_const(rbffi_TypeClass, "Array", rbffi_ArrayTypeClass);
+    rb_define_const(ffi_Type, "Array", rbffi_ArrayTypeClass);
 
     rb_define_alloc_func(rbffi_ArrayTypeClass, array_type_s_allocate);
     rb_define_method(rbffi_ArrayTypeClass, "initialize", array_type_initialize, 2);
