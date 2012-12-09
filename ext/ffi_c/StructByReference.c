@@ -70,6 +70,12 @@ sbr_allocate(VALUE klass)
     return obj;
 }
 
+/*
+ * call-seq: initialize(struc_class)
+ * @param [Struct] struct_calss
+ * @return [self]
+ * A new instance of StructByReference.
+ */
 static VALUE
 sbr_initialize(VALUE self, VALUE rbStructClass)
 {
@@ -92,6 +98,11 @@ sbr_mark(StructByReference *sbr)
 }
 
 
+/*
+ * call-seq: struct_class
+ * @return [Struct]
+ * Get +struct_class+.
+ */
 static VALUE
 sbr_struct_class(VALUE self)
 {
@@ -102,12 +113,23 @@ sbr_struct_class(VALUE self)
     return sbr->rbStructClass;
 }
 
+/*
+ * call-seq: native_type
+ * @return [Class]
+ * Always get {FFI::Type}::POINTER.
+ */
 static VALUE
 sbr_native_type(VALUE self)
 {
     return rb_const_get(rbffi_TypeClass, rb_intern("POINTER"));
 }
 
+/*
+ * call-seq: to_native(value, ctx)
+ * @param [nil, Struct] value
+ * @param [nil] ctx
+ * @return [AbstractMemory] Pointer on +value+.
+ */
 static VALUE
 sbr_to_native(VALUE self, VALUE value, VALUE ctx)
 {
@@ -130,6 +152,13 @@ sbr_to_native(VALUE self, VALUE value, VALUE ctx)
     return s->rbPointer;
 }
 
+/*
+ * call-seq: from_native(value, ctx)
+ * @param [AbstractMemory] value
+ * @param [nil] ctx
+ * @return [Struct]
+ * Create a struct from content of memory +value+.
+ */
 static VALUE
 sbr_from_native(VALUE self, VALUE value, VALUE ctx)
 {
@@ -144,6 +173,10 @@ sbr_from_native(VALUE self, VALUE value, VALUE ctx)
 void
 rbffi_StructByReference_Init(VALUE moduleFFI)
 {
+    /*
+     * Document-class: FFI::StructByReference
+     * This class includes {FFI::DataConverter} module.
+     */
     rbffi_StructByReferenceClass = rb_define_class_under(moduleFFI, "StructByReference", rb_cObject);
     rb_global_variable(&rbffi_StructByReferenceClass);
     rb_include_module(rbffi_StructByReferenceClass, rb_const_get(moduleFFI, rb_intern("DataConverter")));
