@@ -22,9 +22,9 @@ using Ruby-FFI [here](http://wiki.github.com/ffi/ffi/why-use-ffi).
 require 'ffi'
 
 module MyLib
-extend FFI::Library
-ffi_lib 'c'
-attach_function :puts, [ :string ], :int
+  extend FFI::Library
+  ffi_lib 'c'
+  attach_function :puts, [ :string ], :int
 end
 
 MyLib.puts 'Hello, World using libc!'
@@ -38,7 +38,10 @@ For less minimalistic and more sane examples you may look at:
 
 ## Requirements
 
-* You need a sane building environment in order to compile the extension.
+You need a sane building environment in order to compile the extension.
+At a minimum, you will need:
+* A C compiler (e.g. Xcode on OSX, gcc on everything else)
+* libffi development library - this is commonly in the libffi-dev or libffi-devel
 
 ## Installation
 
