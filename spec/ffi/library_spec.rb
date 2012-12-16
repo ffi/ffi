@@ -24,6 +24,17 @@ describe "Library" do
     end
   end
 
+  describe "ffi_lib" do
+    it "empty name list should raise error" do
+      lambda {
+        Module.new do |m|
+          m.extend FFI::Library
+          ffi_lib
+        end
+      }.should raise_error(LoadError)
+    end
+    
+  end
   unless RbConfig::CONFIG['target_os'] =~ /mswin|mingw/
     it "attach_function with no library specified" do
       lambda {
