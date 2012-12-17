@@ -241,7 +241,10 @@ struct_mark(Struct *s)
     rb_gc_mark(s->rbPointer);
     rb_gc_mark(s->rbLayout);
     if (s->rbReferences != NULL) {
-        rb_gc_mark_locations(&s->rbReferences[0], &s->rbReferences[s->layout->referenceFieldCount]);
+        int i;
+        for (i = 0; i < s->layout->referenceFieldCount; ++i) {
+            rb_gc_mark(s->rbReferences[i]);
+        }
     }
 }
 

@@ -74,7 +74,10 @@ fntype_mark(FunctionType* fnInfo)
     rb_gc_mark(fnInfo->rbParameterTypes);
     rb_gc_mark(fnInfo->rbEnums);
     if (fnInfo->callbackCount > 0 && fnInfo->callbackParameters != NULL) {
-        rb_gc_mark_locations(&fnInfo->callbackParameters[0], &fnInfo->callbackParameters[fnInfo->callbackCount]);
+        int i;
+        for (i = 0; i < fnInfo->callbackCount; ++i) {
+            rb_gc_mark(fnInfo->callbackParameters[i]);
+        }
     }
 }
 
