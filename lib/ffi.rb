@@ -1,4 +1,5 @@
-if !defined?(RUBY_ENGINE) || RUBY_ENGINE == "ruby"
+if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
+  Object.send(:remove_const, :FFI) if defined?(::FFI)
   begin
     if RUBY_VERSION =~ /1.8/
       require '1.8/ffi_c'
