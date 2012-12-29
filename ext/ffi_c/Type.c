@@ -39,6 +39,7 @@ static void builtin_type_free(BuiltinType *);
 VALUE rbffi_TypeClass = Qnil;
 
 static VALUE classBuiltinType = Qnil;
+static VALUE moduleNativeType = Qnil;
 static VALUE typeMap = Qnil, sizeMap = Qnil;
 static ID id_find_type = 0, id_type_size = 0, id_size = 0;
 
@@ -243,7 +244,6 @@ rbffi_Type_Find(VALUE name)
 void
 rbffi_Type_Init(VALUE moduleFFI)
 {
-    VALUE moduleNativeType;
     /*
      * Document-class: FFI::Type
      * This class manages C types.

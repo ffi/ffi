@@ -56,7 +56,7 @@ Init_ffi_c(void) {
      * This module embbed type constants from {FFI::NativeType}.
      */
     rbffi_FFIModule = moduleFFI = rb_define_module("FFI");
-    rb_global_variable(&moduleFFI);
+    rb_global_variable(&rbffi_FFIModule);
 
 
     /* FFI::Type needs to be initialized before most other classes */
