@@ -177,11 +177,11 @@ static VALUE
 struct_class_layout(VALUE klass)
 {
     VALUE layout;
-    if (!rb_cvar_defined(klass, id_layout_ivar)) {
+    if (!rb_ivar_defined(klass, id_layout_ivar)) {
         rb_raise(rb_eRuntimeError, "no Struct layout configured for %s", rb_class2name(klass));
     }
 
-    layout = rb_cvar_get(klass, id_layout_ivar);
+    layout = rb_ivar_get(klass, id_layout_ivar);
     if (!rb_obj_is_kind_of(layout, rbffi_StructLayoutClass)) {
         rb_raise(rb_eRuntimeError, "invalid Struct layout for %s", rb_class2name(klass));
     }

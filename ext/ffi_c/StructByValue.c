@@ -77,9 +77,9 @@ sbv_initialize(VALUE self, VALUE rbStructClass)
     StructLayout* layout = NULL;
     VALUE rbLayout = Qnil;
 
-    rbLayout = rb_cvar_get(rbStructClass, rb_intern("@layout"));
+    rbLayout = rb_ivar_get(rbStructClass, rb_intern("@layout"));
     if (!rb_obj_is_instance_of(rbLayout, rbffi_StructLayoutClass)) {
-        rb_raise(rb_eTypeError, "wrong type in @layout cvar (expected FFI::StructLayout)");
+        rb_raise(rb_eTypeError, "wrong type in @layout ivar (expected FFI::StructLayout)");
     }
 
     Data_Get_Struct(rbLayout, StructLayout, layout);
