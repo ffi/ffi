@@ -79,7 +79,6 @@ typedef int bool;
 
 static void* callback_param(VALUE proc, VALUE cbinfo);
 static inline void* getPointer(VALUE value, int type);
-static inline char* getString(VALUE value, int type);
 
 static ID id_to_ptr, id_map_symbol, id_to_native;
 
@@ -221,7 +220,18 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
 
 
             case NATIVE_STRING:
-                param->ptr = getString(argv[argidx++], type);
+                if (type == T_NIL) {
+                    param->ptr = NULL; 
+                
+                } else {
+                    if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
+                        rb_raise(rb_eSecurityError, "Unsafe string parameter");
+                    }
+
+                    param->ptr = StringValueCStr(argv[argidx]);
+                    ++argidx;
+                }
+
                 ADJ(param, ADDRESS);
                 break;
 
@@ -396,25 +406,6 @@ getPointer(VALUE value, int type)
     rb_raise(rb_eArgError, ":pointer argument is not a valid pointer");
     return NULL;
 }
-
-static inline char*
-getString(VALUE value, int type)
-{
-    if (type == T_STRING) {
-
-        if (rb_safe_level() >= 1 && OBJ_TAINTED(value)) {
-            rb_raise(rb_eSecurityError, "Unsafe string parameter");
-        }
-
-        return StringValueCStr(value);
-
-    } else if (type == T_NIL) {
-        return NULL;
-    }
-
-    rb_raise(rb_eArgError, "Invalid String value");
-}
-
 
 Invoker
 rbffi_GetInvoker(FunctionType *fnInfo)
