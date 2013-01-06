@@ -118,11 +118,7 @@ describe "AutoPointer" do
       loop = 5
       while @@count < count && loop > 0
         loop -= 1
-        if RUBY_PLATFORM =~ /java/
-          java.lang.System.gc
-        else
-          GC.start
-        end
+        TestLibrary.force_gc
         sleep 0.05 unless @@count == count
       end
       @@count = 0

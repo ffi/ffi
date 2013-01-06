@@ -17,6 +17,15 @@ require "ffi"
 
 module TestLibrary
   PATH = "build/libtest.#{FFI::Platform::LIBSUFFIX}"
+  def self.force_gc
+    if RUBY_PLATFORM =~ /java/
+      java.lang.System.gc
+    elsif defined?(RUBY_ENGINE) && RUBY_ENGINE == 'rbx'
+      GC.run(true)
+    else
+      GC.start
+    end
+  end
 end
 module LibTest
   extend FFI::Library
