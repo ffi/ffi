@@ -38,7 +38,6 @@ extern void rbffi_Variadic_Init(VALUE ffiModule);
 extern void rbffi_DataConverter_Init(VALUE ffiModule);
 extern VALUE rbffi_AbstractMemoryClass, rbffi_InvokerClass;
 extern int rbffi_type_size(VALUE type);
-extern void rbffi_gc_mark_locations(VALUE *start, VALUE *end);
 
 #ifdef	__cplusplus
 }
