@@ -229,10 +229,10 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                     }
 
                     param->ptr = StringValueCStr(argv[argidx]);
-                    ++argidx;
                 }
 
                 ADJ(param, ADDRESS);
+                ++argidx;
                 break;
 
             case NATIVE_POINTER:
