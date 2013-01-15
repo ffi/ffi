@@ -239,3 +239,13 @@ describe "Buffer#size" do
     buf.size.should == 14
   end
 end
+
+describe "Buffer#initialize" do
+  it "with block should execute block" do
+    block_executed = false
+    FFI::Buffer.new(:pointer) do |ptr|
+      block_executed = true
+    end
+    block_executed.should be_true
+  end
+end
