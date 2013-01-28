@@ -1,4 +1,4 @@
-# ruby-ffi http://wiki.github.com/ffi/ffi
+# ruby-ffi http://wiki.github.com/ffi/ffi [![Build Status](https://travis-ci.org/ffi/ffi.png?branch=master)](https://travis-ci.org/ffi/ffi)
 
 ## Description
 
