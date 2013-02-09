@@ -123,6 +123,15 @@ library_initialize(VALUE self, VALUE libname, VALUE libflags)
                 libname != Qnil ? StringValueCStr(libname) : "[current process]",
                 errmsg);
     }
+#ifdef __CYGWIN__
+    // On Cygwin 1.7.17 "dlsym(dlopen(0,0), 'getpid')" fails. (dlerror: "No such process")
+    // As a workaround we can use "dlsym(RTLD_DEFAULT, 'getpid')" instead.
+    // Since 0 == RTLD_DEFAULT we won't call dl_close later.
+    if (libname == Qnil) {
+        dl_close(library->handle);
+        library->handle = RTLD_DEFAULT;
+    }
+#endif
     rb_iv_set(self, "@name", libname != Qnil ? libname : rb_str_new2("[current process]"));
     return self;
 }
