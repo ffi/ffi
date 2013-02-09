@@ -23,7 +23,7 @@
 #ifndef _MSC_VER
 #  include <stdint.h>
 #endif
-#if defined(_WIN32) || defined(__WIN32__)
+#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 # include <winsock2.h>
 # define _WINSOCKAPI_
 # include <windows.h>
@@ -59,7 +59,7 @@ static void symbol_mark(LibrarySymbol* sym);
 
 static VALUE LibraryClass = Qnil, SymbolClass = Qnil;
 
-#if defined(_WIN32) || defined(__WIN32__)
+#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 static void* dl_open(const char* name, int flags);
 static void dl_error(char* buf, int size);
 #define dl_sym(handle, name) GetProcAddress(handle, name)
@@ -123,6 +123,15 @@ library_initialize(VALUE self, VALUE libname, VALUE libflags)
                 libname != Qnil ? StringValueCStr(libname) : "[current process]",
                 errmsg);
     }
+#ifdef __CYGWIN__
+    // On Cygwin 1.7.17 "dlsym(dlopen(0,0), 'getpid')" fails. (dlerror: "No such process")
+    // As a workaround we can use "dlsym(RTLD_DEFAULT, 'getpid')" instead.
+    // Since 0 == RTLD_DEFAULT we won't call dl_close later.
+    if (libname == Qnil) {
+        dl_close(library->handle);
+        library->handle = RTLD_DEFAULT;
+    }
+#endif
     rb_iv_set(self, "@name", libname != Qnil ? libname : rb_str_new2("[current process]"));
     return self;
 }
@@ -164,7 +173,7 @@ library_free(Library* library)
     xfree(library);
 }
 
-#if defined(_WIN32) || defined(__WIN32__)
+#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 static void*
 dl_open(const char* name, int flags)
 {

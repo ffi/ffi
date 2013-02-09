@@ -89,6 +89,14 @@ describe "Library" do
         end.getpid.should == Process.pid
       }.should raise_error(LoadError)
     end
+    it "attach_function :bool_return_true from [ File.expand_path(#{TestLibrary::PATH.inspect}) ]" do
+      Module.new do |m|
+        m.extend FFI::Library
+        ffi_lib File.expand_path(TestLibrary::PATH)
+        attach_function :bool_return_true, [ ], :bool
+        m.bool_return_true.should == true
+      end
+    end
   end
 
   def gvar_lib(name, type)

@@ -80,14 +80,21 @@ module FFI
 
     
 
-    LIBPREFIX = IS_WINDOWS ? '' : 'lib'
+    LIBPREFIX = case OS
+    when /windows/
+      ''
+    when /cygwin/
+      'cyg'
+    else
+      'lib'
+    end
 
     LIBSUFFIX = case OS
     when /darwin/
       'dylib'
     when /linux|bsd|solaris/
       'so'
-    when /windows/
+    when /windows|cygwin/
       'dll'
     else
       # Punt and just assume a sane unix (i.e. anything but AIX)
@@ -98,6 +105,8 @@ module FFI
       RbConfig::CONFIG['RUBY_SO_NAME'].split('-')[-2] + '.dll'
     elsif IS_GNU
       GNU_LIBC
+    elsif OS == 'cygwin'
+      "cygwin1.dll"
     else
       "#{LIBPREFIX}c.#{LIBSUFFIX}"
     end
