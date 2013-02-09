@@ -23,7 +23,7 @@
 #ifndef _MSC_VER
 #  include <stdint.h>
 #endif
-#if defined(_WIN32) || defined(__WIN32__)
+#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 # include <winsock2.h>
 # define _WINSOCKAPI_
 # include <windows.h>
@@ -59,7 +59,7 @@ static void symbol_mark(LibrarySymbol* sym);
 
 static VALUE LibraryClass = Qnil, SymbolClass = Qnil;
 
-#if defined(_WIN32) || defined(__WIN32__)
+#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 static void* dl_open(const char* name, int flags);
 static void dl_error(char* buf, int size);
 #define dl_sym(handle, name) GetProcAddress(handle, name)
@@ -164,7 +164,7 @@ library_free(Library* library)
     xfree(library);
 }
 
-#if defined(_WIN32) || defined(__WIN32__)
+#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 static void*
 dl_open(const char* name, int flags)
 {
