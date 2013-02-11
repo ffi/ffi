@@ -360,7 +360,8 @@ struct_layout_initialize(VALUE self, VALUE field_names, VALUE fields, VALUE size
             rb_raise(rb_eTypeError, "wrong type for field %d.", i);
         }
 
-        Data_Get_Struct(rbField, StructField, field = layout->fields[i]);
+        field = layout->fields[i];
+        Data_Get_Struct(rbField, StructField, field);
 
         if (field->type == NULL || field->type->ffiType == NULL) {
             rb_raise(rb_eRuntimeError, "type of field %d not supported", i);
