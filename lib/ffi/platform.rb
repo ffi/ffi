@@ -25,12 +25,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+require 'ffi_c'
 require 'rbconfig'
+
 module FFI
   class PlatformError < FFI::NativeError; end
 
   module Platform
-    OS = case Config::CONFIG['host_os'].downcase
+    OS = case RbConfig::CONFIG['host_os'].downcase
     when /linux/
       "linux"
     when /darwin/
@@ -44,7 +46,7 @@ module FFI
     when /win|mingw/
       "windows"
     else
-      Config::CONFIG['host_os'].downcase
+      RbConfig::CONFIG['host_os'].downcase
     end
 
     ARCH = case CPU.downcase
@@ -55,7 +57,7 @@ module FFI
     when /ppc|powerpc/
       "powerpc"
     else
-      Config::CONFIG['host_cpu']
+      RbConfig::CONFIG['host_cpu']
     end
 
     private
