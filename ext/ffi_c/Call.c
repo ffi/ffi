@@ -319,11 +319,8 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     void* retval;
     void** ffiValues;
     FFIStorage* params;
-    VALUE rbReturnValue;
-    
-#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+    VALUE rbReturnValue, exc;    
     rbffi_thread_t oldThread;
-#endif
 
     retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
     
@@ -374,15 +371,16 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
             fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
             fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
-#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
         oldThread = rbffi_active_thread;
         rbffi_active_thread = rbffi_thread_self();
-#endif
+        
         ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
 
-#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
+        exc = rbffi_active_thread.exc;
         rbffi_active_thread = oldThread;
-#endif
+        if (exc != Qnil) {
+            rb_exc_raise(exc);
+        }
     }
 
     if (unlikely(!fnInfo->ignoreErrno)) {

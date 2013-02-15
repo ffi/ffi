@@ -39,7 +39,6 @@ typedef int bool;
 #include "Thread.h"
 
 
-#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
 rbffi_thread_t rbffi_active_thread;
 
 rbffi_thread_t
@@ -52,6 +51,7 @@ rbffi_thread_self()
     self.id = pthread_self();
 #endif
     self.valid = true;
+    self.exc = Qnil;
 
     return self;
 }
@@ -76,7 +76,6 @@ rbffi_thread_has_gvl_p(void)
     return rbffi_active_thread.valid && pthread_equal(rbffi_active_thread.id, pthread_self());
 #endif
 }
-#endif /* HAVE_RUBY_THREAD_HAS_GVL_P */
 
 #ifndef HAVE_RB_THREAD_BLOCKING_REGION
 
@@ -291,34 +290,6 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
 
     return thr->retval;
 }
-
-
-#if 0
-
-/*
- * FIXME: someone needs to implement something similar to the posix pipe based
- * blocking region implementation above for ruby1.8.x on win32
- */
-VALUE
-rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2)
-{
-#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
-    rbffi_thread_t oldThread;
-#endif
-    VALUE res;
-#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
-    oldThread = rbffi_active_thread;
-    rbffi_active_thread = rbffi_thread_self();
-#endif
-
-    res = (*func)(data1);
-
-#if !defined(HAVE_RUBY_THREAD_HAS_GVL_P)
-    rbffi_active_thread = oldThread;
-#endif
-  return res;
-}
-#endif
 
 #endif /* !_WIN32 */
 

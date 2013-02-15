@@ -54,6 +54,7 @@ typedef struct {
     pthread_t id;
 #endif
     bool valid;
+    VALUE exc;
 } rbffi_thread_t;
 
 extern rbffi_thread_t rbffi_active_thread;

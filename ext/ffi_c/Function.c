@@ -78,7 +78,8 @@ static void function_free(Function *);
 static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
-static void* callback_with_gvl(void* data);
+static VALUE callback_with_gvl(void* data);
+static VALUE save_callback_exception(void* data, VALUE exc);
 
 #define DEFER_ASYNC_CALLBACK 1
 
@@ -458,12 +459,9 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
     cb.done = false;
 
     if (rbffi_thread_has_gvl_p()) {
-        callback_with_gvl(&cb);
+        rbffi_active_thread.exc = Qnil;
+        rb_rescue2(callback_with_gvl, &cb, save_callback_exception, &cb, rb_eException, (VALUE) 0);
     
-#if defined(HAVE_RUBY_NATIVE_THREAD_P) && defined (HAVE_RB_THREAD_CALL_WITH_GVL)
-    } else if (ruby_native_thread_p()) {
-        rb_thread_call_with_gvl(callback_with_gvl, &cb);
-#endif
 #if defined(DEFER_ASYNC_CALLBACK) && !defined(_WIN32)
     } else {
         bool empty = false;
@@ -717,7 +715,7 @@ async_cb_call(void *data)
 #endif
 
 
-static void*
+static VALUE
 callback_with_gvl(void* data)
 {
     struct gvl_callback* cb = (struct gvl_callback *) data;
@@ -905,9 +903,19 @@ callback_with_gvl(void* data)
             break;
     }
 
-    return NULL;
+    return Qnil;
 }
 
+static VALUE 
+save_callback_exception(void* data, VALUE exc)
+{
+    struct gvl_callback* cb = (struct gvl_callback *) data;
+    
+    memset(cb->retval, 0, ((Function *) cb->closure->info)->info->returnType->ffiType->size);
+    rbffi_active_thread.exc = exc;
+    
+    return Qnil;
+}
 
 static bool
 callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize)

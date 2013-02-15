@@ -26,8 +26,6 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   have_func('rb_thread_blocking_region')
   have_func('rb_thread_call_with_gvl')
   have_func('rb_thread_call_without_gvl')
-  have_func('ruby_native_thread_p')
-  have_func('rb_thread_call_with_gvl')
   have_func('ffi_prep_cif_var')
   
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works

@@ -163,9 +163,9 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     VALUE* argv;
     int paramCount = 0, i;
     ffi_status ffiStatus;
-#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
+    VALUE exc;
     rbffi_thread_t oldThread;
-#endif
+
     Check_Type(parameterTypes, T_ARRAY);
     Check_Type(parameterValues, T_ARRAY);
 
@@ -239,17 +239,17 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
     rbffi_SetupCallParams(paramCount, argv, -1, paramTypes, params,
         ffiValues, NULL, 0, invoker->rbEnums);
-#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
     oldThread = rbffi_active_thread;
     rbffi_active_thread = rbffi_thread_self();
-#endif
 
     ffi_call(&cif, FFI_FN(invoker->function), retval, ffiValues);
 
-#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
+    exc = rbffi_active_thread.exc;
     rbffi_active_thread = oldThread;
-#endif
-
+    if (exc != Qnil) {
+        rb_exc_raise(exc);
+    }
+    
     rbffi_save_errno();
 
     return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, retval);
