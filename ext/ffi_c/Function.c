@@ -536,7 +536,7 @@ struct async_wait {
 static VALUE async_cb_wait(void *);
 static void async_cb_stop(void *);
 
-#if defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#if defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)
 static VALUE
 async_cb_event(void* unused)
 {
@@ -544,7 +544,11 @@ async_cb_event(void* unused)
 
     w.stop = false;
     while (!w.stop) {
+#if defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)
+        rb_thread_call_without_gvl(async_cb_wait, &w, async_cb_stop, &w);
+#else
         rb_thread_blocking_region(async_cb_wait, &w, async_cb_stop, &w);
+#endif
         if (w.cb != NULL) {
             /* Start up a new ruby thread to run the ruby callback */
             rb_thread_create(async_cb_call, w.cb);

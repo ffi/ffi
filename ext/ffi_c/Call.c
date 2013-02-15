@@ -271,8 +271,10 @@ typedef struct BlockingCall_ {
     FunctionType* info;
     void **ffiValues;
     void* retval;
-    void* stkretval;
     void* params;
+#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
+    void* stkretval;
+#endif
 } BlockingCall;
 
 static VALUE
@@ -284,6 +286,8 @@ call_blocking_function(void* data)
 
     return Qnil;
 }
+
+#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
 
 static VALUE
 do_blocking_call(void *data)
@@ -307,6 +311,8 @@ cleanup_blocking_call(void *data)
     return Qnil;
 }
 
+#endif /* HAVE_RB_THREAD_BLOCKING_REGION */
+
 VALUE
 rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
 {
@@ -328,21 +334,36 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
          * due to the way thread switching works on older ruby variants, we
          * cannot allocate anything passed to the blocking function on the stack
          */
+#if defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)
+        ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
+        params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
+        bc = ALLOCA_N(BlockingCall, 1);
+        bc->retval = retval;
+#else
         ffiValues = ALLOC_N(void *, fnInfo->parameterCount);
         params = ALLOC_N(FFIStorage, fnInfo->parameterCount);
         bc = ALLOC_N(BlockingCall, 1);
+        bc->retval = xmalloc(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
+        bc->stkretval = retval;
+#endif
         bc->info = fnInfo;
         bc->function = function;
         bc->ffiValues = ffiValues;
         bc->params = params;
-        bc->retval = xmalloc(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
-        bc->stkretval = retval;
 
         rbffi_SetupCallParams(argc, argv,
             fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
             fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
-        
+
+#if defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL) 
+        rb_thread_call_without_gvl(call_blocking_function, bc, (void *) -1, NULL);
+
+#elif defined(HAVE_RB_THREAD_BLOCKING_REGION)
+        rb_thread_blocking_region(call_blocking_function, bc, (void *) -1, NULL);
+
+#else
         rb_ensure(do_blocking_call, (VALUE) bc, cleanup_blocking_call, (VALUE) bc);
+#endif
         
     } else {
 
