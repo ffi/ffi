@@ -30,6 +30,7 @@ typedef int bool;
 # include <pthread.h>
 # include <errno.h>
 # include <signal.h>
+# include <unistd.h>
 #else
 # include <winsock2.h>
 # define _WINSOCKAPI_

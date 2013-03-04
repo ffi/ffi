@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #ifndef _WIN32
 # include <sys/mman.h>
+# include <unistd.h>
 #endif
 #include <stdio.h>
 #ifndef _MSC_VER
@@ -460,7 +461,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 
     if (rbffi_thread_has_gvl_p()) {
         rbffi_active_thread.exc = Qnil;
-        rb_rescue2(callback_with_gvl, &cb, save_callback_exception, &cb, rb_eException, (VALUE) 0);
+        rb_rescue2(callback_with_gvl, (VALUE) &cb, save_callback_exception, (VALUE) &cb, rb_eException, (VALUE) 0);
     
 #if defined(DEFER_ASYNC_CALLBACK) && !defined(_WIN32)
     } else {
