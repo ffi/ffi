@@ -171,7 +171,7 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
     fnInfo->ffiReturnType = fnInfo->returnType->ffiType;
 
 
-#if defined(_WIN32) || defined(__WIN32__)
+#if (defined(_WIN32) || defined(__WIN32__)) && defined(FFI_STDCALL) 
     rbConventionStr = (rbConvention != Qnil) ? rb_funcall2(rbConvention, rb_intern("to_s"), 0, NULL) : Qnil;
     fnInfo->abi = (rbConventionStr != Qnil && strcmp(StringValueCStr(rbConventionStr), "stdcall") == 0)
             ? FFI_STDCALL : FFI_DEFAULT_ABI;
