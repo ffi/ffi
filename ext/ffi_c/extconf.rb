@@ -7,8 +7,8 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
 
   # recent versions of ruby add restrictive ansi and warning flags on a whim - kill them all
   $warnflags = ''
-  $CFLAGS.gsub!(/-ansi/, '')
-  $CFLAGS.gsub!(/-std=[^\s]+/, '')
+  $CFLAGS.gsub!(/[\s+]-ansi/, '')
+  $CFLAGS.gsub!(/[\s+]-std=[^\s]+/, '')
   # solaris needs -c99 for <stdbool.h>
   $CFLAGS << " -std=c99" if RbConfig::CONFIG['host_os'] =~ /solaris/
   
