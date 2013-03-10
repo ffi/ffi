@@ -122,8 +122,7 @@ desc "Clean all built files"
 task :distclean => :clobber do
   FileUtils.rm_rf('build')
   FileUtils.rm_rf(Dir["lib/**/ffi_c.#{RbConfig::CONFIG['DLEXT']}"])
-  FileUtils.rm_rf('lib/1.8')
-  FileUtils.rm_rf('lib/1.9')
+  FileUtils.rm_rf(Dir["lib/**/ffi_c.so"])
   FileUtils.rm_rf('lib/ffi/types.conf')
   FileUtils.rm_rf('conftest.dSYM')
   FileUtils.rm_rf('pkg')
@@ -202,6 +201,14 @@ if USE_RAKE_COMPILER
     ext.tmp_dir = BUILD_DIR                                   # temporary folder used during compilation.
     ext.cross_compile = true                                  # enable cross compilation (requires cross compile toolchain)
     ext.cross_platform = 'i386-mingw32'                       # forces the Windows platform instead of the default one
+  end
+
+  task 'copy:ffi_c:i386-mingw32:1.9.3' do |t|
+    sh "i686-w64-mingw32-strip -S lib/1.9/ffi_c.so"
+  end
+  
+  task 'copy:ffi_c:i386-mingw32:2.0.0' do |t|
+    sh "i686-w64-mingw32-strip -S lib/2.0/ffi_c.so"
   end
 end
 
