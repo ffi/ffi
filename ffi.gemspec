@@ -9,6 +9,7 @@ Gem::Specification.new do |s|
   s.files = %w(ffi.gemspec History.txt LICENSE COPYING COPYING.LESSER README.md Rakefile) + Dir.glob("{ext,gen,lib,spec,libtest}/**/*").reject { |f| f =~ /lib\/1\.[89]/}
   s.extensions << 'ext/ffi_c/extconf.rb'
   s.has_rdoc = false
+  s.rdoc_options = %w[--exclude=ext/ffi_c/.*\.o$ --exclude=ffi_c\.(bundle|so)$]
   s.license = 'LGPL-3'
   s.require_paths << 'ext/ffi_c'
   s.required_ruby_version = '>= 1.8.7'
