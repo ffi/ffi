@@ -99,6 +99,9 @@ describe "Pointer" do
     end
   end
 
+  it "Pointer.size returns sizeof pointer on platform" do
+    FFI::Pointer.size.should == (FFI::Platform::ADDRESS_SIZE / 8)
+  end
 end
 
 describe "AutoPointer" do
