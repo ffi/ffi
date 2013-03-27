@@ -212,5 +212,25 @@ describe "AutoPointer" do
     end
   end
 
+  describe "#slice" do
+    before(:each) do
+      @mptr = FFI::MemoryPointer.new(:char, 12)
+      @mptr.put_uint(0, 0x12345678)
+      @mptr.put_uint(4, 0xdeadbeef)
+    end
+
+    it "contents of sliced pointer matches original pointer at offset" do
+      @mptr.slice(4, 4).get_uint(0).should == 0xdeadbeef
+    end
+    
+    it "modifying sliced pointer is reflected in original pointer" do
+      @mptr.slice(4, 4).put_uint(0, 0xfee1dead)
+      @mptr.get_uint(4).should == 0xfee1dead
+    end
+    
+    it "access beyond bounds should raise IndexError" do
+      lambda { @mptr.slice(4, 4).get_int(4) }.should raise_error(IndexError)
+    end
+  end
 end
 
