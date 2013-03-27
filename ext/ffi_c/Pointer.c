@@ -396,6 +396,16 @@ ptr_free(VALUE self)
     return self;
 }
 
+static VALUE
+ptr_type_size(VALUE self)
+{
+    Pointer* ptr;
+
+    Data_Get_Struct(self, Pointer, ptr);
+    
+    return INT2NUM(ptr->memory.typeSize);
+}
+
 /*
  * call-seq: ptr.autorelease = autorelease
  * @param [Boolean] autorelease
@@ -481,6 +491,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
     rb_define_method(rbffi_PointerClass, "autorelease=", ptr_autorelease, 1);
     rb_define_method(rbffi_PointerClass, "autorelease?", ptr_autorelease_p, 0);
     rb_define_method(rbffi_PointerClass, "free", ptr_free, 0);
+    rb_define_method(rbffi_PointerClass, "type_size", ptr_type_size, 0);
 
     rbffi_NullPointerSingleton = rb_class_new_instance(1, &rbNullAddress, rbffi_PointerClass);
     /*
