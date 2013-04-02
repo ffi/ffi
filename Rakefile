@@ -200,15 +200,22 @@ if USE_RAKE_COMPILER
     # ext.lib_dir = BUILD_DIR                                 # put binaries into this folder.
     ext.tmp_dir = BUILD_DIR                                   # temporary folder used during compilation.
     ext.cross_compile = true                                  # enable cross compilation (requires cross compile toolchain)
-    ext.cross_platform = ['i386-mingw32', 'x64-mingw32']      # forces the Windows platform instead of the default one
+    ext.cross_platform = %w[i386-mingw32 x64-mingw32]                     # forces the Windows platform instead of the default one
   end
 
   ENV['RUBY_CC_VERSION'].to_s.split(':').each do |ruby_version|
     task "copy:ffi_c:i386-mingw32:#{ruby_version}" do |t|
-      sh "i686-w64-mingw32-strip -S build/i386-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
+      %w[lib #{BUILD_DIR}/i386-mingw32/stage/lib].each do |dir| 
+        if File.exists?("#{dir}/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so")
+          sh "i686-w64-mingw32-strip -S #{dir}/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
+        end
+      end
     end
+
     task "copy:ffi_c:x64-mingw32:#{ruby_version}" do |t|
-      sh "x86_64-w64-mingw32-strip -S build/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
+      if File.exists?("#{BUILD_DIR}/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so")
+        sh "x86_64-w64-mingw32-strip -S #{dir}/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
+      end
     end
   end
 end
