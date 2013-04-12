@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'ffi'
-  s.version = '1.7.0.dev'
+  s.version = '1.7.0'
   s.author = 'Wayne Meissner'
   s.email = 'wmeissner@gmail.com'
   s.homepage = 'http://wiki.github.com/ffi/ffi'
@@ -16,4 +16,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake'
   s.add_development_dependency 'rake-compiler', '>=0.6.0'
   s.add_development_dependency 'rspec'
+  s.add_development_dependency 'rubygems-tasks'
 end
