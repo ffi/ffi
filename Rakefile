@@ -203,7 +203,9 @@ if USE_RAKE_COMPILER
   end
 end
 
-Gem::Tasks.new
+Gem::Tasks.new do |t|
+  t.scm.tag.format = '%s'
+end
 
 begin
   require 'yard'
