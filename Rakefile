@@ -77,12 +77,6 @@ def gem_spec
   @gem_spec ||= Gem::Specification.load('ffi.gemspec')
 end
 
-Gem::PackageTask.new(gem_spec) do |pkg|
-  pkg.need_zip = true
-  pkg.need_tar = true
-  pkg.package_dir = 'pkg'
-end
-
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
   desc "Run all specs"
@@ -110,25 +104,15 @@ end
 desc "Build all packages"
 task :package => 'gem:package'
 
-desc "Install the gem locally"
-task :install => 'gem:install'
 
-namespace :gem do
-  task :install => :gem do
-    ruby %{ -S gem install pkg/ffi-#{gem_spec.version}.gem }
-  end
-end
+CLOBBER.include 'build'
+CLOBBER.include FileList['lib/**/ffi_c.so']
+CLOBBER.include FileList["lib/**/ffi_c.#{RbConfig::CONFIG['DLEXT']}"]
+CLOBBER.include 'lib/ffi/types.conf'
+CLOBBER.include 'conftest.dSYM'
+CLOBBER.include 'pkg'
 
-desc "Clean all built files"
-task :distclean => :clobber do
-  FileUtils.rm_rf('build')
-  FileUtils.rm_rf(Dir["lib/**/ffi_c.#{RbConfig::CONFIG['DLEXT']}"])
-  FileUtils.rm_rf(Dir["lib/**/ffi_c.so"])
-  FileUtils.rm_rf('lib/ffi/types.conf')
-  FileUtils.rm_rf('conftest.dSYM')
-  FileUtils.rm_rf('pkg')
-end
-
+task :distclean => :clobber
 
 desc "Build the native test lib"
 file "build/libtest.#{LIBEXT}" => FileList['libtest/**/*.[ch]'] do
@@ -221,7 +205,7 @@ if USE_RAKE_COMPILER
   end
 end
 
-Gem::Tasks.new
+Gem::Tasks.new(:push => false)
 
 begin
   require 'yard'
