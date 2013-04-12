@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'rubygems/package_task'
+require 'rubygems/tasks'
 require 'rbconfig'
 
 USE_RAKE_COMPILER = (RUBY_PLATFORM =~ /java/) ? false : true
@@ -219,6 +220,8 @@ if USE_RAKE_COMPILER
     end
   end
 end
+
+Gem::Tasks.new
 
 begin
   require 'yard'
