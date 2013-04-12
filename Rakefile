@@ -65,8 +65,6 @@ OS = case RbConfig::CONFIG['host_os'].downcase
     RbConfig::CONFIG['host_os'].downcase
   end
 
-CC = ENV['CC'] || RbConfig::CONFIG['CC'] || "gcc"
-
 GMAKE = system('which gmake >/dev/null') && 'gmake' || 'make'
 
 LIBTEST = "build/libtest.#{LIBEXT}"
@@ -205,7 +203,7 @@ if USE_RAKE_COMPILER
   end
 end
 
-Gem::Tasks.new(:push => false)
+Gem::Tasks.new
 
 begin
   require 'yard'
