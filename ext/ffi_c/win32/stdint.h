@@ -1,4 +1,5 @@
 /* stdint.h standard header */
+#if !defined(_MSC_VER) && !defined(INT8_MIN)
 #pragma once
 #ifndef _STDINT
 #define _STDINT
@@ -197,3 +198,4 @@ using _CSTD uint_fast32_t; using _CSTD uint_fast64_t;
  * Copyright (c) 1992-2009 by P.J. Plauger.  ALL RIGHTS RESERVED.
  * Consult your license regarding permissions and restrictions.
 V5.20:0009 */
+#endif /* !defined(_MSC_VER) && !defined(INT8_MIN) */

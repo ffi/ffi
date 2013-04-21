@@ -18,8 +18,6 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "MethodHandle.h"
-
 #ifndef _MSC_VER
 #include <sys/param.h>
 #endif
@@ -28,19 +26,18 @@
 # include <sys/mman.h>
 # include <unistd.h>
 #endif
+
 #include <stdio.h>
 #ifndef _MSC_VER
-#include <stdint.h>
-#include <stdbool.h>
+# include <stdint.h>
+# include <stdbool.h>
 #else
-typedef int bool;
-#define true 1
-#define false 0
+# include "win32/stdbool.h"
+# if !defined(INT8_MIN)
+#  include "win32/stdint.h"
+# endif
 #endif
 #include <ruby.h>
-#if defined(_MSC_VER) && !defined(INT8_MIN)
-#  include "win32/stdint.h"
-#endif
 
 #include <ffi.h>
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
@@ -59,10 +56,11 @@ typedef int bool;
 #include "LastError.h"
 #include "Call.h"
 #include "ClosurePool.h"
-#include "Function.h"
 #include "MappedType.h"
 #include "Thread.h"
 #include "LongDouble.h"
+#include "MethodHandle.h"
+#include "Function.h"
 
 typedef struct Function_ {
     Pointer base;

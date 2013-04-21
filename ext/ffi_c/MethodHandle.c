@@ -22,19 +22,18 @@
 #endif
 #include <sys/types.h>
 #ifndef _WIN32
-#  include <sys/mman.h>
+# include <sys/mman.h>
 #endif
 #include <stdio.h>
 #ifndef _MSC_VER
-#include <stdint.h>
-#include <stdbool.h>
+# include <stdint.h>
+# include <stdbool.h>
 #else
-typedef int bool;
-#define true 1
-#define false 0
+# include "win32/stdint.h"
+# include "win32/stdbool.h"
 #endif
 #ifndef _WIN32
-#  include <unistd.h>
+# include <unistd.h>
 #endif
 #include <errno.h>
 #include <ruby.h>

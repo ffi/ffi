@@ -21,9 +21,8 @@
 #ifndef _MSC_VER
 #include <stdbool.h>
 #else
-typedef int bool;
-#define true 1
-#define false 0
+# include "win32/stdbool.h"
+# include "win32/stdint.h"
 #endif
 
 #ifndef _WIN32

@@ -19,23 +19,23 @@
  */
 
 #ifndef _MSC_VER
-#include <sys/param.h>
+# include <sys/param.h>
 #endif
-#include <sys/types.h>
+# include <sys/types.h>
 #ifndef _MSC_VER
-#include <stdint.h>
-#include <stdbool.h>
+# include <stdint.h>
+# include <stdbool.h>
 #else
-typedef int bool;
-#define true 1
-#define false 0
+# include "win32/stdint.h"
+# include "win32/stdbool.h"
 #endif
 #include <ruby.h>
 #include <ctype.h>
 #include "rbffi_endian.h"
 #include "Platform.h"
+
 #if defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
-  #include <gnu/lib-names.h>
+# include <gnu/lib-names.h>
 #endif
 
 static VALUE PlatformModule = Qnil;

@@ -21,15 +21,13 @@
 
 #include <sys/types.h>
 
-#include "Function.h"
 #ifndef _MSC_VER
-#include <sys/param.h>
-#include <stdint.h>
-#include <stdbool.h>
+# include <sys/param.h>
+# include <stdint.h>
+# include <stdbool.h>
 #else
-typedef int bool;
-#define true 1
-#define false 0
+# include "win32/stdbool.h"
+# include "win32/stdint.h"
 #endif
 #include <ruby.h>
 #include "rbffi.h"
@@ -39,10 +37,11 @@ typedef int bool;
 #include "MemoryPointer.h"
 #include "Function.h"
 #include "Types.h"
-#include "Struct.h"
 #include "StructByValue.h"
 #include "ArrayType.h"
+#include "Function.h"
 #include "MappedType.h"
+#include "Struct.h"
 
 #define FFI_ALIGN(v, a)  (((((size_t) (v))-1) | ((a)-1))+1)
 

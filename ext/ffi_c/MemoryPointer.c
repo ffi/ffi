@@ -20,14 +20,11 @@
  */
 
 #ifndef _MSC_VER
-#include <stdbool.h>
+# include <stdbool.h>
+# include <stdint.h>
 #else
-typedef int bool;
-#define true 1
-#define false 0
-#endif
-#ifndef _MSC_VER
-#include <stdint.h>
+# include "win32/stdbool.h"
+# include "win32/stdint.h"
 #endif
 #include <limits.h>
 #include <ruby.h>

@@ -21,8 +21,8 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef RBFFI_INVOKE_H
-#define	RBFFI_INVOKE_H
+#ifndef RBFFI_CALL_H
+#define	RBFFI_CALL_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -59,19 +59,19 @@ typedef union {
     double f64;
     long double ld;
 } FFIStorage;
-
-
+ 
 extern void rbffi_Call_Init(VALUE moduleFFI);
 
 extern void rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
         FFIStorage* paramStorage, void** ffiValues,
         VALUE* callbackParameters, int callbackCount, VALUE enums);
 
-extern VALUE rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+struct FunctionType_;
+extern VALUE rbffi_CallFunction(int argc, VALUE* argv, void* function, struct FunctionType_* fnInfo);
 
-typedef VALUE (*Invoker)(int argc, VALUE* argv, void* function, FunctionType* fnInfo);
+typedef VALUE (*Invoker)(int argc, VALUE* argv, void* function, struct FunctionType_* fnInfo);
 
-Invoker rbffi_GetInvoker(FunctionType* fnInfo);
+Invoker rbffi_GetInvoker(struct FunctionType_* fnInfo);
 
 extern VALUE rbffi_GetEnumValue(VALUE enums, VALUE value);
 extern int rbffi_GetSignedIntValue(VALUE value, int type, int minValue, int maxValue, const char* typeName, VALUE enums);
@@ -80,5 +80,5 @@ extern int rbffi_GetSignedIntValue(VALUE value, int type, int minValue, int maxV
 }
 #endif
 
-#endif	/* RBFFI_INVOKE_H */
+#endif	/* RBFFI_CALL_H */
 
