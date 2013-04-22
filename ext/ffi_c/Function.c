@@ -122,13 +122,13 @@ static struct gvl_callback* async_cb_list = NULL;
 # ifndef _WIN32
     static pthread_mutex_t async_cb_mutex = PTHREAD_MUTEX_INITIALIZER;
     static pthread_cond_t async_cb_cond = PTHREAD_COND_INITIALIZER;
-#  if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#  if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
     static int async_cb_pipe[2];
 #  endif
 # else
     static HANDLE async_cb_cond;
     static CRITICAL_SECTION async_cb_lock;
-#  if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#  if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
     static int async_cb_pipe[2];
 #  endif
 # endif
@@ -309,9 +309,9 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
 #if defined(DEFER_ASYNC_CALLBACK)
         if (async_cb_thread == Qnil) {
-#if !defined(HAVE_RB_THREAD_BLOCKING_REGION) && defined(_WIN32)
+#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)) && defined(_WIN32)
             _pipe(async_cb_pipe, 1024, O_BINARY);
-#elif !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#elif !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
             pipe(async_cb_pipe);
             fcntl(async_cb_pipe[0], F_SETFL, fcntl(async_cb_pipe[0], F_GETFL) | O_NONBLOCK);
             fcntl(async_cb_pipe[1], F_SETFL, fcntl(async_cb_pipe[1], F_GETFL) | O_NONBLOCK);
@@ -475,7 +475,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         async_cb_list = &cb;
         pthread_mutex_unlock(&async_cb_mutex);
 
-#if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
         /* Only signal if the list was empty */
         if (empty) {
             char c;
@@ -507,7 +507,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         async_cb_list = &cb;
         LeaveCriticalSection(&async_cb_lock);
 
-#if !defined(HAVE_RB_THREAD_BLOCKING_REGION)
+#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
         /* Only signal if the list was empty */
         if (empty) {
             char c;

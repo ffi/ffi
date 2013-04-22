@@ -34,7 +34,7 @@
 #endif
 #include <errno.h>
 #include <ruby.h>
-#if defined(HAVE_NATIVETHREAD) && defined(HAVE_RB_THREAD_BLOCKING_REGION) && !defined(_WIN32)
+#if defined(HAVE_NATIVETHREAD) && (defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)) && !defined(_WIN32)
 #  include <signal.h>
 #  include <pthread.h>
 #endif
