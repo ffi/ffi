@@ -38,46 +38,56 @@
 #include <fcntl.h>
 #include "Thread.h"
 
-
-rbffi_thread_t rbffi_active_thread;
-
-rbffi_thread_t
-rbffi_thread_self()
-{
-    rbffi_thread_t self;
 #ifdef _WIN32
-    self.id = GetCurrentThreadId();
+static volatile DWORD frame_thread_key = TLS_OUT_OF_INDEXES;
 #else
-    self.id = pthread_self();
+static pthread_key_t thread_data_key;
+struct thread_data {
+    rbffi_frame_t* frame;
+};
+static inline struct thread_data* thread_data_get(void);
+
 #endif
-    self.valid = true;
-    self.exc = Qnil;
 
-    return self;
-}
-
-bool
-rbffi_thread_equal(const rbffi_thread_t* lhs, const rbffi_thread_t* rhs)
+rbffi_frame_t*
+rbffi_frame_current(void)
 {
-    return lhs->valid && rhs->valid && 
 #ifdef _WIN32
-            lhs->id == rhs->id;
+    return (rbffi_frame_t *) TlsGetValue(frame_thread_key);
 #else
-            pthread_equal(lhs->id, rhs->id);
+    struct thread_data* td = (struct thread_data *) pthread_getspecific(thread_data_key);
+    return td != NULL ? td->frame : NULL;
 #endif
 }
 
-bool
-rbffi_thread_has_gvl_p(void)
+void 
+rbffi_frame_push(rbffi_frame_t* frame)
 {
+    memset(frame, 0, sizeof(*frame));
+    frame->has_gvl = true;
+    frame->exc = Qnil;
+    
 #ifdef _WIN32
-    return rbffi_active_thread.valid && rbffi_active_thread.id == GetCurrentThreadId();
+    frame->prev = TlsGetValue(frame_thread_key);
+    TlsSetValue(frame_thread_key, frame);
 #else
-    return rbffi_active_thread.valid && pthread_equal(rbffi_active_thread.id, pthread_self());
+    frame->td = thread_data_get();
+    frame->prev = frame->td->frame;
+    frame->td->frame = frame;
 #endif
 }
 
-#ifndef HAVE_RB_THREAD_BLOCKING_REGION
+void 
+rbffi_frame_pop(rbffi_frame_t* frame)
+{
+#ifdef _WIN32
+    TlsSetValue(frame_thread_key, frame->prev);
+#else
+    frame->td->frame = frame->prev;
+#endif
+}
+
+#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
 
 #if !defined(_WIN32)
 
@@ -295,3 +305,39 @@ rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(voi
 
 #endif /* HAVE_RB_THREAD_BLOCKING_REGION */
 
+#ifndef _WIN32
+static struct thread_data* thread_data_init(void);
+
+static inline struct thread_data*
+thread_data_get(void)
+{
+    struct thread_data* td = (struct thread_data *) pthread_getspecific(thread_data_key);
+    return td != NULL ? td : thread_data_init();
+}
+
+static struct thread_data*
+thread_data_init(void)
+{
+    struct thread_data* td = calloc(1, sizeof(struct thread_data));
+
+    pthread_setspecific(thread_data_key, td);
+
+    return td;
+}
+
+static void
+thread_data_free(void *ptr)
+{
+    free(ptr);
+}
+#endif
+
+void
+rbffi_Thread_Init(VALUE moduleFFI)
+{
+#ifdef _WIN32
+    frame_thread_key = TlsAlloc();
+#else
+    pthread_key_create(&thread_data_key, thread_data_free);    
+#endif
+}

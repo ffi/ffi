@@ -266,6 +266,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
 
 
 typedef struct BlockingCall_ {
+    rbffi_frame_t* frame;
     void* function;
     FunctionType* info;
     void **ffiValues;
@@ -280,13 +281,12 @@ static VALUE
 call_blocking_function(void* data)
 {
     BlockingCall* b = (BlockingCall *) data;
-
+    b->frame->has_gvl = false;
     ffi_call(&b->info->ffi_cif, FFI_FN(b->function), b->retval, b->ffiValues);
+    b->frame->has_gvl = true;
 
     return Qnil;
 }
-
-#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
 
 static VALUE
 do_blocking_call(void *data)
@@ -297,20 +297,12 @@ do_blocking_call(void *data)
 }
 
 static VALUE
-cleanup_blocking_call(void *data)
+save_frame_exception(void *data, VALUE exc)
 {
-    BlockingCall* bc = (BlockingCall *) data;
-
-    memcpy(bc->stkretval, bc->retval, MAX(bc->info->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
-    xfree(bc->params);
-    xfree(bc->ffiValues);
-    xfree(bc->retval);
-    xfree(bc);
-
+    rbffi_frame_t* frame = (rbffi_frame_t *) data;
+    frame->exc = exc;
     return Qnil;
 }
-
-#endif /* HAVE_RB_THREAD_BLOCKING_REGION */
 
 VALUE
 rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
@@ -318,9 +310,9 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     void* retval;
     void** ffiValues;
     FFIStorage* params;
-    VALUE rbReturnValue, exc;    
-    rbffi_thread_t oldThread;
-
+    VALUE rbReturnValue;
+    rbffi_frame_t frame = { 0 };
+    
     retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
     
     if (unlikely(fnInfo->blocking)) {
@@ -346,21 +338,24 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         bc->function = function;
         bc->ffiValues = ffiValues;
         bc->params = params;
+        bc->frame = &frame;
 
         rbffi_SetupCallParams(argc, argv,
             fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
             fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
-#if defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL) 
-        rb_thread_call_without_gvl(call_blocking_function, bc, (void *) -1, NULL);
+        rbffi_frame_push(&frame); 
+        rb_rescue2(do_blocking_call, (VALUE) bc, save_frame_exception, (VALUE) &frame, rb_eException, (VALUE) 0);
+        rbffi_frame_pop(&frame);
 
-#elif defined(HAVE_RB_THREAD_BLOCKING_REGION)
-        rb_thread_blocking_region(call_blocking_function, bc, (void *) -1, NULL);
-
-#else
-        rb_ensure(do_blocking_call, (VALUE) bc, cleanup_blocking_call, (VALUE) bc);
+#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
+        memcpy(bc->stkretval, bc->retval, MAX(bc->info->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
+        xfree(bc->params);
+        xfree(bc->ffiValues);
+        xfree(bc->retval);
+        xfree(bc);
 #endif
-        
+    
     } else {
 
         ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
@@ -370,22 +365,19 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
             fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
             fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
 
-        oldThread = rbffi_active_thread;
-        rbffi_active_thread = rbffi_thread_self();
-        
+        rbffi_frame_push(&frame);
         ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
-
-        exc = rbffi_active_thread.exc;
-        rbffi_active_thread = oldThread;
-        if (exc != Qnil) {
-            rb_exc_raise(exc);
-        }
+        rbffi_frame_pop(&frame);
     }
 
     if (unlikely(!fnInfo->ignoreErrno)) {
         rbffi_save_errno();
     }    
-    
+
+    if (RTEST(frame.exc) && frame.exc != Qnil) {
+        rb_exc_raise(frame.exc);
+    }
+
     RB_GC_GUARD(rbReturnValue) = rbffi_NativeValue_ToRuby(fnInfo->returnType, fnInfo->rbReturnType, retval);
     RB_GC_GUARD(fnInfo->rbReturnType);
     

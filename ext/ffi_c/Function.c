@@ -78,6 +78,7 @@ static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 static VALUE callback_with_gvl(void* data);
+static VALUE invoke_callback(void* data);
 static VALUE save_callback_exception(void* data, VALUE exc);
 
 #define DEFER_ASYNC_CALLBACK 1
@@ -105,6 +106,7 @@ struct gvl_callback {
     void*    retval;
     void**   parameters;
     bool done;
+    rbffi_frame_t *frame;
 #if defined(DEFER_ASYNC_CALLBACK)
     struct gvl_callback* next;
 # ifndef _WIN32
@@ -451,16 +453,22 @@ function_release(VALUE self)
 static void
 callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
-    struct gvl_callback cb;
+    struct gvl_callback cb = { 0 };
+    
     cb.closure = (Closure *) user_data;
     cb.retval = retval;
     cb.parameters = parameters;
     cb.done = false;
-
-    if (rbffi_thread_has_gvl_p()) {
-        rbffi_active_thread.exc = Qnil;
-        rb_rescue2(callback_with_gvl, (VALUE) &cb, save_callback_exception, (VALUE) &cb, rb_eException, (VALUE) 0);
+    cb.frame = rbffi_frame_current();
     
+    if (cb.frame != NULL) cb.frame->exc = Qnil;
+    if (cb.frame != NULL && cb.frame->has_gvl) {
+        callback_with_gvl(&cb);
+
+#if defined(RB_THREAD_CALL_WITH_GVL)
+    } else if (cb.frame != NULL) {
+        rb_thread_call_with_gvl(callback_with_gvl, &cb);
+#endif
 #if defined(DEFER_ASYNC_CALLBACK) && !defined(_WIN32)
     } else {
         bool empty = false;
@@ -695,9 +703,9 @@ static VALUE
 async_cb_call(void *data)
 {
     struct gvl_callback* cb = (struct gvl_callback *) data;
-
-    callback_with_gvl(cb);
-
+    
+    callback_with_gvl(data);
+        
     /* Signal the original native thread that the ruby code has completed */
 #ifdef _WIN32
     SetEvent(cb->async_event);
@@ -713,9 +721,14 @@ async_cb_call(void *data)
 
 #endif
 
-
 static VALUE
 callback_with_gvl(void* data)
+{
+    rb_rescue2(invoke_callback, (VALUE) data, save_callback_exception, (VALUE) data, rb_eException, (VALUE) 0);
+}
+
+static VALUE
+invoke_callback(void* data)
 {
     struct gvl_callback* cb = (struct gvl_callback *) data;
 
@@ -911,7 +924,7 @@ save_callback_exception(void* data, VALUE exc)
     struct gvl_callback* cb = (struct gvl_callback *) data;
     
     memset(cb->retval, 0, ((Function *) cb->closure->info)->info->returnType->ffiType->size);
-    rbffi_active_thread.exc = exc;
+    if (cb->frame != NULL) cb->frame->exc = exc;
     
     return Qnil;
 }

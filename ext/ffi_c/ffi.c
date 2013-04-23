@@ -49,7 +49,8 @@ VALUE rbffi_FFIModule = Qnil;
 static VALUE moduleFFI = Qnil;
 
 void
-Init_ffi_c(void) {
+Init_ffi_c(void) 
+{
     /* 
      * Document-module: FFI
      *
@@ -58,7 +59,8 @@ Init_ffi_c(void) {
     rbffi_FFIModule = moduleFFI = rb_define_module("FFI");
     rb_global_variable(&rbffi_FFIModule);
 
-
+    rbffi_Thread_Init(rbffi_FFIModule);
+    
     /* FFI::Type needs to be initialized before most other classes */
     rbffi_Type_Init(moduleFFI);
 

@@ -162,8 +162,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     VALUE* argv;
     int paramCount = 0, i;
     ffi_status ffiStatus;
-    VALUE exc;
-    rbffi_thread_t oldThread;
+    rbffi_frame_t frame = { 0 };
 
     Check_Type(parameterTypes, T_ARRAY);
     Check_Type(parameterValues, T_ARRAY);
@@ -238,18 +237,16 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
     rbffi_SetupCallParams(paramCount, argv, -1, paramTypes, params,
         ffiValues, NULL, 0, invoker->rbEnums);
-    oldThread = rbffi_active_thread;
-    rbffi_active_thread = rbffi_thread_self();
-
+    
+    rbffi_frame_push(&frame);
     ffi_call(&cif, FFI_FN(invoker->function), retval, ffiValues);
-
-    exc = rbffi_active_thread.exc;
-    rbffi_active_thread = oldThread;
-    if (exc != Qnil) {
-        rb_exc_raise(exc);
-    }
+    rbffi_frame_pop(&frame);
     
     rbffi_save_errno();
+    
+    if (RTEST(frame.exc) && frame.exc != Qnil) {
+        rb_exc_raise(frame.exc);
+    }
 
     return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, retval);
 }

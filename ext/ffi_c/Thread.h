@@ -35,11 +35,6 @@ extern "C" {
 #endif
 
 
-#ifdef HAVE_RUBY_THREAD_HAS_GVL_P
-    extern int ruby_thread_has_gvl_p(void);
-# define rbffi_thread_has_gvl_p ruby_thread_has_gvl_p
-#else
-
 #ifdef _WIN32
 # include <windows.h>
 #else
@@ -53,17 +48,29 @@ typedef struct {
     pthread_t id;
 #endif
     bool valid;
+    bool has_gvl;
     VALUE exc;
 } rbffi_thread_t;
 
-extern rbffi_thread_t rbffi_active_thread;
-rbffi_thread_t rbffi_thread_self();
-bool rbffi_thread_equal(const rbffi_thread_t* lhs, const rbffi_thread_t* rhs);
-bool rbffi_thread_has_gvl_p(void);
-
+typedef struct rbffi_frame {
+#ifndef _WIN32
+    struct thread_data* td;
 #endif
-#ifdef HAVE_RB_THREAD_BLOCKING_REGION
+    struct rbffi_frame* prev;
+    bool has_gvl;
+    VALUE exc;
+} rbffi_frame_t;
+
+rbffi_frame_t* rbffi_frame_current(void);
+void rbffi_frame_push(rbffi_frame_t* frame);
+void rbffi_frame_pop(rbffi_frame_t* frame);
+
+#ifdef HAVE_RB_THREAD_CALL_WITHOUT_GVL
+# define rbffi_thread_blocking_region rb_thread_call_without_gvl
+
+#elif defined(HAVE_RB_THREAD_BLOCKING_REGION)
 # define rbffi_thread_blocking_region rb_thread_blocking_region
+
 #else
 
 VALUE rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2);
