@@ -1,6 +1,8 @@
+require File.expand_path("../lib/#{File.basename(__FILE__, '.gemspec')}/version", __FILE__)
+
 Gem::Specification.new do |s|
   s.name = 'ffi'
-  s.version = '1.7.0'
+  s.version = FFI::VERSION
   s.author = 'Wayne Meissner'
   s.email = 'wmeissner@gmail.com'
   s.homepage = 'http://wiki.github.com/ffi/ffi'
