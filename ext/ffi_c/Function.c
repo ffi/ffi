@@ -465,7 +465,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
     if (cb.frame != NULL && cb.frame->has_gvl) {
         callback_with_gvl(&cb);
 
-#if defined(RB_THREAD_CALL_WITH_GVL)
+#if defined(HAVE_RB_THREAD_CALL_WITH_GVL)
     } else if (cb.frame != NULL) {
         rb_thread_call_with_gvl(callback_with_gvl, &cb);
 #endif
@@ -481,9 +481,9 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         empty = async_cb_list == NULL;
         cb.next = async_cb_list;
         async_cb_list = &cb;
-        pthread_mutex_unlock(&async_cb_mutex);
 
 #if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
+        pthread_mutex_unlock(&async_cb_mutex);
         /* Only signal if the list was empty */
         if (empty) {
             char c;
@@ -491,6 +491,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         }
 #else
         pthread_cond_signal(&async_cb_cond);
+        pthread_mutex_unlock(&async_cb_mutex);
 #endif
 
         /* Wait for the thread executing the ruby callback to signal it is done */
