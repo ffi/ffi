@@ -36,7 +36,6 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
 
   create_header
   
-  $CFLAGS << " -mwin32 " if RbConfig::CONFIG['host_os'] =~ /cygwin/
   $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if RbConfig::CONFIG['host_os'] =~ /mswin/
 
   create_makefile("ffi_c")
