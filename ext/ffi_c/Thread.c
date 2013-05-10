@@ -25,7 +25,7 @@
 # include "win32/stdint.h"
 #endif
 
-#ifndef _WIN32
+#if defined(__CYGWIN__) || !defined(_WIN32)
 # include <pthread.h>
 # include <errno.h>
 # include <signal.h>

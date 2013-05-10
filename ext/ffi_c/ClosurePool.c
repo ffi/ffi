@@ -21,7 +21,7 @@
 #include <sys/param.h>
 #endif
 #include <sys/types.h>
-#ifndef _WIN32
+#if defined(__CYGWIN__) || !defined(_WIN32)
 #  include <sys/mman.h>
 #endif
 #include <stdio.h>
@@ -32,7 +32,7 @@
 # include "win32/stdbool.h"
 # include "win32/stdint.h"
 #endif
-#ifndef _WIN32
+#if defined(__CYGWIN__) || !defined(_WIN32)
 #  include <unistd.h>
 #else
 #  include <winsock2.h>
@@ -225,7 +225,7 @@ rbffi_Closure_CodeAddress(Closure* handle)
 static long
 getPageSize()
 {
-#if defined(_WIN32) || defined(__WIN32__)
+#if !defined(__CYGWIN__) && (defined(_WIN32) || defined(__WIN32__))
     SYSTEM_INFO si;
     GetSystemInfo(&si);
     return si.dwPageSize;
@@ -237,7 +237,7 @@ getPageSize()
 static void*
 allocatePage(void)
 {
-#if defined(_WIN32) || defined(__WIN32__)
+#if !defined(__CYGWIN__) && (defined(_WIN32) || defined(__WIN32__))
     return VirtualAlloc(NULL, pageSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #else
     caddr_t page = mmap(NULL, pageSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
@@ -248,7 +248,7 @@ allocatePage(void)
 static bool
 freePage(void *addr)
 {
-#if defined(_WIN32) || defined(__WIN32__)
+#if !defined(__CYGWIN__) && (defined(_WIN32) || defined(__WIN32__))
     return VirtualFree(addr, 0, MEM_RELEASE);
 #else
     return munmap(addr, pageSize) == 0;
@@ -258,7 +258,7 @@ freePage(void *addr)
 static bool
 protectPage(void* page)
 {
-#if defined(_WIN32) || defined(__WIN32__)
+#if !defined(__CYGWIN__) && (defined(_WIN32) || defined(__WIN32__))
     DWORD oldProtect;
     return VirtualProtect(page, pageSize, PAGE_EXECUTE_READ, &oldProtect);
 #else
