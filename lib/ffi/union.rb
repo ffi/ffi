@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2010 Wayne Meissner
+# Copyright (C) 2009 Andrea Fazzi <andrea.fazzi@alcacoop.it>
 #
 # All rights reserved.
 #

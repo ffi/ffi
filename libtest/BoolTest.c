@@ -1,5 +1,8 @@
 /*
- * Copyright (c) 2007 Wayne Meissner. All rights reserved.
+ * Copyright (c) 2007 Wayne Meissner.
+ * Copyright (c) 2009 Aman Gupta.
+ *
+ * All rights reserved.
  *
  * For licensing, see LICENSE.SPECS
  */
