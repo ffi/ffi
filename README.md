@@ -57,7 +57,7 @@ or from the git repository on github:
 
 ## License
 
-The ffi library is covered by the LGPL3 license, also see the LICENSE file.
+The ffi library is covered by the BSD license, also see the LICENSE file.
 The specs are shared with Rubyspec and are licensed by the same license
 as Rubyspec, see the LICENSE.SPECS file.
 

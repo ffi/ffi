@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/ffi_c/extconf.rb'
   s.has_rdoc = false
   s.rdoc_options = %w[--exclude=ext/ffi_c/.*\.o$ --exclude=ffi_c\.(bundle|so)$]
-  s.license = 'LGPL-3'
+  s.license = 'BSD'
   s.require_paths << 'ext/ffi_c'
   s.required_ruby_version = '>= 1.8.7'
   s.add_development_dependency 'rake'

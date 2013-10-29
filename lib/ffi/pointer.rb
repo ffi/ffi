@@ -1,25 +1,8 @@
 #
 # Copyright (C) 2008, 2009 Wayne Meissner
-#
-# All rights reserved.
+# Copyright (c) 2007, 2008 Evan Phoenix
 #
 # This file is part of ruby-ffi.
-#
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
-#
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Parts of this file are derived from code under the following license.
-#
-# Copyright (c) 2007, 2008 Evan Phoenix
 #
 # All rights reserved.
 #
@@ -31,7 +14,7 @@
 # * Redistributions in binary form must reproduce the above copyright notice
 #   this list of conditions and the following disclaimer in the documentation
 #   and/or other materials provided with the distribution.
-# * Neither the name of the Evan Phoenix nor the names of its contributors
+# * Neither the name of the Ruby FFI project nor the names of its contributors
 #   may be used to endorse or promote products derived from this software
 #   without specific prior written permission.
 #

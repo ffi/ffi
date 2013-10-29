@@ -1,6 +1,6 @@
-# Parts of this file are derived from code under the following license.
-#
 # Copyright (C) 2008 Mike Dalessio
+#
+# This file is part of ruby-ffi.
 #
 # All rights reserved.
 #
@@ -12,7 +12,7 @@
 # * Redistributions in binary form must reproduce the above copyright notice
 #   this list of conditions and the following disclaimer in the documentation
 #   and/or other materials provided with the distribution.
-# * Neither the name of the Evan Phoenix nor the names of its contributors
+# * Neither the name of the Ruby FFI project nor the names of its contributors
 #   may be used to endorse or promote products derived from this software
 #   without specific prior written permission.
 #
