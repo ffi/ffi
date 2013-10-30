@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.homepage = 'http://wiki.github.com/ffi/ffi'
   s.summary = 'Ruby FFI'
   s.description = 'Ruby FFI library'
-  s.files = %w(ffi.gemspec LICENSE COPYING README.md Rakefile) + Dir.glob("{ext,gen,lib,spec,libtest}/**/*").reject { |f| f =~ /lib\/[12]\.[089]/}
+  s.files = %w(ffi.gemspec LICENSE COPYING README.md Rakefile) + Dir.glob("{ext,gen,lib,spec,libtest}/**/*").reject { |f| f =~ /(lib\/[12]\.[089]|\.so|\.bundle)/}
   s.extensions << 'ext/ffi_c/extconf.rb'
   s.has_rdoc = false
   s.rdoc_options = %w[--exclude=ext/ffi_c/.*\.o$ --exclude=ffi_c\.(bundle|so)$]
