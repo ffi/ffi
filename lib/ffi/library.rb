@@ -114,8 +114,8 @@ module FFI
 
             rescue Exception => ex
               ldscript = false
-              if ex.message =~ /(([^ \t()])+\.so([^ \t:()])*):([ \t])*invalid ELF header/
-                if File.read($1) =~ /GROUP *\( *([^ \)]+) *\)/
+              if ex.message =~ /(([^ \t()])+\.so([^ \t:()])*):([ \t])*(invalid ELF header|file too short)/
+                if File.read($1) =~ /(?:GROUP|INPUT) *\( *([^ \)]+)/
                   libname = $1
                   ldscript = true
                 end
