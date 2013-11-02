@@ -14,7 +14,7 @@ describe FFI::Struct, ' by_ref' do
     @api = Module.new do 
       extend FFI::Library
       ffi_lib TestLibrary::PATH
-      fn = FFI::Type::POINTER.size == FFI::Type::LONG.size ? :ret_ulong : ret_uint64_t
+      fn = FFI::Type::POINTER.size == FFI::Type::LONG.size ? :ret_ulong : :ret_u64
       attach_function :struct_test, fn, [ struct_class.by_ref ], :pointer
     end
   end
