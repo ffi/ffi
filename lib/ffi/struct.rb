@@ -76,7 +76,7 @@ module FFI
       end
 
      def put(ptr, value)
-       raise TypeError, "wrong value type (expected #{type.struct_class}" unless value.is_a?(type.struct_class)
+       raise TypeError, "wrong value type (expected #{type.struct_class})" unless value.is_a?(type.struct_class)
        ptr.slice(self.offset, self.size).__copy_from__(value.pointer, self.size)
      end
     end
@@ -258,7 +258,7 @@ module FFI
       #    end
       #  @note Creating a layout from a hash +spec+ is supported only for Ruby 1.9.
       def layout(*spec)
-#        raise RuntimeError, "struct layout already defined for #{self.inspect}" if defined?(@layout)
+        #raise RuntimeError, "struct layout already defined for #{self.inspect}" if defined?(@layout)
         return @layout if spec.size == 0
 
         builder = StructLayoutBuilder.new
