@@ -334,7 +334,7 @@ module FFI
           def self.#{mname}
             @@ffi_gvar_#{mname}
           end
-code
+        code
 
       else
         sc = Class.new(FFI::Struct)
