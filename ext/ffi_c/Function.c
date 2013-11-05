@@ -759,8 +759,8 @@ invoke_callback(void* data)
         VALUE rbParamType = rb_ary_entry(cbInfo->rbParameterTypes, i);
 
         if (unlikely(paramType->nativeType == NATIVE_MAPPED)) {
-            paramType = ((MappedType *) paramType)->type;
             rbParamType = ((MappedType *) paramType)->rbType;
+            paramType = ((MappedType *) paramType)->type;
         }
 
         switch (paramType->nativeType) {
