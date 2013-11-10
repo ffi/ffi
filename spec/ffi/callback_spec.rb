@@ -664,4 +664,27 @@ describe "Callback with " do
     }.should raise_error(ArgumentError)
   end
 
+  #
+  # Test stdcall convention with function and callback.
+  # This is Windows 32-bit only.
+  #
+  if FFI::Platform::OS =~ /windows|cygwin/ && FFI::Platform::ARCH == 'i386'
+    module LibTestStdcall
+      extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      ffi_convention :stdcall
+
+      callback :cbStdcall, [ :pointer, :long ], :void
+      attach_function :testCallbackStdcall, 'testClosureStdcall', [ :pointer, :cbStdcall, :long ], :bool
+    end
+
+    it "stdcall convention" do
+      v = 0xdeadbeef
+      po = FFI::MemoryPointer.new :long
+      pr = proc{|a,i| v = a,i; i }
+      res = LibTestStdcall.testCallbackStdcall(po, pr, 0x7fffffff)
+      v.should == [po, 0x7fffffff]
+      res.should be_true
+    end
+  end
 end
