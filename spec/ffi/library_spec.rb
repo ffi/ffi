@@ -24,6 +24,29 @@ describe "Library" do
     end
   end
 
+  if FFI::Platform::OS =~ /windows|cygwin/ && FFI::Platform::ARCH == 'i386'
+    module LibTestStdcall
+      extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      ffi_convention :stdcall
+
+      class StructUCDP < FFI::Struct
+        layout :a1, :uchar,
+          :a2, :double,
+          :a3, :pointer
+      end
+
+      attach_function :testStdcallManyParams, [ :pointer, :int8, :int16, :int32, :int64,
+              StructUCDP.by_value, StructUCDP.by_ref, :float, :double ], :void
+    end
+
+    it "adds stdcall decoration: testStdcallManyParams@64" do
+      s = LibTestStdcall::StructUCDP.new
+      po = FFI::MemoryPointer.new :long
+      LibTestStdcall.testStdcallManyParams po, 1, 2, 3, 4, s, s, 1.0, 2.0
+    end
+  end
+
   describe "ffi_lib" do
     it "empty name list should raise error" do
       lambda {

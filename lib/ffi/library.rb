@@ -279,11 +279,11 @@ module FFI
       if ffi_convention == :stdcall
         # Get the size of each parameter
         size = arg_types.inject(0) do |mem, arg|
-          mem + arg.size
+          size = arg.size
+          # The size must be a multiple of 4
+          size += (4 - size) % 4
+          mem + size
         end
-
-        # Next, the size must be a multiple of 4
-        size += (4 - size) % 4
 
         result << "_#{name.to_s}@#{size}" # win32
         result << "#{name.to_s}@#{size}" # win64
