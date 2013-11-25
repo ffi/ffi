@@ -374,7 +374,10 @@ module FFI
       end
 
       native_params = params.map { |e| find_type(e) }
-      raise ArgumentError, "callbacks cannot have variadic parameters" if native_params.include?(FFI::Type::VARARGS)
+
+      # Remove so program does not halt when controllers gets connected with incorrect params, this happens on Mac OSx Mavericks.
+      # output warning instead, after first call controller gets connected and params work fine.
+      puts "Warning: callbacks cannot have variadic parameters" if native_params.include?(FFI::Type::VARARGS)
       options = Hash.new
       options[:convention] = ffi_convention
       options[:enums] = @ffi_enums if defined?(@ffi_enums)
