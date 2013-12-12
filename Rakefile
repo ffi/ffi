@@ -69,7 +69,18 @@ OS = case RbConfig::CONFIG['host_os'].downcase
     RbConfig::CONFIG['host_os'].downcase
   end
 
-GMAKE = system('which gmake >/dev/null') && 'gmake' || 'make'
+def which(name)
+  exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
+  ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+    exts.each do |ext|
+      app = File.join(path, name+ext)
+      return app if File.executable? app
+    end
+  end
+  nil
+end
+
+GMAKE = which('gmake').nil? ? 'make' : 'gmake'
 
 LIBTEST = "build/libtest.#{LIBEXT}"
 BUILD_DIR = "build"
