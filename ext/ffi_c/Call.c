@@ -246,7 +246,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
             case NATIVE_ULONG:
                 if (unlikely(type == T_SYMBOL && enums != Qnil)) {
                     VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
-                    *(ffi_sarg *) param = NUM2ULONG(value);
+                    *(ffi_arg *) param = NUM2ULONG(value);
                 } else {
                     *(ffi_arg *) param = NUM2ULONG(argv[argidx]);
                 }
@@ -256,19 +256,37 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                 break;
 
             case NATIVE_FLOAT32:
-                param->f32 = (float) NUM2DBL(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->f32 = (float) NUM2DBL(value);
+                } else {
+                    param->f32 = (float) NUM2DBL(argv[argidx]);
+                }
+
                 ADJ(param, FLOAT32);
                 ++argidx;
                 break;
 
             case NATIVE_FLOAT64:
-                param->f64 = NUM2DBL(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->f64 = NUM2DBL(value);
+                } else {
+                    param->f64 = NUM2DBL(argv[argidx]);
+                }
+
                 ADJ(param, FLOAT64);
                 ++argidx;
                 break;
 
             case NATIVE_LONGDOUBLE:
-                param->ld = rbffi_num2longdouble(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->ld = rbffi_num2longdouble(value);
+                } else {
+                    param->ld = rbffi_num2longdouble(argv[argidx]);
+                }
+
                 ADJ(param, LONGDOUBLE);
                 ++argidx;
                 break;
