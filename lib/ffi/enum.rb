@@ -86,8 +86,13 @@ module FFI
 
     attr_reader :tag
 
-    # @param [nil, Enumerable] info
-    # @param tag enum tag
+    # @overload initialize(info, tag=nil)
+    #   @param [nil, Enumerable] info
+    #   @param [nil, Symbol] tag enum tag
+    # @overload initialize(native_type, info, tag=nil)
+    #   @param [FFI::Type] native_type Native type for new Enum
+    #   @param [nil, Enumerable] info symbols and values for new Enum
+    #   @param [nil, Symbol] tag name of new Enum
     def initialize(*args)
       @native_type = args.shift if args.first.kind_of?(FFI::Type)
       info, @tag = *args

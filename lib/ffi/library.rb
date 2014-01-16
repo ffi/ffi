@@ -444,6 +444,25 @@ module FFI
     #  @example
     #   enum [:zero, :one, :two]  # unnamed enum, equivalent to above example
     #  @param [Array] values values for enum
+    # @overload enum(native_type, name, values)
+    #  Create a named enum and specify the native type.
+    #  @example
+    #   enum FFI::Type::UINT64, :foo, [:zero, :one, :two]  # named enum
+    #  @param [FFI::Type] native_type native type for new enum
+    #  @param [Symbol] name name for new enum
+    #  @param [Array] values values for enum
+    # @overload enum(native_type, *args)
+    #  Create an unnamed enum and specify the native type.
+    #  @example
+    #   enum FFI::Type::UINT64, :zero, :one, :two  # unnamed enum
+    #  @param [FFI::Type] native_type native type for new enum
+    #  @param args values for enum
+    # @overload enum(native_type, values)
+    #  Create an unnamed enum and specify the native type.
+    #  @example
+    #   enum Type::UINT64, [:zero, :one, :two]  # unnamed enum, equivalent to above example
+    #  @param [FFI::Type] native_type native type for new enum
+    #  @param [Array] values values for enum
     # @return [FFI::Enum]
     # Create a new {FFI::Enum}.
     def enum(*args)
