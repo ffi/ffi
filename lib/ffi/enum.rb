@@ -88,8 +88,9 @@ module FFI
 
     # @param [nil, Enumerable] info
     # @param tag enum tag
-    def initialize(info, tag=nil)
-      @tag = tag
+    def initialize(*args)
+      @native_type = args.shift if args.first.kind_of?(FFI::Type)
+      info, @tag = *args
       @kv_map = Hash.new
       unless info.nil?
         last_cst = nil
@@ -144,9 +145,9 @@ module FFI
     alias to_hash symbol_map
 
     # Get native type of Enum
-    # @return [Type::INT]
+    # @return [Type]
     def native_type
-      Type::INT
+      @native_type || Type::INT
     end
 
     # @param [Symbol, Integer, #to_int] val
