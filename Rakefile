@@ -82,8 +82,8 @@ end
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
   desc "Run all specs"
-  task :specs => TEST_DEPS do
-    sh %{#{Gem.ruby} -w -S rspec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+  task :specs, [:options] => TEST_DEPS do |t, args|
+    sh %{#{Gem.ruby} -w -S rspec #{args.options || Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
@@ -92,9 +92,9 @@ if RUBY_PLATFORM == "java"
 else
   TEST_DEPS.unshift :compile
   desc "Run all specs"
-  task :specs => TEST_DEPS do
+  task :specs, [:options] => TEST_DEPS do |t, args|
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{args.options || Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
