@@ -12,7 +12,7 @@ require 'fileutils'
 require 'rbconfig'
 require 'rspec/core/rake_task'
 
-RSpec::Core::RakeTask.new(:spec) do |config|
+RSpec::Core::RakeTask.new(:spec => :compile) do |config|
   config.rspec_opts = YAML.load_file 'spec/spec.opts'
 end
 
