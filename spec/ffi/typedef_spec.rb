@@ -3,7 +3,9 @@
 # For licensing, see LICENSE.SPECS
 #
 
-require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
+require_relative 'spec_helper'
+
 describe "Custom type definitions" do
   it "attach_function with custom typedef" do
     module CustomTypedef

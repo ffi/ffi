@@ -3,7 +3,9 @@
 # For licensing, see LICENSE.SPECS
 #
 
-require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
+require_relative 'spec_helper'
+
 describe "Struct tests" do
   StructTypes = {
     's8' => :char,
@@ -61,7 +63,7 @@ describe "Struct tests" do
   it "Struct#[:pointer]=struct" do
     smp = FFI::MemoryPointer.new :pointer
     s = PointerMember.new smp
-    lambda { s[:pointer] = s }.should_not raise_error
+    lambda { s[:pointer] = s }.should_not raise_error Exception
   end
   it "Struct#[:pointer]=nil" do
     smp = FFI::MemoryPointer.new :pointer
@@ -121,21 +123,19 @@ describe "Struct tests" do
     s[:b] = 0xfee1deadbeef
     mp.get_int64(4).should == 0xfee1deadbeef
   end
-  rb_maj, rb_min = RUBY_VERSION.split('.')
-  if rb_maj.to_i >= 1 && rb_min.to_i >= 9 || RUBY_PLATFORM =~ /java/
-    it "Struct#layout withs with a hash of :name => type" do
-      class HashLayout < FFI::Struct
-        layout :a => :int, :b => :long_long
-      end
-      ll_off = (FFI::TYPE_UINT64.alignment == 4? 4 : 8)
-      HashLayout.size.should == (ll_off + 8)
-      mp = FFI::MemoryPointer.new(HashLayout.size)
-      s = HashLayout.new mp
-      s[:a] = 0x12345678
-      mp.get_int(0).should == 0x12345678
-      s[:b] = 0xfee1deadbeef
-      mp.get_int64(ll_off).should == 0xfee1deadbeef
-      end
+
+  it "Struct#layout withs with a hash of :name => type" do
+    class HashLayout < FFI::Struct
+      layout :a => :int, :b => :long_long
+    end
+    ll_off = (FFI::TYPE_UINT64.alignment == 4? 4 : 8)
+    HashLayout.size.should == (ll_off + 8)
+    mp = FFI::MemoryPointer.new(HashLayout.size)
+    s = HashLayout.new mp
+    s[:a] = 0x12345678
+    mp.get_int(0).should == 0x12345678
+    s[:b] = 0xfee1deadbeef
+    mp.get_int64(ll_off).should == 0xfee1deadbeef
   end
 
   it "subclass overrides initialize without calling super" do
@@ -163,7 +163,7 @@ describe "Struct tests" do
         layout :c, :char
       end
       attach_function :struct_field_s8, [ TestStruct.in ], :char
-    end
+    end.should be_an_instance_of FFI::Function
   end
   it "Can use Struct subclass as IN parameter type" do
     module StructParam2
@@ -173,7 +173,7 @@ describe "Struct tests" do
         layout :c, :char
       end
       attach_function :struct_field_s8, [ TestStruct.in ], :char
-    end
+    end.should be_an_instance_of FFI::Function
   end
   it "Can use Struct subclass as OUT parameter type" do
     module StructParam3
@@ -183,7 +183,7 @@ describe "Struct tests" do
         layout :c, :char
       end
       attach_function :struct_field_s8, [ TestStruct.out ], :char
-    end
+    end.should be_an_instance_of FFI::Function
   end
   it "can be passed directly as a :pointer parameter" do
     class TestStruct < FFI::Struct
@@ -261,7 +261,7 @@ describe "Struct tests" do
   def test_num_field(type, v)
     klass = Class.new(FFI::Struct)
     klass.layout :v, type, :dummy, :long
-    
+
     s = klass.new
     s[:v] = v
     s.pointer.send("get_#{type.to_s}", 0).should == v
@@ -312,11 +312,11 @@ describe "Struct tests" do
     extend FFI::Library
     TestEnum = enum :test_enum, [:c1, 10, :c2, 20, :c3, 30, :c4, 40]
     class TestStruct < FFI::Struct
-      layout :a, :int, :c, :test_enum, 
+      layout :a, :int, :c, :test_enum,
         :d, [ TestEnum, TestEnum.symbols.length ]
     end
   end
-  
+
   it ":enum field r/w" do
     s = EnumFields::TestStruct.new
     s[:c] = :c3
@@ -324,22 +324,22 @@ describe "Struct tests" do
     s.pointer.get_uint(FFI::Type::INT32.size).should == 30
     s[:c].should == :c3
   end
-  
+
   it "array of :enum field" do
     s = EnumFields::TestStruct.new
     EnumFields::TestEnum.symbols.each_with_index do |val, i|
       s[:d][i] = val
     end
-    
+
     EnumFields::TestEnum.symbols.each_with_index do |val, i|
       s.pointer.get_uint(FFI::Type::INT32.size * (2 + i)).should == EnumFields::TestEnum[val]
     end
-    
+
     s[:d].each_with_index do |val, i|
       val.should == EnumFields::TestEnum.symbols[i]
     end
   end
-  
+
   module CallbackMember
     extend FFI::Library
     ffi_lib TestLibrary::PATH
@@ -396,6 +396,53 @@ describe "Struct tests" do
   end
 end
 
+describe FFI::Struct, ".layout" do
+  module FFISpecs
+    module LibTest
+      extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
+    end
+  end
+
+  describe "when derived class is not assigned to any constant" do
+    it "resolves a built-in type" do
+      klass = Class.new FFI::Struct
+      klass.layout :number, :int
+
+      instance = klass.new
+      instance[:number] = 0xA1
+      FFISpecs::LibTest.ptr_ret_int32_t(instance, 0).should == 0xA1
+    end
+  end
+
+  describe "when derived class is assigned to a constant" do
+    it "resolves a built-in type" do
+      class FFISpecs::TestStruct < FFI::Struct
+        layout :number, :int
+      end
+
+      instance = FFISpecs::TestStruct.new
+      instance[:number] = 0xA1
+      FFISpecs::LibTest.ptr_ret_int32_t(instance, 0).should == 0xA1
+    end
+
+    it "resolves a type from the enclosing module" do
+      module FFISpecs::LibTest
+        typedef :uint, :custom_int
+
+        class TestStruct < FFI::Struct
+          layout :number, :custom_int
+        end
+      end
+
+      instance = FFISpecs::LibTest::TestStruct.new
+      instance[:number] = 0xA1
+      FFISpecs::LibTest.ptr_ret_int32_t(instance, 0).should == 0xA1
+    end
+  end
+end
+
 describe FFI::Struct, ' with a nested struct field'  do
   module LibTest
     extend FFI::Library
@@ -420,7 +467,7 @@ describe FFI::Struct, ' with a nested struct field'  do
     LibTest::ContainerStruct.size.should == 8
   end
   it 'should return a Struct object when the field is accessed' do
-    @cs[:ns].is_a?(FFI::Struct).should be_true 
+    @cs[:ns].is_a?(FFI::Struct).should be_true
   end
   it 'should read a value from memory' do
     @cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
@@ -432,7 +479,7 @@ describe FFI::Struct, ' with a nested struct field'  do
     LibTest.struct_align_nested_struct(@cs.to_ptr).should == 456
   end
 
-  it 'should be able to assign struct instance to nested field' do 
+  it 'should be able to assign struct instance to nested field' do
     cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
     ns = LibTest::NestedStruct.new
     ns[:i] = 567
@@ -540,15 +587,18 @@ describe FFI::Struct, ' by value'  do
     s = LibTest::S8S32.new
     s[:s8] = 0x12
     s[:s32] = 0x34567890
-    
+
     LibTest.struct_s8s32_s32_ret_s32(s, 0x1eefdead).should == 0x1eefdead
   end
 
-  it 'parameter with following s64' do
-    s = LibTest::S8S32.new
-    s[:s8] = 0x12
-    s[:s32] = 0x34567890
-  end
+  # it 'parameter with following s64' do
+  #   s = LibTest::S8S64.new
+  #   s[:s8] = 0x12
+  #   s[:s64] = 0x34567890
+  #
+  #
+  #   LibTest.struct_s8s64_s64_ret_s64(s, 0x1eefdead1eefdead).should == 0x1eefdead1eefdead
+  # end
 
   it 'parameter with preceding s32,ptr,s32' do
     s = LibTest::S8S32.new
@@ -615,7 +665,7 @@ describe FFI::Struct, ' with an array field'  do
   end
   it 'should allow iteration through the array elements' do
     @s = LibTest::StructWithArray.new(LibTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
-    @s[:a].each_with_index { |elem, i| elem.should == i }  
+    @s[:a].each_with_index { |elem, i| elem.should == i }
   end
   it 'should return the pointer to the array' do
     @s = LibTest::StructWithArray.new(LibTest.struct_make_struct_with_array(0, 1, 2, 3, 4))
@@ -652,7 +702,7 @@ describe 'BuggedStruct' do
   end
   it 'should return correct field/offset pairs' do
     LibTest::BuggedStruct.offsets.sort do |a, b|
-      a[1] <=> b[1] 
+      a[1] <=> b[1]
     end.should == [[:visible, 0], [:x, 4], [:y, 8], [:rx, 12], [:ry, 14], [:order, 16], [:size, 17]]
   end
 end
@@ -702,7 +752,7 @@ describe "Struct allocation" do
       end
       struct = c.new
       struct[:b] = ! struct[:b]
-    end.should_not raise_error
+    end.should_not raise_error Exception
   end
 
 end
@@ -713,7 +763,7 @@ describe "variable-length arrays" do
       Class.new(FFI::Struct) do
         layout :count, :int, :data, [ :char, 0 ]
       end
-    }.should_not raise_error
+    }.should_not raise_error Exception
   end
 
   it "zero length array before last element should raise error" do

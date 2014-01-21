@@ -3,7 +3,9 @@
 # For licensing, see LICENSE.SPECS
 #
 
-require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
+require_relative 'spec_helper'
+
 describe "String tests" do
   include FFI
   module StrLibTest
@@ -43,7 +45,7 @@ describe "String tests" do
     end
   end if false
   it "casts nil as NULL pointer" do
-    StrLibTest.string_dummy(nil)
+    StrLibTest.string_dummy(nil).should == nil
   end
   it "return nil for NULL char*" do
     StrLibTest.string_null.should == nil

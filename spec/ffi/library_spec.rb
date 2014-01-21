@@ -3,7 +3,9 @@
 # For licensing, see LICENSE.SPECS
 #
 
-require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
+require_relative 'spec_helper'
+
 describe "Library" do
   describe "#ffi_convention" do
     it "defaults to :default" do

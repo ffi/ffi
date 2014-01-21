@@ -1,6 +1,10 @@
-# coding: utf-8
-require "rubygems"
-require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+#
+# This file is part of ruby-ffi.
+# For licensing, see LICENSE.SPECS
+#
+
+require 'ffi'
+require_relative 'spec_helper'
 
 module CTest
   extend FFI::Library
@@ -17,7 +21,7 @@ describe "MemoryPointer" do
   end
 
   it "does not make a pointer from non-strings" do
-    expect { FFI::MemoryPointer.from_string(nil) }.to raise_error(TypeError)
+    expect {FFI::MemoryPointer.from_string(nil)}.to raise_error(TypeError)
   end
 
   it "makes a pointer from a string with multibyte characters" do

@@ -3,7 +3,8 @@
 # For licensing, see LICENSE.SPECS
 #
 
-require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
+require_relative 'spec_helper'
 
 describe FFI::Struct, ' with inline callback functions' do
   it 'should be able to define inline callback field' do
@@ -19,7 +20,7 @@ describe FFI::Struct, ' with inline callback functions' do
       end
       attach_function :struct_call_add_cb, [TestStruct, :int, :int], :int
       attach_function :struct_call_sub_cb, [TestStruct, :int, :int], :int
-    end
+    end.should be_an_instance_of FFI::Function
   end
   it 'should take methods as callbacks' do
     module CallbackMember2
