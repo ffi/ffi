@@ -7,18 +7,11 @@ rvm:
   - "2.1"
   - "ruby-head"
   - "rbx-2.1.1"
-<<<<<<< HEAD
   - "rbx"
 matrix:
   allow_failures:
     - rvm: "rbx-2.1.1"
     - rvm: "rbx"
-=======
-  - "rbx-head"
-matrix:
-  allow_failures:
-    - rvm: "rbx-2.1.1"
     - rvm: "rbx-head"
->>>>>>> add rbx dependencies
     - rvm: "1.8.7"
     - rvm: "1.9.3"

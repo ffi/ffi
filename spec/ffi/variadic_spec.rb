@@ -10,8 +10,24 @@ describe "Function with variadic arguments" do
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
+    enum :enum_type1, [:c1, :c2]
+    enum :enum_type2, [:c3, 42, :c4]
     attach_function :pack_varargs, [ :buffer_out, :string, :varargs ], :void
+    attach_function :pack_varargs2, [ :buffer_out, :enum_type1, :string, :varargs ], :enum_type1
   end
+
+  it "takes enum arguments" do
+    buf = FFI::Buffer.new :long_long, 2
+    LibTest.pack_varargs(buf, "ii", :int, :c3, :int, :c4)
+    buf.get_int64(0).should == 42
+    buf.get_int64(8).should == 43
+  end
+
+  it "returns symbols for enums" do
+    buf = FFI::Buffer.new :long_long, 2
+    LibTest.pack_varargs2(buf, :c1, "ii", :int, :c3, :int, :c4).should eql(:c2)
+  end
+
   [ 0, 127, -128, -1 ].each do |i|
     it "call variadic with (:char (#{i})) argument" do
       buf = FFI::Buffer.new :long_long

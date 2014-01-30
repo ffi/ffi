@@ -64,7 +64,6 @@ def compile_library(path, lib)
     end
 
     if $?.exitstatus != 0
-      puts "ERROR:\n#{output}"
       raise "Unable to compile \"#{lib}\""
     end
   end

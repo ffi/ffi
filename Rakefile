@@ -112,6 +112,7 @@ CLOBBER.include FileList["lib/**/ffi_c.#{RbConfig::CONFIG['DLEXT']}"]
 CLOBBER.include 'lib/ffi/types.conf'
 CLOBBER.include 'conftest.dSYM'
 CLOBBER.include 'pkg'
+CLOBBER.include 'spec/ffi/fixtures/libtest.dylib'
 
 task :distclean => :clobber
 
