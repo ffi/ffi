@@ -4,8 +4,12 @@ rvm:
   - "1.9.3"
   - "1.8.7"
   - "2.0.0"
+  - "2.1.0"
   - "ruby-head"
   - "rbx-2.1.1"
+  - "rbx"
 matrix:
   allow_failures:
     - rvm: "rbx-2.1.1"
+    - rvm: "rbx"
+    - rvm: "1.8.7"
