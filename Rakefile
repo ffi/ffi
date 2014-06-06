@@ -1,5 +1,4 @@
 require 'rubygems'
-require 'rubygems/package_task'
 require 'rubygems/tasks'
 require 'rbconfig'
 require 'rake/clean'
