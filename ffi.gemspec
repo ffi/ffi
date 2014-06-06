@@ -15,8 +15,8 @@ Gem::Specification.new do |s|
   s.license = 'BSD'
   s.require_paths << 'ext/ffi_c'
   s.required_ruby_version = '>= 1.8.7'
-  s.add_development_dependency 'rake'
-  s.add_development_dependency 'rake-compiler', '>=0.6.0'
-  s.add_development_dependency 'rspec'
-  s.add_development_dependency 'rubygems-tasks'
+  s.add_development_dependency 'rake' '~> 10.1'
+  s.add_development_dependency 'rake-compiler', '~> 0.9'
+  s.add_development_dependency 'rspec', '~> 2.14.1'
+  s.add_development_dependency 'rubygems-tasks', "~> 0.2.4"
 end
