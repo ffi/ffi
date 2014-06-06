@@ -1,11 +1,9 @@
-require 'rubygems'
 require 'rubygems/tasks'
 require 'rbconfig'
 require 'rake/clean'
 
 USE_RAKE_COMPILER = (RUBY_PLATFORM =~ /java/) ? false : true
 if USE_RAKE_COMPILER
-  gem 'rake-compiler', '>=0.6.0'
   require 'rake/extensiontask'
 end
 
