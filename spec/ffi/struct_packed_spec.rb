@@ -3,8 +3,8 @@
 # For licensing, see LICENSE.SPECS
 #
 
+require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 require 'ffi'
-require_relative 'spec_helper'
 
 describe FFI::Struct do
   it "packed :char followed by :int should have size of 5" do

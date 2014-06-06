@@ -3,8 +3,8 @@
 # For licensing, see LICENSE.SPECS
 #
 
+require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 require 'ffi'
-require_relative 'spec_helper'
 
 describe "FFI::Platform::LIBSUFFIX" do
   it "returns 'so'", if: RbConfig::CONFIG['host_os'].match('linux') do
