@@ -4,6 +4,7 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
 
 describe FFI::Struct do
   it "packed :char followed by :int should have size of 5" do

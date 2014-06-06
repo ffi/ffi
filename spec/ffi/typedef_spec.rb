@@ -4,6 +4,8 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
+
 describe "Custom type definitions" do
   it "attach_function with custom typedef" do
     module CustomTypedef

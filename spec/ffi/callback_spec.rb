@@ -4,6 +4,7 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
 
 describe "Callback" do
 #  module LibC
@@ -253,6 +254,9 @@ describe "Callback" do
       s2[:f32] = struct[:f32]
       s2[:s32] = struct[:s32]
     end
+    expect(s2[:s8]).to eql 0x12
+    expect(s2[:s32]).to eql 0x1eefbeef
+    expect(s2[:f32]).to be_within(0.0000001).of 1.234567
   end
 
   
@@ -264,7 +268,7 @@ describe "Callback" do
 
   describe "When the callback is considered optional by the underlying library" do
     it "should handle receiving 'nil' in place of the closure" do
-      LibTest.testOptionalCallbackCrV(nil, 13)
+      LibTest.testOptionalCallbackCrV(nil, 13).should be_nil
     end
   end
 
@@ -288,7 +292,7 @@ describe "Callback" do
         callback :cb_return_type_1, [ :short ], :short
         callback :cb_lookup_1, [ :short ], :cb_return_type_1
         attach_function :testReturnsCallback_1, :testReturnsClosure, [ :cb_lookup_1, :short ], :cb_return_type_1
-      end      
+      end.should be_an_instance_of FFI::Function
     end
 
     it "should return a callback" do
@@ -345,7 +349,7 @@ describe "Callback" do
         callback :cb_argument, [ :int ], :int
         callback :cb_with_cb_argument, [ :cb_argument, :int ], :int
         attach_function :testCallbackAsArgument_2, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
-      end   
+      end.should be_an_instance_of FFI::Function
     end
     it 'should be able to use the callback argument' do
       module LibTest
@@ -644,7 +648,7 @@ describe "Callback with " do
     magic = LibTest::S8F32S32.new
     LibTest.testCallbackYrV(magic) { |i| v = i }
     v.class.should == magic.class
-    v.pointer == magic.pointer
+    v.pointer.should == magic.pointer
   end
 
   it "struct by reference argument with nil value" do

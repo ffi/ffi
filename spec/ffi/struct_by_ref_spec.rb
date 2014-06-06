@@ -4,6 +4,7 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
 
 describe FFI::Struct, ' by_ref' do
   before :all do
@@ -11,7 +12,7 @@ describe FFI::Struct, ' by_ref' do
       layout :a, :pointer
     end
 
-    @api = Module.new do 
+    @api = Module.new do
       extend FFI::Library
       ffi_lib TestLibrary::PATH
       fn = FFI::Type::POINTER.size == FFI::Type::LONG.size ? :ret_ulong : :ret_u64
@@ -23,7 +24,7 @@ describe FFI::Struct, ' by_ref' do
     s = @struct_class.new
     @api.struct_test(s).should == s.pointer
   end
-  
+
   it "should accept nil" do
     @api.struct_test(nil).should == nil
   end

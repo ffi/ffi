@@ -4,6 +4,8 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
+
 describe "Function with primitive integer arguments" do
   module LibTest
     extend FFI::Library

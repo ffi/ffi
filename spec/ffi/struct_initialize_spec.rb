@@ -4,6 +4,7 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
 
 describe FFI::Struct, ' with an initialize function' do
   it "should call the initialize function" do

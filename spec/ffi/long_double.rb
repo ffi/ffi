@@ -4,6 +4,7 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
 require 'bigdecimal'
 
 describe ":long_double arguments and return values" do

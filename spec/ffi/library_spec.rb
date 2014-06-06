@@ -4,6 +4,8 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
+
 describe "Library" do
   describe "#ffi_convention" do
     it "defaults to :default" do

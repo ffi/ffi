@@ -4,6 +4,7 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
+require 'ffi'
 
 describe FFI::Function do
   module LibTest
@@ -16,13 +17,14 @@ describe FFI::Function do
                                         FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_GLOBAL)
   end
   it 'is initialized with a signature and a block' do
-    FFI::Function.new(:int, []) { }
+    fn = FFI::Function.new(:int, []) { 5 }
+    expect(fn.call).to eql 5
   end
   it 'raises an error when passing a wrong signature' do
     lambda { FFI::Function.new([], :int).new { } }.should raise_error TypeError 
   end
   it 'returns a native pointer' do
-    FFI::Function.new(:int, []) { }.kind_of? FFI::Pointer
+    expect(FFI::Function.new(:int, []) { }).to be_a_kind_of FFI::Pointer
   end
   it 'can be used as callback from C passing to it a block' do
     function_add = FFI::Function.new(:int, [:int, :int]) { |a, b| a + b }

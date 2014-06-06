@@ -10,6 +10,11 @@ end
 require 'date'
 require 'fileutils'
 require 'rbconfig'
+require 'rspec/core/rake_task'
+
+RSpec::Core::RakeTask.new(:spec => :compile) do |config|
+  config.rspec_opts = YAML.load_file 'spec/spec.opts'
+end
 
 
 LIBEXT = case RbConfig::CONFIG['host_os'].downcase
@@ -100,13 +105,13 @@ end
 desc "Build all packages"
 task :package => 'gem:package'
 
-
 CLOBBER.include 'build'
 CLOBBER.include FileList['lib/**/ffi_c.so']
 CLOBBER.include FileList["lib/**/ffi_c.#{RbConfig::CONFIG['DLEXT']}"]
 CLOBBER.include 'lib/ffi/types.conf'
 CLOBBER.include 'conftest.dSYM'
 CLOBBER.include 'pkg'
+CLOBBER.include 'spec/ffi/fixtures/libtest.dylib'
 
 task :distclean => :clobber
 
@@ -120,7 +125,7 @@ desc "Build test helper lib"
 task :libtest => "build/libtest.#{LIBEXT}"
 
 desc "Test the extension"
-task :test => [ :specs, :rbxspecs ]
+task :test => [ :spec ]
 
 
 namespace :bench do
