@@ -11,6 +11,7 @@ require 'date'
 require 'fileutils'
 require 'rbconfig'
 require 'rspec/core/rake_task'
+require 'rubygems/package_task'
 
 RSpec::Core::RakeTask.new(:spec => :compile) do |config|
   config.rspec_opts = YAML.load_file 'spec/spec.opts'
