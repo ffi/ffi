@@ -192,17 +192,11 @@ if USE_RAKE_COMPILER
 
   ENV['RUBY_CC_VERSION'].to_s.split(':').each do |ruby_version|
     task "copy:ffi_c:i386-mingw32:#{ruby_version}" do |t|
-      %w[lib #{BUILD_DIR}/i386-mingw32/stage/lib].each do |dir| 
-        if File.exists?("#{dir}/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so")
-          sh "i686-w64-mingw32-strip -S #{dir}/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
-        end
-      end
+      sh "i686-w64-mingw32-strip -S #{BUILD_DIR}/i386-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
 
     task "copy:ffi_c:x64-mingw32:#{ruby_version}" do |t|
-      if File.exists?("#{BUILD_DIR}/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so")
-        sh "x86_64-w64-mingw32-strip -S #{BUILD_DIR}/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
-      end
+      sh "x86_64-w64-mingw32-strip -S #{BUILD_DIR}/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
   end
 end
