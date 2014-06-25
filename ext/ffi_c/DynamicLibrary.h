@@ -38,7 +38,7 @@ extern "C" {
 #define RTLD_LAZY 1
 #endif
 
-#ifndef RTLD_LAZY
+#ifndef RTLD_NOW
 #define RTLD_NOW 2
 #endif
 
