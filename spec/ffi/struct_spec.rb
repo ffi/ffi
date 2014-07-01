@@ -20,7 +20,12 @@ describe "Struct tests" do
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
-    attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
+    begin
+      attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
+    rescue FFI::NotFoundError
+      # NetBSD uses #define instead of typedef for these
+      attach_function :ptr_ret_int32_t, :ptr_ret___int32_t, [ :pointer, :int ], :int
+    end
     attach_function :ptr_from_address, [ :ulong ], :pointer
     attach_function :string_equals, [ :string, :string ], :int
     [ 's8', 's16', 's32', 's64', 'f32', 'f64', 'long' ].each do |t|
@@ -401,7 +406,12 @@ describe FFI::Struct, ".layout" do
     module LibTest
       extend FFI::Library
       ffi_lib TestLibrary::PATH
-      attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
+      begin
+        attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
+      rescue FFI::NotFoundError
+        # NetBSD uses #define instead of typedef for these
+        attach_function :ptr_ret_int32_t, :ptr_ret___int32_t, [ :pointer, :int ], :int
+      end
     end
   end
 
