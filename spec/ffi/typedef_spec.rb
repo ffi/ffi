@@ -62,7 +62,12 @@ describe "Custom type definitions" do
         typedef :int, :bar
         
         ffi_lib TestLibrary::PATH
-        attach_function :ptr_ret_int32_t, [ :string, :foo ], :bar
+        begin
+          attach_function :ptr_ret_int32_t, [ :string, :foo ], :bar
+        rescue FFI::NotFoundError
+          # NetBSD uses #define instead of typedef for these
+          attach_function :ptr_ret_int32_t, :ptr_ret___int32_t, [ :string, :foo ], :bar
+        end
       end
     end.should_not raise_error
   end

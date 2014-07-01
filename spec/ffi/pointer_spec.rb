@@ -10,7 +10,12 @@ require 'delegate'
 module PointerTestLib
   extend FFI::Library
   ffi_lib TestLibrary::PATH
-  attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
+  begin
+    attach_function :ptr_ret_int32_t, [ :pointer, :int ], :int
+  rescue FFI::NotFoundError
+    # NetBSD uses #define instead of typedef for these
+    attach_function :ptr_ret_int32_t, :ptr_ret___int32_t, [ :pointer, :int ], :int
+  end
   attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], :pointer
   attach_function :ptr_set_pointer, [ :pointer, :int, :pointer ], :void
   attach_function :ptr_ret_pointer, [ :pointer, :int ], :pointer
