@@ -170,7 +170,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     ffi_type* ffiReturnType;
     Type** paramTypes;
     VALUE* argv;
-    int paramCount = 0, i;
+    int paramCount = 0, fixedCount = 0, i;
     ffi_status ffiStatus;
     rbffi_frame_t frame = { 0 };
 
@@ -229,8 +229,12 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     if (ffiReturnType == NULL) {
         rb_raise(rb_eArgError, "Invalid return type");
     }
+
+    /*Get the number of fixed args from @fixed array*/
+    fixedCount = RARRAY_LEN(rb_iv_get(self, "@fixed"));
+
 #ifdef HAVE_FFI_PREP_CIF_VAR
-    ffiStatus = ffi_prep_cif_var(&cif, invoker->abi, paramCount, paramCount, ffiReturnType, ffiParamTypes);
+    ffiStatus = ffi_prep_cif_var(&cif, invoker->abi, fixedCount, paramCount, ffiReturnType, ffiParamTypes);
 #else
     ffiStatus = ffi_prep_cif(&cif, invoker->abi, paramCount, ffiReturnType, ffiParamTypes);
 #endif
