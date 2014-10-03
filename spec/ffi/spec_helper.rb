@@ -53,17 +53,19 @@ def compile_library(path, lib)
   dir = File.expand_path(path, File.dirname(__FILE__))
   lib = "#{dir}/#{lib}"
   if !File.exists?(lib)
-    ldshared  = RbConfig::CONFIG["LDSHARED"]
+    ldshared  = RbConfig::CONFIG["LDSHARED"] || "clang -dynamic -bundle"
     libs      = RbConfig::CONFIG["LIBS"]
-    dldflags  = RbConfig::CONFIG["DLDFLAGS"]
+    dldflags  = RbConfig::CONFIG["DLDFLAGS"] || "-Wl,-undefined,dynamic_lookup -Wl,-multiply_defined,suppress"
 
     puts Dir.pwd, dir, File.dirname(__FILE__)
 
+    output = nil
     FileUtils.cd(dir) do
       output = system(*%{#{system('which gmake >/dev/null') && 'gmake' || 'make'} CPU=#{CPU} OS=#{OS} }.tap{|x| puts x.inspect})
     end
 
     if $?.exitstatus != 0
+      puts "ERROR:\n#{output}"
       raise "Unable to compile \"#{lib}\""
     end
   end

@@ -4,7 +4,6 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
-require 'ffi'
 
 describe "functions with custom parameter types" do
   before :each do
@@ -33,5 +32,6 @@ describe "functions with custom parameter types" do
       def self.to_native_called?; @to_native_called; end
     end
 
+    # FIXME add tests
   end
 end

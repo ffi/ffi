@@ -4,7 +4,6 @@
 #
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
-require 'ffi'
 
 describe "Library" do
   describe ".enum_value" do
@@ -14,12 +13,12 @@ describe "Library" do
     end
 
     it "should return a value for a valid key" do
-      m.enum_value(:one).should == 0
-      m.enum_value(:two).should == 1
+      expect(m.enum_value(:one)).to eq(0)
+      expect(m.enum_value(:two)).to eq(1)
     end
 
     it "should return nil for an invalid key" do
-      m.enum_value(:three).should == nil
+      expect(m.enum_value(:three)).to be nil
     end
   end
 
@@ -28,7 +27,7 @@ describe "Library" do
       m = Module.new do
         extend FFI::Library
       end
-      m.ffi_convention.should == :default
+      expect(m.ffi_convention).to eq(:default)
     end
 
     it "should be settable" do
@@ -36,9 +35,9 @@ describe "Library" do
         extend FFI::Library
       end
 
-      m.ffi_convention.should == :default
+      expect(m.ffi_convention).to eq(:default)
       m.ffi_convention :stdcall
-      m.ffi_convention.should == :stdcall
+      expect(m.ffi_convention).to eq(:stdcall)
     end
   end
 
@@ -67,76 +66,83 @@ describe "Library" do
 
   describe "ffi_lib" do
     it "empty name list should raise error" do
-      lambda {
+      expect {
         Module.new do |m|
           m.extend FFI::Library
           ffi_lib
         end
-      }.should raise_error(LoadError)
+      }.to raise_error(LoadError)
     end
     
   end
+
   unless RbConfig::CONFIG['target_os'] =~ /mswin|mingw/
     it "attach_function with no library specified" do
-      lambda {
+      expect {
         Module.new do |m|
           m.extend FFI::Library
           attach_function :getpid, [ ], :uint
         end
-      }.should raise_error
+      }.to raise_error
     end
+
     it "attach_function :getpid from this process" do
-      lambda {
-        Module.new do |m|
+      expect {
+        expect(Module.new do |m|
           m.extend FFI::Library
           ffi_lib FFI::Library::CURRENT_PROCESS
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
-      }.should_not raise_error
+        end.getpid).to eq(Process.pid)
+      }.not_to raise_error
     end
+
     it "attach_function :getpid from [ 'c', 'libc.so.6'] " do
-      lambda {
-        Module.new do |m|
+      expect {
+        expect(Module.new do |m|
           m.extend FFI::Library
           ffi_lib [ 'c', 'libc.so.6' ]
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
-      }.should_not raise_error
+        end.getpid).to eq(Process.pid)
+      }.not_to raise_error
     end
+
     it "attach_function :getpid from [ 'libc.so.6', 'c' ] " do
-      lambda {
-        Module.new do |m|
+      expect {
+        expect(Module.new do |m|
           m.extend FFI::Library
           ffi_lib [ 'libc.so.6', 'c' ]
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
-      }.should_not raise_error
+        end.getpid).to eq(Process.pid)
+      }.not_to raise_error
     end
+
     it "attach_function :getpid from [ 'libfubar.so.0xdeadbeef', nil, 'c' ] " do
-      lambda {
-        Module.new do |m|
+      expect {
+        expect(Module.new do |m|
           m.extend FFI::Library
           ffi_lib [ 'libfubar.so.0xdeadbeef', nil, 'c' ]
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
-      }.should_not raise_error
+        end.getpid).to eq(Process.pid)
+      }.not_to raise_error
     end
+
     it "attach_function :getpid from [ 'libfubar.so.0xdeadbeef' ] " do
-      lambda {
-        Module.new do |m|
+      expect {
+        expect(Module.new do |m|
           m.extend FFI::Library
           ffi_lib 'libfubar.so.0xdeadbeef'
           attach_function :getpid, [ ], :uint
-        end.getpid.should == Process.pid
-      }.should raise_error(LoadError)
+        end.getpid).to eq(Process.pid)
+      }.to raise_error(LoadError)
     end
+
     it "attach_function :bool_return_true from [ File.expand_path(#{TestLibrary::PATH.inspect}) ]" do
-      Module.new do |m|
+      mod = Module.new do |m|
         m.extend FFI::Library
         ffi_lib File.expand_path(TestLibrary::PATH)
         attach_function :bool_return_true, [ ], :bool
-        m.bool_return_true.should == true
       end
+      expect(mod.bool_return_true).to be true
     end
   end
 
@@ -149,60 +155,71 @@ describe "Library" do
       attach_function :set, "gvar_#{name}_set", [ type ], :void
     end
   end
+
   def gvar_test(name, type, val)
     lib = gvar_lib(name, type)
     lib.set(val)
-    lib.gvar.should == val
+    expect(lib.gvar).to eq(val)
     lib.set(0)
     lib.gvar = val
-    lib.get.should == val
+    expect(lib.get).to eq(val)
   end
+
   [ 0, 127, -128, -1 ].each do |i|
     it ":char variable" do
       gvar_test("s8", :char, i)
     end
   end
+
   [ 0, 0x7f, 0x80, 0xff ].each do |i|
     it ":uchar variable" do
       gvar_test("u8", :uchar, i)
     end
   end
+
   [ 0, 0x7fff, -0x8000, -1 ].each do |i|
     it ":short variable" do
       gvar_test("s16", :short, i)
     end
   end
+
   [ 0, 0x7fff, 0x8000, 0xffff ].each do |i|
     it ":ushort variable" do
       gvar_test("u16", :ushort, i)
     end
   end
+
   [ 0, 0x7fffffff, -0x80000000, -1 ].each do |i|
     it ":int variable" do
       gvar_test("s32", :int, i)
     end
   end
+
   [ 0, 0x7fffffff, 0x80000000, 0xffffffff ].each do |i|
     it ":uint variable" do
       gvar_test("u32", :uint, i)
     end
   end
+
   [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ].each do |i|
     it ":long_long variable" do
       gvar_test("s64", :long_long, i)
     end
   end
+
   [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ].each do |i|
     it ":ulong_long variable" do
       gvar_test("u64", :ulong_long, i)
     end
   end
+
   if FFI::Platform::LONG_SIZE == 32
     [ 0, 0x7fffffff, -0x80000000, -1 ].each do |i|
       it ":long variable" do
         gvar_test("long", :long, i)
       end
     end
+
     [ 0, 0x7fffffff, 0x80000000, 0xffffffff ].each do |i|
       it ":ulong variable" do
         gvar_test("ulong", :ulong, i)
@@ -214,20 +231,22 @@ describe "Library" do
         gvar_test("long", :long, i)
       end
     end
+
     [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ].each do |i|
       it ":ulong variable" do
         gvar_test("ulong", :ulong, i)
       end
     end
   end
+
   it "Pointer variable" do
     lib = gvar_lib("pointer", :pointer)
     val = FFI::MemoryPointer.new :long
     lib.set(val)
-    lib.gvar.should == val
+    expect(lib.gvar).to eq(val)
     lib.set(nil)
     lib.gvar = val
-    lib.get.should == val
+    expect(lib.get).to eq(val)
   end
 
   [ 0, 0x7fffffff, -0x80000000, -1 ].each do |i|
@@ -247,11 +266,11 @@ describe "Library" do
       val = GlobalStruct.new
       val[:data] = i
       lib.set(val)
-      lib.gvar[:data].should == i
+      expect(lib.gvar[:data]).to eq(i)
       val[:data] = 0
       lib.gvar[:data] = i
       val = GlobalStruct.new(lib.get)
-      val[:data].should == i
+      expect(val[:data]).to eq(i)
     end
   end
 end
