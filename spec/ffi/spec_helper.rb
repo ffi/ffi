@@ -4,6 +4,7 @@
 #
 
 require 'rbconfig'
+require 'fileutils'
 require 'ffi'
 
 CPU = case RbConfig::CONFIG['host_cpu'].downcase
