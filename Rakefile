@@ -150,11 +150,6 @@ task 'spec:specdoc' => TEST_DEPS
 
 task :default => :specs
 
-task 'gem:win32' do
-  sh("rake cross native gem RUBY_CC_VERSION='1.8.7:1.9.3:2.0.0:2.1.3'") || raise("win32 build failed!")
-end
-
-
 namespace 'java' do
 
   java_gem_spec = Gem::Specification.new do |s|
@@ -190,7 +185,11 @@ if USE_RAKE_COMPILER
     ext.cross_platform = %w[i386-mingw32 x64-mingw32]                     # forces the Windows platform instead of the default one
   end
 
-  ENV['RUBY_CC_VERSION'].to_s.split(':').each do |ruby_version|
+  task 'gem:win32' do
+    sh("rake cross native gem RUBY_CC_VERSION='1.8.7:1.9.3:2.0.0:2.1.3'") || raise("win32 build failed!")
+  end
+
+  (ENV['RUBY_CC_VERSION'] || '1.8.7:1.9.3:2.0.0:2.1.3' ).to_s.split(':').each do |ruby_version|
     task "copy:ffi_c:i386-mingw32:#{ruby_version}" do |t|
       sh "i686-w64-mingw32-strip -S #{BUILD_DIR}/i386-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
