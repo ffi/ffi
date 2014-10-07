@@ -7,6 +7,8 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
       require '1.9/ffi_c'
     elsif RUBY_VERSION =~ /2.0/
       require '2.0/ffi_c'
+    elsif RUBY_VERSION =~ /2.1/
+      require '2.1/ffi_c'
     else
       require 'ffi_c'
     end
