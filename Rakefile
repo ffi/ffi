@@ -187,7 +187,7 @@ if USE_RAKE_COMPILER
 
   task 'gem:win32' => ['gem:win32-x64', 'gem:win32-i386']
 
-  task 'gem:win32-x86' do
+  task 'gem:win32-i386' do
     sh("rake cross native:i386-mingw32 gem RUBY_CC_VERSION='1.8.7:1.9.3:2.0.0:2.1.3'") || raise("win32-i386 build failed!")
   end
 
