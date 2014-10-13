@@ -59,6 +59,8 @@ module FFI
       "x86_64"
     when /i?86|x86|i86pc/
       "i386"
+    when /ppc64|powerpc64/
+      "powerpc64"
     when /ppc|powerpc/
       "powerpc"
     else
