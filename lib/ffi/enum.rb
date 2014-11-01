@@ -149,6 +149,12 @@ module FFI
       Type::INT
     end
 
+    # Get the size of the enum
+    # @return [Integer]
+    def size
+      native_type.size
+    end
+
     # @param [Symbol, Integer, #to_int] val
     # @param ctx unused
     # @return [Integer] value of a enum symbol
