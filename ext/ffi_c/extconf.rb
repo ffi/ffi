@@ -10,7 +10,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   $CFLAGS.gsub!(/[\s+]-ansi/, '')
   $CFLAGS.gsub!(/[\s+]-std=[^\s]+/, '')
   # solaris 10 needs -c99 for <stdbool.h>
-  $CFLAGS << " -std=c99" if RbConfig::CONFIG['host_os'] =~ /solaris(!?2\.11)/
+  $CFLAGS << " -std=c99" if RbConfig::CONFIG['host_os'] == /solaris2\.10/
   
   if ENV['RUBY_CC_VERSION'].nil? && (pkg_config("libffi") ||
      have_header("ffi.h") ||
