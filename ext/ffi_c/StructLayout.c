@@ -510,8 +510,8 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
 static VALUE
 struct_layout_union_bang(VALUE self) 
 {
-    static const ffi_type *alignment_types[] = { &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64,
-                                                 &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
+    const ffi_type *alignment_types[] = { &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64,
+                                          &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
     StructLayout* layout;
     ffi_type *t = NULL;
     int count, i;
