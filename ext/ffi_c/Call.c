@@ -126,18 +126,29 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
         switch (paramType->nativeType) {
 
             case NATIVE_INT8:
-                param->s8 = NUM2INT(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->s8 = NUM2INT(value);
+                } else {
+                    param->s8 = NUM2INT(argv[argidx]);
+                }
+
                 ++argidx;
                 ADJ(param, INT8);
                 break;
 
-
             case NATIVE_INT16:
-                param->s16 = NUM2INT(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->s16 = NUM2INT(value);
+
+                } else {
+                    param->s16 = NUM2INT(argv[argidx]);
+                }
+
                 ++argidx;
                 ADJ(param, INT16);
                 break;
-
 
             case NATIVE_INT32:
                 if (unlikely(type == T_SYMBOL && enums != Qnil)) {
@@ -152,7 +163,6 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                 ADJ(param, INT32);
                 break;
 
-
             case NATIVE_BOOL:
                 if (type != T_TRUE && type != T_FALSE) {
                     rb_raise(rb_eTypeError, "wrong argument type  (expected a boolean parameter)");
@@ -161,67 +171,122 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                 ADJ(param, INT8);
                 break;
 
-
             case NATIVE_UINT8:
-                param->u8 = NUM2UINT(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->u8 = NUM2UINT(value);
+                } else {
+                    param->u8 = NUM2UINT(argv[argidx]);
+                }
+
                 ADJ(param, INT8);
                 ++argidx;
                 break;
 
-
             case NATIVE_UINT16:
-                param->u16 = NUM2UINT(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->u16 = NUM2UINT(value);
+                } else {
+                    param->u16 = NUM2UINT(argv[argidx]);
+                }
+
                 ADJ(param, INT16);
                 ++argidx;
                 break;
 
-
             case NATIVE_UINT32:
-                param->u32 = NUM2UINT(argv[argidx]);
-                ADJ(param, INT32);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->u32 = NUM2UINT(value);
+                } else {
+                    param->u32 = NUM2UINT(argv[argidx]);
+                }
+
+                ADJ(param, UINT32);
                 ++argidx;
                 break;
-
 
             case NATIVE_INT64:
-                param->i64 = NUM2LL(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->i64 = NUM2LL(value);
+                } else {
+                    param->i64 = NUM2LL(argv[argidx]);
+                }
+
                 ADJ(param, INT64);
                 ++argidx;
                 break;
 
-
             case NATIVE_UINT64:
-                param->u64 = NUM2ULL(argv[argidx]);
-                ADJ(param, INT64);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->u64 = NUM2ULL(value);
+                } else {
+                    param->u64 = NUM2ULL(argv[argidx]);
+                }
+
+                ADJ(param, UINT64);
                 ++argidx;
                 break;
 
             case NATIVE_LONG:
-                *(ffi_sarg *) param = NUM2LONG(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    *(ffi_sarg *) param = NUM2LONG(value);
+                } else {
+                    *(ffi_sarg *) param = NUM2LONG(argv[argidx]);
+                }
+
                 ADJ(param, LONG);
                 ++argidx;
                 break;
 
             case NATIVE_ULONG:
-                *(ffi_arg *) param = NUM2ULONG(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    *(ffi_arg *) param = NUM2ULONG(value);
+                } else {
+                    *(ffi_arg *) param = NUM2ULONG(argv[argidx]);
+                }
+
                 ADJ(param, LONG);
                 ++argidx;
                 break;
 
             case NATIVE_FLOAT32:
-                param->f32 = (float) NUM2DBL(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->f32 = (float) NUM2DBL(value);
+                } else {
+                    param->f32 = (float) NUM2DBL(argv[argidx]);
+                }
+
                 ADJ(param, FLOAT32);
                 ++argidx;
                 break;
 
             case NATIVE_FLOAT64:
-                param->f64 = NUM2DBL(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->f64 = NUM2DBL(value);
+                } else {
+                    param->f64 = NUM2DBL(argv[argidx]);
+                }
+
                 ADJ(param, FLOAT64);
                 ++argidx;
                 break;
 
             case NATIVE_LONGDOUBLE:
-                param->ld = rbffi_num2longdouble(argv[argidx]);
+                if (unlikely(type == T_SYMBOL && enums != Qnil)) {
+                    VALUE value = rb_funcall(enums, id_map_symbol, 1, argv[argidx]);
+                    param->ld = rbffi_num2longdouble(value);
+                } else {
+                    param->ld = rbffi_num2longdouble(argv[argidx]);
+                }
+
                 ADJ(param, LONGDOUBLE);
                 ++argidx;
                 break;

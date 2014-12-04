@@ -86,10 +86,16 @@ module FFI
 
     attr_reader :tag
 
-    # @param [nil, Enumerable] info
-    # @param tag enum tag
-    def initialize(info, tag=nil)
-      @tag = tag
+    # @overload initialize(info, tag=nil)
+    #   @param [nil, Enumerable] info
+    #   @param [nil, Symbol] tag enum tag
+    # @overload initialize(native_type, info, tag=nil)
+    #   @param [FFI::Type] native_type Native type for new Enum
+    #   @param [nil, Enumerable] info symbols and values for new Enum
+    #   @param [nil, Symbol] tag name of new Enum
+    def initialize(*args)
+      @native_type = args.shift if args.first.kind_of?(FFI::Type)
+      info, @tag = *args
       @kv_map = Hash.new
       unless info.nil?
         last_cst = nil
@@ -144,9 +150,9 @@ module FFI
     alias to_hash symbol_map
 
     # Get native type of Enum
-    # @return [Type::INT]
+    # @return [Type]
     def native_type
-      Type::INT
+      @native_type || Type::INT
     end
 
     # @param [Symbol, Integer, #to_int] val
