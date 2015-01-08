@@ -11,9 +11,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   $CFLAGS.gsub!(/[\s+]-std=[^\s]+/, '')
   # solaris 10 needs -c99 for <stdbool.h>
   if RbConfig::CONFIG['host_os'] =~ /solaris(!?2\.1[0-2])/
-    if RbConfig::CONFIG['GCC'] != ""
-      $CFLAGS << " -std=c99" 
-    else
+    unless RbConfig::CONFIG.has_key?('GCC') && RbConfig::CONFIG['GCC'] != ""
       $CFLAGS << " -xc99" 
     end
   end
