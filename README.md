@@ -63,7 +63,7 @@ as Rubyspec, see the LICENSE.SPECS file.
 
 ## Credits
 
-The following people have submitted code, bug reports, or otherwide contributed to the success of this project:
+The following people have submitted code, bug reports, or otherwise contributed to the success of this project:
 
 * Alban Peignier <alban.peignier@free.fr>
 * Aman Gupta <aman@tmm1.net>
