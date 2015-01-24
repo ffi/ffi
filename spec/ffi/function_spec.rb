@@ -62,16 +62,16 @@ describe FFI::Function do
     expect(foo.add(10, 10)).to eq(20)
   end
 
-  it 'can wrap a blocking function' do
+  it 'can run multiple blocking functions concurrently' do
     fp = FFI::Function.new(:void, [ :int ], @libtest.find_function('testBlocking'), :blocking => true)
+    time = Time.now
     threads = 10.times.map do |x|
       Thread.new do
-        time = Time.now
-        fp.call(2)
-        expect(Time.now - time).to be > 2
+        fp.call(1)
       end
     end
     threads.each { |t| t.join }
+    expect(Time.now - time).to be < 9
   end
 
   it 'autorelease flag is set to true by default' do
