@@ -63,15 +63,12 @@ describe FFI::Function do
   end
 
   it 'can wrap a blocking function' do
-    fp = FFI::Function.new(:void, [ :int ], @libtest.find_function('testBlocking'), :blocking => true)
-    threads = 10.times.map do |x|
-      Thread.new do
-        time = Time.now
-        fp.call(2)
-        expect(Time.now - time).to be > 2
-      end
-    end
-    threads.each { |t| t.join }
+    fp = FFI::Function.new(:int, [], @libtest.find_function('testBlocking'), :blocking => true)
+    error2 = nil
+    thread = Thread.new { error2 = fp.call }
+    error1 = fp.call
+    thread.join
+    expect([error1, error2]).to eq [0, 0]
   end
 
   it 'autorelease flag is set to true by default' do
