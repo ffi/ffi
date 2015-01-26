@@ -256,6 +256,12 @@ module FFI
       #             :field2 => :pointer,
       #             :field3 => :string
       #    end
+      #  @example Creating a layout with pointers to functions
+      #    class MyFunctionTable < Struct
+      #      layout :function1, callback([:int, :int], :int),
+      #             :function2, callback([:pointer], :void),
+      #             :field3, :string
+      #    end
       #  @note Creating a layout from a hash +spec+ is supported only for Ruby 1.9.
       def layout(*spec)
         #raise RuntimeError, "struct layout already defined for #{self.inspect}" if defined?(@layout)
