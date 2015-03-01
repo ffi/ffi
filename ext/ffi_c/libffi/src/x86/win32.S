@@ -156,7 +156,7 @@ ca_epilogue:
         ret
 ffi_call_win32 ENDP
 
-ffi_closure_SYSV PROC NEAR FORCEFRAME
+ffi_closure_SYSV PROC NEAR <FORCEFRAME>
     ;; the ffi_closure ctx is passed in eax by the trampoline.
 
         sub  esp, 40
@@ -314,7 +314,7 @@ ffi_closure_raw_SYSV ENDP
 
 #endif /* !FFI_NO_RAW_API */
 
-ffi_closure_STDCALL PROC NEAR FORCEFRAME
+ffi_closure_STDCALL PROC NEAR <FORCEFRAME>
     ;; the ffi_closure ctx is passed in eax by the trampoline.
 
         sub  esp, 40
