@@ -17,3 +17,4 @@ lib/ffi_c.bundle
 lib/ffi_c.so
 vendor
 .bundle
+Gemfile.lock
