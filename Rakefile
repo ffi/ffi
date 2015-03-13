@@ -188,11 +188,11 @@ if USE_RAKE_COMPILER
   task 'gem:win32' => ['gem:win32-x64', 'gem:win32-i386']
 
   task 'gem:win32-i386' do
-    sh("rake cross native:i386-mingw32 gem RUBY_CC_VERSION='1.8.7:1.9.3:2.0.0:2.1.5,2.2.1'") || raise("win32-i386 build failed!")
+    sh("rake cross native:i386-mingw32 gem RUBY_CC_VERSION='1.8.7:1.9.3:2.0.0:2.1.5:2.2.1'") || raise("win32-i386 build failed!")
   end
 
   task 'gem:win32-x64' do
-    sh("rake cross native:x64-mingw32 gem RUBY_CC_VERSION='2.0.0:2.1.5,2.2.1'") || raise("win32-x64 build failed!")
+    sh("rake cross native:x64-mingw32 gem RUBY_CC_VERSION='2.0.0:2.1.5:2.2.1'") || raise("win32-x64 build failed!")
   end
 
   (ENV['RUBY_CC_VERSION'] || '1.8.7:1.9.3:2.0.0:2.1.5:2.2.1' ).to_s.split(':').each do |ruby_version|
