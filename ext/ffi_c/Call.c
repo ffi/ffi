@@ -203,7 +203,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                     param->u32 = NUM2UINT(argv[argidx]);
                 }
 
-                ADJ(param, UINT32);
+                ADJ(param, INT32);
                 ++argidx;
                 break;
 
@@ -227,7 +227,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                     param->u64 = NUM2ULL(argv[argidx]);
                 }
 
-                ADJ(param, UINT64);
+                ADJ(param, INT64);
                 ++argidx;
                 break;
 
