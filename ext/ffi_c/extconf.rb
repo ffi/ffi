@@ -33,10 +33,11 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
   $defs << "-DUSE_INTERNAL_LIBFFI" unless libffi_ok
   $defs << "-DRUBY_1_9" if RUBY_VERSION >= "1.9.0"
+  $defs << "-DFFI_BUILDING" if RbConfig::CONFIG['host_os'] =~ /mswin/ # for compatibility with newer libffi
 
   create_header
   
-  $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if RbConfig::CONFIG['host_os'] =~ /mswin/
+  $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if !libffi_ok && RbConfig::CONFIG['host_os'] =~ /mswin/
 
   create_makefile("ffi_c")
   unless libffi_ok

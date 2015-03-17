@@ -132,12 +132,6 @@ rbffi_MethodHandle_CodeAddress(MethodHandle* handle)
 #ifndef CUSTOM_TRAMPOLINE
 static void attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 
-static ffi_type* methodHandleParamTypes[] = {
-    &ffi_type_sint,
-    &ffi_type_pointer,
-    &ffi_type_ulong,
-};
-
 static ffi_cif mh_cif;
 
 static bool
@@ -339,7 +333,12 @@ void
 rbffi_MethodHandle_Init(VALUE module)
 {
 #ifndef CUSTOM_TRAMPOLINE
-    ffi_status ffiStatus;
+    ffi_status ffiStatus;	
+    ffi_type* methodHandleParamTypes[] = {
+        &ffi_type_sint,
+        &ffi_type_pointer,
+        &ffi_type_ulong,
+    };
 #endif
 
     defaultClosurePool = rbffi_ClosurePool_New((int) trampoline_size(), prep_trampoline, NULL);
