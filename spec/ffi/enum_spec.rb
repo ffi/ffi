@@ -416,6 +416,38 @@ describe "All enums" do
     expect(enum[0x4242424242424243]).to be_nil
   end
 
+  it "know their own native type" do
+    enum = TestEnum3.enum_type(:enum_type1)
+    expect(enum.native_type).to eq FFI::Type::INT
+
+    enum = TestEnum3.enum_type(:enum_type2)
+    expect(enum.native_type).to eq FFI::Type::INT
+
+    enum = TestEnum3.enum_type(:enum_type3)
+    expect(enum.native_type).to eq FFI::Type::INT
+
+    enum = TestEnum3.enum_type(:enum_type4)
+    expect(enum.native_type).to eq FFI::Type::INT
+
+    enum = TestEnum4.enum_type(:enum_type1)
+    expect(enum.native_type).to eq FFI::Type::INT
+
+    enum = TestEnum4.enum_type(:enum_type2)
+    expect(enum.native_type).to eq FFI::Type::INT
+
+    enum = TestEnum4.enum_type(:enum_type3)
+    expect(enum.native_type).to eq FFI::Type::INT
+
+    enum = TestEnum4.enum_type(:enum_type4)
+    expect(enum.native_type).to eq FFI::Type::UINT16
+
+    enum = TestEnum4.enum_type(:enum_type5)
+    expect(enum.native_type).to eq FFI::Type::UINT32
+
+    enum = TestEnum4.enum_type(:enum_type6)
+    expect(enum.native_type).to eq FFI::Type::UINT64
+  end
+
   it "duplicate enum keys rejected" do
     expect { enum [ :a, 0xfee1dead, :b, 0xdeadbeef, :a, 0 ] }.to raise_error
     expect { enum FFI::Type::UINT64, [ :a, 0xfee1dead, :b, 0xdeadbeef, :a, 0 ] }.to raise_error

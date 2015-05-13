@@ -15,6 +15,7 @@ require 'rubygems/package_task'
 
 RSpec::Core::RakeTask.new(:spec => :compile) do |config|
   config.rspec_opts = YAML.load_file 'spec/spec.opts'
+  config.ruby_opts = '-w'
 end
 
 
@@ -83,23 +84,23 @@ TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
   desc "Run all specs"
   task :specs, [:options] => TEST_DEPS do |t, args|
-    sh %{#{Gem.ruby} -w -S rspec #{args.options || Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -S rspec #{args.options || Dir["spec/ffi/*_spec.rb"].join(" ")} -fs}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
-    sh %{#{Gem.ruby} -w -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs}
   end
 else
   TEST_DEPS.unshift :compile
   desc "Run all specs"
   task :specs, [:options] => TEST_DEPS do |t, args|
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{args.options || Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{args.options || Dir["spec/ffi/*_spec.rb"].join(" ")} -fs}
   end
   desc "Run rubinius specs"
   task :rbxspecs => TEST_DEPS do
     ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs}
   end
 end
 
