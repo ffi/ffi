@@ -152,7 +152,7 @@ module FFI
     # Get native type of Enum
     # @return [Type]
     def native_type
-      @native_type || Type::INT
+      @native_type ||= Type::INT
     end
 
     # @param [Symbol, Integer, #to_int] val
