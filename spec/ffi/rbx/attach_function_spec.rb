@@ -25,7 +25,7 @@ describe FFI::Library, "#attach_function" do
   
   it "correctly populates a struct for gettimeofday" do
     t = Timeval.new
-    time = LibC.gettimeofday(t.pointer, nil)
+    LibC.gettimeofday(t.pointer, nil)
     expect(t[:tv_sec]).to be_kind_of(Numeric)
     expect(t[:tv_usec]).to be_kind_of(Numeric)
   end

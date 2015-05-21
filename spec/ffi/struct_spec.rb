@@ -102,7 +102,7 @@ describe "Struct tests" do
     smp = FFI::MemoryPointer.new :pointer
     s = PointerMember.new smp
     expect { s[:pointer] = s }.not_to raise_error Exception
-    expect { foo = s[:pointer] }.not_to raise_error Exception
+    expect { s[:pointer].nil? }.not_to raise_error Exception
   end
 
   it "Struct#[:pointer]=nil" do

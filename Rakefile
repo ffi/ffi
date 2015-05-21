@@ -13,11 +13,6 @@ require 'rbconfig'
 require 'rspec/core/rake_task'
 require 'rubygems/package_task'
 
-RSpec::Core::RakeTask.new(:spec => :compile) do |config|
-  config.rspec_opts = YAML.load_file 'spec/spec.opts'
-end
-
-
 LIBEXT = case RbConfig::CONFIG['host_os'].downcase
   when /darwin/
     "dylib"
@@ -81,26 +76,15 @@ end
 
 TEST_DEPS = [ LIBTEST ]
 if RUBY_PLATFORM == "java"
-  desc "Run all specs"
-  task :specs, [:options] => TEST_DEPS do |t, args|
-    sh %{#{Gem.ruby} -w -S rspec #{args.options || Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
-  end
-  desc "Run rubinius specs"
-  task :rbxspecs => TEST_DEPS do
-    sh %{#{Gem.ruby} -w -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
+  RSpec::Core::RakeTask.new(:spec) do |config|
+    config.rspec_opts = YAML.load_file 'spec/spec.opts'
   end
 else
+  RSpec::Core::RakeTask.new(:spec => :compile) do |config|
+    config.rspec_opts = YAML.load_file 'spec/spec.opts'
+  end
+
   TEST_DEPS.unshift :compile
-  desc "Run all specs"
-  task :specs, [:options] => TEST_DEPS do |t, args|
-    ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{args.options || Dir["spec/ffi/*_spec.rb"].join(" ")} -fs --color}
-  end
-  desc "Run rubinius specs"
-  task :rbxspecs => TEST_DEPS do
-    ENV["MRI_FFI"] = "1"
-    sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_EXT_DIR} -S rspec #{Dir["spec/ffi/rbx/*_spec.rb"].join(" ")} -fs --color}
-  end
 end
 
 desc "Build all packages"
