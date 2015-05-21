@@ -85,6 +85,7 @@ module FFI
     include DataConverter
 
     attr_reader :tag
+    attr_reader :native_type
 
     # @overload initialize(info, tag=nil)
     #   @param [nil, Enumerable] info
@@ -94,7 +95,7 @@ module FFI
     #   @param [nil, Enumerable] info symbols and values for new Enum
     #   @param [nil, Symbol] tag name of new Enum
     def initialize(*args)
-      @native_type = args.shift if args.first.kind_of?(FFI::Type)
+      @native_type = args.first.kind_of?(FFI::Type) ? args.shift : Type::INT
       info, @tag = *args
       @kv_map = Hash.new
       unless info.nil?
@@ -148,12 +149,6 @@ module FFI
     
     alias to_h symbol_map
     alias to_hash symbol_map
-
-    # Get native type of Enum
-    # @return [Type]
-    def native_type
-      @native_type || Type::INT
-    end
 
     # @param [Symbol, Integer, #to_int] val
     # @param ctx unused
