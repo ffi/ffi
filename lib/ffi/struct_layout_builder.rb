@@ -30,12 +30,12 @@
 #
 
 module FFI
-  
+
   # Build a {StructLayout struct layout}.
   class StructLayoutBuilder
     attr_reader :size
     attr_reader :alignment
-    
+
     def initialize
       @size = 0
       @alignment = 1
@@ -45,42 +45,47 @@ module FFI
       @fields = Array.new
     end
 
-    # @param [Numeric] size
     # Set size attribute with +size+ only if +size+ is greater than attribute value.
+    # @param [Numeric] size
     def size=(size)
       @size = size if size > @size
     end
 
-    # @param [Numeric] align
     # Set alignment attribute with +align+ only if it is greater than attribute value.
+    # @param [Numeric] align
     def alignment=(align)
       @alignment = align if align > @alignment
       @min_alignment = align
     end
 
-    # @param [Boolean] is_union
-    # @return [is_union]
     # Set union attribute.
     # Set to +true+ to build a {Union} instead of a {Struct}.
+    # @param [Boolean] is_union
+    # @return [is_union]
     def union=(is_union)
       @union = is_union
     end
 
-    # @return [Boolean]
     # Building a {Union} or a {Struct} ?
+    #
+    # @return [Boolean]
+    #
     def union?
       @union
     end
 
     # Set packed attribute
-    # @overload packed=(packed)
-    #  @param [Fixnum] packed
-    #  @return [packed]
-    #  Set alignment and packed attributes to +packed+.
-    # @overload packed=(packed)
-    #  @param packed
-    #  @return [0,1]
-    #  Set packed attribute.
+    # @overload packed=(packed) Set alignment and packed attributes to
+    #   +packed+.
+    #
+    #   @param [Fixnum] packed
+    #
+    #   @return [packed]
+    # @overload packed=(packed) Set packed attribute.
+    #   @param packed
+    #
+    #   @return [0,1]
+    #
     def packed=(packed)
       if packed.is_a?(Fixnum)
         @alignment = packed
@@ -139,7 +144,7 @@ module FFI
     def add_field(name, type, offset = nil)
       add(name, type, offset)
     end
-    
+
     # @param (see #add)
     # @return (see #add)
     # Add a struct as a field to the builder.
@@ -162,14 +167,14 @@ module FFI
     def build
       # Add tail padding if the struct is not packed
       size = @packed ? @size : align(@size, @alignment)
-      
+
       layout = StructLayout.new(@fields, size, @alignment)
       layout.__union! if @union
       layout
     end
 
     private
-    
+
     # @param [Numeric] offset
     # @param [Numeric] align
     # @return [Numeric]

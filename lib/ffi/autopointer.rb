@@ -161,9 +161,9 @@ module FFI
     # CallableReleaser is a {Releaser} used when an {AutoPointer} is defined with a
     # Proc or a Method.
     class CallableReleaser < Releaser
+      # Release +ptr+ by using Proc or Method defined at +ptr+ {AutoPointer#initialize initialization}.
       # @param [Pointer] ptr
       # @return [nil]
-      # Release +ptr+ by using Proc or Method defined at +ptr+ {AutoPointer#initialize initialization}.
       def release(ptr)
         @proc.call(ptr)
       end
@@ -183,8 +183,8 @@ module FFI
     #
     # Override {DataConverter#from_native}.
     # @overload self.from_native(ptr, ctx)
-    #  @param [Pointer] ptr
-    #  @param ctx not used. Please set +nil+.
+    #   @param [Pointer] ptr
+    #   @param ctx not used. Please set +nil+.
     # @return [AutoPointer]
     def self.from_native(val, ctx)
       self.new(val)

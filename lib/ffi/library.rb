@@ -292,26 +292,26 @@ module FFI
     end
 
     # @overload attach_variable(mname, cname, type)
-    #  @param [#to_s] mname name of ruby method to attach as
-    #  @param [#to_s] cname name of C variable to attach
-    #  @param [DataConverter, Struct, Symbol, Type] type C variable's type
-    #  @example
-    #   module Bar
-    #     extend FFI::Library
-    #     ffi_lib 'my_lib'
-    #     attach_variable :c_myvar, :myvar, :long
-    #   end
-    #   # now callable via Bar.c_myvar
+    #   @param [#to_s] mname name of ruby method to attach as
+    #   @param [#to_s] cname name of C variable to attach
+    #   @param [DataConverter, Struct, Symbol, Type] type C variable's type
+    #   @example
+    #     module Bar
+    #       extend FFI::Library
+    #       ffi_lib 'my_lib'
+    #       attach_variable :c_myvar, :myvar, :long
+    #     end
+    #     # now callable via Bar.c_myvar
     # @overload attach_variable(cname, type)
-    #  @param [#to_s] mname name of ruby method to attach as
-    #  @param [DataConverter, Struct, Symbol, Type] type C variable's type
-    #  @example
-    #   module Bar
-    #     extend FFI::Library
-    #     ffi_lib 'my_lib'
-    #     attach_variable :myvar, :long
-    #   end
-    #   # now callable via Bar.myvar
+    #   @param [#to_s] mname name of ruby method to attach as
+    #   @param [DataConverter, Struct, Symbol, Type] type C variable's type
+    #   @example
+    #     module Bar
+    #       extend FFI::Library
+    #       ffi_lib 'my_lib'
+    #       attach_variable :myvar, :long
+    #     end
+    #     # now callable via Bar.myvar
     # @return [DynamicLibrary::Symbol]
     # @raise {FFI::NotFoundError} if +cname+ cannot be found in libraries
     #
@@ -362,12 +362,12 @@ module FFI
 
 
     # @overload callback(name, params, ret)
-    #  @param name callback name to add to type map
-    #  @param [Array] params array of parameters' types
-    #  @param [DataConverter, Struct, Symbol, Type] ret callback return type
+    #   @param name callback name to add to type map
+    #   @param [Array] params array of parameters' types
+    #   @param [DataConverter, Struct, Symbol, Type] ret callback return type
     # @overload callback(params, ret)
-    #  @param [Array] params array of parameters' types
-    #  @param [DataConverter, Struct, Symbol, Type] ret callback return type
+    #   @param [Array] params array of parameters' types
+    #   @param [DataConverter, Struct, Symbol, Type] ret callback return type
     # @return [FFI::CallbackInfo]
     def callback(*args)
       raise ArgumentError, "wrong number of arguments" if args.length < 2 || args.length > 3
@@ -392,10 +392,6 @@ module FFI
       cb
     end
 
-    # @param [DataConverter, Symbol, Type] old
-    # @param add
-    # @param info
-    # @return [FFI::Enum, FFI::Type]
     # Register or get an already registered type definition.
     #
     # To register a new type definition, +old+ should be a {FFI::Type}. +add+
@@ -408,6 +404,11 @@ module FFI
     # * in others cases, +info+ is used to create a named enum.
     #
     # If +old+ is a key for type map, #typedef get +old+ type definition.
+    #
+    # @param [DataConverter, Symbol, Type] old
+    # @param [Symbol] add
+    # @param [Symbol] info
+    # @return [FFI::Enum, FFI::Type]
     def typedef(old, add, info=nil)
       @ffi_typedefs = Hash.new unless defined?(@ffi_typedefs)
 
