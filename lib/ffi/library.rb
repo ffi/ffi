@@ -292,6 +292,9 @@ module FFI
     end
 
     # @overload attach_variable(mname, cname, type)
+    #  @param [#to_s] mname name of ruby method to attach as
+    #  @param [#to_s] cname name of C variable to attach
+    #  @param [DataConverter, Struct, Symbol, Type] type C variable's type
     #  @example
     #   module Bar
     #     extend FFI::Library
@@ -300,6 +303,8 @@ module FFI
     #   end
     #   # now callable via Bar.c_myvar
     # @overload attach_variable(cname, type)
+    #  @param [#to_s] mname name of ruby method to attach as
+    #  @param [DataConverter, Struct, Symbol, Type] type C variable's type
     #  @example
     #   module Bar
     #     extend FFI::Library
@@ -307,9 +312,6 @@ module FFI
     #     attach_variable :myvar, :long
     #   end
     #   # now callable via Bar.myvar
-    # @param [#to_s] mname name of ruby method to attach as
-    # @param [#to_s] cname name of C variable to attach
-    # @param [DataConverter, Struct, Symbol, Type] type C varaible's type
     # @return [DynamicLibrary::Symbol]
     # @raise {FFI::NotFoundError} if +cname+ cannot be found in libraries
     #
@@ -360,10 +362,12 @@ module FFI
 
 
     # @overload callback(name, params, ret)
+    #  @param name callback name to add to type map
+    #  @param [Array] params array of parameters' types
+    #  @param [DataConverter, Struct, Symbol, Type] ret callback return type
     # @overload callback(params, ret)
-    # @param name callback name to add to type map
-    # @param [Array] params array of parameters' types
-    # @param [DataConverter, Struct, Symbol, Type] ret callback return type
+    #  @param [Array] params array of parameters' types
+    #  @param [DataConverter, Struct, Symbol, Type] ret callback return type
     # @return [FFI::CallbackInfo]
     def callback(*args)
       raise ArgumentError, "wrong number of arguments" if args.length < 2 || args.length > 3
@@ -389,8 +393,8 @@ module FFI
     end
 
     # @param [DataConverter, Symbol, Type] old
-    # @param  add
-    # @param [] info
+    # @param add
+    # @param info
     # @return [FFI::Enum, FFI::Type]
     # Register or get an already registered type definition.
     #

@@ -51,8 +51,8 @@ module FFI
       @size = size if size > @size
     end
 
-    # @param [Numeric] alignment
-    # Set alignment attribute with +alignment+ only if it is greater than attribute value.
+    # @param [Numeric] align
+    # Set alignment attribute with +align+ only if it is greater than attribute value.
     def alignment=(align)
       @alignment = align if align > @alignment
       @min_alignment = align

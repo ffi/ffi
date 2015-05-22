@@ -155,7 +155,7 @@ module FFI
     native_type Type::POINTER
 
     # @param [Pointer] val
-    # @param [] ctx
+    # @param ctx
     # @return [Array(String, Pointer)]
     # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
     def self.from_native(val, ctx)

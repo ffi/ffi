@@ -183,8 +183,8 @@ module FFI
     #
     # Override {DataConverter#from_native}.
     # @overload self.from_native(ptr, ctx)
-    # @param [Pointer] ptr 
-    # @param ctx not used. Please set +nil+.
+    #  @param [Pointer] ptr
+    #  @param ctx not used. Please set +nil+.
     # @return [AutoPointer]
     def self.from_native(val, ctx)
       self.new(val)
