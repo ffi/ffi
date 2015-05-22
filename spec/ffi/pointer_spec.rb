@@ -170,7 +170,8 @@ describe "AutoPointer" do
     def self.release(ptr); end
   end
 
-  it "cleanup via default release method" do
+  # see #427
+  it "cleanup via default release method", :broken => true do
     expect(AutoPointerSubclass).to receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do
@@ -182,7 +183,8 @@ describe "AutoPointer" do
     AutoPointerTestHelper.gc_everything loop_count
   end
 
-  it "cleanup when passed a proc" do
+  # see #427
+  it "cleanup when passed a proc", :broken => true do
     #  NOTE: passing a proc is touchy, because it's so easy to create a memory leak.
     #
     #  specifically, if we made an inline call to
@@ -200,7 +202,8 @@ describe "AutoPointer" do
     AutoPointerTestHelper.gc_everything loop_count
   end
 
-  it "cleanup when passed a method" do
+  # see #427
+  it "cleanup when passed a method", :broken => true do
     expect(AutoPointerTestHelper).to receive(:release).at_least(loop_count-wiggle_room).times
     AutoPointerTestHelper.reset
     loop_count.times do

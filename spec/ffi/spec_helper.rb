@@ -7,6 +7,10 @@ require 'rbconfig'
 require 'fileutils'
 require 'ffi'
 
+RSpec.configure do |c|
+  c.filter_run_excluding :broken => true
+end
+
 CPU = case RbConfig::CONFIG['host_cpu'].downcase
   when /i[3456]86/
     # Darwin always reports i686, even when running in 64bit mode
