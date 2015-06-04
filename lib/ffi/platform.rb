@@ -79,7 +79,7 @@ module FFI
     def self.is_os(os)
       OS == os
     end
-    
+
     NAME = "#{ARCH}-#{OS}"
     IS_GNU = defined?(GNU_LIBC)
     IS_LINUX = is_os("linux")
@@ -87,12 +87,12 @@ module FFI
     IS_FREEBSD = is_os("freebsd")
     IS_NETBSD = is_os("netbsd")
     IS_OPENBSD = is_os("openbsd")
+    IS_SOLARIS = is_os("solaris")
     IS_WINDOWS = is_os("windows")
     IS_BSD = IS_MAC || IS_FREEBSD || IS_NETBSD || IS_OPENBSD
     CONF_DIR = File.join(File.dirname(__FILE__), 'platform', NAME)
-    public
 
-    
+    public
 
     LIBPREFIX = case OS
     when /windows/
@@ -141,6 +141,12 @@ module FFI
     # @return [Boolean]
     def self.mac?
       IS_MAC
+    end
+
+    # Test if current OS is Solaris (Sun OS)
+    # @return [Boolean]
+    def self.solaris?
+      IS_SOLARIS
     end
 
     # Test if current OS is a unix OS
