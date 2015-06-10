@@ -75,7 +75,7 @@ memptr_allocate(VALUE klass)
  * @param [Numeric] count number of cells in memory
  * @param [Boolean] clear set memory to all-zero if +true+
  * @return [self]
- * A new instance of FFI::MeoryPointer.
+ * A new instance of FFI::MemoryPointer.
  */
 static VALUE
 memptr_initialize(int argc, VALUE* argv, VALUE self)
