@@ -169,26 +169,22 @@ if USE_RAKE_COMPILER
     ext.cross_platform = %w[i386-mingw32 x64-mingw32]                     # forces the Windows platform instead of the default one
   end
 
-  task 'gem:win32' => ['gem:win32-x64', 'gem:win32-i386']
+  ENV['RUBY_CC_VERSION'] ||= '1.8.7:1.9.3:2.0.0:2.1.5:2.2.1'
 
-  task 'gem:win32-i386' do
-    sh("rake cross native:i386-mingw32 gem RUBY_CC_VERSION='1.8.7:1.9.3:2.0.0:2.1.5:2.2.1'") || raise("win32-i386 build failed!")
-  end
-
-  task 'gem:win32-x64' do
-    sh("rake cross native:x64-mingw32 gem RUBY_CC_VERSION='2.0.0:2.1.5:2.2.1'") || raise("win32-x64 build failed!")
-  end
-
-  (ENV['RUBY_CC_VERSION'] || '1.8.7:1.9.3:2.0.0:2.1.5:2.2.1' ).to_s.split(':').each do |ruby_version|
+  ENV['RUBY_CC_VERSION'].to_s.split(':').each do |ruby_version|
     task "copy:ffi_c:i386-mingw32:#{ruby_version}" do |t|
       sh "i686-w64-mingw32-strip -S #{BUILD_DIR}/i386-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
-  end
 
-  (ENV['RUBY_CC_VERSION'] || '2.0.0:2.1.5:2.2.1' ).to_s.split(':').each do |ruby_version|
     task "copy:ffi_c:x64-mingw32:#{ruby_version}" do |t|
       sh "x86_64-w64-mingw32-strip -S #{BUILD_DIR}/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
+  end
+
+  desc "build a windows gem without all the ceremony."
+  task "gem:windows" do
+    require "rake_compiler_dock"
+    RakeCompilerDock.sh "bundle && rake cross native gem MAKE='nice make -j`nproc`'"
   end
 end
 
