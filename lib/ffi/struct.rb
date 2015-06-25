@@ -341,7 +341,7 @@ module FFI
       # @raise if Ruby 1.8
       # Add hash +spec+ to +builder+.
       def hash_layout(builder, spec)
-        raise "Ruby version not supported" if RUBY_VERSION =~ /1.8.*/
+        raise "Ruby version not supported" if RUBY_VERSION =~ /1\.8\.*/
         spec[0].each do |name, type|
           builder.add name, find_field_type(type), nil
         end
