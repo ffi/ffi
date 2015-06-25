@@ -17,6 +17,10 @@ env:
   - CC=clang
 matrix:
   allow_failures:
+    - os: osx
+      rvm: 2.2
+    - os: osx
+      rvm: ruby-head
     - rvm: "rbx"
     - rvm: "rbx-head"
     - rvm: "1.8.7"
