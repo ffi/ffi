@@ -98,6 +98,7 @@ CLEAN.include 'build'
 CLEAN.include 'conftest.dSYM'
 CLEAN.include 'spec/ffi/fixtures/libtest.dylib'
 CLEAN.include FileList["pkg/ffi-#{FFI::VERSION}-*-mingw32"]
+CLEAN.include FileList["pkg/ffi-#{FFI::VERSION}-java"]
 CLEAN.include FileList['lib/1.*']
 CLEAN.include FileList['lib/2.*']
 CLEAN.include 'bin'
