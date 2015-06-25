@@ -1,6 +1,7 @@
 require 'rubygems/tasks'
 require 'rbconfig'
 require 'rake/clean'
+require File.expand_path("./lib/ffi/version")
 
 USE_RAKE_COMPILER = (RUBY_PLATFORM =~ /java/) ? false : true
 if USE_RAKE_COMPILER
@@ -90,13 +91,16 @@ end
 desc "Build all packages"
 task :package => 'gem:package'
 
-CLOBBER.include 'build'
-CLOBBER.include FileList['lib/**/ffi_c.so']
-CLOBBER.include FileList["lib/**/ffi_c.#{RbConfig::CONFIG['DLEXT']}"]
 CLOBBER.include 'lib/ffi/types.conf'
-CLOBBER.include 'conftest.dSYM'
 CLOBBER.include 'pkg'
-CLOBBER.include 'spec/ffi/fixtures/libtest.dylib'
+
+CLEAN.include 'build'
+CLEAN.include 'conftest.dSYM'
+CLEAN.include 'spec/ffi/fixtures/libtest.dylib'
+CLEAN.include FileList["pkg/ffi-#{FFI::VERSION}-*-mingw32"]
+CLEAN.include FileList['lib/1.*']
+CLEAN.include FileList['lib/2.*']
+CLEAN.include 'bin'
 
 task :distclean => :clobber
 
