@@ -18,7 +18,7 @@ env:
 matrix:
   allow_failures:
     - os: osx
-      rvm: 2.2
+      rvm: "2.2"
     - os: osx
       rvm: ruby-head
     - rvm: "rbx"
