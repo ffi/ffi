@@ -8,3 +8,7 @@ group :development do
   gem 'rubygems-tasks', '~> 0.2.4', :require => 'rubygems/tasks'
   gem "rubysl", "~> 2.0", :platforms => 'rbx'
 end
+
+group :doc do
+  gem 'yard', "~> 0.8.7"
+end

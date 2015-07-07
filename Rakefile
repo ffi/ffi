@@ -93,13 +93,13 @@ task :package => 'gem:package'
 
 CLOBBER.include 'lib/ffi/types.conf'
 CLOBBER.include 'pkg'
+CLOBBER.include 'log'
 
 CLEAN.include 'build'
 CLEAN.include 'conftest.dSYM'
 CLEAN.include 'spec/ffi/fixtures/libtest.{dylib,so,dll}'
 CLEAN.include 'spec/ffi/fixtures/*.o'
-CLEAN.include "pkg/ffi-#{FFI::VERSION}-*-mingw32"
-CLEAN.include "pkg/ffi-#{FFI::VERSION}-java"
+CLEAN.include "pkg/ffi-*-{mingw32,java}"
 CLEAN.include 'lib/1.*'
 CLEAN.include 'lib/2.*'
 CLEAN.include 'bin'
@@ -192,6 +192,27 @@ if USE_RAKE_COMPILER
     require "rake_compiler_dock"
     RakeCompilerDock.sh "bundle && rake cross native gem MAKE='nice make -j`nproc`'"
   end
+end
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), 'lib')
+require 'ffi/platform'
+types_conf = File.expand_path(File.join(FFI::Platform::CONF_DIR, 'types.conf'))
+logfile = File.join(File.dirname(__FILE__), 'types_log')
+
+file types_conf => File.join("lib", "ffi", "version.rb") do |task|
+  require 'fileutils'
+  require 'ffi/tools/types_generator'
+  options = {}
+  FileUtils.mkdir_p(File.dirname(task.name), { :mode => 0755 })
+  File.open(task.name, File::CREAT|File::TRUNC|File::RDWR, 0644) do |f|
+    f.puts FFI::TypesGenerator.generate(options)
+  end
+  File.open(logfile, 'w') do |log|
+    log.puts(types_conf)
+  end
+end
+
+task :types_conf => types_conf do
 end
 
 Gem::Tasks.new do |t|

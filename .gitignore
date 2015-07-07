@@ -18,3 +18,4 @@ lib/ffi_c.so
 vendor
 .bundle
 Gemfile.lock
+types_log
