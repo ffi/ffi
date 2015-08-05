@@ -6,7 +6,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#define sleep(x) Sleep(x)
+#define sleep(x) Sleep((x)*1000)
 #endif
 
 #ifndef _WIN32
@@ -55,4 +55,16 @@ void testAsyncCallback(void (*fn)(int), int value)
 #else
     (*fn)(value);
 #endif
-} 
+}
+
+#if defined(_WIN32) && !defined(_WIN64)
+struct StructUCDP {
+  unsigned char a1;
+  double a2;
+  void *a3;
+};
+
+void __stdcall testStdcallManyParams(long *a1, char a2, short int a3, int a4, __int64 a5,
+            struct StructUCDP a6, struct StructUCDP *a7, float a8, double a9) {
+}
+#endif
