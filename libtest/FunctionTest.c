@@ -6,7 +6,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#define sleep(x) Sleep(x)
+#define sleep(x) Sleep((x)*1000)
 #endif
 
 #ifndef _WIN32
