@@ -64,14 +64,14 @@ describe FFI::Function do
 
   it 'can wrap a blocking function' do
     fp = FFI::Function.new(:void, [ :int ], @libtest.find_function('testBlocking'), :blocking => true)
+    time = Time.now
     threads = 10.times.map do |x|
       Thread.new do
-        time = Time.now
-        fp.call(2)
-        expect(Time.now - time).to be >= 2
+        fp.call(1)
       end
     end
     threads.each { |t| t.join }
+    expect(Time.now - time).to be < 9 # 10 * 1 seconds - 1 second granularity
   end
 
   it 'autorelease flag is set to true by default' do
