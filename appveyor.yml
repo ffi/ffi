@@ -1,5 +1,6 @@
 install:
   - SET PATH=C:\%RUBYVER%\bin;%PATH%
+  - SET RAKEOPT=-rdevkit
   - gem install bundler --quiet --no-ri --no-rdoc
   - bundle install
 build: off
