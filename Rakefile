@@ -177,13 +177,14 @@ if USE_RAKE_COMPILER
 
   ENV['RUBY_CC_VERSION'] ||= '1.8.7:1.9.3:2.0.0:2.1.5:2.2.1'
 
+  # To reduce the gem file size strip mingw32 dlls before packaging
   ENV['RUBY_CC_VERSION'].to_s.split(':').each do |ruby_version|
-    task "copy:ffi_c:i386-mingw32:#{ruby_version}" do |t|
-      sh "i686-w64-mingw32-strip -S #{BUILD_DIR}/i386-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
+    task "build/i386-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so" do |t|
+      sh "i686-w64-mingw32-strip -S build/i386-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
 
-    task "copy:ffi_c:x64-mingw32:#{ruby_version}" do |t|
-      sh "x86_64-w64-mingw32-strip -S #{BUILD_DIR}/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
+    task "build/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so" do |t|
+      sh "x86_64-w64-mingw32-strip -S build/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
   end
 
