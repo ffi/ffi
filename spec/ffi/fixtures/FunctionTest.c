@@ -11,10 +11,10 @@
 #ifndef _WIN32
 #include <unistd.h>
 #include <pthread.h>
+#include <stdlib.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "PipeHelper.h"
 
 int testAdd(int a, int b)
 {
@@ -27,56 +27,37 @@ int testFunctionAdd(int a, int b, int (*f)(int, int))
 };
 
 struct testBlockingData {
-    int pipe1[2];
-    int pipe2[2];
+    FD_TYPE pipe1[2];
+    FD_TYPE pipe2[2];
 };
 
 struct testBlockingData *testBlockingOpen()
 {
     struct testBlockingData *self = malloc(sizeof(struct testBlockingData));
 
-    if( pipe(self->pipe1) == -1 ) return NULL;
-    if( pipe(self->pipe2) == -1 ) return NULL;
+    if( pipeHelperCreatePipe(self->pipe1) == -1 ) return NULL;
+    if( pipeHelperCreatePipe(self->pipe2) == -1 ) return NULL;
     return self;
 }
 
-char testBlockingReadChar(int fd)
-{
-    char d;
-    struct timeval timeout;
-    fd_set read_fds;
-    FD_ZERO(&read_fds);
-    FD_SET(fd, &read_fds);
-
-    timeout.tv_sec = 10; // timeout after x seconds
-    timeout.tv_usec = 0;
-
-    if(select(fd + 1, &read_fds, NULL, NULL, &timeout) <= 0)
-      return 0;
-
-    if( read(fd, &d, 1) != 1)
-      return 0;
-    return d;
-}
-
 char testBlockingWR(struct testBlockingData *self, char c) {
-    if( write(self->pipe1[1], &c, 1) != 1)
-      return 0;
-    return testBlockingReadChar(self->pipe2[0]);
+    if( pipeHelperWriteChar(self->pipe1[1], c) != 1)
+        return 0;
+    return pipeHelperReadChar(self->pipe2[0], 10);
 }
 
 char testBlockingRW(struct testBlockingData *self, char c) {
-    char d = testBlockingReadChar(self->pipe1[0]);
-    if( write(self->pipe2[1], &c, 1) != 1)
-      return 0;
+    char d = pipeHelperReadChar(self->pipe1[0], 10);
+    if( pipeHelperWriteChar(self->pipe2[1], c) != 1)
+        return 0;
     return d;
 }
 
 void testBlockingClose(struct testBlockingData *self) {
-    close(self->pipe1[0]);
-    close(self->pipe1[1]);
-    close(self->pipe2[0]);
-    close(self->pipe2[1]);
+    pipeHelperClosePipe(self->pipe1[0]);
+    pipeHelperClosePipe(self->pipe1[1]);
+    pipeHelperClosePipe(self->pipe2[0]);
+    pipeHelperClosePipe(self->pipe2[1]);
     free(self);
 }
 

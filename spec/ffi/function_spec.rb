@@ -68,6 +68,7 @@ describe FFI::Function do
     fpWR = FFI::Function.new(:char, [ :pointer, :char ], @libtest.find_function('testBlockingWR'), :blocking => true)
     fpClose = FFI::Function.new(:void, [ :pointer ], @libtest.find_function('testBlockingClose'))
     handle = fpOpen.call
+    expect(handle).not_to be_null
     begin
       thWR = Thread.new { fpWR.call(handle, 63) }
       thRW = Thread.new { fpRW.call(handle, 64) }
