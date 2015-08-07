@@ -6,13 +6,15 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#define sleep(x) Sleep((x)*1000)
 #endif
 
 #ifndef _WIN32
 #include <unistd.h>
 #include <pthread.h>
+#include <stdlib.h>
 #endif
+
+#include "PipeHelper.h"
 
 int testAdd(int a, int b)
 {
@@ -24,9 +26,40 @@ int testFunctionAdd(int a, int b, int (*f)(int, int))
     return f(a, b);
 };
 
-void testBlocking(int seconds) {
-    sleep(seconds);
+struct testBlockingData {
+    FD_TYPE pipe1[2];
+    FD_TYPE pipe2[2];
 };
+
+struct testBlockingData *testBlockingOpen()
+{
+    struct testBlockingData *self = malloc(sizeof(struct testBlockingData));
+
+    if( pipeHelperCreatePipe(self->pipe1) == -1 ) return NULL;
+    if( pipeHelperCreatePipe(self->pipe2) == -1 ) return NULL;
+    return self;
+}
+
+char testBlockingWR(struct testBlockingData *self, char c) {
+    if( pipeHelperWriteChar(self->pipe1[1], c) != 1)
+        return 0;
+    return pipeHelperReadChar(self->pipe2[0], 10);
+}
+
+char testBlockingRW(struct testBlockingData *self, char c) {
+    char d = pipeHelperReadChar(self->pipe1[0], 10);
+    if( pipeHelperWriteChar(self->pipe2[1], c) != 1)
+        return 0;
+    return d;
+}
+
+void testBlockingClose(struct testBlockingData *self) {
+    pipeHelperClosePipe(self->pipe1[0]);
+    pipeHelperClosePipe(self->pipe1[1]);
+    pipeHelperClosePipe(self->pipe2[0]);
+    pipeHelperClosePipe(self->pipe2[1]);
+    free(self);
+}
 
 struct async_data {
     void (*fn)(int);
