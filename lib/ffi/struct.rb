@@ -146,35 +146,95 @@ module FFI
       pointer
     end
 
-    # Dump this instance as a Hash containing {member => data} pairs
-    # for every member in the struct.
-    # 
-    # Example:
-    # 
-    #   Rect.new( :x=>1, :y=>2, :w=>3, :h=>4 ).to_hash
-    #   # => {:h=>4, :w=>3, :x=>1, :y=>2}
-    def to_hash
-      return {} if members.empty?
-      Hash[ *(members.collect{ |m| [m, self[m]] }.flatten!) ]
+    # Recursively dump this structure's data as a Hash.
+    # @return [Hash] Hash containing member/data pairs for every member in the struct
+    #
+    # @example
+    #   z = Rect.new
+    #   z[:x] = 1
+    #   z[:y] = 2
+    #   z[:w] = 3
+    #   z[:h] = 4
+    #   z.to_h => {:h=>4, :w=>3, :x=>1, :y=>2}
+    def to_h
+      m_list = {}
+      members.collect do |m|
+        if self[m].is_a?(FFI::Struct)
+          m_list[m] = self[m].to_h
+        else
+          m_list[m] = self[m]
+        end
+      end
+      return m_list
     end
 
     # Dump this instance as an Array of its struct data.
     # The array contains only the data, not the member names.
-    # 
-    # Note: the order of data in the array always matches the
-    # order of members given in #layout.
-    # 
-    # Example:
-    # 
-    #   Rect.new( :x=>1, :y=>2, :w=>3, :h=>4 ).to_ary
-    #   # => [1,2,3,4]
-    def to_ary
-      members.collect{ |m| self[m] }
+    # @return [Array] array of data
+    #
+    # @note the order of data in the array always matches the
+    #   order of members given in #layout. 
+    #
+    # @example
+    #   z = Rect.new
+    #   z[:x] = 1
+    #   z[:y] = 2
+    #   z[:w] = 3
+    #   z[:h] = 4
+    #   z.to_a => [1,2,3,4]
+    def to_a
+      members.collect do |m|
+          if self[m].is_a?(FFI::Struct)
+              self[m].to_a
+          else
+              self[m]
+          end
+      end
     end
 
     # Dump this instance as a string of raw bytes of its struct data.
     def to_bytes
       return self.pointer.get_bytes(0, self.size)
+    end
+
+    # Initialize the contents of this structure using data from a hash.
+    def init_from_hash(val)
+      clear
+      val.each do |sym, value|
+        raise NoMethodError unless self.members.member?(sym)
+        if self[sym].is_a?(FFI::Struct)
+          self[sym] = self[sym].class.new
+          self[sym].init_from_hash(value)
+        else
+          self[sym] = value
+        end
+      end
+    end
+
+    # Initialize the contents of this structure using elements from an array.
+    # Array data must be in the same order as was used with #layout.
+    def init_from_array(val)
+      unless val.length == members.length
+        raise IndexError, "expected #{members.length} items, got #{val.length}"
+      end
+      clear
+      members.each_with_index do |member, i|
+        if self[member].is_a?(FFI::Struct)
+          self[member] = self[member].class.new
+          self[member].init_from_array(ary[i])
+        else
+          self[member] = val[i]
+        end
+      end
+    end
+
+    # Initialize the contents of this structure using a raw bytestring.
+    def init_from_bytes(val)
+      unless val.bytesize == size
+        raise ArgumentError, "string of length #{val.bytesize} cannot initialize a structure with size #{size}"
+      end
+      clear
+      self.pointer.put_bytes(0, val)
     end
 
     # Get struct size
@@ -255,35 +315,6 @@ module FFI
 
     def self.auto_ptr
       @managed_type ||= Type::Mapped.new(ManagedStructConverter.new(self))
-    end
-
-    # Create a new instance of the class, reading data from a Hash or
-    # Array of attributes, a bytestring of raw data, or copying from
-    # another instance of the class.
-    def initilize(val = nil)
-      return if val == nil
-
-      case val
-      when Hash
-        #super(FFI::Buffer.new(size))
-        init_from_hash(val)         # Read the values from a Hash.
-
-      # Note: plain "Array" would mean FFI::Struct::Array in this scope.
-      when ::Array
-        #super(FFI::Buffer.new(size))
-        init_from_array(val)        # Read the values from an Array.
-
-      when String
-        #super(FFI::Buffer.new(size))
-        init_from_bytes(val)        # Read the values from a bytestring.
-
-      when self.class
-        #super(FFI::Buffer.new(size))
-        init_from_bytes(val.to_bytes) # Read the values from another instance.
-
-      else
-        raise TypeError, "cannot create new #{self.class} from #{val.inspect}"
-      end
     end
 
 
@@ -428,24 +459,6 @@ module FFI
           builder.add name, find_field_type(type), offset
         end
       end
-    end
-
-    private
-
-    def init_from_hash(val)   # :nodoc:
-      members.each do |member|
-        self[member] = val[member]
-      end
-    end
-
-    def init_from_array(val)  # :nodoc:
-      members.each_with_index do |member, i|
-        self[member] = val[i]
-      end
-    end
-
-    def init_from_bytes(val)  # :nodoc:
-      self.pointer.put_bytes(0, val)
     end
   end
 end
