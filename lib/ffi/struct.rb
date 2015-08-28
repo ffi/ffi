@@ -168,7 +168,7 @@ module FFI
       return m_list
     end
 
-    # Dump this instance as an Array of its struct data.
+    # Recursively dump this structure's data as an Array.
     # The array contains only the data, not the member names.
     # @return [Array] array of data
     #
@@ -192,12 +192,14 @@ module FFI
       end
     end
 
-    # Dump this instance as a string of raw bytes of its struct data.
+    # Dump this structure's data as a raw bytestring.
+    # @return [String] raw byte sequence
     def to_bytes
       return self.pointer.get_bytes(0, self.size)
     end
 
     # Initialize the contents of this structure using data from a hash.
+    # @param val [Hash] hash containing field symbols and associated data
     def init_from_hash(val)
       clear
       val.each do |sym, value|
@@ -213,9 +215,10 @@ module FFI
 
     # Initialize the contents of this structure using elements from an array.
     # Array data must be in the same order as was used with #layout.
-    def init_from_array(val)
-      unless val.length == members.length
-        raise IndexError, "expected #{members.length} items, got #{val.length}"
+    # @param ary [Array] array of structure member data
+    def init_from_array(ary)
+      unless ary.length == members.length
+        raise IndexError, "expected #{members.length} items, got #{ary.length}"
       end
       clear
       members.each_with_index do |member, i|
@@ -223,18 +226,19 @@ module FFI
           self[member] = self[member].class.new
           self[member].init_from_array(ary[i])
         else
-          self[member] = val[i]
+          self[member] = ary[i]
         end
       end
     end
 
-    # Initialize the contents of this structure using a raw bytestring.
-    def init_from_bytes(val)
-      unless val.bytesize == size
-        raise ArgumentError, "string of length #{val.bytesize} cannot initialize a structure with size #{size}"
+    # Initialize the contents of this structure using a bytestring.
+    # @param data [String] byte sequence encoded as a String
+    def init_from_bytes(data)
+      unless data.bytesize == size
+        raise ArgumentError, "string of length #{data.bytesize} cannot initialize a structure with size #{size}"
       end
       clear
-      self.pointer.put_bytes(0, val)
+      self.pointer.put_bytes(0, data)
     end
 
     # Get struct size
