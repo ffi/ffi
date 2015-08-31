@@ -299,4 +299,34 @@ describe FFI::Struct, :new do
     end
   end
 
+
+  describe "Marshal support" do
+    describe "#marshal_dump" do
+      it "can dump a struct object" do
+        x = Inner.new
+        expect {
+          @dump = Marshal.dump x
+        }.not_to raise_error
+        expect(@dump).to be_a(String)
+      end
+    end
+
+
+    describe "#marshal_load" do
+      it "can reconstitute a structure" do
+        x = Inner.new
+        x[:one] = rand(256)
+        x[:two] = rand(256)
+        x[:three] = rand(256)
+        dump = Marshal.dump x
+
+        y = Marshal.load dump
+
+        expect(y[:one]).to eql x[:one]
+        expect(y[:two]).to eql x[:two]
+        expect(y[:three]).to eql x[:three]
+      end
+    end
+  end
+
 end
