@@ -28,6 +28,24 @@ class Outer < FFI::Struct
             :footer, :uint16
 end
 
+# Helper function to make some test cases simpler
+class FFI::Struct
+  # Initialize all fields of a structure with random values (assumes integral types)
+  def randomize
+    layout.members.each_with_index {|obj, idx|
+      if self[obj].is_a? FFI::Struct
+        self[obj].randomize
+      else
+        obj_size = layout.fields[idx].size * 8
+        self[obj] = rand(2 ** obj_size)
+      end
+    }
+    values
+  end
+end
+
+
+
 describe FFI::Struct, :new do
 
   describe "#to_bytes" do
@@ -149,9 +167,7 @@ describe FFI::Struct, :new do
 
     it "can be used to re-constitute the original structure (simple)" do
       x = Inner.new
-      x[:one] = rand(250)
-      x[:two] = rand(250)
-      x[:three] = rand(250)
+      x.randomize
       h = x.to_h
 
       y = Inner.new
@@ -175,11 +191,7 @@ describe FFI::Struct, :new do
 
     it "can be used to re-constitute the original structure (nested)" do
       x = Outer.new
-      x[:header] = rand(250)
-      x[:footer] = rand(250)
-      x[:nested][:one] = rand(250)
-      x[:nested][:two] = rand(250)
-      x[:nested][:three] = rand(250)
+      x.randomize
       h = x.to_h
 
       y = Outer.new
@@ -315,9 +327,7 @@ describe FFI::Struct, :new do
     describe "#marshal_load" do
       it "can reconstitute a structure" do
         x = Inner.new
-        x[:one] = rand(256)
-        x[:two] = rand(256)
-        x[:three] = rand(256)
+        x.randomize
         dump = Marshal.dump x
 
         y = Marshal.load dump
@@ -343,9 +353,7 @@ describe FFI::Struct, :new do
     describe "#init_from_json" do
       it "can reconstitute a structure" do
         x = Inner.new
-        x[:one] = rand(256)
-        x[:two] = rand(256)
-        x[:three] = rand(256)
+        x.randomize
         j = x.to_json
 
         y = Inner.new
