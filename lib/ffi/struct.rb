@@ -33,6 +33,7 @@
 
 require 'ffi/platform'
 require 'ffi/struct_layout_builder'
+require 'json'
 
 module FFI
 
@@ -239,6 +240,17 @@ module FFI
       end
       clear
       self.pointer.put_bytes(0, data)
+    end
+
+    # Serialize data to JSON format
+    def to_json
+      JSON.generate(to_h)
+    end
+
+    # De-serialize data from a JSON record
+    def init_from_json(data)
+      h = JSON.parse(data, opts={:symbolize_names => true})
+      init_from_hash h
     end
 
     # Serialize data for use with the Ruby standard 'Marshal' library.

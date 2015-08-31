@@ -329,4 +329,33 @@ describe FFI::Struct, :new do
     end
   end
 
+
+  describe "JSON support" do
+    describe "#to_json" do
+      it "can dump a struct object" do
+        x = Inner.new
+        j = x.to_json
+        expect(j).to be_a(String)
+      end
+    end
+
+
+    describe "#init_from_json" do
+      it "can reconstitute a structure" do
+        x = Inner.new
+        x[:one] = rand(256)
+        x[:two] = rand(256)
+        x[:three] = rand(256)
+        j = x.to_json
+
+        y = Inner.new
+        y.init_from_json j
+
+        expect(y[:one]).to eql x[:one]
+        expect(y[:two]).to eql x[:two]
+        expect(y[:three]).to eql x[:three]
+      end
+    end
+  end
+
 end
