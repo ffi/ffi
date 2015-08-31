@@ -68,7 +68,7 @@ describe FFI::Struct, ".init_from_bytes" do
   it "can import data from a bytestring" do
     expect {
       @x = Inner.new
-      @x.init_from_bytes("\x01\x02\x00\x00\x00\x03\x00")
+      @x.load("\x01\x02\x00\x00\x00\x03\x00")
     }.not_to raise_error
     expect(@x[:one]).to eql 1
     expect(@x[:two]).to eql 2
@@ -78,16 +78,16 @@ describe FFI::Struct, ".init_from_bytes" do
     @x = Inner.new
     expect {
       # Empty
-      @x.init_from_bytes("")
-    }.to raise_error(ArgumentError)
+      @x.load("")
+    }.to raise_error(TypeError)
     expect {
       # Too long
-      @x.init_from_bytes("\x00" * (@x.size + 1))
-    }.to raise_error(ArgumentError)
+      @x.load("\x00" * (@x.size + 1))
+    }.to raise_error(TypeError)
     expect {
       # Too short
-      @x.init_from_bytes("\x00" * (@x.size - 1))
-    }.to raise_error(ArgumentError)
+      @x.load("\x00" * (@x.size - 1))
+    }.to raise_error(TypeError)
   end
 end
 
@@ -95,7 +95,7 @@ end
 describe FFI::Struct, ".to_h" do
   before :all do
     @x = Inner.new
-    @x.init_from_array [3, 2, 1]
+    @x.load [3, 2, 1]
     @h = @x.to_h
   end
 
@@ -128,7 +128,7 @@ describe FFI::Struct, ".init_from_hash" do
 
   it "loads the correct values" do
     x = Inner.new
-    x.init_from_hash @hash
+    x.load @hash
 
     expect(x[:one]).to eql 1
     expect(x[:two]).to eql 2
@@ -137,7 +137,7 @@ describe FFI::Struct, ".init_from_hash" do
 
   it "only alters the specified fields" do
     x = Inner.new
-    x.init_from_hash @hash.reject{|z| z == :two}
+    x.load @hash.reject{|z| z == :two}
 
     expect(x[:one]).to eql 1
     expect(x[:two]).to eql 0
@@ -148,7 +148,7 @@ describe FFI::Struct, ".init_from_hash" do
     expect {
       h = @hash.merge({ :dummy => 0 })
       x = Inner.new
-      x.init_from_hash h
+      x.load h
      }.to raise_error(NoMethodError)
   end
 
@@ -158,7 +158,7 @@ describe FFI::Struct, ".init_from_hash" do
           :three => rand(250)
          }
     x = Inner.new
-    x.init_from_hash h1
+    x.load h1
     h2 = x.to_h
     expect(h2).to eql h1
   end
@@ -169,7 +169,7 @@ describe FFI::Struct, ".init_from_hash" do
     h = x.to_h
 
     y = Inner.new
-    y.init_from_hash h
+    y.load h
 
     expect(y[:one]).to eql x[:one]
     expect(y[:two]).to eql x[:two]
@@ -182,7 +182,7 @@ describe FFI::Struct, ".init_from_hash" do
           :footer => rand(250)
          }
     x = Outer.new
-    x.init_from_hash h1
+    x.load h1
     h2 = x.to_h
     expect(h2).to eql h1
   end
@@ -193,7 +193,7 @@ describe FFI::Struct, ".init_from_hash" do
     h = x.to_h
 
     y = Outer.new
-    y.init_from_hash h
+    y.load h
 
     expect(y[:header]).to eql x[:header]
     expect(y[:footer]).to eql x[:footer]
@@ -206,7 +206,7 @@ describe FFI::Struct, ".init_from_hash" do
     expect {
       x = Inner.new
       h = {}
-      x.init_from_hash h
+      x.load h
     }.not_to raise_error
   end
 end
@@ -247,7 +247,7 @@ describe FFI::Struct, ".init_from_array" do
 
   it "loads the correct values" do
     x = Inner.new
-    x.init_from_array [1, 2, 3]
+    x.load [1, 2, 3]
 
     expect(x[:one]).to eql 1
     expect(x[:two]).to eql 2
@@ -258,30 +258,30 @@ describe FFI::Struct, ".init_from_array" do
     x = Inner.new
     expect {
       # empty
-      x.init_from_array []
+      x.load []
     }.to raise_error(IndexError)
     expect {
       # too small
-      x.init_from_array @init_data[0...-1]
+      x.load @init_data[0...-1]
     }.to raise_error(IndexError)
     expect {
       # too large
-      x.init_from_array @init_data + [5]
+      x.load @init_data + [5]
     }.to raise_error(IndexError)
   end
 
   it "can be used to re-constitute the original array (simple)" do
     x = Inner.new
-    x.init_from_array @init_data
+    x.load @init_data
     expect(x.to_a).to match_array @init_data
   end
 
   it "can be used to re-constitute the original structure (simple)" do
     x = Inner.new
-    x.init_from_array @init_data
+    x.load @init_data
 
     y = Inner.new
-    y.init_from_array x.to_a
+    y.load x.to_a
 
     expect(y[:one]).to eql x[:one]
     expect(y[:two]).to eql x[:two]
@@ -290,16 +290,16 @@ describe FFI::Struct, ".init_from_array" do
 
   it "can be used to re-constitute the original array (nested)" do
     x = Outer.new
-    x.init_from_array @init_data_outer
+    x.load @init_data_outer
     expect(x.to_a).to match_array @init_data_outer
   end
 
   it "can be used to re-constitute the original structure (nested)" do
     x = Outer.new
-    x.init_from_array @init_data_outer
+    x.load @init_data_outer
 
     y = Outer.new
-    y.init_from_array x.to_a
+    y.load x.to_a
 
     expect(y[:header]).to eql x[:header]
     expect(y[:footer]).to eql x[:footer]
@@ -327,7 +327,7 @@ describe FFI::Struct, " JSON support" do
       j = x.to_json
 
       y = Inner.new
-      y.init_from_json j
+      y.load j
 
       expect(y[:one]).to eql x[:one]
       expect(y[:two]).to eql x[:two]

@@ -199,58 +199,9 @@ module FFI
       return self.pointer.get_bytes(0, self.size)
     end
 
-    # Initialize the contents of this structure using data from a hash.
-    # @param val [Hash] hash containing field symbols and associated data
-    def init_from_hash(val)
-      clear
-      val.each do |sym, value|
-        raise NoMethodError unless self.members.member?(sym)
-        if self[sym].is_a?(FFI::Struct)
-          self[sym] = self[sym].class.new
-          self[sym].init_from_hash(value)
-        else
-          self[sym] = value
-        end
-      end
-    end
-
-    # Initialize the contents of this structure using elements from an array.
-    # Array data must be in the same order as was used with #layout.
-    # @param ary [Array] array of structure member data
-    def init_from_array(ary)
-      unless ary.length == members.length
-        raise IndexError, "expected #{members.length} items, got #{ary.length}"
-      end
-      clear
-      members.each_with_index do |member, i|
-        if self[member].is_a?(FFI::Struct)
-          self[member] = self[member].class.new
-          self[member].init_from_array(ary[i])
-        else
-          self[member] = ary[i]
-        end
-      end
-    end
-
-    # Initialize the contents of this structure using a bytestring.
-    # @param data [String] byte sequence encoded as a String
-    def init_from_bytes(data)
-      unless data.bytesize == size
-        raise ArgumentError, "string of length #{data.bytesize} cannot initialize a structure with size #{size}"
-      end
-      clear
-      self.pointer.put_bytes(0, data)
-    end
-
     # Serialize data to JSON format
     def to_json
       JSON.generate(to_h)
-    end
-
-    # De-serialize data from a JSON record
-    def init_from_json(data)
-      h = JSON.parse(data, opts={:symbolize_names => true})
-      init_from_hash h
     end
 
     # Serialize data for use with the Ruby standard 'Marshal' library.
@@ -264,6 +215,32 @@ module FFI
     def marshal_load data
       initialize
       init_from_json data
+    end
+
+    # Load data from a variety of different formats.
+    # Currently supports Array, Hash, Bytestring, and JSON.
+    def load(data)
+      case data
+      when Hash
+        init_from_hash data
+      when ::Array
+        init_from_array data
+      when String
+        if data.bytesize == size
+          init_from_bytes data
+        else
+          begin
+            init_from_json data
+          rescue JSON::ParserError
+            # This typically occurs because the string was not JSON at all.
+            # Displaying a JSON-specific exception can be misleading, so use
+            # a generic message instead.
+            raise TypeError, "cannot initialize #{self.class} with the given #{data.class}"
+          end
+        end
+      else
+        raise TypeError, "cannot initialize #{self.class} with type #{data.class}"
+      end
     end
 
     # Get struct size
@@ -344,6 +321,57 @@ module FFI
 
     def self.auto_ptr
       @managed_type ||= Type::Mapped.new(ManagedStructConverter.new(self))
+    end
+
+    protected
+
+    # Initialize the contents of this structure using data from a hash.
+    # @param val [Hash] hash containing field symbols and associated data
+    def init_from_hash(val)
+      clear
+      val.each do |sym, value|
+        raise NoMethodError unless self.members.member?(sym)
+        if self[sym].is_a?(FFI::Struct)
+          self[sym] = self[sym].class.new
+          self[sym].init_from_hash(value)
+        else
+          self[sym] = value
+        end
+      end
+    end
+
+    # Initialize the contents of this structure using elements from an array.
+    # Array data must be in the same order as was used with #layout.
+    # @param ary [Array] array of structure member data
+    def init_from_array(ary)
+      unless ary.length == members.length
+        raise IndexError, "expected #{members.length} items, got #{ary.length}"
+      end
+      clear
+      members.each_with_index do |member, i|
+        if self[member].is_a?(FFI::Struct)
+          self[member] = self[member].class.new
+          self[member].init_from_array(ary[i])
+        else
+          self[member] = ary[i]
+        end
+      end
+    end
+
+    # Initialize the contents of this structure using a bytestring.
+    # @param data [String] byte sequence encoded as a String
+    def init_from_bytes(data)
+      unless data.bytesize == size
+        raise ArgumentError, "string of length #{data.bytesize} cannot initialize a structure with size #{size}"
+      end
+      clear
+      self.pointer.put_bytes(0, data)
+    end
+
+    # De-serialize data from a JSON record
+    def init_from_json(data)
+      h = JSON.parse(data, opts={:symbolize_names => true})
+      init_from_hash h
     end
 
 
