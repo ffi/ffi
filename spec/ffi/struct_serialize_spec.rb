@@ -3,22 +3,13 @@
 # For licensing, see LICENSE.SPECS
 #
 
-# test me via:
-#   rspec -O spec/spec.opts
-
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 # Define some sample structs for test purposes
-class Simple < FFI::Struct
-    packed
-    layout  :one, :uint8,
-            :two, :uint8,
-            :three, :uint8
-end
 class Inner < FFI::Struct
     packed
-    layout  :one, :uint8,
-            :two, :uint32,
+    layout  :one,   :uint8,
+            :two,   :uint32,
             :three, :uint16
 end
 class Outer < FFI::Struct
@@ -55,39 +46,17 @@ describe FFI::Struct, ".to_bytes" do
   end
 
   it "dumps fields in the correct order" do
+    class Simple < FFI::Struct
+      packed
+      layout  :one,   :uint8,
+              :two,   :uint8,
+              :three, :uint8
+    end
     x = Simple.new
     x[:one] = 1
     x[:two] = 2
     x[:three] = 3
     expect(x.to_bytes).to eql("\x01\x02\x03")
-  end
-end
-
-
-describe FFI::Struct, ".init_from_bytes" do
-  it "can import data from a bytestring" do
-    expect {
-      @x = Inner.new
-      @x.load("\x01\x02\x00\x00\x00\x03\x00")
-    }.not_to raise_error
-    expect(@x[:one]).to eql 1
-    expect(@x[:two]).to eql 2
-    expect(@x[:three]).to eql 3
-  end
-  it "will not import data from a bytestring with the wrong length" do
-    @x = Inner.new
-    expect {
-      # Empty
-      @x.load("")
-    }.to raise_error(TypeError)
-    expect {
-      # Too long
-      @x.load("\x00" * (@x.size + 1))
-    }.to raise_error(TypeError)
-    expect {
-      # Too short
-      @x.load("\x00" * (@x.size - 1))
-    }.to raise_error(TypeError)
   end
 end
 
@@ -121,7 +90,62 @@ describe FFI::Struct, ".to_h" do
 end
 
 
-describe FFI::Struct, ".init_from_hash" do
+describe FFI::Struct, ".to_a" do
+  before :all do
+    @x = Inner.new
+    @x[:one] = 1
+    @x[:two] = 2
+    @x[:three] = 3
+    @a = @x.to_a
+  end
+
+  it "generates the correct number of elements" do
+    expect(@a.length).to eql @x.members.length
+  end
+
+  it "generates the correct sequence of values" do
+    expect(@a).to match_array [1, 2, 3]
+  end
+
+  it "recursively encodes nested structures" do
+    o = Outer.new
+    a = o.to_a
+    expect(a[0]).not_to be_a(::Array)
+    expect(a[1]).to     be_a(::Array)
+    expect(a[2]).not_to be_a(::Array)
+  end
+end
+
+
+describe FFI::Struct, ".load [bytestring]" do
+  it "can import data from a bytestring" do
+    expect {
+      @x = Inner.new
+      @x.load("\x01\x02\x00\x00\x00\x03\x00")
+    }.not_to raise_error
+    expect(@x[:one]).to eql 1
+    expect(@x[:two]).to eql 2
+    expect(@x[:three]).to eql 3
+  end
+  it "will not import data from a bytestring with the wrong length" do
+    @x = Inner.new
+    expect {
+      # Empty
+      @x.load("")
+    }.to raise_error(TypeError)
+    expect {
+      # Too long
+      @x.load("\x00" * (@x.size + 1))
+    }.to raise_error(TypeError)
+    expect {
+      # Too short
+      @x.load("\x00" * (@x.size - 1))
+    }.to raise_error(TypeError)
+  end
+end
+
+
+describe FFI::Struct, ".load [hash]" do
   before :all do
     @hash = { :one => 1, :two => 2, :three => 3 }
   end
@@ -212,34 +236,7 @@ describe FFI::Struct, ".init_from_hash" do
 end
 
 
-describe FFI::Struct, ".to_a" do
-  before :all do
-    @x = Inner.new
-    @x[:one] = 1
-    @x[:two] = 2
-    @x[:three] = 3
-    @a = @x.to_a
-  end
-
-  it "generates the correct number of elements" do
-    expect(@a.length).to eql @x.members.length
-  end
-
-  it "generates the correct sequence of values" do
-    expect(@a).to match_array [1, 2, 3]
-  end
-
-  it "recursively encodes nested structures" do
-    o = Outer.new
-    a = o.to_a
-    expect(a[0]).not_to be_a(::Array)
-    expect(a[1]).to     be_a(::Array)
-    expect(a[2]).not_to be_a(::Array)
-  end
-end
-
-
-describe FFI::Struct, ".init_from_array" do
+describe FFI::Struct, ".load [array]" do
   before :all do
     @init_data = [rand(250), rand(250), rand(250)]
     @init_data_outer = [rand(250), @init_data, rand(250)]
@@ -310,7 +307,7 @@ describe FFI::Struct, ".init_from_array" do
 end
 
 
-describe FFI::Struct, " JSON support" do
+describe "Struct JSON support" do
   describe FFI::Struct, ".to_json" do
     it "can dump a struct object" do
       x = Inner.new
@@ -320,24 +317,26 @@ describe FFI::Struct, " JSON support" do
   end
 
 
-  describe FFI::Struct, ".init_from_json" do
+  describe FFI::Struct, ".load [json]" do
     it "can reconstitute a structure" do
-      x = Inner.new
+      x = Outer.new
       x.randomize
       j = x.to_json
 
-      y = Inner.new
+      y = Outer.new
       y.load j
 
-      expect(y[:one]).to eql x[:one]
-      expect(y[:two]).to eql x[:two]
-      expect(y[:three]).to eql x[:three]
+      expect(y[:header]).to eql x[:header]
+      expect(y[:footer]).to eql x[:footer]
+      expect(y[:nested][:one]).to eql x[:nested][:one]
+      expect(y[:nested][:two]).to eql x[:nested][:two]
+      expect(y[:nested][:three]).to eql x[:nested][:three]
     end
   end
 end
 
 
-describe FFI::Struct, " Marshal support" do
+describe "Struct Marshal support" do
   describe FFI::Struct, ".marshal_dump" do
     it "can dump a struct object" do
       x = Inner.new
