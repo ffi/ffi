@@ -113,16 +113,10 @@ describe "Function with primitive integer arguments" do
       it ":long call(:long (#{i}))" do
         expect(LibTest.ret_long(i)).to eq(i)
       end
-      it ":off_t call(:off_t (#{i}))" do
-        expect(LibTest.ret_off_t(i)).to eq(i)
-      end
     end
-    [ 0, 0x7fffffff, 0x80000000, 0xffffffff, 0x7fffffffffffffff ].each do |i|
+    [ 0, 0x7fffffff, 0x80000000, 0xffffffff ].each do |i|
       it ":ulong call(:ulong (#{i}))" do
-        expect(LibTest.ret_ulong(i & 32)).to eq(i & 32)
-      end
-      it ":ino_t call(:ino_t (#{i}))" do
-        expect(LibTest.ret_ino_t(i & 32)).to eq(i & 32)
+        expect(LibTest.ret_ulong(i)).to eq(i)
       end
     end
   else
@@ -130,16 +124,10 @@ describe "Function with primitive integer arguments" do
       it ":long call(:long (#{i}))" do
         expect(LibTest.ret_long(i)).to eq(i)
       end
-      it ":off_t call(:off_t (#{i}))" do
-        expect(LibTest.ret_off_t(i)).to eq(i)
-      end
     end
     [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ].each do |i|
       it ":ulong call(:ulong (#{i}))" do
         expect(LibTest.ret_ulong(i)).to eq(i)
-      end
-      it ":ino_t call(:ino_t (#{i}))" do
-        expect(LibTest.ret_ino_t(i)).to eq(i)
       end
     end
     [ 0.0, 0.1, 1.1, 1.23 ].each do |f|
@@ -152,6 +140,37 @@ describe "Function with primitive integer arguments" do
       it ":double call(:double (#{f}))" do
         LibTest.set_double(f)
         expect((LibTest.get_double - f).abs).to be < 0.001
+      end
+    end
+  end
+end
+describe "Descendant type parameter checking" do
+  # unsigned
+  [ :ino_t ].each do |type|
+    bitsize = FFI.find_type( type ).size << 3
+    [ 0, 2**(bitsize-1)-1, 2**(bitsize-1), 2**bitsize-1 ].each do |i|
+      it ":#{type} call(:#{type} (#{i}))" do
+        expect(LibTest.send("ret_#{type}".to_sym, i)).to eq(i)
+      end
+    end
+    [ 2**bitsize, 2**(bitsize*2-1)-1, 2**(bitsize*2-1), 2**(bitsize*2)-1 ].each do |i|
+      it ":#{type} fail call(:#{type} (#{i}))" do
+        expect{ LibTest.send("ret_#{type}".to_sym, i) }.to raise_error(RangeError)
+      end
+    end
+  end
+
+  # signed
+  [ :off_t ].each do |type|
+    bitsize = FFI.find_type( type ).size << 3
+    [ 0, 2**(bitsize-1)-1, -2**(bitsize-1), -1 ].each do |i|
+      it ":#{type} call(:#{type} (#{i}))" do
+        expect(LibTest.send("ret_#{type}".to_sym, i)).to eq(i)
+      end
+    end
+    [ 2**bitsize, 2**(bitsize*2-1)-1, -2**(bitsize*2-1), -2**(bitsize*2)-1 ].each do |i|
+      it ":#{type} fail call(:#{type} (#{i}))" do
+        expect{ LibTest.send("ret_#{type}".to_sym, i) }.to raise_error(RangeError)
       end
     end
   end
