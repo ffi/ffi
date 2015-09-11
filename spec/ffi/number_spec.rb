@@ -19,6 +19,8 @@ describe "Function with primitive integer arguments" do
     attach_function :ret_u64, [ :ulong_long ], :ulong_long
     attach_function :ret_long, [ :long ], :long
     attach_function :ret_ulong, [ :ulong ], :ulong
+    attach_function :ret_ino_t, [ :ino_t ], :ino_t
+    attach_function :ret_off_t, [ :off_t ], :off_t
     attach_function :set_s8, [ :char ], :void
     attach_function :get_s8, [ ], :char
     attach_function :set_float, [ :float ], :void
@@ -111,10 +113,16 @@ describe "Function with primitive integer arguments" do
       it ":long call(:long (#{i}))" do
         expect(LibTest.ret_long(i)).to eq(i)
       end
+      it ":off_t call(:off_t (#{i}))" do
+        expect(LibTest.ret_off_t(i)).to eq(i)
+      end
     end
-    [ 0, 0x7fffffff, 0x80000000, 0xffffffff ].each do |i|
+    [ 0, 0x7fffffff, 0x80000000, 0xffffffff, 0x7fffffffffffffff ].each do |i|
       it ":ulong call(:ulong (#{i}))" do
-        expect(LibTest.ret_ulong(i)).to eq(i)
+        expect(LibTest.ret_ulong(i & 32)).to eq(i & 32)
+      end
+      it ":ino_t call(:ino_t (#{i}))" do
+        expect(LibTest.ret_ino_t(i & 32)).to eq(i & 32)
       end
     end
   else
@@ -122,10 +130,16 @@ describe "Function with primitive integer arguments" do
       it ":long call(:long (#{i}))" do
         expect(LibTest.ret_long(i)).to eq(i)
       end
+      it ":off_t call(:off_t (#{i}))" do
+        expect(LibTest.ret_off_t(i)).to eq(i)
+      end
     end
     [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ].each do |i|
       it ":ulong call(:ulong (#{i}))" do
         expect(LibTest.ret_ulong(i)).to eq(i)
+      end
+      it ":ino_t call(:ino_t (#{i}))" do
+        expect(LibTest.ret_ino_t(i)).to eq(i)
       end
     end
     [ 0.0, 0.1, 1.1, 1.23 ].each do |f|
