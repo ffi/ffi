@@ -21,6 +21,7 @@ describe "Function with primitive integer arguments" do
     attach_function :ret_ulong, [ :ulong ], :ulong
     attach_function :ret_ino_t, [ :ino_t ], :ino_t
     attach_function :ret_off_t, [ :off_t ], :off_t
+    attach_function :ret_nlink_t, [ :nlink_t ], :nlink_t
     attach_function :set_s8, [ :char ], :void
     attach_function :get_s8, [ ], :char
     attach_function :set_float, [ :float ], :void
@@ -146,17 +147,15 @@ describe "Function with primitive integer arguments" do
 end
 describe "Descendant type parameter checking" do
   # unsigned
-  [ :ino_t ].each do |type|
+  [ :ino_t, :nlink_t ].each do |type|
     bitsize = FFI.find_type( type ).size << 3
     [ 0, 2**(bitsize-1)-1, 2**(bitsize-1), 2**bitsize-1 ].each do |i|
-      it ":#{type} call(:#{type} (#{i}))" do
+      it ":#{type} call(:#{type} (#{i}))[#{bitsize}]" do
         expect(LibTest.send("ret_#{type}".to_sym, i)).to eq(i)
       end
     end
-    [ 2**bitsize, 2**(bitsize*2-1)-1, 2**(bitsize*2-1), 2**(bitsize*2)-1 ].each do |i|
-      it ":#{type} fail call(:#{type} (#{i}))" do
-        expect{ LibTest.send("ret_#{type}".to_sym, i) }.to raise_error(RangeError)
-      end
+    it ":#{type} fail call(:#{type} (#{2**bitsize}))[#{bitsize}]" do
+      expect{ LibTest.send("ret_#{type}".to_sym, 2**bitsize) }.to raise_error(RangeError)
     end
   end
 
@@ -164,12 +163,12 @@ describe "Descendant type parameter checking" do
   [ :off_t ].each do |type|
     bitsize = FFI.find_type( type ).size << 3
     [ 0, 2**(bitsize-1)-1, -2**(bitsize-1), -1 ].each do |i|
-      it ":#{type} call(:#{type} (#{i}))" do
+      it ":#{type} call(:#{type} (#{i}))[#{bitsize}]" do
         expect(LibTest.send("ret_#{type}".to_sym, i)).to eq(i)
       end
     end
-    [ 2**bitsize, 2**(bitsize*2-1)-1, -2**(bitsize*2-1), -2**(bitsize*2)-1 ].each do |i|
-      it ":#{type} fail call(:#{type} (#{i}))" do
+    [ 2**(bitsize-1), -2**(bitsize-1)-1 ].each do |i|
+      it ":#{type} fail call(:#{type} (#{i}))[#{bitsize}]" do
         expect{ LibTest.send("ret_#{type}".to_sym, i) }.to raise_error(RangeError)
       end
     end
