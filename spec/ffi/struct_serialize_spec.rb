@@ -18,6 +18,17 @@ class Outer < FFI::Struct
             :nested, Inner,
             :footer, :uint16
 end
+class Other < FFI::Struct
+    packed
+    # These types aren't fixed-width, so they can't be tested
+    # against an expected byte sequence.
+    layout  :f, :float,
+            :z, :size_t,
+            :l, :long,
+            :p, :pointer,
+            :u, :ushort,
+            :c, :char
+end
 
 # Helper function to make some test cases simpler
 class FFI::Struct
@@ -26,9 +37,13 @@ class FFI::Struct
     layout.members.each_with_index {|obj, idx|
       if self[obj].is_a? FFI::Struct
         self[obj].randomize
+      elsif self[obj].is_a? Float
+        self[obj] = rand(10_000) / 10_000.0
+      elsif self[obj].is_a? FFI::Pointer
+        self[obj] = FFI::Pointer.new(:uchar, rand(2 ** 32))
       else
         obj_size = layout.fields[idx].size * 8
-        self[obj] = rand(2 ** obj_size)
+        self[obj] = rand(2 ** (obj_size - 1))
       end
     }
     values
@@ -148,6 +163,8 @@ end
 describe FFI::Struct, ".load [hash]" do
   before :all do
     @hash = { :one => 1, :two => 2, :three => 3 }
+    @other_hash = { :f => 3.14, :z => 789, :l => 123456, :p => 0x56781234,
+                    :u => 42, :c => 'm'.ord }
   end
 
   it "loads the correct values" do
@@ -157,6 +174,16 @@ describe FFI::Struct, ".load [hash]" do
     expect(x[:one]).to eql 1
     expect(x[:two]).to eql 2
     expect(x[:three]).to eql 3
+
+    y = Other.new
+    y.load @other_hash
+
+    expect(y[:f]).to be_within(0.001).of @other_hash[:f]
+    expect(y[:z]).to eql @other_hash[:z]
+    expect(y[:l]).to eql @other_hash[:l]
+    expect(y[:p].address).to eql @other_hash[:p]
+    expect(y[:u]).to eql @other_hash[:u]
+    expect(y[:c]).to eql @other_hash[:c]
   end
 
   it "only alters the specified fields" do
@@ -226,6 +253,35 @@ describe FFI::Struct, ".load [hash]" do
     expect(y[:nested][:three]).to eql x[:nested][:three]
   end
 
+  it "can be used to re-constitute the original hash (other types)" do
+    x = Other.new
+    x.load @other_hash
+    h2 = x.to_h
+
+    expect(h2[:f]).to be_within(0.001).of @other_hash[:f]
+    expect(h2[:z]).to eql @other_hash[:z]
+    expect(h2[:l]).to eql @other_hash[:l]
+    expect(h2[:p].address).to eql @other_hash[:p]
+    expect(h2[:u]).to eql @other_hash[:u]
+    expect(h2[:c]).to eql @other_hash[:c]
+  end
+
+  it "can be used to re-constitute the original structure (other types)" do
+    x = Other.new
+    x.randomize
+    h = x.to_h
+
+    y = Other.new
+    y.load h
+
+    expect(y[:f]).to be_within(0.00001).of x[:f]
+    expect(y[:z]).to eql x[:z]
+    expect(y[:l]).to eql x[:l]
+    expect(y[:p].address).to eql x[:p].address
+    expect(y[:u]).to eql x[:u]
+    expect(y[:c]).to eql x[:c]
+  end
+
   it "can handle being passed an empty hash" do
     expect {
       x = Inner.new
@@ -240,6 +296,7 @@ describe FFI::Struct, ".load [array]" do
   before :all do
     @init_data = [rand(250), rand(250), rand(250)]
     @init_data_outer = [rand(250), @init_data, rand(250)]
+    @init_data_other = [3.14, 789, 123456, 0x56781234, 42, 'm'.ord]
   end
 
   it "loads the correct values" do
@@ -303,6 +360,33 @@ describe FFI::Struct, ".load [array]" do
     expect(y[:nested][:one]).to eql x[:nested][:one]
     expect(y[:nested][:two]).to eql x[:nested][:two]
     expect(y[:nested][:three]).to eql x[:nested][:three]
+  end
+
+  it "can be used to re-constitute the original array (other types)" do
+    x = Other.new
+    x.load @init_data_other
+
+    expect(x[:f]).to be_within(0.00001).of @init_data_other[0]
+    expect(x[:z]).to eql @init_data_other[1]
+    expect(x[:l]).to eql @init_data_other[2]
+    expect(x[:p].address).to eql @init_data_other[3]
+    expect(x[:u]).to eql @init_data_other[4]
+    expect(x[:c]).to eql @init_data_other[5]
+  end
+
+  it "can be used to re-constitute the original structure (other types)" do
+    x = Other.new
+    x.randomize
+
+    y = Other.new
+    y.load x.to_a
+
+    expect(y[:f]).to be_within(0.00001).of x[:f]
+    expect(y[:z]).to eql x[:z]
+    expect(y[:l]).to eql x[:l]
+    expect(y[:p].address).to eql x[:p].address
+    expect(y[:u]).to eql x[:u]
+    expect(y[:c]).to eql x[:c]
   end
 end
 
