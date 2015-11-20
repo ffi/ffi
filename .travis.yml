@@ -1,6 +1,8 @@
 language: ruby
 script: bundle exec rake test
 before_install: gem install bundler
+cache: bundler
+sudo: false
 os:
   - linux
   - osx
