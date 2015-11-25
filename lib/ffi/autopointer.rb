@@ -141,7 +141,7 @@ module FFI
       # @param args
       # Release pointer if +autorelease+ is set.
       def call(*args)
-        release(@ptr) if @autorelease && @ptr
+        free if @autorelease
       end
       
     end
