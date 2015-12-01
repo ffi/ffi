@@ -182,7 +182,7 @@ module FFI
     # @return [Type::POINTER]
     # @raise {RuntimeError} if class does not implement a +#release+ method
     def self.native_type
-      if not unless self.respond_to?(:release)
+      if not self.respond_to?(:release)
         raise RuntimeError.new("no release method defined for #{self.inspect}")
       end
       Type::POINTER
