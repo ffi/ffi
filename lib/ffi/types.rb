@@ -65,7 +65,6 @@ module FFI
 
     elsif name.is_a?(DataConverter)
       (type_map || TypeDefs)[name] = Type::Mapped.new(name)
-    
     else
       raise TypeError, "unable to resolve type '#{name}'"
     end
@@ -149,19 +148,24 @@ module FFI
       :varargs => Type::VARARGS,
   })
 
-  
+  # This will convert a pointer to a Ruby string (just like `:string`), but
+  # also allow to work with the pointer itself. This is useful when you want
+  # a Ruby string already containing a copy of the data, but also the pointer
+  # to the data for you to do something with it, like freeing it, in case the
+  # library handed the memory to off to the caller (Ruby-FFI).
+  #
+  # It's {typedef}'d as +:strptr+.
   class StrPtrConverter
     extend DataConverter
     native_type Type::POINTER
 
     # @param [Pointer] val
-    # @param ctx
+    # @param ctx not used
     # @return [Array(String, Pointer)]
     # Returns a [ String, Pointer ] tuple so the C memory for the string can be freed
     def self.from_native(val, ctx)
       [ val.null? ? nil : val.get_string(0), val ]
     end
-
   end
 
   typedef(StrPtrConverter, :strptr)

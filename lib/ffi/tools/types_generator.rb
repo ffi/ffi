@@ -1,7 +1,7 @@
 require 'tempfile'
 
 module FFI
-  
+
   # @private
   class TypesGenerator
 
@@ -65,7 +65,7 @@ module FFI
           typedefs = `#{cmd} #{io.path}`
         end
       end
-      
+
       code = ""
 
       typedefs.each_line do |type|
@@ -73,11 +73,11 @@ module FFI
         next unless type =~ /typedef/
         # Ignore unions or structs
         next if type =~ /union|struct/
-        
+
         # strip off the starting typedef and ending ;
         type.gsub!(/^(.*typedef\s*)/, "")
         type.gsub!(/\s*;\s*$/, "")
-    
+
         parts = type.split(/\s+/)
         def_type   = parts.join(" ")
 
@@ -99,7 +99,7 @@ module FFI
           else
             final_type = parts.pop
           end
-          
+
           def_type = case type
                      when /__QI__/   then "char"
                      when /__HI__/   then "short"
@@ -114,7 +114,7 @@ module FFI
           final_type = parts.pop
           def_type   = parts.join(" ")
         end
-        
+
         if type = TYPE_MAP[def_type]
           code << "rbx.platform.typedef.#{final_type} = #{type}\n"
           TYPE_MAP[final_type] = TYPE_MAP[def_type]
@@ -129,7 +129,6 @@ module FFI
 
       code
     end
-
   end
 end
 

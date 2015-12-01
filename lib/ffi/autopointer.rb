@@ -34,27 +34,29 @@ module FFI
     extend DataConverter
 
     # @overload initialize(pointer, method)
-    #  @param [Pointer] pointer
-    #  @param [Method] method
-    #  @return [self]
-    #  The passed Method will be invoked at GC time.
+    #   @param pointer [Pointer]
+    #   @param method [Method]
+    #   @return [self]
+    #   The passed Method will be invoked at GC time.
     # @overload initialize(pointer, proc)
-    #  @param [Pointer] pointer
-    #  @return [self]
-    #  The passed Proc will be invoked at GC time (SEE WARNING BELOW!)
-    #  @note WARNING: passing a proc _may_ cause your pointer to never be GC'd, unless you're 
-    #   careful to avoid trapping a reference to the pointer in the proc. See the test 
-    #   specs for examples.
+    #   @param pointer [Pointer]
+    #   @return [self]
+    #   The passed Proc will be invoked at GC time (SEE WARNING BELOW!)
+    #   @note WARNING: passing a proc _may_ cause your pointer to never be
+    #     GC'd, unless you're careful to avoid trapping a reference to the
+    #     pointer in the proc. See the test specs for examples.
     # @overload initialize(pointer) { |p| ... }
-    #  @param [Pointer] pointer
-    #  @yieldparam [Pointer] p +pointer+ passed to the block
-    #  @return [self]
-    #  The passed block will be invoked at GC time.
-    #  @note WARNING: passing a block will cause your pointer to never be GC'd. This is bad.
+    #   @param pointer [Pointer]
+    #   @yieldparam [Pointer] p +pointer+ passed to the block
+    #   @return [self]
+    #   The passed block will be invoked at GC time.
+    #   @note
+    #     WARNING: passing a block will cause your pointer to never be GC'd.
+    #     This is bad.
     # @overload initialize(pointer)
-    #  @param [Pointer] pointer
-    #  @return [self]
-    #  The pointer's release() class method will be invoked at GC time.
+    #   @param pointer [Pointer]
+    #   @return [self]
+    #   The pointer's release() class method will be invoked at GC time.
     #
     # @note The safest, and therefore preferred, calling
     #  idiom is to pass a Method as the second parameter. Example usage:
@@ -79,11 +81,15 @@ module FFI
         || ptr.kind_of?(MemoryPointer) || ptr.kind_of?(AutoPointer)
 
       @releaser = if proc
-                    raise RuntimeError.new("proc must be callable") unless proc.respond_to?(:call)
+                    if not proc.respond_to?(:call)
+                      raise RuntimeError.new("proc must be callable")
+                    end
                     CallableReleaser.new(ptr, proc)
 
                   else
-                    raise RuntimeError.new("no release method defined") unless self.class.respond_to?(:release)
+                    if not self.class.respond_to?(:release)
+                      raise RuntimeError.new("no release method defined")
+                    end
                     DefaultReleaser.new(ptr, self.class)
                   end
 
@@ -143,16 +149,15 @@ module FFI
       def call(*args)
         release(@ptr) if @autorelease && @ptr
       end
-      
     end
 
-    # DefaultReleaser is a {Releaser} used when an {AutoPointer} is defined without Proc
-    # or Method. In this case, the pointer to release must be of a class derived from 
-    # AutoPointer with a +#release+ class method.
+    # DefaultReleaser is a {Releaser} used when an {AutoPointer} is defined
+    # without Proc or Method. In this case, the pointer to release must be of
+    # a class derived from AutoPointer with a {release} class method.
     class DefaultReleaser < Releaser
       # @param [Pointer] ptr
       # @return [nil]
-      # Release +ptr+ by using his #release class method.
+      # Release +ptr+ using the {release} class method of its class.
       def release(ptr)
         @proc.release(ptr)
       end
@@ -161,7 +166,9 @@ module FFI
     # CallableReleaser is a {Releaser} used when an {AutoPointer} is defined with a
     # Proc or a Method.
     class CallableReleaser < Releaser
-      # Release +ptr+ by using Proc or Method defined at +ptr+ {AutoPointer#initialize initialization}.
+      # Release +ptr+ by using Proc or Method defined at +ptr+
+      # {AutoPointer#initialize initialization}.
+      #
       # @param [Pointer] ptr
       # @return [nil]
       def release(ptr)
@@ -175,7 +182,9 @@ module FFI
     # @return [Type::POINTER]
     # @raise {RuntimeError} if class does not implement a +#release+ method
     def self.native_type
-      raise RuntimeError.new("no release method defined for #{self.inspect}") unless self.respond_to?(:release)
+      if not self.respond_to?(:release)
+        raise RuntimeError.new("no release method defined for #{self.inspect}")
+      end
       Type::POINTER
     end
 

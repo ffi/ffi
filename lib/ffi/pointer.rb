@@ -33,7 +33,7 @@
 require 'ffi/platform'
 module FFI
   class Pointer
-    
+
     # Pointer size
     SIZE = Platform::ADDRESS_SIZE / 8
 
