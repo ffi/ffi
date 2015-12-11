@@ -76,6 +76,7 @@ static void ffi_prep_args(char *stack,
   void **p_argv;
   char *argp;
   ffi_type **p_arg;
+  int ecif_test;
 
 #ifdef FFI_MIPS_N32
   /* If more than 8 double words are used, the remainder go
@@ -92,10 +93,11 @@ static void ffi_prep_args(char *stack,
   memset(stack, 0, bytes);
 
 #ifdef FFI_MIPS_N32
-  if ( ecif->cif->rstruct_flag != 0 )
+  ecif_test = ecif->cif->rstruct_flag != 0;
 #else
-  if ( ecif->cif->rtype->type == FFI_TYPE_STRUCT )
+  ecif_test = ecif->cif->rtype->type == FFI_TYPE_STRUCT;
 #endif  
+    if (ecif_test)
     {
       *(ffi_arg *) argp = (ffi_arg) ecif->rvalue;
       argp += sizeof(ffi_arg);
