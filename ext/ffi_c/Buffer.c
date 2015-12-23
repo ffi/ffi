@@ -253,7 +253,7 @@ buffer_inspect(VALUE self)
  * @overload order(order)
  *  @param [:big, :little, :network] order
  *  @return [self]
- *  Set endinaness of Buffer (+:network+ is an alias for +:big+).
+ *  Set endianness of Buffer (+:network+ is an alias for +:big+).
  */
 static VALUE
 buffer_order(int argc, VALUE* argv, VALUE self)
