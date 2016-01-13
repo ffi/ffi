@@ -12,11 +12,13 @@ rvm:
   - "2.2"
   - "ruby-head"
   - "rbx"
+  - "system"
 env:
   - CC=gcc
   - CC=clang
 matrix:
   allow_failures:
+    - rvm: system
     - os: osx
       rvm: "2.2"
     - os: osx

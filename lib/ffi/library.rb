@@ -109,6 +109,7 @@ module FFI
 
           libnames.each do |libname|
             begin
+              orig = libname
               lib = FFI::DynamicLibrary.open(libname, lib_flags)
               break if lib
 
@@ -121,10 +122,22 @@ module FFI
                 end
               end
 
+              # TODO better library lookup logic
+              unless libname.start_with?("/")
+                path = ['/usr/lib/','/usr/local/lib/'].find do |pth|
+                  File.exist?(pth + libname)
+                end
+                if path
+                  libname = path + libname
+                  retry
+                end
+              end
+
               if ldscript
                 retry
               else
-                errors[libname] = ex
+                libr = (orig == libname ? orig : "#{orig} #{libname}")
+                errors[libr] = ex
               end
             end
           end
