@@ -243,10 +243,10 @@ static VALUE custom_trampoline(caddr_t args, Closure*);
 #define TRAMPOLINE_FUN_MAGIC (0xbeefcafe)
 
 /*
- * This is a hand-coded trampoline to speedup entry from ruby to the FFI translation
+ * This is a hand-coded trampoline to speed-up entry from ruby to the FFI translation
  * layer for i386 arches.
  *
- * This does not make a discernable difference vs a raw closure, so for now,
+ * This does not make a discernible difference vs a raw closure, so for now,
  * it is not enabled.
  */
 __asm__(

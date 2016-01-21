@@ -89,7 +89,7 @@ ptr_allocate(VALUE klass)
  * @overload initialize(type, address)
  *  @param [Type] type type for pointer
  *  @param [Integer] address base address for pointer
- *  Create a new pointer from a {Type} and a base adresse
+ *  Create a new pointer from a {Type} and a base address
  * @return [self]
  * A new instance of Pointer.
  */
@@ -146,11 +146,11 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
  * call-seq: ptr.initialize_copy(other)
  * @param [Pointer] other source for cloning or dupping
  * @return [self]
- * @raise {RuntimeError} if +other+ is an unbounded memory area, or is unreable/unwritable
+ * @raise {RuntimeError} if +other+ is an unbounded memory area, or is unreadable/unwritable
  * @raise {NoMemError} if failed to allocate memory for new object
  * DO NOT CALL THIS METHOD.
  *
- * This method is internally used by #dup and #clone. Memory contents is copied from +other+.
+ * This method is internally used by #dup and #clone. Memory content is copied from +other+.
  */
 static VALUE
 ptr_initialize_copy(VALUE self, VALUE other)

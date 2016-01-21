@@ -497,7 +497,7 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     off = NUM2LONG(offset);
     idx = nargs > 2 ? NUM2LONG(rbIndex) : 0;
     if (idx < 0) {
-        rb_raise(rb_eRangeError, "index canot be less than zero");
+        rb_raise(rb_eRangeError, "index cannot be less than zero");
         return Qnil;
     }
     len = nargs > 3 ? NUM2LONG(rbLength) : (RSTRING_LEN(str) - idx);
