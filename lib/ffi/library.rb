@@ -108,6 +108,7 @@ module FFI
           errors = {}
 
           libnames.each do |libname|
+            orig = libname
             begin
               lib = FFI::DynamicLibrary.open(libname, lib_flags)
               break if lib
@@ -124,7 +125,7 @@ module FFI
               unless libname.start_with?("/")
                 path = Dir["{/usr{/local,},}/lib/**/#{libname}"].first
                 if path
-                  libname = path + libname
+                  libname = path
                   retry
                 end
               end
@@ -132,7 +133,7 @@ module FFI
               if ldscript
                 retry
               else
-                errors[libname] = ex
+                errors[orig] = ex
               end
             end
           end
