@@ -1,6 +1,11 @@
 language: ruby
 script: bundle exec rake test
 before_install: gem install bundler
+install:
+  - wget http://ftp.gnu.org/gnu/texinfo/texinfo-5.2.tar.xz
+  - tar -xJvf texinfo-5.2.tar.xz
+  - cd texinfo-5.2 && ./configure --prefix=/usr && make && sudo make install
+  - bundle install --jobs=3 --retry=3
 os:
   - linux
   - osx
