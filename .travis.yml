@@ -10,6 +10,7 @@ rvm:
   - "2.0.0"
   - "2.1"
   - "2.2"
+  - "2.3"
   - "ruby-head"
   - "rbx"
   - "system"
@@ -21,6 +22,7 @@ matrix:
     - rvm: system
     - os: osx
       rvm: "2.2"
+      rvm: "2.3"
     - os: osx
       rvm: ruby-head
     - rvm: "rbx"
