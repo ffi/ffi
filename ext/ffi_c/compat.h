@@ -75,9 +75,4 @@
 #  define RB_GC_GUARD(x) (x)
 #endif
 
-#ifndef RB_GC_GUARD_PTR
-#  define RB_GC_GUARD_PTR(x) (x)
-#endif
-
 #endif /* RBFFI_COMPAT_H */
-

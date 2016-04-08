@@ -202,7 +202,7 @@ function_free(Function *fn)
 static VALUE
 function_initialize(int argc, VALUE* argv, VALUE self)
 {
-    
+
     VALUE rbReturnType = Qnil, rbParamTypes = Qnil, rbProc = Qnil, rbOptions = Qnil;
     VALUE rbFunctionInfo = Qnil;
     VALUE infoArgv[3];
@@ -229,14 +229,14 @@ function_initialize(int argc, VALUE* argv, VALUE self)
          *      Function.new(:int, [ :int ], addr, { :convention => :stdcall })
          */
     }
-    
+
     infoArgv[0] = rbReturnType;
     infoArgv[1] = rbParamTypes;
     infoArgv[2] = rbOptions;
     rbFunctionInfo = rb_class_new_instance(rbOptions != Qnil ? 3 : 2, infoArgv, rbffi_FunctionTypeClass);
 
     function_init(self, rbFunctionInfo, rbProc);
-    
+
     return self;
 }
 
@@ -272,12 +272,12 @@ rbffi_Function_ForProc(VALUE rbFunctionInfo, VALUE proc)
             return cbref;
         }
     }
-    
+
     cbTable = RTEST(rb_ivar_defined(proc, id_cbtable)) ? rb_ivar_get(proc, id_cbtable) : Qnil;
     if (cbTable != Qnil && (callback = rb_hash_aref(cbTable, rbFunctionInfo)) != Qnil) {
         return callback;
     }
-    
+
     /* No existing function for the proc with that signature, create a new one and cache it */
     callback = rbffi_Function_NewInstance(rbFunctionInfo, proc);
     if (cbref == Qnil) {
@@ -297,7 +297,7 @@ static VALUE
 function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 {
     Function* fn = NULL;
-    
+
     Data_Get_Struct(self, Function, fn);
 
     fn->rbFunctionInfo = rbFunctionInfo;
@@ -342,7 +342,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         rb_raise(rb_eTypeError, "wrong argument type %s, expected pointer or proc",
                 rb_obj_classname(rbProc));
     }
-    
+
     fn->rbProc = rbProc;
 
     return self;
@@ -402,7 +402,7 @@ function_attach(VALUE self, VALUE module, VALUE name)
     rb_define_singleton_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
 
-    
+
     rb_define_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
 
@@ -452,10 +452,10 @@ function_release(VALUE self)
     if (fn->closure == NULL) {
         rb_raise(rb_eRuntimeError, "cannot free function which was not allocated");
     }
-    
+
     rbffi_Closure_Free(fn->closure);
     fn->closure = NULL;
-    
+
     return self;
 }
 
@@ -463,13 +463,13 @@ static void
 callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
     struct gvl_callback cb = { 0 };
-    
+
     cb.closure = (Closure *) user_data;
     cb.retval = retval;
     cb.parameters = parameters;
     cb.done = false;
     cb.frame = rbffi_frame_current();
-    
+
     if (cb.frame != NULL) cb.frame->exc = Qnil;
     if (cb.frame != NULL && cb.frame->has_gvl) {
         callback_with_gvl(&cb);
@@ -651,14 +651,14 @@ async_cb_wait(void *data)
         WaitForSingleObject(async_cb_cond, INFINITE);
         EnterCriticalSection(&async_cb_lock);
     }
-    
+
     if (async_cb_list != NULL) {
         w->cb = async_cb_list;
         async_cb_list = async_cb_list->next;
     }
 
     LeaveCriticalSection(&async_cb_lock);
-    
+
     return Qnil;
 }
 
@@ -686,14 +686,14 @@ async_cb_wait(void *data)
     while (!w->stop && async_cb_list == NULL) {
         pthread_cond_wait(&async_cb_cond, &async_cb_mutex);
     }
-    
+
     if (async_cb_list != NULL) {
         w->cb = async_cb_list;
         async_cb_list = async_cb_list->next;
     }
 
     pthread_mutex_unlock(&async_cb_mutex);
-    
+
     return Qnil;
 }
 
@@ -713,9 +713,9 @@ static VALUE
 async_cb_call(void *data)
 {
     struct gvl_callback* cb = (struct gvl_callback *) data;
-    
+
     callback_with_gvl(data);
-        
+
     /* Signal the original native thread that the ruby code has completed */
 #ifdef _WIN32
     SetEvent(cb->async_event);
@@ -835,8 +835,7 @@ invoke_callback(void* data)
     }
 
     rbReturnValue = rb_funcall2(fn->rbProc, id_call, cbInfo->parameterCount, rbParams);
-    RB_GC_GUARD_PTR(rbParams);
-    
+
     if (unlikely(returnType->nativeType == NATIVE_MAPPED)) {
         VALUE values[] = { rbReturnValue, Qnil };
         rbReturnValue = rb_funcall2(((MappedType *) returnType)->rbConverter, id_to_native, 2, values);
@@ -915,7 +914,7 @@ invoke_callback(void* data)
                 } else {
                     memset(retval, 0, returnType->ffiType->size);
                 }
-                
+
             } else {
                 memset(retval, 0, returnType->ffiType->size);
             }
@@ -929,14 +928,14 @@ invoke_callback(void* data)
     return Qnil;
 }
 
-static VALUE 
+static VALUE
 save_callback_exception(void* data, VALUE exc)
 {
     struct gvl_callback* cb = (struct gvl_callback *) data;
-    
+
     memset(cb->retval, 0, ((Function *) cb->closure->info)->info->returnType->ffiType->size);
     if (cb->frame != NULL) cb->frame->exc = exc;
-    
+
     return Qnil;
 }
 
@@ -963,7 +962,7 @@ rbffi_Function_Init(VALUE moduleFFI)
      * Document-class: FFI::Function < FFI::Pointer
      */
     rbffi_FunctionClass = rb_define_class_under(moduleFFI, "Function", rbffi_PointerClass);
-    
+
     rb_global_variable(&rbffi_FunctionClass);
     rb_define_alloc_func(rbffi_FunctionClass, function_allocate);
 
@@ -997,4 +996,3 @@ rbffi_Function_Init(VALUE moduleFFI)
     async_cb_cond = CreateEvent(NULL, FALSE, FALSE, NULL);
 #endif
 }
-
