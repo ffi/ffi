@@ -7,7 +7,7 @@
 
 #include <sys/types.h>
 
-#if defined(__linux__) || defined(__CYGWIN__) || defined(__GNU__) || defined(__GLIBC__)
+#if defined(__linux__) || defined(__CYGWIN__) || defined(__GNU__) || defined(__GLIBC__) || defined(__HAIKU__)
 # include <endian.h>
 # if !defined(LITTLE_ENDIAN) && defined(__LITTLE_ENDIAN)
 #  define LITTLE_ENDIAN __LITTLE_ENDIAN
