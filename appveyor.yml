@@ -15,3 +15,5 @@ environment:
     - RUBYVER: Ruby21-x64
     - RUBYVER: Ruby22
     - RUBYVER: Ruby22-x64
+    - RUBYVER: Ruby23
+    - RUBYVER: Ruby23-x64
