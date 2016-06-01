@@ -11,6 +11,7 @@
 #ifndef _WIN32
 #include <unistd.h>
 #include <pthread.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #endif
 
@@ -59,6 +60,37 @@ void testBlockingClose(struct testBlockingData *self) {
     pipeHelperClosePipe(self->pipe2[0]);
     pipeHelperClosePipe(self->pipe2[1]);
     free(self);
+}
+
+char testBlockingWRva(struct testBlockingData *self, char c, ...) {
+    /* Process argument list but ignore values */
+    va_list args;
+    va_start(args, c);
+    char arg;
+    while ((arg = va_arg(args, char)) != 0) {
+        continue;
+    }
+    va_end(args);
+
+    if( pipeHelperWriteChar(self->pipe1[1], c) != 1)
+        return 0;
+    return pipeHelperReadChar(self->pipe2[0], 10);
+}
+
+char testBlockingRWva(struct testBlockingData *self, char c, ...) {
+    /* Process argument list but ignore values */
+    va_list args;
+    va_start(args, c);
+    char arg;
+    while ((arg = va_arg(args, char)) != 0) {
+        continue;
+    }
+    va_end(args);
+
+    char d = pipeHelperReadChar(self->pipe1[0], 10);
+    if( pipeHelperWriteChar(self->pipe2[1], c) != 1)
+        return 0;
+    return d;
 }
 
 struct async_data {
