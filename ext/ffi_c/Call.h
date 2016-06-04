@@ -33,6 +33,8 @@
 #ifndef RBFFI_CALL_H
 #define	RBFFI_CALL_H
 
+#include "Thread.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -84,6 +86,21 @@ Invoker rbffi_GetInvoker(struct FunctionType_* fnInfo);
 
 extern VALUE rbffi_GetEnumValue(VALUE enums, VALUE value);
 extern int rbffi_GetSignedIntValue(VALUE value, int type, int minValue, int maxValue, const char* typeName, VALUE enums);
+
+typedef struct rbffi_blocking_call {
+    rbffi_frame_t* frame;
+    void* function;
+    ffi_cif cif;
+    void **ffiValues;
+    void* retval;
+    void* params;
+#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
+    void* stkretval;
+#endif
+} rbffi_blocking_call_t;
+
+VALUE rbffi_do_blocking_call(void* data);
+VALUE rbffi_save_frame_exception(void *data, VALUE exc);
 
 #ifdef	__cplusplus
 }
