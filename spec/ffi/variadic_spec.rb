@@ -33,6 +33,7 @@ describe "Function with variadic arguments" do
   end
 
   it 'can wrap a blocking function with varargs' do
+    pending("not supported in 1.8") if RUBY_VERSION =~ /^1\.8\..*/
     handle = LibTest.testBlockingOpen
     expect(handle).not_to be_null
     begin
