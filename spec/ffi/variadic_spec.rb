@@ -36,8 +36,8 @@ describe "Function with variadic arguments" do
     handle = LibTest.testBlockingOpen
     expect(handle).not_to be_null
     begin
-      thWR = Thread.new { LibTest.testBlockingWRva(handle, 63, :char, 0) }
-      thRW = Thread.new { LibTest.testBlockingRWva(handle, 64, :char, 0) }
+      thWR = Thread.new { LibTest.testBlockingWRva(handle, 63, :char, 40, :char, 23, :char, 0) }
+      thRW = Thread.new { LibTest.testBlockingRWva(handle, 64, :char, 40, :char, 24, :char, 0) }
       expect(thWR.value).to eq(64)
       expect(thRW.value).to eq(63)
     ensure

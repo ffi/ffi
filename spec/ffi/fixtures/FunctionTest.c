@@ -62,15 +62,25 @@ void testBlockingClose(struct testBlockingData *self) {
     free(self);
 }
 
-char testBlockingWRva(struct testBlockingData *self, char c, ...) {
-    /* Process argument list but ignore values */
-    va_list args;
-    va_start(args, c);
+static char sum_varargs(va_list args) {
+    char sum = 0;
     char arg;
     while ((arg = va_arg(args, char)) != 0) {
-        continue;
+        sum += arg;
     }
     va_end(args);
+    return sum;
+}
+
+/* Write c to pipe1 and return the value read from pipe2, or 0 if there’s
+ * an error such as a timeout, or if c does not equal the sum of the
+ * zero-terminated list of char arguments. */
+char testBlockingWRva(struct testBlockingData *self, char c, ...) {
+    va_list args;
+    va_start(args, c);
+    if (sum_varargs(args) != c) {
+        return 0;
+    }
 
     if( pipeHelperWriteChar(self->pipe1[1], c) != 1)
         return 0;
@@ -78,14 +88,11 @@ char testBlockingWRva(struct testBlockingData *self, char c, ...) {
 }
 
 char testBlockingRWva(struct testBlockingData *self, char c, ...) {
-    /* Process argument list but ignore values */
     va_list args;
     va_start(args, c);
-    char arg;
-    while ((arg = va_arg(args, char)) != 0) {
-        continue;
+    if (sum_varargs(args) != c) {
+        return 0;
     }
-    va_end(args);
 
     char d = pipeHelperReadChar(self->pipe1[0], 10);
     if( pipeHelperWriteChar(self->pipe2[1], c) != 1)
