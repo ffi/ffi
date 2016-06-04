@@ -62,10 +62,10 @@ void testBlockingClose(struct testBlockingData *self) {
     free(self);
 }
 
-static char sum_varargs(va_list args) {
+static int sum_varargs(va_list args) {
     char sum = 0;
-    char arg;
-    while ((arg = va_arg(args, char)) != 0) {
+    int arg;
+    while ((arg = va_arg(args, int)) != 0) {
         sum += arg;
     }
     va_end(args);
