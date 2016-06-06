@@ -64,6 +64,7 @@ typedef struct VariadicInvoker_ {
     ffi_abi abi;
     void* function;
     int paramCount;
+    bool blocking;
 } VariadicInvoker;
 
 
@@ -84,6 +85,7 @@ variadic_allocate(VALUE klass)
     invoker->rbAddress = Qnil;
     invoker->rbEnums = Qnil;
     invoker->rbReturnType = Qnil;
+    invoker->blocking = false;
 
     return obj;
 }
@@ -115,6 +117,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     invoker->rbEnums = rb_hash_aref(options, ID2SYM(rb_intern("enums")));
     invoker->rbAddress = rbFunction;
     invoker->function = rbffi_AbstractMemory_Cast(rbFunction, rbffi_PointerClass)->address;
+    invoker->blocking = RTEST(rb_hash_aref(options, ID2SYM(rb_intern("blocking"))));
 
 #if defined(X86_WIN32)
     rbConventionStr = rb_funcall2(convention, rb_intern("to_s"), 0, NULL);
@@ -253,7 +256,28 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
         ffiValues, NULL, 0, invoker->rbEnums);
     
     rbffi_frame_push(&frame);
+#ifdef HAVE_RB_THREAD_CALL_WITHOUT_GVL
+    /* In Call.c, blocking: true is supported on older ruby variants
+     * without rb_thread_call_without_gvl by allocating on the heap instead
+     * of the stack. Since this functionality is being added later,
+     * we’re skipping support for old rubies here. */
+    if(unlikely(invoker->blocking)) {
+        rbffi_blocking_call_t* bc;
+        bc = ALLOCA_N(rbffi_blocking_call_t, 1);
+        bc->retval = retval;
+        bc->function = invoker->function;
+        bc->ffiValues = ffiValues;
+        bc->params = params;
+        bc->frame = &frame;
+        bc->cif = cif;
+
+        rb_rescue2(rbffi_do_blocking_call, (VALUE) bc, rbffi_save_frame_exception, (VALUE) &frame, rb_eException, (VALUE) 0);
+    } else {
+        ffi_call(&cif, FFI_FN(invoker->function), retval, ffiValues);
+    }
+#else
     ffi_call(&cif, FFI_FN(invoker->function), retval, ffiValues);
+#endif
     rbffi_frame_pop(&frame);
     
     rbffi_save_errno();
