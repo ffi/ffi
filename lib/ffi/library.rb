@@ -122,21 +122,21 @@ module FFI
                 end
               end
 
-              # TODO better library lookup logic
-              libname = libname.to_s
-              unless libname.start_with?("/")
-                path = ['/usr/lib/','/usr/local/lib/'].find do |pth|
-                  File.exist?(pth + libname)
-                end
-                if path
-                  libname = path + libname
-                  retry
-                end
-              end
-
               if ldscript
                 retry
               else
+                # TODO better library lookup logic
+                libname = libname.to_s
+                unless libname.start_with?("/")
+                  path = ['/usr/lib/','/usr/local/lib/'].find do |pth|
+                    File.exist?(pth + libname)
+                  end
+                  if path
+                    libname = path + libname
+                    retry
+                  end
+                end
+
                 libr = (orig == libname ? orig : "#{orig} #{libname}")
                 errors[libr] = ex
               end
