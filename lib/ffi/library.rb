@@ -123,7 +123,8 @@ module FFI
               end
 
               # TODO better library lookup logic
-              unless libname.to_s.start_with?("/")
+              libname = libname.to_s
+              unless libname.start_with?("/")
                 path = ['/usr/lib/','/usr/local/lib/'].find do |pth|
                   File.exist?(pth + libname)
                 end
