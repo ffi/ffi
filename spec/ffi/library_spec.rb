@@ -62,6 +62,15 @@ describe "Library" do
       po = FFI::MemoryPointer.new :long
       LibTestStdcall.testStdcallManyParams po, 1, 2, 3, 4, s, s, 1.0, 2.0
     end
+
+    it "symbol should not raise error" do
+      expect {
+        Module.new do |m|
+          m.extend FFI::Library
+          ffi_lib :kernel32
+        end
+      }.not_to raise_error(LoadError)
+    end
   end
 
   describe "ffi_lib" do

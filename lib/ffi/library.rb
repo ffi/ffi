@@ -103,7 +103,7 @@ module FFI
           FFI::DynamicLibrary.open(nil, FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL)
 
         else
-          libnames = (name.is_a?(::Array) ? name : [ name ]).map { |n| [ n, FFI.map_library_name(n) ].uniq }.flatten.compact
+          libnames = (name.is_a?(::Array) ? name : name.is_a?(::String) ? [ name ] : [ name.to_s ]).map { |n| [ n, FFI.map_library_name(n) ].uniq }.flatten.compact
           lib = nil
           errors = {}
 
@@ -123,7 +123,7 @@ module FFI
               end
 
               # TODO better library lookup logic
-              unless libname.to_s.start_with?("/")
+              unless libname.start_with?('/')
                 path = ['/usr/lib/','/usr/local/lib/'].find do |pth|
                   File.exist?(pth + libname)
                 end
