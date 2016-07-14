@@ -310,13 +310,79 @@ memory_clear(VALUE self)
  * @return [Numeric]
  */
 static VALUE
-memory_size(VALUE self) 
+memory_size(VALUE self)
 {
     AbstractMemory* ptr;
 
     Data_Get_Struct(self, AbstractMemory, ptr);
 
     return LONG2NUM(ptr->size);
+}
+
+/*
+ * call-seq: memory.get(type, offset)
+ * Return data of given type contained in memory.
+ * @param [Symbol, Type] type_name type of data to get
+ * @param [Numeric] offset point in buffer to start from
+ * @return [Object]
+ * @raise {ArgumentError} if type is not supported
+ */
+static VALUE
+memory_get(VALUE self, VALUE type_name, VALUE offset)
+{
+    AbstractMemory* ptr;
+    VALUE nType;
+    Type *type;
+
+    nType = rbffi_Type_Lookup(type_name);
+    if(NIL_P(nType)) goto undefined_type;
+
+    Data_Get_Struct(self, AbstractMemory, ptr);
+    Data_Get_Struct(nType, Type, type);
+
+    MemoryOp *op = get_memory_op(type);
+    if(op == NULL) goto undefined_type;
+
+    return op->get(ptr, NUM2LONG(offset));
+
+undefined_type: {
+    VALUE msg = rb_sprintf("undefined type '%" PRIsVALUE "'", type_name);
+    rb_exc_raise(rb_exc_new3(rb_eArgError, msg));
+    return Qnil;
+  }
+}
+
+/*
+ * call-seq: memory.put(type, offset, value)
+ * @param [Symbol, Type] type_name type of data to put
+ * @param [Numeric] offset point in buffer to start from
+ * @return [nil]
+ * @raise {ArgumentError} if type is not supported
+ */
+static VALUE
+memory_put(VALUE self, VALUE type_name, VALUE offset, VALUE value)
+{
+    AbstractMemory* ptr;
+    VALUE nType;
+    Type *type;
+
+    nType = rbffi_Type_Lookup(type_name);
+    if(NIL_P(nType)) goto undefined_type;
+
+    Data_Get_Struct(self, AbstractMemory, ptr);
+    Data_Get_Struct(nType, Type, type);
+
+    MemoryOp *op = get_memory_op(type);
+    if(op == NULL) goto undefined_type;
+
+    op->put(ptr, NUM2LONG(offset), value);
+    return Qnil;
+
+undefined_type: {
+    VALUE msg = rb_sprintf("unsupported type '%" PRIsVALUE "'", type_name);
+    rb_exc_raise(rb_exc_new3(rb_eArgError, msg));
+    return Qnil;
+  }
 }
 
 /*
@@ -1017,6 +1083,9 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "read_bytes", memory_read_bytes, 1);
     rb_define_method(classMemory, "write_bytes", memory_write_bytes, -1);
     rb_define_method(classMemory, "get_array_of_string", memory_get_array_of_string, -1);
+
+    rb_define_method(classMemory, "get", memory_get, 2);
+    rb_define_method(classMemory, "put", memory_put, 3);
 
     rb_define_method(classMemory, "clear", memory_clear, 0);
     rb_define_method(classMemory, "total", memory_size, 0);

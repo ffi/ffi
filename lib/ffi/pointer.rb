@@ -130,5 +130,26 @@ module FFI
       }
       self
     end
+
+    # @param [Symbol,Type] type of data to read
+    # @return [Object]
+    # Read pointer's contents as +type+
+    #
+    # Same as:
+    #  ptr.get(type, 0)
+    def read(type)
+      get(type, 0)
+    end
+
+    # @param [Symbol,Type] type of data to read
+    # @param [Object] value to write
+    # @return [nil]
+    # Write +value+ of type +type+ to pointer's content
+    #
+    # Same as:
+    #  ptr.put(type, 0)
+    def write(type, value)
+      put(type, 0, value)
+    end
   end
 end
