@@ -130,5 +130,10 @@ module FFI
       }
       self
     end
+
+    # @return [self]
+    def to_ptr
+      self
+    end
   end
 end
