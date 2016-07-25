@@ -62,6 +62,13 @@ describe "Pointer" do
     expect { PointerTestLib.ptr_ret_int32(0xfee1deadbeefcafebabe, 0) }.to raise_error
   end
 
+  it "#to_ptr" do
+    memory = FFI::MemoryPointer.new :pointer
+    expect(memory.to_ptr).to eq(memory)
+
+    expect(FFI::Pointer::NULL.to_ptr).to eq(FFI::Pointer::NULL)
+  end
+
   describe "pointer type methods" do
 
     it "#read_pointer" do
