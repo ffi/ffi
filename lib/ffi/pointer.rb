@@ -103,6 +103,7 @@ module FFI
     # Read an array of +type+ of length +length+.
     # @example
     #  ptr.read_array_of_type(TYPE_UINT8, :get_uint8, 4) # -> [1, 2, 3, 4]
+    # @deprecated Use {#read_array_of} instead
     def read_array_of_type(type, reader, length)
       ary = []
       size = FFI.type_size(type)
@@ -121,6 +122,7 @@ module FFI
     # Write +ary+ in pointer's contents as +type+.
     # @example
     #  ptr.write_array_of_type(TYPE_UINT8, :put_uint8, [1, 2, 3 ,4])
+    # @deprecated Use {#write_array_of} instead
     def write_array_of_type(type, writer, ary)
       size = FFI.type_size(type)
       tmp = self
@@ -129,6 +131,26 @@ module FFI
         tmp += size unless j == ary.length-1 # avoid OOB
       }
       self
+    end
+
+    # @param [Type] type type of data to write to pointer's contents
+    # @param [Array] ary array of values
+    # @return [self]
+    # Write +ary+ in pointer's contents as +type+.
+    # @example
+    #  ptr.write_array_of(:uint8, [1, 2, 3 ,4])
+    def write_array_of(type, ary)
+      put_array_of(type, 0, ary)
+    end
+
+    # @param [Type] type type of data to read from pointer's contents
+    # @param [Numeric] length
+    # @return [Array]
+    # Read an array of +type+ of length +length+.
+    # @example
+    #  ptr.read_array_of_type(:uint8, 4) # -> [1, 2, 3, 4]
+    def read_array_of(type, length)
+      get_array_of(type, 0, length)
     end
 
     # @return [self]

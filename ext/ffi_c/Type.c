@@ -214,6 +214,14 @@ rbffi_type_size(VALUE type)
     }
 }
 
+void
+rbffi_type_raise_invalid(VALUE typeName)
+{
+    VALUE s = rb_inspect(typeName);
+    rb_raise(rb_eTypeError, "invalid type, %s", RSTRING_PTR(s));
+    RB_GC_GUARD(s);
+}
+
 VALUE
 rbffi_Type_Lookup(VALUE name)
 {
@@ -245,9 +253,7 @@ rbffi_Type_Find(VALUE name)
     VALUE rbType = rbffi_Type_Lookup(name);
 
     if (!RTEST(rbType)) {
-        VALUE s = rb_inspect(name);
-        rb_raise(rb_eTypeError, "invalid type, %s", RSTRING_PTR(s));
-        RB_GC_GUARD(s);
+        rbffi_type_raise_invalid(name);
     }
 
     return rbType;
