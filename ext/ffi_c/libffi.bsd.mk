@@ -17,6 +17,7 @@ LIBFFI_BUILD_DIR = ${.CURDIR}/libffi-${arch}
 
 
 LIBFFI = ${LIBFFI_BUILD_DIR}/.libs/libffi_convenience.a
+LIBFFI_AUTOGEN = ${LIBFFI_SRC_DIR}/autogen.sh
 LIBFFI_CONFIGURE = ${LIBFFI_SRC_DIR}/configure --disable-static \
 	--with-pic=yes --disable-dependency-tracking
 
@@ -24,9 +25,14 @@ $(OBJS):	${LIBFFI}
 
 $(LIBFFI):		
 	@mkdir -p ${LIBFFI_BUILD_DIR}
+	@if [ ! -f $(LIBFFI_BUILD_DIR)/configure ]; then \
+		echo "Running autoreconf for libffi"; \
+		cd "$(LIBFFI_SRC_DIR)" && \
+		/bin/sh $(LIBFFI_AUTOGEN) > /dev/null; \
+	fi
 	@if [ ! -f ${LIBFFI_BUILD_DIR}/Makefile ]; then \
-	    echo "Configuring libffi"; \
-	    cd ${LIBFFI_BUILD_DIR} && \
+		echo "Configuring libffi"; \
+		cd ${LIBFFI_BUILD_DIR} && \
 		/usr/bin/env CC="${CC}" LD="${LD}" CFLAGS="${LIBFFI_CFLAGS}" GREP_OPTIONS="" \
 		/bin/sh ${LIBFFI_CONFIGURE} ${LIBFFI_HOST} > /dev/null; \
 	fi
