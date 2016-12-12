@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2009, Wayne Meissner
- *
- * Copyright (c) 2008-2013, Ruby FFI project contributors
+ * Copyright (c) 2009, 2010 Wayne Meissner
+ * Copyright (c) 2008-2016, Ruby FFI project contributors
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,60 +26,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RBFFI_FUNCTION_H
-#define	RBFFI_FUNCTION_H
+#ifndef RUBYFFI_CLOSURE_H
+#define RUBYFFI_CLOSURE_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+#include <ruby.h>
 
-#ifndef _MSC_VER
-# include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-#endif
+typedef struct Closure_ {
+    void* info;              /* Data to pass when calling */
+    void* function;          /* Function to call */
+    void* libffi_trampoline; /* Calls .function */
+    void *libffi_closure;    /* Allocates .libffi_trampoline */
+} Closure;
 
-#include <ffi.h>
+Closure* rbffi_Closure_Alloc();
+void rbffi_Closure_Free(Closure *);
 
-typedef struct FunctionType_ FunctionType;
+void rbffi_Closure_Init(VALUE ffiModule);
 
-#include "Type.h"
-#include "Call.h"
-#include "Closure.h"
-
-struct FunctionType_ {
-    Type type; /* The native type of a FunctionInfo object */
-    VALUE rbReturnType;
-    VALUE rbParameterTypes;
-
-    Type* returnType;
-    Type** parameterTypes;
-    NativeType* nativeParameterTypes;
-    ffi_type* ffiReturnType;
-    ffi_type** ffiParameterTypes;
-    ffi_cif ffi_cif;
-    Invoker invoke;
-    int parameterCount;
-    int flags;
-    ffi_abi abi;
-    int callbackCount;
-    VALUE* callbackParameters;
-    VALUE rbEnums;
-    bool ignoreErrno;
-    bool blocking;
-    bool hasStruct;
-};
-
-extern VALUE rbffi_FunctionTypeClass, rbffi_FunctionClass;
-
-void rbffi_Function_Init(VALUE moduleFFI);
-VALUE rbffi_Function_NewInstance(VALUE functionInfo, VALUE proc);
-VALUE rbffi_Function_ForProc(VALUE cbInfo, VALUE proc);
-void rbffi_FunctionInfo_Init(VALUE moduleFFI);
-
-#ifdef	__cplusplus
-}
-#endif
-
-#endif	/* RBFFI_FUNCTION_H */
+#endif /* RUBYFFI_CLOSURE_H */
 
