@@ -49,6 +49,9 @@
 #include "Function.h"
 #include "LongDouble.h"
 
+#ifndef PRIsVALUE
+# define PRIsVALUE "s"
+#endif
 
 static inline char* memory_address(VALUE self);
 VALUE rbffi_AbstractMemoryClass = Qnil;
