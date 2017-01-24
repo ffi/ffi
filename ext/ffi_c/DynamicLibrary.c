@@ -36,6 +36,7 @@
 # include <winsock2.h>
 # define _WINSOCKAPI_
 # include <windows.h>
+# include <shlwapi.h>
 #else
 # include <dlfcn.h>
 #endif

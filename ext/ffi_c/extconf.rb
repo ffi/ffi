@@ -24,7 +24,8 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     # Check if the raw api is available.
     $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")
   end
-  
+
+  have_header('shlwapi.h')
   have_func('rb_thread_blocking_region')
   have_func('rb_thread_call_with_gvl')
   have_func('rb_thread_call_without_gvl')
