@@ -776,6 +776,7 @@ end
 describe "Callback interop" do
   require 'fiddle'
   require 'fiddle/import'
+  require 'timeout'
 
   module LibTestFFI
     extend FFI::Library
@@ -843,6 +844,24 @@ describe "Callback interop" do
     assert_callback_in_same_thread_called_once do |block|
       func = LibTestFiddle.bind_function(:cbVrV, Fiddle::TYPE_VOID, [], &block)
       LibTestFiddle.testClosureVrV(Fiddle::Pointer[func.to_i])
+    end
+  end
+
+  # https://github.com/ffi/ffi/issues/527
+  if RUBY_ENGINE == 'ruby' && RUBY_VERSION.split('.').map(&:to_i).pack("C*") >= [2,3,0].pack("C*")
+    it "C outside ffi call stack does not deadlock [#527]" do
+      path = File.join(File.dirname(__FILE__), "embed-test/embed-test.rb")
+      pid = spawn(RbConfig.ruby, "-Ilib", path, { [:out, :err] => "embed-test.log" })
+      begin
+        Timeout.timeout(10){ Process.wait(pid) }
+      rescue Timeout::Error
+        Process.kill(9, pid)
+        raise
+      else
+        if $?.exitstatus != 0
+          raise "external process failed:\n#{ File.read("embed-test.log") }"
+        end
+      end
     end
   end
 end
