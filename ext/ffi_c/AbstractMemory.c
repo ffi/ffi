@@ -49,8 +49,13 @@
 #include "Function.h"
 #include "LongDouble.h"
 
-#ifndef PRIsVALUE
+#ifdef PRIsVALUE
+# define RB_OBJ_CLASSNAME(obj) rb_obj_class(obj)
+# define RB_OBJ_STRING(obj) (obj)
+#else
 # define PRIsVALUE "s"
+# define RB_OBJ_CLASSNAME(obj) rb_obj_classname(obj)
+# define RB_OBJ_STRING(obj) StringValueCStr(obj)
 #endif
 
 static inline char* memory_address(VALUE self);
