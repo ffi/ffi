@@ -12,7 +12,6 @@ os:
   - osx
 rvm:
   - "1.9.3"
-  - "1.8.7"
   - "2.0.0"
   - "2.1"
   - "2.2.3"
@@ -33,7 +32,6 @@ matrix:
       rvm: ruby-head
     - rvm: "rbx"
     - rvm: "rbx-head"
-    - rvm: "1.8.7"
     - rvm: "1.9.3"
 after_failure:
   - "find build -name mkmf.log | xargs cat"
