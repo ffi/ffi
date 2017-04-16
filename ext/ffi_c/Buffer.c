@@ -114,7 +114,7 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
         }
 
         /* ensure the memory is aligned on at least a 8 byte boundary */
-        p->memory.address = (void *) (((uintptr_t) p->data.storage + 0x7) & (uintptr_t) ~0x7UL);
+		p->memory.address = (void *) MEMORY_ALIGN(p->data.storage);
     
         if (p->memory.size > 0 && (nargs < 3 || RTEST(rbClear))) {
             memset(p->memory.address, 0, p->memory.size);
@@ -154,7 +154,7 @@ buffer_initialize_copy(VALUE self, VALUE other)
         return Qnil;
     }
     
-    dst->memory.address = (void *) (((uintptr_t) dst->data.storage + 0x7) & (uintptr_t) ~0x7UL);
+	dst->memory.address = (void *) MEMORY_ALIGN(dst->data.storage);
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
     

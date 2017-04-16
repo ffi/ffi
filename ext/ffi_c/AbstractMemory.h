@@ -165,6 +165,13 @@ get_memory_op(Type* type)
 #define MEMORY_PTR(obj) MEMORY((obj))->address
 #define MEMORY_LEN(obj) MEMORY((obj))->size
 
+/* ensure the memory is aligned on at least a 8 byte boundary */
+#if defined(__x86_64__)
+#define MEMORY_ALIGN_MASK 0x7ULL
+#else
+#define MEMORY_ALIGN_MASK 0x7UL
+#endif
+#define MEMORY_ALIGN(p) (((uintptr_t) p + MEMORY_ALIGN_MASK) & (uintptr_t) ~MEMORY_ALIGN_MASK)
 
 
 #ifdef	__cplusplus

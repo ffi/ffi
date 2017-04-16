@@ -183,7 +183,7 @@ ptr_initialize_copy(VALUE self, VALUE other)
     
     dst->allocated = true;
     dst->autorelease = true;
-    dst->memory.address = (void *) (((uintptr_t) dst->storage + 0x7) & (uintptr_t) ~0x7UL);
+	dst->memory.address = (void *) MEMORY_ALIGN(dst->storage);
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
     
