@@ -95,6 +95,11 @@ describe "Pointer" do
       end
     end
     
+    it "#write_array_of_type" do
+      memory = FFI::MemoryPointer.new :pointer, 3
+      memory.write_array_of_type(FFI::TYPE_UINT8, :put_uint8,[1,2,3])
+      #should not throw exception
+    end
   end
 
   describe 'NULL' do
