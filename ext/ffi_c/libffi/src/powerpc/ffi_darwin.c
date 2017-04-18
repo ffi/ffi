@@ -302,10 +302,10 @@ ffi_prep_args (extended_cif *ecif, unsigned long *const stack)
     }
 
   /* Check that we didn't overrun the stack...  */
-  //FFI_ASSERT(gpr_base <= stacktop - ASM_NEEDS_REGISTERS);
-  //FFI_ASSERT((unsigned *)fpr_base
-  //	     <= stacktop - ASM_NEEDS_REGISTERS - NUM_GPR_ARG_REGISTERS);
-  //FFI_ASSERT(flags & FLAG_4_GPR_ARGUMENTS || intarg_count <= 4);
+  /* FFI_ASSERT(gpr_base <= stacktop - ASM_NEEDS_REGISTERS);
+     FFI_ASSERT((unsigned *)fpr_base
+     	     <= stacktop - ASM_NEEDS_REGISTERS - NUM_GPR_ARG_REGISTERS);
+     FFI_ASSERT(flags & FLAG_4_GPR_ARGUMENTS || intarg_count <= 4);  */
 }
 
 #if defined(POWERPC_DARWIN64)
@@ -593,7 +593,7 @@ darwin_adjust_aggregate_sizes (ffi_type *s)
       /* Natural alignment for all items.  */
       align = p->alignment;
 #else
-      /* Natrual alignment for the first item... */
+      /* Natural alignment for the first item... */
       if (i == 0)
 	align = p->alignment;
       else if (p->alignment == 16 || p->alignment < 4)
@@ -1065,10 +1065,10 @@ ffi_prep_closure_loc (ffi_closure* closure,
       closure->cif = cif;
       closure->fun = fun;
       closure->user_data = user_data;
+      break;
 
     default:
-
-      FFI_ASSERT(0);
+      return FFI_BAD_ABI;
       break;
     }
   return FFI_OK;
@@ -1235,7 +1235,7 @@ ffi_closure_helper_DARWIN (ffi_closure *closure, void *rvalue,
 	  if (arg_types[i]->elements[0]->type == FFI_TYPE_DOUBLE)
 	    size_al = ALIGN(arg_types[i]->size, 8);
 #  if defined(POWERPC64)
-	  FFI_ASSERT (cif->abi != FFI_DARWIN)
+	  FFI_ASSERT (cif->abi != FFI_DARWIN);
 	  avalue[i] = pgr;
 	  pgr += (size_al + 7) / 8;
 #  else

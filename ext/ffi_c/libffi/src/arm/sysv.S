@@ -41,7 +41,7 @@
 #define CNAME(x) x
 #endif
 #ifdef __APPLE__
-#define ENTRY(x) .globl CNAME(x); CNAME(x):
+#define ENTRY(x) .globl _##x; _##x:
 #else
 #define ENTRY(x) .globl CNAME(x); .type CNAME(x),%function; CNAME(x):
 #endif /* __APPLE__ */
@@ -109,42 +109,27 @@
 #define UNWIND @
 #endif	
 
-	
+.syntax unified
+
 #if defined(__thumb__) && !defined(__THUMB_INTERWORK__)
-.macro	ARM_FUNC_START name
-	.text
-	.align 0
-	.thumb
-	.thumb_func
-#ifdef __APPLE__
-	ENTRY($0)
+#define ARM_FUNC_START(name) \
+	.text; \
+	.align 2; \
+	.thumb; \
+	.thumb_func; \
+	ENTRY(name); \
+	bx pc; \
+	nop; \
+	.arm; \
+	UNWIND .fnstart; \
+_L__##name:
 #else
-	ENTRY(\name)
-#endif
-	bx	pc
-	nop
-	.arm
+#define ARM_FUNC_START(name) \
+	.text; \
+	.align 2; \
+	.arm; \
+	ENTRY(name); \
 	UNWIND .fnstart
-/* A hook to tell gdb that we've switched to ARM mode.  Also used to call
-   directly from other local arm routines.  */
-#ifdef __APPLE__
-_L__$0:
-#else
-_L__\name:
-#endif
-.endm
-#else
-.macro	ARM_FUNC_START name
-	.text
-	.align 0
-	.arm
-#ifdef __APPLE__
-	ENTRY($0)
-#else
-	ENTRY(\name)
-#endif
-	UNWIND .fnstart
-.endm
 #endif
 
 .macro	RETLDM	regs=, cond=, dirn=ia
@@ -171,7 +156,7 @@ _L__\name:
 	@ sp+0: ecif.rvalue
 
 	@ This assumes we are using gas.
-ARM_FUNC_START ffi_call_SYSV
+ARM_FUNC_START(ffi_call_SYSV)
 	@ Save registers
         stmfd	sp!, {r0-r3, fp, lr}
 	UNWIND .save	{r0-r3, fp, lr}
@@ -187,7 +172,7 @@ ARM_FUNC_START ffi_call_SYSV
 	@     r1 already set
 
 	@ Call ffi_prep_args(stack, &ecif)
-	bl	ffi_prep_args
+	bl	CNAME(ffi_prep_args_SYSV)
 
 	@ move first 4 parameters in registers
 	ldmia	sp, {r0-r3}
@@ -228,7 +213,7 @@ ARM_FUNC_START ffi_call_SYSV
 #if defined(__SOFTFP__) || defined(__ARM_EABI__)
 	cmpne	r3, #FFI_TYPE_DOUBLE
 #endif
-	stmeqia	r2, {r0, r1}
+	stmiaeq	r2, {r0, r1}
 
 #if !defined(__SOFTFP__) && !defined(__ARM_EABI__)
 	beq	LSYM(Lepilogue)
@@ -260,13 +245,13 @@ LSYM(Lepilogue):
 
 /*
 	unsigned int FFI_HIDDEN
-	ffi_closure_SYSV_inner (closure, respp, args)
+	ffi_closure_inner (closure, respp, args)
 	     ffi_closure *closure;
 	     void **respp;
   	     void *args;
 */
 
-ARM_FUNC_START ffi_closure_SYSV
+ARM_FUNC_START(ffi_closure_SYSV)
 	UNWIND .pad #16
 	add	ip, sp, #16
 	stmfd	sp!, {ip, lr}
@@ -276,7 +261,7 @@ ARM_FUNC_START ffi_closure_SYSV
 	sub	sp, sp, #16
 	str	sp, [sp, #8]
 	add	r1, sp, #8
-	bl	CNAME(ffi_closure_SYSV_inner)
+	bl	CNAME(ffi_closure_inner)
 	cmp	r0, #FFI_TYPE_INT
 	beq	.Lretint
 
@@ -334,7 +319,9 @@ ARM_FUNC_START ffi_closure_SYSV
 
 
 /* Below are VFP hard-float ABI call and closure implementations.
-   Add VFP FPU directive here. */
+   Add VFP FPU directive here. This is only compiled into the library
+   under EABI.  */
+#ifdef __ARM_EABI__
 	.fpu	vfp
 
 	@ r0:   fn
@@ -343,7 +330,7 @@ ARM_FUNC_START ffi_closure_SYSV
 	@ r3:   fig->flags
 	@ sp+0: ecif.rvalue
 
-ARM_FUNC_START ffi_call_VFP
+ARM_FUNC_START(ffi_call_VFP)
 	@ Save registers
         stmfd	sp!, {r0-r3, fp, lr}
 	UNWIND .save	{r0-r3, fp, lr}
@@ -362,10 +349,11 @@ ARM_FUNC_START ffi_call_VFP
 	sub	r2, fp, #64   @ VFP scratch space
 
 	@ Call ffi_prep_args(stack, &ecif, vfp_space)
-	bl	ffi_prep_args
+	bl	CNAME(ffi_prep_args_VFP)
 
 	@ Load VFP register args if needed
 	cmp	r0, #0
+	mov	ip, fp
 	beq	LSYM(Lbase_args)
 
 	@ Load only d0 if possible
@@ -431,7 +419,7 @@ LSYM(Lepilogue_vfp):
         .size    CNAME(ffi_call_VFP),.ffi_call_VFP_end-CNAME(ffi_call_VFP)
 
 
-ARM_FUNC_START ffi_closure_VFP
+ARM_FUNC_START(ffi_closure_VFP)
 	fstmfdd	sp!, {d0-d7}
 	@ r0-r3, then d0-d7
 	UNWIND .pad #80
@@ -444,7 +432,7 @@ ARM_FUNC_START ffi_closure_VFP
 	sub	sp, sp, #72
 	str	sp, [sp, #64]
 	add	r1, sp, #64
-	bl	ffi_closure_SYSV_inner
+	bl	CNAME(ffi_closure_inner)
 
 	cmp	r0, #FFI_TYPE_INT
 	beq	.Lretint_vfp
@@ -491,6 +479,12 @@ ARM_FUNC_START ffi_closure_VFP
 .ffi_closure_VFP_end:
 	UNWIND .fnend
         .size    CNAME(ffi_closure_VFP),.ffi_closure_VFP_end-CNAME(ffi_closure_VFP)
+#endif
+
+ENTRY(ffi_arm_trampoline)
+	stmfd sp!, {r0-r3}
+	ldr r0, [pc]
+	ldr pc, [pc]
 
 #if defined __ELF__ && defined __linux__
 	.section	.note.GNU-stack,"",%progbits
