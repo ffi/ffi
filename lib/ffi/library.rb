@@ -447,6 +447,26 @@ module FFI
       end
     end
 
+    # Generic enum builder
+    #  @param [Class] klass can be one of FFI::Enum or FFI::Bitmask
+    #  @param args (see #enum or #bitmask)
+    private def generic_enum(klass, *args)
+      native_type = args.first.kind_of?(FFI::Type) ? args.shift : nil
+      name, values = if args[0].kind_of?(Symbol) && args[1].kind_of?(Array)
+        [ args[0], args[1] ]
+      elsif args[0].kind_of?(Array)
+        [ nil, args[0] ]
+      else
+        [ nil, args ]
+      end
+      @ffi_enums = FFI::Enums.new unless defined?(@ffi_enums)
+      @ffi_enums << (e = native_type ? klass.new(native_type, values, name) : klass.new(values, name))
+
+      # If called with a name, add a typedef alias
+      typedef(e, name) if name
+      e
+    end
+
     # @overload enum(name, values)
     #  Create a named enum.
     #  @example
@@ -485,20 +505,50 @@ module FFI
     # @return [FFI::Enum]
     # Create a new {FFI::Enum}.
     def enum(*args)
-      native_type = args.first.kind_of?(FFI::Type) ? args.shift : nil
-      name, values = if args[0].kind_of?(Symbol) && args[1].kind_of?(Array)
-        [ args[0], args[1] ]
-      elsif args[0].kind_of?(Array)
-        [ nil, args[0] ]
-      else
-        [ nil, args ]
-      end
-      @ffi_enums = FFI::Enums.new unless defined?(@ffi_enums)
-      @ffi_enums << (e = native_type ? FFI::Enum.new(native_type, values, name) : FFI::Enum.new(values, name))
+      generic_enum(FFI::Enum, *args)
+    end
 
-      # If called as enum :foo, [ :zero, :one, :two ], add a typedef alias
-      typedef(e, name) if name
-      e
+    # @overload bitmask(name, values)
+    #  Create a named bitmask
+    #  @example
+    #   bitmask :foo, [:red, :green, :blue] # bits 0,1,2 are used
+    #   bitmask :foo, [:red, :green, 5, :blue] # bits 0,5,6 are used
+    #  @param [Symbol] name for new bitmask
+    #  @param [Array<Symbol, Integer>] values for new bitmask
+    # @overload bitmask(*args)
+    #  Create an unamed bitmask
+    #  @example
+    #   bm = bitmask :red, :green, :blue # bits 0,1,2 are used
+    #   bm = bitmask :red, :green, 5, blue # bits 0,5,6 are used
+    #  @param [Symbol, Integer] args values for new bitmask
+    # @overload bitmask(values)
+    #  Create an unamed bitmask
+    #  @example
+    #   bm = bitmask [:red, :green, :blue] # bits 0,1,2 are used
+    #   bm = bitmask [:red, :green, 5, blue] # bits 0,5,6 are used
+    #  @param [Array<Symbol, Integer>] values for new bitmask
+    # @overload bitmask(native_type, name, values)
+    #  Create a named enum and specify the native type.
+    #  @example
+    #   bitmask FFI::Type::UINT64, :foo, [:red, :green, :blue]
+    #  @param [FFI::Type] native_type native type for new bitmask
+    #  @param [Symbol] name for new bitmask
+    #  @param [Array<Symbol, Integer>] values for new bitmask
+    # @overload bitmask(native_type, *args)
+    #  @example
+    #   bitmask FFI::Type::UINT64, :red, :green, :blue
+    #  @param [FFI::Type] native_type native type for new bitmask
+    #  @param [Symbol, Integer] args values for new bitmask
+    # @overload bitmask(native_type, values)
+    #  Create a named enum and specify the native type.
+    #  @example
+    #   bitmask FFI::Type::UINT64, [:red, :green, :blue]
+    #  @param [FFI::Type] native_type native type for new bitmask
+    #  @param [Array<Symbol, Integer>] values for new bitmask
+    # @return [FFI::Bitmask]
+    # Create a new FFI::Bitmask
+    def bitmask(*args)
+      generic_enum(FFI::Bitmask, *args)
     end
 
     # @param name
