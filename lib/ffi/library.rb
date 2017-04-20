@@ -447,10 +447,11 @@ module FFI
       end
     end
 
+    private
     # Generic enum builder
     #  @param [Class] klass can be one of FFI::Enum or FFI::Bitmask
     #  @param args (see #enum or #bitmask)
-    private def generic_enum(klass, *args)
+    def generic_enum(klass, *args)
       native_type = args.first.kind_of?(FFI::Type) ? args.shift : nil
       name, values = if args[0].kind_of?(Symbol) && args[1].kind_of?(Array)
         [ args[0], args[1] ]
@@ -467,6 +468,7 @@ module FFI
       e
     end
 
+    public
     # @overload enum(name, values)
     #  Create a named enum.
     #  @example
