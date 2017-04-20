@@ -242,7 +242,7 @@ module FFI
           v = @kv_map[o]
           if v then val |= v else val end
         end
-      when Integer, -> (o) { o.respond_to?(:to_int) }
+      when Integer, ->(o) { o.respond_to?(:to_int) }
         val = flat_query.inject(0) { |val, o| val |= o.to_int }
         @kv_map.select { |_, v| v & val != 0 }.keys
       end
@@ -268,7 +268,7 @@ module FFI
           val |= v
         when Integer
           val |= o
-        when -> (o) { o.respond_to?(:to_int) }
+        when ->(o) { o.respond_to?(:to_int) }
           val |= o.to_int
         else
           raise ArgumentError, "invalid bitmask value, #{o.inspect}"
