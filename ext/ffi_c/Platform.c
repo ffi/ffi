@@ -66,12 +66,20 @@ static VALUE PlatformModule = Qnil;
 #elif defined(__ppc__) || defined(__powerpc__) || defined(__powerpc)
 # define CPU "ppc"
 
-/* Need to check for __sparcv9 first, because __sparc will be defined either way. */
+/*
+ * Need to check for __sparcv9 first, because __sparc will be defined either way.
+ * Note that __sparcv9 seems to only be set for Solaris. On Linux, __sparc will
+ * be set, along with __arch64__ if a 64-bit platform.
+ */
 #elif defined(__sparcv9__) || defined(__sparcv9)
 # define CPU "sparcv9"
 
 #elif defined(__sparc__) || defined(__sparc)
-# define CPU "sparc"
+# if defined(__arch64__)
+#  define CPU "sparcv9"
+# else
+#  define CPU "sparc"
+# endif
 
 #elif defined(__arm__) || defined(__arm)
 # define CPU "arm"

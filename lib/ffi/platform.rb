@@ -63,6 +63,8 @@ module FFI
       "powerpc64"
     when /ppc|powerpc/
       "powerpc"
+    when /sparcv9|sparc64/
+      "sparcv9"
     else
       case RbConfig::CONFIG['host_cpu']
       when /^arm/
