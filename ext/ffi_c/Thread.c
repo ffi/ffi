@@ -344,9 +344,13 @@ thread_data_free(void *ptr)
 void
 rbffi_Thread_Init(VALUE moduleFFI)
 {
+    static rbffi_frame_t root_frame;
 #ifdef _WIN32
     frame_thread_key = TlsAlloc();
 #else
     pthread_key_create(&thread_data_key, thread_data_free);    
 #endif
+    /* Create a root frame for the thread initialising us.
+     * This makes programs that embed ruby work (see #527) */
+    rbffi_frame_push(&root_frame);
 }
