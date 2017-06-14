@@ -191,7 +191,7 @@ if USE_RAKE_COMPILER
   desc "build a windows gem without all the ceremony."
   task "gem:windows" do
     require "rake_compiler_dock"
-    RakeCompilerDock.sh "bundle && rake cross native gem MAKE='nice make -j`nproc`'"
+    RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle && rake cross native gem MAKE='nice make -j`nproc`'"
   end
 end
 
