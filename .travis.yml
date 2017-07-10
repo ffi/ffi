@@ -27,8 +27,6 @@ matrix:
   allow_failures:
     - rvm: system
     - os: osx
-      rvm: "2.3.0"
-    - os: osx
       rvm: ruby-head
     - rvm: "rbx"
     - rvm: "rbx-head"
