@@ -29,8 +29,13 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   have_func('rb_thread_blocking_region')
   have_func('rb_thread_call_with_gvl')
   have_func('rb_thread_call_without_gvl')
-  have_func('ffi_prep_cif_var')
-  
+
+  if libffi_ok
+    have_func('ffi_prep_cif_var')
+  else
+    $defs << "-DHAVE_FFI_PREP_CIF_VAR"
+  end
+
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
   $defs << "-DUSE_INTERNAL_LIBFFI" unless libffi_ok
   $defs << "-DRUBY_1_9" if RUBY_VERSION >= "1.9.0"

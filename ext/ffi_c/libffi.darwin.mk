@@ -8,7 +8,7 @@ BUILD_DIR := $(shell pwd)
 INCFLAGS += -I"$(BUILD_DIR)"
 
 # Work out which arches we need to compile the lib for
-ARCHES := 
+ARCHES :=
 ARCHFLAGS ?= $(filter -arch %, $(CFLAGS))
 
 ifneq ($(findstring -arch ppc,$(ARCHFLAGS)),)
@@ -26,11 +26,16 @@ endif
 ifeq ($(strip $(ARCHES)),)
 LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi-$(arch)
 # Just build the one (default) architecture
-$(LIBFFI):		
+$(LIBFFI):
 	@mkdir -p "$(LIBFFI_BUILD_DIR)" "$(@D)"
+	@if [ ! -f "$(LIBFFI_BUILD_DIR)"/configure ]; then \
+		echo "Running autoreconf for libffi"; \
+		cd "$(LIBFFI_SRC_DIR)" && \
+		/bin/sh $(LIBFFI_AUTOGEN) > /dev/null; \
+	fi
 	@if [ ! -f "$(LIBFFI_BUILD_DIR)"/Makefile ]; then \
-	    echo "Configuring libffi"; \
-	    cd "$(LIBFFI_BUILD_DIR)" && \
+		echo "Configuring libffi"; \
+		cd "$(LIBFFI_BUILD_DIR)" && \
 		/usr/bin/env CC="$(CC)" LD="$(LD)" CFLAGS="$(LIBFFI_CFLAGS)" GREP_OPTIONS="" \
 		/bin/sh $(LIBFFI_CONFIGURE) $(LIBFFI_HOST) > /dev/null; \
 	fi
@@ -42,6 +47,11 @@ LIBTARGETS = $(foreach arch,$(ARCHES),"$(BUILD_DIR)"/libffi-$(arch)/.libs/libffi
 # Build a fat binary and assemble
 build_ffi = \
 	mkdir -p "$(BUILD_DIR)"/libffi-$(1); \
+	(if [ ! -f "$(BUILD_DIR)"/libffi-$(1)/configure ]; then \
+		echo "Running autoreconf for libffi"; \
+		cd "$(LIBFFI_SRC_DIR)" && \
+		/bin/sh $(LIBFFI_AUTOGEN) > /dev/null; \
+	fi); \
 	(if [ ! -f "$(BUILD_DIR)"/libffi-$(1)/Makefile ]; then \
 	    echo "Configuring libffi for $(1)"; \
 	    cd "$(BUILD_DIR)"/libffi-$(1) && \
