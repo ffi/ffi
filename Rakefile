@@ -65,7 +65,18 @@ OS = case RbConfig::CONFIG['host_os'].downcase
     RbConfig::CONFIG['host_os'].downcase
   end
 
-GMAKE = system('which gmake >/dev/null') && 'gmake' || 'make'
+def which(name)
+  exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
+  ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+    exts.each do |ext|
+      app = File.join(path, name+ext)
+      return app if File.executable? app
+    end
+  end
+  nil
+end
+
+GMAKE = which('gmake').nil? ? 'make' : 'gmake'
 
 LIBTEST = "build/libtest.#{LIBEXT}"
 BUILD_DIR = "build"
@@ -175,7 +186,7 @@ if USE_RAKE_COMPILER
     ext.cross_platform = %w[i386-mingw32 x64-mingw32]                     # forces the Windows platform instead of the default one
   end
 
-  ENV['RUBY_CC_VERSION'] ||= '1.8.7:1.9.3:2.0.0:2.1.6:2.2.2:2.3.0'
+  ENV['RUBY_CC_VERSION'] ||= '1.9.3:2.0.0:2.1.6:2.2.2:2.3.0'
 
   # To reduce the gem file size strip mingw32 dlls before packaging
   ENV['RUBY_CC_VERSION'].to_s.split(':').each do |ruby_version|
@@ -191,7 +202,7 @@ if USE_RAKE_COMPILER
   desc "build a windows gem without all the ceremony."
   task "gem:windows" do
     require "rake_compiler_dock"
-    RakeCompilerDock.sh "bundle && rake cross native gem MAKE='nice make -j`nproc`'"
+    RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle && rake cross native gem MAKE='nice make -j`nproc`'"
   end
 end
 

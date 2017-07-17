@@ -19,3 +19,4 @@ vendor
 .bundle
 Gemfile.lock
 types_log
+*.gem

@@ -63,6 +63,8 @@ module FFI
       "powerpc64"
     when /ppc|powerpc/
       "powerpc"
+    when /sparcv9|sparc64/
+      "sparcv9"
     else
       case RbConfig::CONFIG['host_cpu']
       when /^arm/
@@ -95,7 +97,7 @@ module FFI
     public
 
     LIBPREFIX = case OS
-    when /windows/
+    when /windows|msys/
       ''
     when /cygwin/
       'cyg'
@@ -108,7 +110,7 @@ module FFI
       'dylib'
     when /linux|bsd|solaris/
       'so'
-    when /windows|cygwin/
+    when /windows|cygwin|msys/
       'dll'
     else
       # Punt and just assume a sane unix (i.e. anything but AIX)
@@ -121,6 +123,9 @@ module FFI
       GNU_LIBC
     elsif OS == 'cygwin'
       "cygwin1.dll"
+    elsif OS == 'msys'
+      # Not sure how msys 1.0 behaves, tested on MSYS2.
+      "msys-2.0.dll"
     else
       "#{LIBPREFIX}c.#{LIBSUFFIX}"
     end

@@ -36,6 +36,7 @@
 # include <winsock2.h>
 # define _WINSOCKAPI_
 # include <windows.h>
+# include <shlwapi.h>
 #else
 # include <dlfcn.h>
 #endif
@@ -185,7 +186,8 @@ dl_open(const char* name, int flags)
     if (name == NULL) {
         return GetModuleHandle(NULL);
     } else {
-        return LoadLibraryExA(name, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+        DWORD dwFlags = PathIsRelativeA(name) ? 0 : LOAD_WITH_ALTERED_SEARCH_PATH;
+        return LoadLibraryExA(name, NULL, dwFlags);
     }
 }
 

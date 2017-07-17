@@ -7,7 +7,6 @@ require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 describe "Struct aligns fields correctly" do
   it "char, followed by an int" do
-    pending("not supported in 1.8") if RUBY_VERSION =~ /^1\.8\..*/
     class CIStruct < FFI::Struct
       layout :c => :char, :i => :int
     end
@@ -15,7 +14,6 @@ describe "Struct aligns fields correctly" do
   end
 
   it "short, followed by an int" do
-    pending("not supported in 1.8") if RUBY_VERSION =~ /^1\.8\..*/
     class SIStruct < FFI::Struct
       layout :s => :short, :i => :int
     end
@@ -23,7 +21,6 @@ describe "Struct aligns fields correctly" do
   end
 
   it "int, followed by an int" do
-    pending("not supported in 1.8") if RUBY_VERSION =~ /^1\.8\..*/
     class IIStruct < FFI::Struct
       layout :i1 => :int, :i => :int
     end
@@ -31,7 +28,6 @@ describe "Struct aligns fields correctly" do
   end
 
   it "long long, followed by an int" do
-    pending("not supported in 1.8") if RUBY_VERSION =~ /^1\.8\..*/
     class LLIStruct < FFI::Struct
       layout :l => :long_long, :i => :int
     end

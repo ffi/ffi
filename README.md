@@ -43,6 +43,8 @@ At a minimum, you will need:
 * A C compiler (e.g. Xcode on OSX, gcc on everything else)
 * libffi development library - this is commonly in the libffi-dev or libffi-devel
 
+On Linux systems running with [PaX](https://en.wikipedia.org/wiki/PaX) (Gentoo, Alpine, etc.) FFI may trigger `mprotrect` errors. You may need to disable [mprotect](https://en.wikibooks.org/wiki/Grsecurity/Appendix/Grsecurity_and_PaX_Configuration_Options#Restrict_mprotect.28.29) for ruby (`paxctl -m [/path/to/ruby]`) for the time being until a solution is found.
+
 ## Installation
 
 From rubygems:
@@ -52,8 +54,9 @@ From rubygems:
 or from the git repository on github:
 
     git clone git://github.com/ffi/ffi.git
+    git submodule update --init --recursive
     cd ffi
-    rake gem:install
+    rake install
 
 ## License
 

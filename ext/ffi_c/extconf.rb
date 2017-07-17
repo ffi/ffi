@@ -24,12 +24,18 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     # Check if the raw api is available.
     $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")
   end
-  
+
+  have_header('shlwapi.h')
   have_func('rb_thread_blocking_region')
   have_func('rb_thread_call_with_gvl')
   have_func('rb_thread_call_without_gvl')
-  have_func('ffi_prep_cif_var')
-  
+
+  if libffi_ok
+    have_func('ffi_prep_cif_var')
+  else
+    $defs << "-DHAVE_FFI_PREP_CIF_VAR"
+  end
+
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
   $defs << "-DUSE_INTERNAL_LIBFFI" unless libffi_ok
   $defs << "-DRUBY_1_9" if RUBY_VERSION >= "1.9.0"
