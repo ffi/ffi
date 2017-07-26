@@ -66,7 +66,9 @@ typedef struct rbffi_frame {
     struct thread_data* td;
 #endif
     struct rbffi_frame* prev;
+#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
     bool has_gvl;
+#endif
     VALUE exc;
 } rbffi_frame_t;
 

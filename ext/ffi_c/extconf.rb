@@ -30,6 +30,11 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   have_func('rb_thread_blocking_region')
   have_func('rb_thread_call_with_gvl')
   have_func('rb_thread_call_without_gvl')
+  have_func('ruby_native_thread_p')
+  if RbConfig::CONFIG['host_os'].downcase !~ /darwin/ || RUBY_VERSION >= "2.3.0"
+    # On OSX ruby_thread_has_gvl_p is detected but fails at runtime for ruby < 2.3.0
+    have_func('ruby_thread_has_gvl_p')
+  end
 
   if libffi_ok
     have_func('ffi_prep_cif_var')
@@ -43,7 +48,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   $defs << "-DFFI_BUILDING" if RbConfig::CONFIG['host_os'] =~ /mswin/ # for compatibility with newer libffi
 
   create_header
-  
+
   $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if !libffi_ok && RbConfig::CONFIG['host_os'] =~ /mswin/
 
   create_makefile("ffi_c")
@@ -63,7 +68,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
       end
     end
   end
-  
+
 else
   File.open("Makefile", "w") do |mf|
     mf.puts "# Dummy makefile for non-mri rubies"

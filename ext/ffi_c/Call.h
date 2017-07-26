@@ -48,7 +48,7 @@ extern "C" {
 #if (defined(__i386__) || defined(__x86_64__)) && !(defined(_WIN32) || defined(__WIN32__))
 #  define BYPASS_FFI 1
 #endif
-    
+
 typedef union {
 #ifdef USE_RAW
     signed int s8, s16, s32;
@@ -70,7 +70,7 @@ typedef union {
     double f64;
     long double ld;
 } FFIStorage;
- 
+
 extern void rbffi_Call_Init(VALUE moduleFFI);
 
 extern void rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
