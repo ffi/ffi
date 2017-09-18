@@ -51,8 +51,6 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
       mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
       if RbConfig::CONFIG['host_os'].downcase =~ /darwin/
         mf.puts "include ${srcdir}/libffi.darwin.mk"
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /bsd/
-        mf.puts '.include "${srcdir}/libffi.bsd.mk"'
       elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin64/
         mf.puts '!include $(srcdir)/libffi.vc64.mk'
       elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin32/
