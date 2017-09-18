@@ -55,7 +55,7 @@ module FFI
         C
 
         io.close
-        cc = ENV['CC'] || 'gcc'
+        cc = ENV['CC'] || 'cc'
         cmd = "#{cc} -E -x c #{options[:cppflags]} -D_DARWIN_USE_64_BIT_INODE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -c"
         if options[:input]
           typedefs = File.read(options[:input])
