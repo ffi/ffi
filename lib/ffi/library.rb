@@ -128,7 +128,7 @@ module FFI
                 # TODO better library lookup logic
                 libname = libname.to_s
                 unless libname.start_with?("/")
-                  path = ['/usr/lib/','/usr/local/lib/'].find do |pth|
+                  path = ['/lib/x86_64-linux-gnu/', '/usr/lib/','/usr/local/lib/'].find do |pth|
                     File.exist?(pth + libname)
                   end
                   if path
