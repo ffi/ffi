@@ -48,6 +48,7 @@ module FFI
     # Read pointer's contents as a string, or the first +len+ bytes of the 
     # equivalent string if +len+ is not +nil+.
     def read_string(len=nil)
+      return '' if len == 0
       if len
         get_bytes(0, len)
       else
