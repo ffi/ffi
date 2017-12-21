@@ -10,5 +10,6 @@ group :development do
 end
 
 group :doc do
+  gem 'kramdown'
   gem 'yard', '~> 0.9'
 end
