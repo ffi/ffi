@@ -10,5 +10,5 @@ group :development do
 end
 
 group :doc do
-  gem 'yard', "~> 0.8.7"
+  gem 'yard', '~> 0.9'
 end
