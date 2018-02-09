@@ -184,9 +184,10 @@ if USE_RAKE_COMPILER
     ext.tmp_dir = BUILD_DIR                                   # temporary folder used during compilation.
     ext.cross_compile = true                                  # enable cross compilation (requires cross compile toolchain)
     ext.cross_platform = %w[i386-mingw32 x64-mingw32]                     # forces the Windows platform instead of the default one
+    ext.cross_compiling do |spec|
+      spec.files.reject! { |path| File.fnmatch?('ext/*', path) }
+    end
   end
-
-  ENV['RUBY_CC_VERSION'] ||= '1.9.3:2.0.0:2.1.6:2.2.2:2.3.0'
 
   # To reduce the gem file size strip mingw32 dlls before packaging
   ENV['RUBY_CC_VERSION'].to_s.split(':').each do |ruby_version|
