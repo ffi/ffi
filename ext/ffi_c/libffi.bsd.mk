@@ -23,9 +23,9 @@ LIBFFI_CONFIGURE = ${LIBFFI_SRC_DIR}/configure --disable-static \
 
 $(OBJS):	${LIBFFI}
 
-$(LIBFFI):		
+$(LIBFFI):
 	@mkdir -p ${LIBFFI_BUILD_DIR}
-	@if [ ! -f $(LIBFFI_BUILD_DIR)/configure ]; then \
+	@if [ ! -f $(LIBFFI_SRC_DIR)/configure ]; then \
 		echo "Running autoreconf for libffi"; \
 		cd "$(LIBFFI_SRC_DIR)" && \
 		/bin/sh $(LIBFFI_AUTOGEN) > /dev/null; \
