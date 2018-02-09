@@ -206,6 +206,29 @@ if USE_RAKE_COMPILER
   end
 end
 
+directory "ext/ffi_c/libffi"
+file "ext/ffi_c/libffi/autogen.sh" => "ext/ffi_c/libffi" do
+  warn "Downloading libffi ..."
+  sh "git submodule update --init --recursive"
+end
+
+LIBFFI_GIT_FILES = `git --git-dir ext/ffi_c/libffi/.git ls-files -z`.split("\x0")
+
+# Generate files in gemspec but not in libffi's git repo by running autogen.sh
+gem_spec.files.select do |f|
+  f =~ /ext\/ffi_c\/libffi\/(.*)/ && !LIBFFI_GIT_FILES.include?($1)
+end.each do |f|
+  file f => "ext/ffi_c/libffi/autogen.sh" do
+    chdir "ext/ffi_c/libffi" do
+      sh "./autogen.sh"
+    end
+    if gem_spec.files != Gem::Specification.load('ffi.gemspec')
+      warn "gemspec files have changed -> Please restart rake!"
+      exit 1
+    end
+  end
+end
+
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), 'lib')
 require 'ffi/platform'
 types_conf = File.expand_path(File.join(FFI::Platform::CONF_DIR, 'types.conf'))
