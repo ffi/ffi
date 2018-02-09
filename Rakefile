@@ -100,7 +100,7 @@ else
 end
 
 desc "Build all packages"
-task :package => 'gem:package'
+task :package => %w[ gem:java gem:windows ]
 
 CLOBBER.include 'lib/ffi/types.conf'
 CLOBBER.include 'pkg'
