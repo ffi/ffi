@@ -221,7 +221,7 @@ gem_spec.files.select do |f|
 end.each do |f|
   file f => "ext/ffi_c/libffi/autogen.sh" do
     chdir "ext/ffi_c/libffi" do
-      sh "./autogen.sh"
+      sh "sh ./autogen.sh"
     end
     if gem_spec.files != Gem::Specification.load('ffi.gemspec')
       warn "gemspec files have changed -> Please restart rake!"

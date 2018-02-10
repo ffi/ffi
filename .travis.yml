@@ -1,12 +1,12 @@
+dist: trusty
 sudo: false
-addons:
-  apt:
-    packages:
-    - libgmp-dev    # this is needed for ruby-2.1.10 and ruby-head on linux
+group: beta
 language: ruby
 before_install:
   - gem install bundler
-script: bundle exec rake test
+script:
+  - bundle exec rake compile || bundle exec rake compile
+  - bundle exec rake test
 os:
   - linux
   - osx
@@ -16,7 +16,8 @@ rvm:
   - 2.1
   - 2.2.8
   - 2.3.5
-  - 2.4.2
+  - 2.4.3
+  - 2.5.0
   - ruby-head
   - rbx
   - system
@@ -26,6 +27,8 @@ env:
 matrix:
   allow_failures:
     - rvm: system
+    - os: osx
+      rvm: 2.0.0
     - os: osx
       rvm: ruby-head
     - rvm: rbx
