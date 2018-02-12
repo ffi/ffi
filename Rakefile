@@ -100,7 +100,7 @@ else
 end
 
 desc "Build all packages"
-task :package => 'gem:package'
+task :package => %w[ gem:java gem:windows ]
 
 CLOBBER.include 'lib/ffi/types.conf'
 CLOBBER.include 'pkg'
@@ -184,9 +184,10 @@ if USE_RAKE_COMPILER
     ext.tmp_dir = BUILD_DIR                                   # temporary folder used during compilation.
     ext.cross_compile = true                                  # enable cross compilation (requires cross compile toolchain)
     ext.cross_platform = %w[i386-mingw32 x64-mingw32]                     # forces the Windows platform instead of the default one
+    ext.cross_compiling do |spec|
+      spec.files.reject! { |path| File.fnmatch?('ext/*', path) }
+    end
   end
-
-  ENV['RUBY_CC_VERSION'] ||= '1.9.3:2.0.0:2.1.6:2.2.2:2.3.0'
 
   # To reduce the gem file size strip mingw32 dlls before packaging
   ENV['RUBY_CC_VERSION'].to_s.split(':').each do |ruby_version|
@@ -203,6 +204,29 @@ if USE_RAKE_COMPILER
   task "gem:windows" do
     require "rake_compiler_dock"
     RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle && rake cross native gem MAKE='nice make -j`nproc`'"
+  end
+end
+
+directory "ext/ffi_c/libffi"
+file "ext/ffi_c/libffi/autogen.sh" => "ext/ffi_c/libffi" do
+  warn "Downloading libffi ..."
+  sh "git submodule update --init --recursive"
+end
+
+LIBFFI_GIT_FILES = `git --git-dir ext/ffi_c/libffi/.git ls-files -z`.split("\x0")
+
+# Generate files in gemspec but not in libffi's git repo by running autogen.sh
+gem_spec.files.select do |f|
+  f =~ /ext\/ffi_c\/libffi\/(.*)/ && !LIBFFI_GIT_FILES.include?($1)
+end.each do |f|
+  file f => "ext/ffi_c/libffi/autogen.sh" do
+    chdir "ext/ffi_c/libffi" do
+      sh "sh ./autogen.sh"
+    end
+    if gem_spec.files != Gem::Specification.load('ffi.gemspec')
+      warn "gemspec files have changed -> Please restart rake!"
+      exit 1
+    end
   end
 end
 

@@ -8,7 +8,20 @@ Gem::Specification.new do |s|
   s.homepage = 'http://wiki.github.com/ffi/ffi'
   s.summary = 'Ruby FFI'
   s.description = 'Ruby FFI library'
-  s.files = %w(ffi.gemspec LICENSE COPYING README.md Rakefile) + Dir.glob("{ext,gen,lib,spec,libtest}/**/*").reject { |f| f =~ /(lib\/[12]\.[089]|\.s?[ao]$|\.bundle|\.dylib$)/ }
+  s.files = `git ls-files -z`.split("\x0").reject do |f|
+    f =~ /^(bench|gen|libtest|nbproject|spec)/
+  end
+
+  # Add libffi git files
+  lfs = `git --git-dir ext/ffi_c/libffi/.git ls-files -z`.split("\x0")
+  # Add autoconf generated files of libffi
+  lfs += %w[ configure config.guess config.sub install-sh ltmain.sh missing fficonfig.h.in ]
+  # Add automake generated files of libffi
+  lfs += `git --git-dir ext/ffi_c/libffi/.git ls-files -z *.am */*.am`.gsub(".am\0", ".in\0").split("\x0")
+  s.files += lfs.map do |f|
+    File.join("ext/ffi_c/libffi", f)
+  end
+
   s.extensions << 'ext/ffi_c/extconf.rb'
   s.has_rdoc = false
   s.rdoc_options = %w[--exclude=ext/ffi_c/.*\.o$ --exclude=ffi_c\.(bundle|so)$]

@@ -28,7 +28,7 @@ LIBFFI_BUILD_DIR = $(BUILD_DIR)/libffi-$(arch)
 # Just build the one (default) architecture
 $(LIBFFI):
 	@mkdir -p "$(LIBFFI_BUILD_DIR)" "$(@D)"
-	@if [ ! -f "$(LIBFFI_BUILD_DIR)"/configure ]; then \
+	@if [ ! -f "$(LIBFFI_SRC_DIR)"/configure ]; then \
 		echo "Running autoreconf for libffi"; \
 		cd "$(LIBFFI_SRC_DIR)" && \
 		/bin/sh $(LIBFFI_AUTOGEN) > /dev/null; \
