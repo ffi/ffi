@@ -28,6 +28,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.#
 
+require 'pathname'
+require_relative "platform.rb"
+
 module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = Object.new
 
@@ -43,6 +46,7 @@ module FFI
   #  FFI.map_library_name 'jpeg'  # -> "jpeg.dll"
   def self.map_library_name(lib)
     # Mangle the library name to reflect the native library naming conventions
+    lib = lib.to_s unless lib.kind_of?(String)
     lib = Library::LIBC if lib == 'c'
 
     if lib && File.basename(lib) == lib
@@ -102,7 +106,7 @@ module FFI
           FFI::DynamicLibrary.open(nil, FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL)
 
         else
-          libnames = (name.is_a?(::Array) ? name : [ name ]).map(&:to_s).map { |n| [ n, FFI.map_library_name(n) ].uniq }.flatten.compact
+          libnames = (name.is_a?(::Array) ? name : [ name ]).map { |n| [ n, FFI.map_library_name(n) ].uniq }.flatten.compact
           lib = nil
           errors = {}
 
@@ -124,18 +128,17 @@ module FFI
               if ldscript
                 retry
               else
-                # TODO better library lookup logic
-                unless libname.start_with?("/") || FFI::Platform.windows?
-                  path = ['/usr/lib/','/usr/local/lib/','/opt/local/lib/'].find do |pth|
-                    File.exist?(pth + libname)
-                  end
+                libname = Pathname(libname.to_s)
+                unless libname.absolute?
+                  path = pathnames.map{|pn| pn.join(libname)}
+                                  .find{|pn| pn.exist? }
                   if path
-                    libname = path + libname
+                    libname = pn.join( libname )
                     retry
                   end
                 end
 
-                libr = (orig == libname ? orig : "#{orig} #{libname}")
+                libr = (orig == libname.to_s ? orig : "#{orig} #{libname}")
                 errors[libr] = ex
               end
             end
@@ -583,6 +586,24 @@ module FFI
         typedef Type::Mapped.new(t), t
 
       end || FFI.find_type(t)
+    end
+
+
+    # Look for libraries by using what's loaded in the env.
+    # @return [Array<String>]
+    def pathnames
+      path =
+        if FFI::Platform.mac? then
+          ENV["DYLD_FALLBACK_FRAMEWORK_PATH"] || # preferred for Mac
+          ENV["DYLD_FRAMEWORK_PATH"]
+        elsif FFI::Platform.windows?
+          # No idea what to put here
+        elsif FFI::Platform.unix?
+          ENV["LD_LIBRARY_PATH"] || # Systems using ELF
+          ENV["LIBPATH"]            # XCOFF-based Unix-like systems
+        end
+      paths = path.nil? ? [] : path.split(":")
+      (paths + ['/usr/local/lib/','/usr/lib/']).uniq.map{|path| Pathname(path) }
     end
   end
 end
