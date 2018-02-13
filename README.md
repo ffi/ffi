@@ -1,4 +1,4 @@
-# ruby-ffi https://wiki.github.com/ffi/ffi [![Build Status](https://travis-ci.org/ffi/ffi.png?branch=master)](https://travis-ci.org/ffi/ffi)
+# ruby-ffi https://wiki.github.com/ffi/ffi [![Build Status](https://travis-ci.org/ffi/ffi.png?branch=master)](https://travis-ci.org/ffi/ffi) [![Build status Windows](https://ci.appveyor.com/api/projects/status/r8wxn1sd4s794gg1/branch/master?svg=true)](https://ci.appveyor.com/project/larskanis/ffi-aofqa/branch/master)
 
 ## Description
 
