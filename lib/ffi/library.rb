@@ -133,7 +133,7 @@ module FFI
                   path = pathnames.map{|pn| pn.join(libname)}
                                   .find{|pn| pn.exist? }
                   if path
-                    libname = pn.join( libname )
+                    libname = path.join( libname )
                     retry
                   end
                 end
