@@ -596,6 +596,7 @@ module FFI
       path =
         if FFI::Platform.mac? then
           ENV["DYLD_FALLBACK_LIBRARY_PATH"] || # preferred for Mac
+          ENV["DYLD_FALLBACK_FRAMEWORK_PATH"] ||
           ENV["DYLD_LIBRARY_PATH"]
         elsif FFI::Platform.windows?
           # No idea what to put here
