@@ -46,7 +46,7 @@ module FFI
   #  FFI.map_library_name 'jpeg'  # -> "jpeg.dll"
   def self.map_library_name(lib)
     # Mangle the library name to reflect the native library naming conventions
-    lib = lib.to_s unless lib.kind_of?(String)
+    lib = lib.to_s
     lib = Library::LIBC if lib == 'c'
 
     if lib && File.basename(lib) == lib
