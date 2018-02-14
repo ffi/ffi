@@ -112,8 +112,9 @@ module FFI
 
           libnames.each do |libname|
             begin
-              orig = libname
-              lib = FFI::DynamicLibrary.open(libname, lib_flags)
+              orig = libname = Pathname(libname)
+              next if libname.directory?
+              lib = FFI::DynamicLibrary.open(libname.to_path, lib_flags)
               break if lib
 
             rescue Exception => ex
@@ -138,8 +139,8 @@ module FFI
                   end
                 end
 
-                libr = (orig == libname.to_s ? orig : "#{orig} #{libname}")
-                errors[libr] = ex
+                libr = (orig == libname ? orig : "#{orig} #{libname}")
+                errors[libr.to_s] = ex
               end
             end
           end
