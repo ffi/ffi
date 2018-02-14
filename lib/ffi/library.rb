@@ -595,8 +595,8 @@ module FFI
     def pathnames
       path =
         if FFI::Platform.mac? then
-          ENV["DYLD_FALLBACK_FRAMEWORK_PATH"] || # preferred for Mac
-          ENV["DYLD_FRAMEWORK_PATH"]
+          ENV["DYLD_FALLBACK_LIBRARY_PATH"] || # preferred for Mac
+          ENV["DYLD_LIBRARY_PATH"]
         elsif FFI::Platform.windows?
           # No idea what to put here
         elsif FFI::Platform.unix?
