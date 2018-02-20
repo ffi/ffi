@@ -72,7 +72,6 @@ fntype_allocate(VALUE klass)
     fnInfo->rbParameterTypes = Qnil;
     fnInfo->rbEnums = Qnil;
     fnInfo->invoke = rbffi_CallFunction;
-    fnInfo->closurePool = NULL;
 
     return obj;
 }
@@ -95,9 +94,6 @@ fntype_free(FunctionType* fnInfo)
     xfree(fnInfo->ffiParameterTypes);
     xfree(fnInfo->nativeParameterTypes);
     xfree(fnInfo->callbackParameters);
-    if (fnInfo->closurePool != NULL) {
-        rbffi_ClosurePool_Free(fnInfo->closurePool);
-    }
     xfree(fnInfo);
 }
 

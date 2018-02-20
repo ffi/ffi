@@ -62,28 +62,7 @@
 #include "Thread.h"
 #include "LongDouble.h"
 
-#ifdef USE_RAW
-#  ifndef __i386__
-#    error "RAW argument packing only supported on i386"
-#  endif
-
-#define INT8_ADJ (4)
-#define INT16_ADJ (4)
-#define INT32_ADJ (4)
-#define INT64_ADJ (8)
-#define LONG_ADJ (sizeof(long))
-#define FLOAT32_ADJ (4)
-#define FLOAT64_ADJ (8)
-#define ADDRESS_ADJ (sizeof(void *))
-#define LONGDOUBLE_ADJ (ffi_type_longdouble.alignment)
-
-#endif /* USE_RAW */
-
-#ifdef USE_RAW
-#  define ADJ(p, a) ((p) = (FFIStorage*) (((char *) p) + a##_ADJ))
-#else
-#  define ADJ(p, a) (++(p))
-#endif
+#define ADJ(p, a) (++(p))
 
 static void* callback_param(VALUE proc, VALUE cbinfo);
 static inline void* getPointer(VALUE value, int type);
