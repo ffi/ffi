@@ -223,7 +223,8 @@ end.each do |f|
     chdir "ext/ffi_c/libffi" do
       sh "sh ./autogen.sh"
     end
-    if gem_spec.files != Gem::Specification.load('ffi.gemspec')
+    touch f
+    if gem_spec.files != Gem::Specification.load('./ffi.gemspec').files
       warn "gemspec files have changed -> Please restart rake!"
       exit 1
     end
