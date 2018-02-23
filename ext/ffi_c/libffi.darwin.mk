@@ -47,7 +47,7 @@ LIBTARGETS = $(foreach arch,$(ARCHES),"$(BUILD_DIR)"/libffi-$(arch)/.libs/libffi
 # Build a fat binary and assemble
 build_ffi = \
 	mkdir -p "$(BUILD_DIR)"/libffi-$(1); \
-	(if [ ! -f "$(BUILD_DIR)"/libffi-$(1)/configure ]; then \
+	(if [ ! -f "$(LIBFFI_SRC_DIR)"/configure ]; then \
 		echo "Running autoreconf for libffi"; \
 		cd "$(LIBFFI_SRC_DIR)" && \
 		/bin/sh $(LIBFFI_AUTOGEN) > /dev/null; \
