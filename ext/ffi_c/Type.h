@@ -51,6 +51,7 @@ struct Type_ {
 };
 
 extern VALUE rbffi_TypeClass;
+extern void  rbffi_type_raise_invalid(VALUE typeName);
 extern VALUE rbffi_Type_Lookup(VALUE type);
 extern VALUE rbffi_Type_Find(VALUE type);
 

@@ -76,7 +76,6 @@ memory_allocate(VALUE klass)
 #define VAL(x, swap) (unlikely(((memory->flags & MEM_SWAP) != 0)) ? swap((x)) : (x))
 
 #define NUM_OP(name, type, toNative, fromNative, swap) \
-static void memory_op_put_##name(AbstractMemory* memory, long off, VALUE value); \
 static void \
 memory_op_put_##name(AbstractMemory* memory, long off, VALUE value) \
 { \
@@ -85,25 +84,6 @@ memory_op_put_##name(AbstractMemory* memory, long off, VALUE value) \
     checkBounds(memory, off, sizeof(type)); \
     memcpy(memory->address + off, &tmp, sizeof(tmp)); \
 } \
-static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
-static VALUE \
-memory_put_##name(VALUE self, VALUE offset, VALUE value) \
-{ \
-    AbstractMemory* memory; \
-    Data_Get_Struct(self, AbstractMemory, memory); \
-    memory_op_put_##name(memory, NUM2LONG(offset), value); \
-    return self; \
-} \
-static VALUE memory_write_##name(VALUE self, VALUE value); \
-static VALUE \
-memory_write_##name(VALUE self, VALUE value) \
-{ \
-    AbstractMemory* memory; \
-    Data_Get_Struct(self, AbstractMemory, memory); \
-    memory_op_put_##name(memory, 0, value); \
-    return self; \
-} \
-static VALUE memory_op_get_##name(AbstractMemory* memory, long off); \
 static VALUE \
 memory_op_get_##name(AbstractMemory* memory, long off) \
 { \
@@ -113,31 +93,10 @@ memory_op_get_##name(AbstractMemory* memory, long off) \
     memcpy(&tmp, memory->address + off, sizeof(tmp)); \
     return fromNative(VAL(tmp, swap)); \
 } \
-static VALUE memory_get_##name(VALUE self, VALUE offset); \
-static VALUE \
-memory_get_##name(VALUE self, VALUE offset) \
-{ \
-    AbstractMemory* memory; \
-    Data_Get_Struct(self, AbstractMemory, memory); \
-    return memory_op_get_##name(memory, NUM2LONG(offset)); \
-} \
-static VALUE memory_read_##name(VALUE self); \
-static VALUE \
-memory_read_##name(VALUE self) \
-{ \
-    AbstractMemory* memory; \
-    Data_Get_Struct(self, AbstractMemory, memory); \
-    return memory_op_get_##name(memory, 0); \
-} \
-static MemoryOp memory_op_##name = { memory_op_get_##name, memory_op_put_##name }; \
-\
-static VALUE memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary); \
-static VALUE \
-memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
+static void \
+memory_op_put_array_of_##name(AbstractMemory *memory, long off, VALUE ary) \
 { \
     long count = RARRAY_LEN(ary); \
-    long off = NUM2LONG(offset); \
-    AbstractMemory* memory = MEMORY(self); \
     long i; \
     checkWrite(memory); \
     checkBounds(memory, off, count * sizeof(type)); \
@@ -145,21 +104,10 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
         type tmp = (type) VAL(toNative(RARRAY_PTR(ary)[i]), swap); \
         memcpy(memory->address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
     } \
-    return self; \
 } \
-static VALUE memory_write_array_of_##name(VALUE self, VALUE ary); \
 static VALUE \
-memory_write_array_of_##name(VALUE self, VALUE ary) \
+memory_op_get_array_of_##name(AbstractMemory *memory, long off, long count) \
 { \
-    return memory_put_array_of_##name(self, INT2FIX(0), ary); \
-} \
-static VALUE memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length); \
-static VALUE \
-memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
-{ \
-    long count = NUM2LONG(length); \
-    long off = NUM2LONG(offset); \
-    AbstractMemory* memory = MEMORY(self); \
     VALUE retVal = rb_ary_new2(count); \
     long i; \
     checkRead(memory); \
@@ -171,11 +119,67 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     } \
     return retVal; \
 } \
-static VALUE memory_read_array_of_##name(VALUE self, VALUE length); \
+static MemoryOp memory_op_##name = { memory_op_get_##name, memory_op_put_##name, memory_op_get_array_of_##name, memory_op_put_array_of_##name }; \
+\
+static VALUE \
+memory_put_##name(VALUE self, VALUE offset, VALUE value) \
+{ \
+    AbstractMemory* memory; \
+    Data_Get_Struct(self, AbstractMemory, memory); \
+    memory_op_put_##name(memory, NUM2LONG(offset), value); \
+    return self; \
+} \
+static VALUE \
+memory_write_##name(VALUE self, VALUE value) \
+{ \
+    AbstractMemory* memory; \
+    Data_Get_Struct(self, AbstractMemory, memory); \
+    memory_op_put_##name(memory, 0, value); \
+    return self; \
+} \
+static VALUE \
+memory_get_##name(VALUE self, VALUE offset) \
+{ \
+    AbstractMemory* memory; \
+    Data_Get_Struct(self, AbstractMemory, memory); \
+    return memory_op_get_##name(memory, NUM2LONG(offset)); \
+} \
+static VALUE \
+memory_read_##name(VALUE self) \
+{ \
+    AbstractMemory* memory; \
+    Data_Get_Struct(self, AbstractMemory, memory); \
+    return memory_op_get_##name(memory, 0); \
+} \
+static VALUE \
+memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
+{ \
+    long off = NUM2LONG(offset); \
+    AbstractMemory* memory = MEMORY(self); \
+    memory_op_put_array_of_##name(memory, off, ary); \
+    return self; \
+} \
+static VALUE \
+memory_write_array_of_##name(VALUE self, VALUE ary) \
+{ \
+    AbstractMemory* memory = MEMORY(self); \
+    memory_op_put_array_of_##name(memory, 0, ary); \
+    return self; \
+} \
+static VALUE \
+memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
+{ \
+    long count = NUM2LONG(length); \
+    long off = NUM2LONG(offset); \
+    AbstractMemory* memory = MEMORY(self); \
+    return memory_op_get_array_of_##name(memory, off, count); \
+} \
 static VALUE \
 memory_read_array_of_##name(VALUE self, VALUE length) \
 { \
-    return memory_get_array_of_##name(self, INT2FIX(0), length); \
+    long count = NUM2LONG(length); \
+    AbstractMemory* memory = MEMORY(self); \
+    return memory_op_get_array_of_##name(memory, 0, count); \
 }
 
 #define NOSWAP(x) (x)
@@ -327,71 +331,74 @@ memory_size(VALUE self)
     return LONG2NUM(ptr->size);
 }
 
+
+#define MEM_OP_GET_PUT(func, ret, ...) \
+    AbstractMemory* ptr; \
+    Type *type; \
+    VALUE nType = rbffi_Type_Find(typeName); \
+    Data_Get_Struct(self, AbstractMemory, ptr); \
+    Data_Get_Struct(nType, Type, type); \
+    MemoryOp *op = get_memory_op(type); \
+    if(op == NULL || op->func == NULL) rbffi_type_raise_invalid(typeName); \
+    ret op->func(ptr, __VA_ARGS__);
+
 /*
  * call-seq: memory.get(type, offset)
  * Return data of given type contained in memory.
- * @param [Symbol, Type] type_name type of data to get
+ * @param [Symbol, Type] typeName type of data to get
  * @param [Numeric] offset point in buffer to start from
  * @return [Object]
- * @raise {ArgumentError} if type is not supported
+ * @raise {TypeError} if type is not supported
  */
 static VALUE
-memory_get(VALUE self, VALUE type_name, VALUE offset)
+memory_get(VALUE self, VALUE typeName, VALUE offset)
 {
-    AbstractMemory* ptr;
-    VALUE nType;
-    Type *type;
+    MEM_OP_GET_PUT(get, return, NUM2LONG(offset));
+}
 
-    nType = rbffi_Type_Lookup(type_name);
-    if(NIL_P(nType)) goto undefined_type;
-
-    Data_Get_Struct(self, AbstractMemory, ptr);
-    Data_Get_Struct(nType, Type, type);
-
-    MemoryOp *op = get_memory_op(type);
-    if(op == NULL) goto undefined_type;
-
-    return op->get(ptr, NUM2LONG(offset));
-
-undefined_type: {
-    VALUE msg = rb_sprintf("undefined type '%" PRIsVALUE "'", type_name);
-    rb_exc_raise(rb_exc_new3(rb_eArgError, msg));
-    return Qnil;
-  }
+/*
+ * call-seq: memory.get_array_of(type, offset)
+ * Return array of given type contained in memory.
+ * @param [Symbol, Type] typeName type of data to get
+ * @param [Numeric] offset point in buffer to start from
+ * @return [Object]
+ * @raise {TypeError} if type is not supported
+ */
+static VALUE
+memory_get_array_of(VALUE self, VALUE typeName, VALUE offset, VALUE length)
+{
+    MEM_OP_GET_PUT(getArray, return, NUM2LONG(offset), NUM2LONG(length));
 }
 
 /*
  * call-seq: memory.put(type, offset, value)
- * @param [Symbol, Type] type_name type of data to put
+ * @param [Symbol, Type] typeName type of data to put
  * @param [Numeric] offset point in buffer to start from
- * @return [nil]
- * @raise {ArgumentError} if type is not supported
+ * @return [self]
+ * @raise {TypeError} if type is not supported
  */
 static VALUE
-memory_put(VALUE self, VALUE type_name, VALUE offset, VALUE value)
+memory_put(VALUE self, VALUE typeName, VALUE offset, VALUE value)
 {
-    AbstractMemory* ptr;
-    VALUE nType;
-    Type *type;
-
-    nType = rbffi_Type_Lookup(type_name);
-    if(NIL_P(nType)) goto undefined_type;
-
-    Data_Get_Struct(self, AbstractMemory, ptr);
-    Data_Get_Struct(nType, Type, type);
-
-    MemoryOp *op = get_memory_op(type);
-    if(op == NULL) goto undefined_type;
-
-    op->put(ptr, NUM2LONG(offset), value);
-    return Qnil;
-
-undefined_type: {
-    VALUE msg = rb_sprintf("unsupported type '%" PRIsVALUE "'", type_name);
-    rb_exc_raise(rb_exc_new3(rb_eArgError, msg));
-    return Qnil;
-  }
+    MEM_OP_GET_PUT(put, (void), NUM2LONG(offset), value);
 }
+
+
+/*
+ * call-seq: memory.put_array_of(type, offset, ary)
+ * @param [Symbol, Type] type type of data to write to pointer's contents
+ * @param [Numeric] offset point in buffer to start from
+ * @param [Array] ary array of values
+ * @return [self]
+ * @raise {TypeError} if type is not supported
+ */
+static VALUE
+memory_put_array_of(VALUE self, VALUE typeName, VALUE offset, VALUE ary)
+{
+    MEM_OP_GET_PUT(putArray, (void), NUM2LONG(offset), ary);
+}
+
+
 
 /*
  * call-seq: memory.get_string(offset, length=nil)
@@ -420,6 +427,7 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
     return rb_tainted_str_new((char *) ptr->address + off,
             (end != NULL ? end - ptr->address - off : len));
 }
+
 
 /*
  * call-seq: memory.get_array_of_string(offset, count=nil)
@@ -450,7 +458,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
         int i;
 
         checkBounds(ptr, off, count * sizeof (char*));
-        
+
         for (i = 0; i < count; ++i) {
             const char* strptr = *((const char**) (ptr->address + off) + i);
             rb_ary_push(retVal, (strptr == NULL ? Qnil : rb_tainted_str_new2(strptr)));
@@ -727,8 +735,7 @@ memory_op_put_strptr(AbstractMemory* ptr, long offset, VALUE value)
     rb_raise(rb_eArgError, "Cannot set :string fields");
 }
 
-static MemoryOp memory_op_strptr = { memory_op_get_strptr, memory_op_put_strptr };
-
+static MemoryOp memory_op_strptr = { memory_op_get_strptr, memory_op_put_strptr, NULL, NULL};
 
 MemoryOps rbffi_AbstractMemoryOps = {
     &memory_op_int8, /*.int8 */
@@ -1094,6 +1101,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
 
     rb_define_method(classMemory, "get", memory_get, 2);
     rb_define_method(classMemory, "put", memory_put, 3);
+    rb_define_method(classMemory, "get_array_of", memory_get_array_of, 3);
+    rb_define_method(classMemory, "put_array_of", memory_put_array_of, 3);
 
     rb_define_method(classMemory, "clear", memory_clear, 0);
     rb_define_method(classMemory, "total", memory_size, 0);

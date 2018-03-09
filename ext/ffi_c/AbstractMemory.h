@@ -54,9 +54,16 @@ extern "C" {
 
 typedef struct AbstractMemory_ AbstractMemory;
 
+typedef VALUE (*AbstractMemoryGetFunc)(AbstractMemory* ptr, long offset);
+typedef void (*AbstractMemoryPutFunc)(AbstractMemory* ptr, long offset, VALUE value);
+typedef VALUE (*AbstractMemoryGetArrayFunc)(AbstractMemory* ptr, long offset, long count);
+typedef void (*AbstractMemoryPutArrayFunc)(AbstractMemory* ptr, long offset, VALUE ary);
+
 typedef struct {
-    VALUE (*get)(AbstractMemory* ptr, long offset);
-    void (*put)(AbstractMemory* ptr, long offset, VALUE value);
+  AbstractMemoryGetFunc get;
+  AbstractMemoryPutFunc put;
+  AbstractMemoryGetArrayFunc getArray;
+  AbstractMemoryPutArrayFunc putArray;
 } MemoryOp;
 
 typedef struct {

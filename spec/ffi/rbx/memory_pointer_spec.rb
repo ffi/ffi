@@ -10,6 +10,10 @@ module CTest
   extend FFI::Library
   ffi_lib FFI::Library::LIBC
 
+  class FooStruct < FFI::Struct
+    layout :a, :int, :b, :long
+  end
+
   attach_function :strcat, [:pointer, :pointer], :pointer
 end
 
@@ -123,11 +127,48 @@ describe "MemoryPointer" do
     expect(m.read :fubar2_t).to eq(10)
   end
 
-  it "raises an error if you try to read an undefined type" do
-    m = FFI::MemoryPointer.new(:long)
-    expect { m.read(:undefined_type) }.to raise_error(ArgumentError)
+  it "allows writing and reading an array of a custom typedef" do
+    FFI.typedef :int, :fubar_t
+    FFI.typedef :size_t, :fubar2_t
+
+    values = [0, 1, 2, 3, 0xFFFFFFF, -10]
+    m = FFI::MemoryPointer.new(:fubar_t, 10)
+    m.write_array_of(:fubar_t, values)
+    expect(m.read_array_of :fubar_t, 3).to eq([0, 1, 2])
+    expect(m.read_array_of :fubar_t, values.size).to eq(values)
+
+    values = [0, 1, 2, 3, 0xFFFFFFFF]
+    m = FFI::MemoryPointer.new(:fubar2_t, 10)
+    m.write_array_of(:fubar2_t, values)
+    expect(m.read_array_of :fubar2_t, 3).to eq([0, 1, 2])
+    expect(m.read_array_of :fubar2_t, values.size).to eq(values)
   end
-  
+
+  it "raises an error if you try to write or read an undefined type" do
+    m = FFI::MemoryPointer.new(:long)
+    expect { m.read(:undefined_type) }.to raise_error(TypeError)
+    expect { m.read(::CTest::FooStruct) }.to raise_error(TypeError)
+
+    expect { m.write(:undefined_type, 10) }.to raise_error(TypeError)
+    expect { m.write(::CTest::FooStruct, ::CTest::FooStruct.new) }.to raise_error(TypeError)
+
+    m = FFI::MemoryPointer.new(:long, 10)
+    expect { m.read_array_of(:undefined_type, 10) }.to raise_error(TypeError)
+    expect { m.read_array_of(::CTest::FooStruct, 10) }.to raise_error(TypeError)
+    expect { m.write_array_of(:undefined_type, [1,2,3]) }.to raise_error(TypeError)
+    expect { m.write_array_of(::CTest::FooStruct, [::CTest::FooStruct.new]) }.to raise_error(TypeError)
+  end
+
+  it "raises an error if you try to write a value that would overflow memory" do
+    m = FFI::MemoryPointer.new(:uint8, 1)
+    expect { m.write(:long, 10) }.to raise_error(IndexError)
+    expect { m.write_array_of(:long, [10]) }.to raise_error(IndexError)
+
+    m = FFI::MemoryPointer.new(:uint8, 8)
+    expect { m.write_array_of(:uint64, Array.new(2, 0)) }.to raise_error(IndexError)
+    expect { m.write_array_of(:uint8, Array.new(9, 0)) }.to raise_error(IndexError)
+  end
+
   it "raises an error if you try putting a long into a pointer of size 1" do
     m = FFI::MemoryPointer.new(1)
     expect { m.write_long(10) }.to raise_error
