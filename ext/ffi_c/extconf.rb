@@ -11,15 +11,15 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   $CFLAGS.gsub!(/[\s+]-std=[^\s]+/, '')
   # solaris 10 needs -c99 for <stdbool.h>
   $CFLAGS << " -std=c99" if RbConfig::CONFIG['host_os'] =~ /solaris(!?2\.11)/
-
+  
   if ENV['RUBY_CC_VERSION'].nil? && (pkg_config("libffi") ||
      have_header("ffi.h") ||
      find_header("ffi.h", "/usr/local/include", "/usr/include/ffi"))
 
-    # We need at least ffi_call and ffi_closure_alloc
+    # We need at least ffi_call and ffi_prep_closure
     libffi_ok = have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
                 have_library("libffi", "ffi_call", [ "ffi.h" ])
-    libffi_ok &&= have_func("ffi_closure_alloc")
+    libffi_ok &&= have_func("ffi_prep_closure")
 
     # Check if the raw api is available.
     $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")

@@ -34,10 +34,6 @@ describe "MemoryPointer" do
     m = FFI::MemoryPointer.from_string("FFI is Awesome")
     expect(m.read_string).to eq("FFI is Awesome")
   end
-
-  it "reads back an empty string" do
-    expect(FFI::Pointer::NULL.read_string(0)).to eq('')
-  end
   
   it "makes a pointer for a certain number of bytes" do
     m = FFI::MemoryPointer.new(8)
