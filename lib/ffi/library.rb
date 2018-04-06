@@ -344,7 +344,7 @@ module FFI
       raise FFI::NotFoundError.new(cname, ffi_libraries) if address.nil? || address.null?
       if type.is_a?(Class) && type < FFI::Struct
         # If it is a global struct, just attach directly to the pointer
-        s = type.new(address)
+        s = s = type.new(address) # Assigning twice to suppress unused variable warning
         self.module_eval <<-code, __FILE__, __LINE__
           @@ffi_gvar_#{mname} = s
           def self.#{mname}

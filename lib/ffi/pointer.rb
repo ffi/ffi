@@ -49,6 +49,7 @@ module FFI
     # equivalent string if +len+ is not +nil+.
     def read_string(len=nil)
       if len
+        return '' if len == 0
         get_bytes(0, len)
       else
         get_string(0)

@@ -64,7 +64,7 @@
 #include "Type.h"
 #include "LastError.h"
 #include "Call.h"
-#include "ClosurePool.h"
+#include "Closure.h"
 #include "MappedType.h"
 #include "Thread.h"
 #include "LongDouble.h"
@@ -297,6 +297,7 @@ static VALUE
 function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 {
     Function* fn = NULL;
+    ffi_status ffiStatus;
 
     Data_Get_Struct(self, Function, fn);
 
@@ -311,13 +312,6 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         fn->base.rbParent = rbProc;
 
     } else if (rb_obj_is_kind_of(rbProc, rb_cProc) || rb_respond_to(rbProc, id_call)) {
-        if (fn->info->closurePool == NULL) {
-            fn->info->closurePool = rbffi_ClosurePool_New(sizeof(ffi_closure), callback_prep, fn->info);
-            if (fn->info->closurePool == NULL) {
-                rb_raise(rb_eNoMemError, "failed to create closure pool");
-            }
-        }
-
 #if defined(DEFER_ASYNC_CALLBACK)
         if (async_cb_thread == Qnil) {
 #if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)) && defined(_WIN32)
@@ -332,10 +326,22 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
 #endif
 
-        fn->closure = rbffi_Closure_Alloc(fn->info->closurePool);
+        fn->closure = rbffi_Closure_Alloc();
         fn->closure->info = fn;
-        fn->base.memory.address = fn->closure->code;
+
+        ffiStatus = ffi_prep_closure_loc(fn->closure->libffi_closure,
+                &fn->info->ffi_cif, /* callback signature */
+                callback_invoke,
+                fn->closure, /* user_data for callback_invoke */
+                fn->closure->libffi_trampoline);
+        if (ffiStatus != FFI_OK) {
+            rb_raise(rb_eRuntimeError, "ffi_prep_closure_loc in function_init failed.  status=%#x",
+                    ffiStatus);
+        }
+
+        fn->base.memory.address = fn->closure->libffi_trampoline;
         fn->base.memory.size = sizeof(*fn->closure);
+
         fn->autorelease = true;
 
     } else {
@@ -937,21 +943,6 @@ save_callback_exception(void* data, VALUE exc)
     if (cb->frame != NULL) cb->frame->exc = exc;
 
     return Qnil;
-}
-
-static bool
-callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize)
-{
-    FunctionType* fnInfo = (FunctionType *) ctx;
-    ffi_status ffiStatus;
-
-    ffiStatus = ffi_prep_closure(code, &fnInfo->ffi_cif, callback_invoke, closure);
-    if (ffiStatus != FFI_OK) {
-        snprintf(errmsg, errmsgsize, "ffi_prep_closure failed.  status=%#x", ffiStatus);
-        return false;
-    }
-
-    return true;
 }
 
 void
