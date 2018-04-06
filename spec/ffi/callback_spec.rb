@@ -267,7 +267,6 @@ describe "Callback" do
   end
 
   it "returning struct by value" do
-    skip "Segfault on 32 bit MINGW" if RUBY_PLATFORM == 'i386-mingw32'
     s = LibTest::S8F32S32.new
     s[:s8] = 0x12
     s[:s32] = 0x1eefbeef
