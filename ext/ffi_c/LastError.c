@@ -49,8 +49,17 @@
 # define USE_PTHREAD_LOCAL
 #endif
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+typedef uint32_t DWORD;
+DWORD __stdcall GetLastError(void);
+void __stdcall SetLastError(DWORD);
+#endif
+
 typedef struct ThreadData {
     int td_errno;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    DWORD td_win_errno;
+#endif
 } ThreadData;
 
 #if defined(USE_PTHREAD_LOCAL)
@@ -126,6 +135,19 @@ get_last_error(VALUE self)
     return INT2NUM(thread_data_get()->td_errno);
 }
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+/*
+ * call-seq: win_error
+ * @return [Numeric]
+ * Get +GetLastError()+ value. Only Windows or Cygwin.
+ */
+static VALUE
+get_last_win_error(VALUE self)
+{
+    return INT2NUM(thread_data_get()->td_win_errno);
+}
+#endif
+
 
 /*
  * call-seq: error(error)
@@ -146,21 +168,39 @@ set_last_error(VALUE self, VALUE error)
     return Qnil;
 }
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+/*
+ * call-seq: error(error)
+ * @param [Numeric] error
+ * @return [nil]
+ * Set +GetLastError()+ value. Only on Windows and Cygwin.
+ */
+static VALUE
+set_last_win_error(VALUE self, VALUE error)
+{
+    SetLastError(NUM2INT(error));
+    return Qnil;
+}
+#endif
+
 
 void
 rbffi_save_errno(void)
 {
     int error = 0;
-
 #ifdef _WIN32
     error = GetLastError();
 #else
     error = errno;
 #endif
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+    DWORD win_error = GetLastError();
+    thread_data_get()->td_win_errno = win_error;
+#endif
+
     thread_data_get()->td_errno = error;
 }
-
 
 void
 rbffi_LastError_Init(VALUE moduleFFI)
@@ -174,6 +214,11 @@ rbffi_LastError_Init(VALUE moduleFFI)
 
     rb_define_module_function(moduleError, "error", get_last_error, 0);
     rb_define_module_function(moduleError, "error=", set_last_error, 1);
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    rb_define_module_function(moduleError, "win_error", get_last_win_error, 0);
+    rb_define_module_function(moduleError, "win_error=", set_last_win_error, 1);
+#endif
 
 #if defined(USE_PTHREAD_LOCAL)
     pthread_key_create(&threadDataKey, thread_data_free);
