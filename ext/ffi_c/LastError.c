@@ -58,7 +58,7 @@ void __stdcall SetLastError(DWORD);
 typedef struct ThreadData {
     int td_errno;
 #if defined(_WIN32) || defined(__CYGWIN__)
-    DWORD td_win_errno;
+    DWORD td_winapi_errno;
 #endif
 } ThreadData;
 
@@ -137,14 +137,14 @@ get_last_error(VALUE self)
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 /*
- * call-seq: win_error
+ * call-seq: winapi_error
  * @return [Numeric]
  * Get +GetLastError()+ value. Only Windows or Cygwin.
  */
 static VALUE
-get_last_win_error(VALUE self)
+get_last_winapi_error(VALUE self)
 {
-    return INT2NUM(thread_data_get()->td_win_errno);
+    return INT2NUM(thread_data_get()->td_winapi_errno);
 }
 #endif
 
@@ -176,7 +176,7 @@ set_last_error(VALUE self, VALUE error)
  * Set +GetLastError()+ value. Only on Windows and Cygwin.
  */
 static VALUE
-set_last_win_error(VALUE self, VALUE error)
+set_last_winapi_error(VALUE self, VALUE error)
 {
     SetLastError(NUM2INT(error));
     return Qnil;
@@ -195,8 +195,8 @@ rbffi_save_errno(void)
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-    DWORD win_error = GetLastError();
-    thread_data_get()->td_win_errno = win_error;
+    DWORD winapi_error = GetLastError();
+    thread_data_get()->td_winapi_errno = winapi_error;
 #endif
 
     thread_data_get()->td_errno = error;
@@ -216,8 +216,8 @@ rbffi_LastError_Init(VALUE moduleFFI)
     rb_define_module_function(moduleError, "error=", set_last_error, 1);
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-    rb_define_module_function(moduleError, "win_error", get_last_win_error, 0);
-    rb_define_module_function(moduleError, "win_error=", set_last_win_error, 1);
+    rb_define_module_function(moduleError, "winapi_error", get_last_winapi_error, 0);
+    rb_define_module_function(moduleError, "winapi_error=", set_last_winapi_error, 1);
 #endif
 
 #if defined(USE_PTHREAD_LOCAL)
