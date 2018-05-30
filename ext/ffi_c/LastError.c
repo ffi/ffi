@@ -49,7 +49,7 @@
 # define USE_PTHREAD_LOCAL
 #endif
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(__CYGWIN__)
 typedef uint32_t DWORD;
 DWORD __stdcall GetLastError(void);
 void __stdcall SetLastError(DWORD);
