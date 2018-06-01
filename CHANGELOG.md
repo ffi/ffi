@@ -3,6 +3,7 @@
 
 Added:
 * Added a CHANGELOG file
+* Add mips64(eb) support, and mips r6 support. (#601)
 
 Changed:
 * Update libffi to latest changes on master.
