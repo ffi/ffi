@@ -125,7 +125,7 @@ module FFI
                 retry
               else
                 # TODO better library lookup logic
-                unless libname.start_with?("/")
+                unless libname.start_with?("/") || FFI::Platform.windows?
                   path = ['/usr/lib/','/usr/local/lib/'].find do |pth|
                     File.exist?(pth + libname)
                   end
