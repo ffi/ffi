@@ -43,7 +43,6 @@ module FFI
   #  FFI.map_library_name 'jpeg'  # -> "jpeg.dll"
   def self.map_library_name(lib)
     # Mangle the library name to reflect the native library naming conventions
-    lib = lib.to_s unless lib.kind_of?(String)
     lib = Library::LIBC if lib == 'c'
 
     if lib && File.basename(lib) == lib
@@ -103,7 +102,7 @@ module FFI
           FFI::DynamicLibrary.open(nil, FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL)
 
         else
-          libnames = (name.is_a?(::Array) ? name : [ name ]).map { |n| [ n, FFI.map_library_name(n) ].uniq }.flatten.compact
+          libnames = (name.is_a?(::Array) ? name : [ name ]).map(&:to_s).map { |n| [ n, FFI.map_library_name(n) ].uniq }.flatten.compact
           lib = nil
           errors = {}
 
@@ -126,7 +125,6 @@ module FFI
                 retry
               else
                 # TODO better library lookup logic
-                libname = libname.to_s
                 unless libname.start_with?("/")
                   path = ['/usr/lib/','/usr/local/lib/'].find do |pth|
                     File.exist?(pth + libname)
