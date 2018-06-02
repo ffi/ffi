@@ -47,6 +47,9 @@
 # endif
 #endif
 #include <ruby.h>
+#if defined(HAVE_RUBY_THREAD_H)
+#include <ruby/thread.h>
+#endif
 
 #include <ffi.h>
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
@@ -554,7 +557,7 @@ struct async_wait {
     bool stop;
 };
 
-static VALUE async_cb_wait(void *);
+static void * async_cb_wait(void *);
 static void async_cb_stop(void *);
 
 #if defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)
@@ -643,7 +646,7 @@ async_cb_event(void* unused)
 #endif
 
 #ifdef _WIN32
-static VALUE
+static void *
 async_cb_wait(void *data)
 {
     struct async_wait* w = (struct async_wait *) data;
@@ -665,7 +668,7 @@ async_cb_wait(void *data)
 
     LeaveCriticalSection(&async_cb_lock);
 
-    return Qnil;
+    return NULL;
 }
 
 static void
@@ -680,7 +683,7 @@ async_cb_stop(void *data)
 }
 
 #else
-static VALUE
+static void *
 async_cb_wait(void *data)
 {
     struct async_wait* w = (struct async_wait *) data;
@@ -700,7 +703,7 @@ async_cb_wait(void *data)
 
     pthread_mutex_unlock(&async_cb_mutex);
 
-    return Qnil;
+    return NULL;
 }
 
 static void

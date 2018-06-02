@@ -26,6 +26,7 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   end
 
   have_header('shlwapi.h')
+  have_header('ruby/thread.h') # for compat with ruby < 2.0
   have_func('rb_thread_blocking_region')
   have_func('rb_thread_call_with_gvl')
   have_func('rb_thread_call_without_gvl')

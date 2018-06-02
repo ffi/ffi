@@ -43,6 +43,9 @@
 #endif
 #include <errno.h>
 #include <ruby.h>
+#if defined(HAVE_RUBY_THREAD_H)
+#include <ruby/thread.h>
+#endif
 #if defined(HAVE_NATIVETHREAD) && (defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)) && !defined(_WIN32)
 #  include <signal.h>
 #  include <pthread.h>
@@ -317,7 +320,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
     }
 }
 
-static VALUE
+static void *
 call_blocking_function(void* data)
 {
     rbffi_blocking_call_t* b = (rbffi_blocking_call_t *) data;
@@ -325,7 +328,7 @@ call_blocking_function(void* data)
     ffi_call(&b->cif, FFI_FN(b->function), b->retval, b->ffiValues);
     b->frame->has_gvl = true;
 
-    return Qnil;
+    return NULL;
 }
 
 VALUE
