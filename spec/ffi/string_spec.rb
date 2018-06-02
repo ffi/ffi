@@ -34,7 +34,7 @@ describe "String tests" do
 
   it "Poison null byte raises error" do
     s = "123\0abc"
-    expect { StrLibTest.string_equals(s, s) }.to raise_error
+    expect { StrLibTest.string_equals(s, s) }.to raise_error(ArgumentError)
   end
 
   it "Tainted String parameter should throw a SecurityError" do
@@ -101,7 +101,7 @@ describe "String tests" do
       a << f
     end
     ptrary.write_array_of_pointer(ary)
-    expect { ptrary.get_array_of_string(0, 6) }.to raise_error
+    expect { ptrary.get_array_of_string(0, 6) }.to raise_error(IndexError)
   end
 
   it "raises an IndexError when trying to read an array of strings using a negative offset" do
@@ -113,6 +113,6 @@ describe "String tests" do
       a << f
     end
     ptrary.write_array_of_pointer(ary)
-    expect { ptrary.get_array_of_string(-1) }.to raise_error
+    expect { ptrary.get_array_of_string(-1) }.to raise_error(IndexError)
   end
 end

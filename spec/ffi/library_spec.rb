@@ -83,7 +83,7 @@ describe "Library" do
           m.extend FFI::Library
           attach_function :getpid, [ ], :uint
         end
-      }.to raise_error
+      }.to raise_error(LoadError)
     end
 
     it "attach_function :getpid from this process" do

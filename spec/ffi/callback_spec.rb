@@ -473,7 +473,7 @@ describe "Callback with " do
   end
 
   it "function with Callback plus another arg should raise error if no arg given" do
-    expect { LibTest.testCallbackCrV { |*a| }}.to raise_error
+    expect { LibTest.testCallbackCrV { |*a| }}.to raise_error(ArgumentError)
   end
 
   it ":char (0) argument" do
