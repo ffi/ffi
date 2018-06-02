@@ -55,11 +55,11 @@ describe "Pointer" do
   end
 
   it "Fixnum cannot be used as a Pointer argument" do
-    expect { PointerTestLib.ptr_ret_int32(0, 0) }.to raise_error
+    expect { PointerTestLib.ptr_ret_int32_t(0, 0) }.to raise_error(ArgumentError)
   end
 
   it "Bignum cannot be used as a Pointer argument" do
-    expect { PointerTestLib.ptr_ret_int32(0xfee1deadbeefcafebabe, 0) }.to raise_error
+    expect { PointerTestLib.ptr_ret_int32_t(0xfee1deadbeefcafebabe, 0) }.to raise_error(ArgumentError)
   end
 
   it "#to_ptr" do

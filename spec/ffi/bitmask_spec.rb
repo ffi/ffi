@@ -569,7 +569,17 @@ describe "All bitmasks" do
   end
 
   it "duplicate bitmask keys rejected" do
-    expect { bitmask [ :a, 2, :b, 5, :a, 0 ] }.to raise_error
-    expect { bitmask FFI::Type::UINT64, [ :a, 2, :b, 5, :a, 0 ] }.to raise_error
+    expect do
+      Module.new do
+        extend FFI::Library
+        bitmask [ :a, 2, :b, 5, :a, 0 ]
+      end
+    end.to raise_error(ArgumentError, /duplicate/)
+    expect do
+      Module.new do
+        extend FFI::Library
+        bitmask FFI::Type::UINT64, [ :a, 2, :b, 5, :a, 0 ]
+      end
+    end.to raise_error(ArgumentError, /duplicate/)
   end
 end
