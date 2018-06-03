@@ -1,3 +1,11 @@
+1.9.25 / 2018-06-03
+-------------------
+
+Changed:
+* Revert closures via libffi.
+  This re-adds ClosurePool and fixes compat with SELinux enabled systems. #621
+
+
 1.9.24 / 2018-06-02
 -------------------
 
