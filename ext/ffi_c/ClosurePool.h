@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009, 2010 Wayne Meissner
- * Copyright (c) 2008-2016, Ruby FFI project contributors
+ * Copyright (c) 2008-2013, Ruby FFI project contributors
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,29 +26,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ffi.h>
-#include "Closure.h"
-#include "rbffi.h"
+#ifndef RUBYFFI_CLOSUREPOOL_H
+#define RUBYFFI_CLOSUREPOOL_H
 
-Closure* rbffi_Closure_Alloc(void)
-{
-    Closure *self;
+typedef struct ClosurePool_ ClosurePool;
+typedef struct Closure_ Closure;
 
-    self = xmalloc(sizeof(Closure));
-    self->libffi_closure = ffi_closure_alloc(sizeof(ffi_closure), &self->libffi_trampoline);
-    if (!self->libffi_closure) {
-        return NULL;
-    }
+struct Closure_ {
+    void* info;      /* opaque handle for storing closure-instance specific data */
+    void* function;  /* closure-instance specific function, called by custom trampoline */
+    void* code;      /* The native trampoline code location */
+    struct ClosurePool_* pool;
+    Closure* next;
+};
 
-    return self;
-}
+void rbffi_ClosurePool_Init(VALUE module);
 
-void rbffi_Closure_Free(Closure *self)
-{
-    ffi_closure_free(self->libffi_closure);
-    free(self);
-}
+ClosurePool* rbffi_ClosurePool_New(int closureSize, 
+        bool (*prep)(void* ctx, void *code, Closure* closure, char* errbuf, size_t errbufsize),
+        void* ctx);
 
-void rbffi_Closure_Init(VALUE moduleFFI)
-{
-}
+void rbffi_ClosurePool_Free(ClosurePool *);
+
+Closure* rbffi_Closure_Alloc(ClosurePool *);
+void rbffi_Closure_Free(Closure *);
+
+void* rbffi_Closure_GetCodeAddress(Closure *);
+
+#endif /* RUBYFFI_CLOSUREPOOL_H */
+
