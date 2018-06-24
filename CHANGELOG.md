@@ -9,6 +9,10 @@ Changed:
 1.9.24 / 2018-06-02
 -------------------
 
+Security Note:
+
+This update addresses vulnerability CVE-2018-1000201: DLL loading issue which can be hijacked on Windows OS, when a Symbol is used as DLL name instead of a String. Found by Matthew Bush.
+
 Added:
 * Added a CHANGELOG file
 * Add mips64(eb) support, and mips r6 support. (#601)
