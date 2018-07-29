@@ -180,10 +180,9 @@ task 'gem:java' => 'java:gem'
 if USE_RAKE_COMPILER
   Rake::ExtensionTask.new('ffi_c', gem_spec) do |ext|
     ext.name = 'ffi_c'                                        # indicate the name of the extension.
-    # ext.lib_dir = BUILD_DIR                                 # put binaries into this folder.
     ext.tmp_dir = BUILD_DIR                                   # temporary folder used during compilation.
     ext.cross_compile = true                                  # enable cross compilation (requires cross compile toolchain)
-    ext.cross_platform = %w[i386-mingw32 x64-mingw32]                     # forces the Windows platform instead of the default one
+    ext.cross_platform = %w[i386-mingw32 x64-mingw32 x86-linux x86_64-linux]
     ext.cross_compiling do |spec|
       spec.files.reject! { |path| File.fnmatch?('ext/*', path) }
     end
@@ -200,8 +199,7 @@ if USE_RAKE_COMPILER
     end
   end
 
-  desc "build a windows gem without all the ceremony."
-  task "gem:windows" do
+  task "gem:native" do
     require "rake_compiler_dock"
     RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle && rake cross native gem MAKE='nice make -j`nproc`'"
   end
