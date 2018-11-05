@@ -103,7 +103,7 @@ module FFI
     # @return [Array]
     # Read an array of +type+ of length +length+.
     # @example
-    #  ptr.read_array_of_type(TYPE_UINT8, :get_uint8, 4) # -> [1, 2, 3, 4]
+    #  ptr.read_array_of_type(TYPE_UINT8, :read_uint8, 4) # -> [1, 2, 3, 4]
     def read_array_of_type(type, reader, length)
       ary = []
       size = FFI.type_size(type)
