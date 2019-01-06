@@ -198,12 +198,13 @@ if USE_RAKE_COMPILER
       sh "x86_64-w64-mingw32-strip -S build/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
   end
+end
 
-  desc "build a windows gem without all the ceremony."
-  task "gem:windows" do
-    require "rake_compiler_dock"
-    RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle && rake cross native gem MAKE='nice make -j`nproc`'"
-  end
+desc "build a windows gem without all the ceremony"
+task "gem:windows" do
+  require "rake_compiler_dock"
+  sh "bundle package"
+  RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle --local && rake cross native gem MAKE='nice make -j`nproc`'"
 end
 
 directory "ext/ffi_c/libffi"
