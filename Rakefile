@@ -162,7 +162,6 @@ namespace 'java' do
     s.summary = gem_spec.summary
     s.description = gem_spec.description
     s.files = %w(LICENSE COPYING README.md CHANGELOG.md Rakefile)
-    s.has_rdoc = false
     s.license = gem_spec.license
     s.platform = 'java'
   end
