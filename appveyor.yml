@@ -8,7 +8,7 @@ install:
       }
   - ridk version
   - gem --version
-  - gem install bundler --quiet --no-ri --no-rdoc
+  - gem install bundler --quiet --no-document
   - bundle install
 build: off
 build_script:
