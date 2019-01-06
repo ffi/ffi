@@ -95,9 +95,9 @@ module FFI
     IS_BSD = IS_MAC || IS_FREEBSD || IS_NETBSD || IS_OPENBSD
 
     # Add the version for known ABI breaks
-    NAME_VERSION = "12" if IS_FREEBSD && OSVERSION >= 12 # 64-bit inodes
+    name_version = "12" if IS_FREEBSD && OSVERSION >= 12 # 64-bit inodes
 
-    NAME = "#{ARCH}-#{OS}#{NAME_VERSION}"
+    NAME = "#{ARCH}-#{OS}#{name_version}"
     CONF_DIR = File.join(File.dirname(__FILE__), 'platform', NAME)
 
     public
