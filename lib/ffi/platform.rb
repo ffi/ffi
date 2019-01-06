@@ -54,6 +54,8 @@ module FFI
       RbConfig::CONFIG['host_os'].downcase
     end
 
+    OSVERSION = RbConfig::CONFIG['host_os'].gsub(/[^\d]/, '').to_i
+
     ARCH = case CPU.downcase
     when /amd64|x86_64/
       "x86_64"
@@ -82,7 +84,6 @@ module FFI
       OS == os
     end
 
-    NAME = "#{ARCH}-#{OS}"
     IS_GNU = defined?(GNU_LIBC)
     IS_LINUX = is_os("linux")
     IS_MAC = is_os("darwin")
@@ -92,6 +93,11 @@ module FFI
     IS_SOLARIS = is_os("solaris")
     IS_WINDOWS = is_os("windows")
     IS_BSD = IS_MAC || IS_FREEBSD || IS_NETBSD || IS_OPENBSD
+
+    # Add the version for known ABI breaks
+    NAME_VERSION = "12" if IS_FREEBSD && OSVERSION >= 12 # 64-bit inodes
+
+    NAME = "#{ARCH}-#{OS}#{NAME_VERSION}"
     CONF_DIR = File.join(File.dirname(__FILE__), 'platform', NAME)
 
     public
