@@ -1,3 +1,23 @@
+1.9.26 / 2019-01-06
+-------------------
+
+Added:
+* Add /opt/local/lib/ to ffi's fallback library search path. #638
+* Add binary gem support for ruby-2.6 on Windows
+* Add FreeBSD on AArch64 and ARM support. #644
+* Add FFI::LastError.winapi_error on Windows native or Cygwin. #633
+
+Changed:
+* Update to rake-compiler-dock-0.7.0
+* Use 64-bit inodes on FreeBSD >= 12. #644
+* Switch time_t and suseconds_t types to long on FreeBSD. #627
+* Make register_t long_long on 64-bit FreeBSD. #644
+* Fix Pointer#write_array_of_type #637
+
+Removed:
+* Drop binary gem support for ruby-2.0 and 2.1 on Windows
+
+
 1.9.25 / 2018-06-03
 -------------------
 
