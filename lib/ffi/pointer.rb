@@ -124,10 +124,9 @@ module FFI
     #  ptr.write_array_of_type(TYPE_UINT8, :put_uint8, [1, 2, 3 ,4])
     def write_array_of_type(type, writer, ary)
       size = FFI.type_size(type)
-      tmp = self
-      ary.each_with_index {|i, j|
-        tmp.send(writer, i)
-        tmp += size unless j == ary.length-1 # avoid OOB
+      ary.each_with_index { |val, i|
+        break unless i < self.size
+        self.send(writer, i * size, val)
       }
       self
     end
