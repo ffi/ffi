@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'ffi/platform'
+require 'ffi/data_converter'
 require 'ffi/types'
 require 'ffi/library'
 require 'ffi/errno'

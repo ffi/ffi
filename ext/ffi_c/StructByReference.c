@@ -172,14 +172,9 @@ sbr_from_native(VALUE self, VALUE value, VALUE ctx)
 void
 rbffi_StructByReference_Init(VALUE moduleFFI)
 {
-    /*
-     * Document-class: FFI::StructByReference
-     * This class includes {FFI::DataConverter} module.
-     */
     rbffi_StructByReferenceClass = rb_define_class_under(moduleFFI, "StructByReference", rb_cObject);
     rb_global_variable(&rbffi_StructByReferenceClass);
-    rb_include_module(rbffi_StructByReferenceClass, rb_const_get(moduleFFI, rb_intern("DataConverter")));
-    
+
     rb_define_alloc_func(rbffi_StructByReferenceClass, sbr_allocate);
     rb_define_method(rbffi_StructByReferenceClass, "initialize", sbr_initialize, 1);
     rb_define_method(rbffi_StructByReferenceClass, "struct_class", sbr_struct_class, 0);
@@ -187,4 +182,3 @@ rbffi_StructByReference_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructByReferenceClass, "to_native", sbr_to_native, 2);
     rb_define_method(rbffi_StructByReferenceClass, "from_native", sbr_from_native, 2);
 }
-

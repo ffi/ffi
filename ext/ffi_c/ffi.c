@@ -74,8 +74,6 @@ Init_ffi_c(void)
     /* FFI::Type needs to be initialized before most other classes */
     rbffi_Type_Init(moduleFFI);
 
-    rbffi_DataConverter_Init(moduleFFI);
-
     rbffi_ArrayType_Init(moduleFFI);
     rbffi_LastError_Init(moduleFFI);
     rbffi_Call_Init(moduleFFI);
@@ -95,4 +93,3 @@ Init_ffi_c(void)
     rbffi_Types_Init(moduleFFI);
     rbffi_MappedType_Init(moduleFFI);
 }
-
