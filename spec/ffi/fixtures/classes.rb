@@ -111,6 +111,7 @@ module FFISpecs
   #
   module LibTest
     attach_function :setLastError, [ :int ], :void
+    attach_function :setErrno, [ :int ], :void
   end
 
   #
