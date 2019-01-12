@@ -32,5 +32,41 @@ module FFI
   # This class includes the {FFI::DataConverter} module.
   class StructByReference
     include DataConverter
+
+    attr_reader :struct_class
+
+    # @param [Struct] struct_class
+    def initialize(struct_class)
+      unless Class === struct_class and struct_class < FFI::Struct
+        raise TypeError, 'wrong type (expected subclass of FFI::Struct)'
+      end
+      @struct_class = struct_class
+    end
+
+    # Always get {FFI::Type}::POINTER.
+    def native_type
+      FFI::Type::POINTER
+    end
+
+    # @param [nil, Struct] value
+    # @param [nil] ctx
+    # @return [AbstractMemory] Pointer on +value+.
+    def to_native(value, ctx)
+      return Pointer::NULL if value.nil?
+
+      unless @struct_class === value
+        raise TypeError, "wrong argument type #{value.class} (expected #{@struct_class})"
+      end
+
+      value.pointer
+    end
+
+    # @param [AbstractMemory] value
+    # @param [nil] ctx
+    # @return [Struct]
+    # Create a struct from content of memory +value+.
+    def from_native(value, ctx)
+      @struct_class.new(value)
+    end
   end
 end
