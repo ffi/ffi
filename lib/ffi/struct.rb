@@ -33,6 +33,7 @@
 
 require 'ffi/platform'
 require 'ffi/struct_layout_builder'
+require 'ffi/struct_by_reference'
 
 module FFI
 
@@ -97,7 +98,7 @@ module FFI
     end
   end
 
-  
+
   class Struct
 
     # Get struct size
@@ -296,7 +297,7 @@ module FFI
         @packed = packed
       end
       alias :pack :packed
-      
+
       def aligned(alignment = 1)
         @min_alignment = alignment
       end
@@ -367,10 +368,5 @@ module FFI
         end
       end
     end
-  end
-
-  # This class includes the {FFI::DataConverter} module.
-  class StructByReference
-    include DataConverter
   end
 end
