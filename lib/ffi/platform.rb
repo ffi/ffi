@@ -56,6 +56,8 @@ module FFI
 
     OSVERSION = RbConfig::CONFIG['host_os'].gsub(/[^\d]/, '').to_i
 
+    CPU = RbConfig::CONFIG['host_cpu']
+
     ARCH = case CPU.downcase
     when /amd64|x86_64/
       "x86_64"
