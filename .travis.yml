@@ -29,6 +29,20 @@ matrix:
     - os: osx
       rvm: 2.4.2
   include:
+    - name: powerpc
+      language: generic
+      before_install: |
+        docker run --rm --privileged multiarch/qemu-user-static:register --reset &&
+          docker build --rm -t ffi-powerpc -f spec/env/Dockerfile.powerpc .
+      script: |
+        docker run --rm -t -v `pwd`:/ffi ffi-powerpc
+    - name: armhf
+      language: generic
+      before_install: |
+        docker run --rm --privileged multiarch/qemu-user-static:register --reset &&
+          docker build --rm -t ffi-armhf -f spec/env/Dockerfile.armhf .
+      script: |
+        docker run --rm -t -v `pwd`:/ffi ffi-armhf
     - os: osx
       osx_image: xcode9.1
       rvm: 2.4.2
