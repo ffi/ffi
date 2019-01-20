@@ -1,9 +1,7 @@
 dist: trusty
-sudo: false
 group: beta
 language: ruby
-before_install:
-  - gem install bundler
+
 script:
   - bundle exec rake compile || bundle exec rake compile
   - bundle exec rake test
