@@ -52,7 +52,6 @@ struct Type_ {
 
 extern VALUE rbffi_TypeClass;
 extern VALUE rbffi_Type_Lookup(VALUE type);
-extern VALUE rbffi_Type_Find(VALUE type);
 
 #ifdef	__cplusplus
 }

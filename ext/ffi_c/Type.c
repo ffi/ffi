@@ -235,24 +235,6 @@ rbffi_Type_Lookup(VALUE name)
     return Qnil;
 }
 
-/**
- * rbffi_Type_Find() is like rbffi_Type_Lookup, but an error is raised if the
- * type is not found.
- */
-VALUE
-rbffi_Type_Find(VALUE name)
-{
-    VALUE rbType = rbffi_Type_Lookup(name);
-
-    if (!RTEST(rbType)) {
-        VALUE s = rb_inspect(name);
-        rb_raise(rb_eTypeError, "invalid type, %s", RSTRING_PTR(s));
-        RB_GC_GUARD(s);
-    }
-
-    return rbType;
-}
-
 void
 rbffi_Type_Init(VALUE moduleFFI)
 {

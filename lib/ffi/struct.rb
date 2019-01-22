@@ -368,4 +368,9 @@ module FFI
       end
     end
   end
+
+  # This class includes the {FFI::DataConverter} module.
+  class StructByReference
+    include DataConverter
+  end
 end
