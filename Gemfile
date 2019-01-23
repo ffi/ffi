@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 group :development do
-  gem 'rake', '~> 10.1'
+  gem 'rake', '~> 12.1'
   gem 'rake-compiler', '~> 1.0.3'
   gem 'rake-compiler-dock', '~> 0.7.0'
   gem 'rspec', '~> 3.0'
