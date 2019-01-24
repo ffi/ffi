@@ -1,19 +1,19 @@
-# ruby-ffi https://wiki.github.com/ffi/ffi [![Build Status](https://travis-ci.org/ffi/ffi.svg?branch=master)](https://travis-ci.org/ffi/ffi) [![Build status Windows](https://ci.appveyor.com/api/projects/status/r8wxn1sd4s794gg1/branch/master?svg=true)](https://ci.appveyor.com/project/larskanis/ffi-aofqa/branch/master)
+# Ruby-FFI https://wiki.github.com/ffi/ffi [![Build Status](https://travis-ci.org/ffi/ffi.svg?branch=master)](https://travis-ci.org/ffi/ffi) [![Build status Windows](https://ci.appveyor.com/api/projects/status/r8wxn1sd4s794gg1/branch/master?svg=true)](https://ci.appveyor.com/project/larskanis/ffi-aofqa/branch/master)
 
 ## Description
 
-Ruby-FFI is a ruby extension for programmatically loading dynamic
+Ruby-FFI is a gem for programmatically loading dynamically-linked native
 libraries, binding functions within them, and calling those functions
 from Ruby code. Moreover, a Ruby-FFI extension works without changes
-on Ruby and JRuby. [Discover why you should write your next extension
+on CRuby (MRI), JRuby, Rubinius and TruffleRuby. [Discover why you should write your next extension
 using Ruby-FFI](https://wiki.github.com/ffi/ffi/why-use-ffi).
 
-## Features/problems
+## Features
 
 * Intuitive DSL
 * Supports all C native types
 * C structs (also nested), enums and global variables
-* Callbacks from C to ruby
+* Callbacks from C to Ruby
 * Automatic garbage collection of native memory
 
 ## Synopsis
@@ -30,20 +30,21 @@ end
 MyLib.puts 'Hello, World using libc!'
 ```
 
-For less minimalistic and more sane examples you may look at:
+For less minimalistic and more examples you may look at:
 
-* the samples/ folder
+* the `samples/` folder
 * the examples on the [wiki](https://wiki.github.com/ffi/ffi)
-* the projects using FFI listed on this page (https://wiki.github.com/ffi/ffi/projects-using-ffi)
+* the projects using FFI listed on the wiki: https://wiki.github.com/ffi/ffi/projects-using-ffi
 
 ## Requirements
 
-You need a sane building environment in order to compile the extension.
-At a minimum, you will need:
-* A C compiler (e.g. Xcode on OSX, gcc on everything else)
-* libffi development library - this is commonly in the libffi-dev or libffi-devel
+When installing the gem on CRuby (MRI) or Rubinius, you will need:
+* A C compiler (e.g., Xcode on macOS, `gcc` or `clang` on everything else)
+* The `libffi` library and development headers - this is commonly in the `libffi-dev` or `libffi-devel` packages
 
-On Linux systems running with [PaX](https://en.wikipedia.org/wiki/PaX) (Gentoo, Alpine, etc.) FFI may trigger `mprotect` errors. You may need to disable [mprotect](https://en.wikibooks.org/wiki/Grsecurity/Appendix/Grsecurity_and_PaX_Configuration_Options#Restrict_mprotect.28.29) for ruby (`paxctl -m [/path/to/ruby]`) for the time being until a solution is found.
+On Linux systems running with [PaX](https://en.wikipedia.org/wiki/PaX) (Gentoo, Alpine, etc.), FFI may trigger `mprotect` errors. You may need to disable [mprotect](https://en.wikibooks.org/wiki/Grsecurity/Appendix/Grsecurity_and_PaX_Configuration_Options#Restrict_mprotect.28.29) for ruby (`paxctl -m [/path/to/ruby]`) for the time being until a solution is found.
+
+On JRuby and TruffleRuby, there are no requirements to install the FFI gem, and `require 'ffi'` works even without installing the gem (i.e., the gem is preinstalled on these implementations).
 
 ## Installation
 
@@ -61,8 +62,7 @@ or from the git repository on github:
 ## License
 
 The ffi library is covered by the BSD license, also see the LICENSE file.
-The specs are shared with Rubyspec and are licensed by the same license
-as Rubyspec, see the LICENSE.SPECS file.
+The specs are covered by the same license as [ruby/spec](https://github.com/ruby/spec), the MIT license.
 
 ## Credits
 
@@ -74,6 +74,7 @@ The following people have submitted code, bug reports, or otherwise contributed 
 * Andreas Niederl <rico32@gmx.net>
 * Andrew Cholakian <andrew@andrewvc.com>
 * Antonio Terceiro <terceiro@softwarelivre.org>
+* Benoit Daloze <eregontp@gmail.com>
 * Brian Candler <B.Candler@pobox.com>
 * Brian D. Burns <burns180@gmail.com>
 * Bryan Kearney <bkearney@redhat.com>
