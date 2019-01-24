@@ -137,6 +137,7 @@ file "ext/ffi_c/libffi/autogen.sh" => "ext/ffi_c/libffi" do
   warn "Downloading libffi ..."
   sh "git submodule update --init --recursive"
 end
+task :libffi => "ext/ffi_c/libffi/autogen.sh"
 
 LIBFFI_GIT_FILES = `git --git-dir ext/ffi_c/libffi/.git ls-files -z`.split("\x0")
 

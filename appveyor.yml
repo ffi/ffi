@@ -12,7 +12,7 @@ install:
   - bundle install
 build: off
 build_script:
-  - bundle exec rake compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
+  - bundle exec rake libffi compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
 test_script:
   - bundle exec rake test
 environment:
