@@ -20,6 +20,8 @@ environment:
     - RUBYVER: "head-x64"
       EXTCONFOPTS: "--disable-system-libffi"
     - RUBYVER: 24
-      EXTCONFOPTS: "--enable-system-libffi"
+      EXTCONFOPTS: "--disable-system-libffi"
     - RUBYVER: 25-x64
+      EXTCONFOPTS: "--enable-system-libffi"
+    - RUBYVER: 25
       EXTCONFOPTS: "--enable-system-libffi"
