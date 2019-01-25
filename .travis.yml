@@ -18,13 +18,13 @@ rvm:
 env:
   - CC=gcc
   - CC=clang
+branches:
+  only:
+  - master
 matrix:
   allow_failures:
     - os: osx
       rvm: ruby-head
-  exclude: # ruby 2.4.2 needs build with xcode9 or later on osx
-    - os: osx
-      rvm: 2.4.2
   include:
     - name: powerpc
       language: generic
@@ -40,15 +40,5 @@ matrix:
           docker build --rm -t ffi-armhf -f spec/env/Dockerfile.armhf .
       script: |
         docker run --rm -t -v `pwd`:/ffi ffi-armhf
-    - os: osx
-      osx_image: xcode9.1
-      rvm: 2.4.2
-      env:
-      - CC=gcc
-    - os: osx
-      osx_image: xcode9.1
-      rvm: 2.4.2
-      env:
-      - CC=clang
 after_failure:
   - "find build -name mkmf.log | xargs cat"
