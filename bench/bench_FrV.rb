@@ -34,30 +34,3 @@ puts "Benchmark ruby method(1 arg)  performance, #{ITER}x calls"
     end
   }
 }
-
-unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
-  require 'dl'
-  require 'dl/import'
-  module LibTest
-    if RUBY_VERSION >= "1.9.0"
-      extend DL::Importer
-    else
-      extend DL::Importable
-    end
-    dlload LIBTEST_PATH
-    extern "void bench_f32_v(float)"
-  end
-  puts "Benchmark DL void bench(float) performance, #{ITER}x calls"
-  10.times {
-    puts Benchmark.measure {
-      i = 0; while i < ITER
-        LibTest.bench_f32_v(0)
-        LibTest.bench_f32_v(0)
-        LibTest.bench_f32_v(0)
-        LibTest.bench_f32_v(0)
-        i += 4
-      end
-    }
-  }
-end
-
