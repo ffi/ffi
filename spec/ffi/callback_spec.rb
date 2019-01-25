@@ -862,6 +862,8 @@ describe "Callback interop" do
           raise "external process failed:\n#{ File.read("embed-test.log") }"
         end
       end
+
+      expect(File.read("embed-test.log")).to match(/callback called with \["hello", 5, 0\]/)
     end
   end
 end

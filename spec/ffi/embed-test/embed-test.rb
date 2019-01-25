@@ -10,8 +10,10 @@
 # which deadlocked in earlier FFI versions, see
 # https://github.com/ffi/ffi/issues/527
 
-EXT = File.expand_path("ext/embed_test.so", File.dirname(__FILE__))
+require 'rbconfig'
+require 'ffi'
 
+EXT = File.expand_path("ext/embed_test.#{RbConfig::CONFIG['DLEXT']}", File.dirname(__FILE__))
 old = Dir.pwd
 Dir.chdir(File.dirname(EXT))
 
@@ -28,5 +30,22 @@ end
 
 Dir.chdir(old)
 
+puts "load #{EXT}"
 require EXT
+
+module LibWrap
+  extend FFI::Library
+  ffi_lib EXT
+  callback :completion_function, [:string, :long, :uint8], :void
+  attach_function :do_work, [:pointer, :completion_function], :int
+  Callback = Proc.new do |buf_ptr, count, code|
+    puts "callback called with #{[buf_ptr, count, code].inspect}"
+    nil
+  end
+end
+
+puts "call do_work()"
+LibWrap.do_work("test", LibWrap::Callback)
+
+puts "call testfunc()"
 EmbedTest::testfunc

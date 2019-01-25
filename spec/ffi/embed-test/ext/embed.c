@@ -29,21 +29,6 @@
 #include <stdio.h>
 #include <ruby.h>
 
-const char script[] =
-"require 'rubygems'\n"
-"require 'ffi'\n"
-"module LibWrap\n"
-"  extend FFI::Library\n"
-"  ffi_lib FFI::CURRENT_PROCESS\n"
-"  callback :completion_function, [:string, :long, :uint8], :void\n"
-"  attach_function :do_work, [:pointer, :completion_function], :int\n"
-"  Callback = Proc.new do |buf_ptr, count, code|\n"
-"    nil\n"
-"  end\n"
-"end\n"
-"\n"
-"LibWrap.do_work(\"test\", LibWrap::Callback)\n";
-
 typedef void completion_function(const char *buffer, long count, unsigned char code);
 
 static completion_function *ruby_func;
@@ -53,7 +38,6 @@ static completion_function *ruby_func;
 #endif
 int do_work(const char *buffer, completion_function *fn)
 {
-  /* Calling fn directly here works */
   ruby_func = fn;
   return 0;
 }
@@ -68,25 +52,7 @@ void Init_embed_test(void)
 
 static VALUE testfunc(VALUE self)
 {
-  int state = 0;
-  VALUE ret;
-
-  rb_eval_string_protect(script, &state);
-
-  if (state)
-  {
-    VALUE e = rb_errinfo();
-    ret = rb_funcall(e, rb_intern("message"), 0);
-    fprintf(stderr, "exc %s\n", StringValueCStr(ret));
-    rb_set_errinfo(Qnil);
-    exit(1);
-  }
-  else
-  {
-    /* Calling fn here hangs, because ffi expects an initial ruby stack
-     * frame. Spawn a thread to kill the process, otherwise the deadlock
-     * would prevent completing the test. */
-    ruby_func("hello", 5, 0);
-  }
+  printf("testfunc() called\n");
+  ruby_func("hello", 5, 0);
   return Qnil;
 }
