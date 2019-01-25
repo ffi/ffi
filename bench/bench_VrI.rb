@@ -7,20 +7,6 @@ module LibTest
   def self.rb_bench; 0xdeadbeef; end
 end
 
-unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
-  require 'dl'
-  require 'dl/import'
-  module LibTest
-    if RUBY_VERSION >= "1.9.0"
-      extend DL::Importer
-    else
-      extend DL::Importable
-    end
-    dlload LIBTEST_PATH
-    extern "int returnInt()"
-  end
-end
-
 puts "Benchmark [ ], :int performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
@@ -48,19 +34,3 @@ puts "Benchmark ruby method(), nil performance, #{ITER}x calls"
     end
   }
 }
-
-unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
-puts "Benchmark DL void bench() performance, #{ITER}x calls"
-10.times {
-  puts Benchmark.measure {
-    i = 0; max = ITER / 4
-    while i < max
-      LibTest.returnInt
-      LibTest.returnInt
-      LibTest.returnInt
-      LibTest.returnInt
-      i += 1
-    end
-  }
-}
-end

@@ -7,19 +7,6 @@ module LibTest
   attach_function :ffi_bench, :testClosureIIIrV, [ :closureIIIrV, :int, :int, :int ], :void
   def self.rb_bench(a, b, c, &block); yield(a, b, c); end
 end
-unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
-  require 'dl'
-  require 'dl/import'
-  module LibTest
-    if RUBY_VERSION >= "1.9.0"
-      extend DL::Importer
-    else
-      extend DL::Importable
-    end
-    dlload LIBTEST_PATH
-    extern "int returnInt()"
-  end
-end
 
 class Foo
   def call(a, b, c); nil; end
@@ -71,15 +58,6 @@ puts "Benchmark [ ], :void pre-allocated callable, #{ITER}x calls"
     ITER.times { LibTest.ffi_bench(proc, 1, 2, 3) }
   }
 }
-
-#unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
-#puts "Benchmark DL void bench() performance, #{ITER}x calls"
-#10.times {
-#  puts Benchmark.measure {
-#    ITER.times { LibTest.returnInt }
-#  }
-#}
-#end
 
 puts "Benchmark ruby method(3 arg), #{ITER}x calls"
 10.times {

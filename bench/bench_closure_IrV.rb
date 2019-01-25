@@ -7,19 +7,6 @@ module LibTest
   attach_function :ffi_bench, :testClosureIrV, [ :closureVrV, :int ], :void
   def self.rb_bench(i, &block); nil; end
 end
-unless RUBY_PLATFORM == "java" && JRUBY_VERSION < "1.3.0"
-  require 'dl'
-  require 'dl/import'
-  module LibTest
-    if RUBY_VERSION >= "1.9.0"
-      extend DL::Importer
-    else
-      extend DL::Importable
-    end
-    dlload LIBTEST_PATH
-    extern "int returnInt()"
-  end
-end
 
 puts "Benchmark [ ], :void closure block performance, #{ITER}x calls"
 10.times {
