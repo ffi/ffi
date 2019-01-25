@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2010 Wayne Meissner
- *
- * Copyright (c) 2008-2013, Ruby FFI project contributors
+ * Copyright (C) 2017 Thomas Martitz <kugel@rockbox.org>
+ * Copyright (C) 2008-2017, Ruby FFI project contributors
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,71 +26,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RBFFI_THREAD_H
-#define	RBFFI_THREAD_H
-
-#ifndef _MSC_VER
-# include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-# include "win32/stdint.h"
-#endif
+#include <stdio.h>
 #include <ruby.h>
-#include "extconf.h"
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+typedef void completion_function(const char *buffer, long count, unsigned char code);
 
+static completion_function *ruby_func;
 
 #ifdef _WIN32
-# include <windows.h>
-#else
-# include <pthread.h>
+  __declspec(dllexport)
 #endif
-
-typedef struct {
-#ifdef _WIN32
-    DWORD id;
-#else
-    pthread_t id;
-#endif
-    bool valid;
-    bool has_gvl;
-    VALUE exc;
-} rbffi_thread_t;
-
-typedef struct rbffi_frame {
-#ifndef _WIN32
-    struct thread_data* td;
-#endif
-    struct rbffi_frame* prev;
-#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
-    bool has_gvl;
-#endif
-    VALUE exc;
-} rbffi_frame_t;
-
-rbffi_frame_t* rbffi_frame_current(void);
-void rbffi_frame_push(rbffi_frame_t* frame);
-void rbffi_frame_pop(rbffi_frame_t* frame);
-
-#ifdef HAVE_RB_THREAD_CALL_WITHOUT_GVL
-# define rbffi_thread_blocking_region rb_thread_call_without_gvl
-
-#elif defined(HAVE_RB_THREAD_BLOCKING_REGION)
-# define rbffi_thread_blocking_region rb_thread_blocking_region
-
-#else
-
-VALUE rbffi_thread_blocking_region(VALUE (*func)(void *), void *data1, void (*ubf)(void *), void *data2);
-
-#endif
-
-
-#ifdef	__cplusplus
+int do_work(const char *buffer, completion_function *fn)
+{
+  ruby_func = fn;
+  return 0;
 }
-#endif
 
-#endif	/* RBFFI_THREAD_H */
+static VALUE testfunc(VALUE args);
 
+void Init_embed_test(void)
+{
+  VALUE mod = rb_define_module("EmbedTest");
+  rb_define_module_function(mod, "testfunc", testfunc, 0);
+}
+
+static VALUE testfunc(VALUE self)
+{
+  printf("testfunc() called\n");
+  ruby_func("hello", 5, 0);
+  return Qnil;
+}
