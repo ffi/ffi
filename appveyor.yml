@@ -11,6 +11,9 @@ install:
   - gem install bundler --quiet --no-document
   - bundle install
 build: off
+branches:
+  only:
+  - master
 build_script:
   - bundle exec rake compile || bundle exec rake compile
 test_script:
