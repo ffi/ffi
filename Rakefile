@@ -47,7 +47,6 @@ CLEAN.include 'spec/ffi/fixtures/*.o'
 CLEAN.include "pkg/ffi-*-{mingw32,java}"
 CLEAN.include 'lib/1.*'
 CLEAN.include 'lib/2.*'
-CLEAN.include 'bin'
 
 task :distclean => :clobber
 
