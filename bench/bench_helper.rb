@@ -3,4 +3,4 @@ require "rubygems"
 require 'benchmark'
 require 'ffi'
 ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
-LIBTEST_PATH = "#{Dir.getwd}/build/libtest.#{FFI::Platform::LIBSUFFIX}"
+LIBTEST_PATH = File.expand_path("../../spec/ffi/fixtures/libtest.#{FFI::Platform::LIBSUFFIX}", __FILE__)
