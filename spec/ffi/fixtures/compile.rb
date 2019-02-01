@@ -62,6 +62,8 @@ def compile_library(path, lib)
   lib
 end
 
+require 'ffi/platform'
+
 module TestLibrary
-  PATH = compile_library(".", "libtest.#{RbConfig::CONFIG['DLEXT']}")
+  PATH = compile_library(".", "libtest.#{FFI::Platform::LIBSUFFIX}")
 end
