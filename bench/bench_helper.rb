@@ -10,6 +10,8 @@ end
 $LOAD_PATH.unshift(lib)
 require 'ffi'
 
+require_relative '../spec/ffi/fixtures/compile'
+
 ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100_000
 
-LIBTEST_PATH = File.expand_path("../../spec/ffi/fixtures/libtest.#{FFI::Platform::LIBSUFFIX}", __FILE__)
+LIBTEST_PATH = TestLibrary::PATH
