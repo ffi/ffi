@@ -1,8 +1,6 @@
-require 'benchmark'
-require 'ffi'
-require 'ffi/platform'
+require_relative 'bench_helper'
 
-iter = 10_000
+iter = ITER
 file = "README"
 
 module Posix

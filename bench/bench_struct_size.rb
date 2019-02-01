@@ -1,8 +1,6 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
+require_relative 'bench_helper'
 
-require 'benchmark'
-require 'ffi'
-iter = ITER || 1000_000
+iter = ITER
 
 class TestStruct < FFI::Struct
   layout :i, :int, :p, :pointer
@@ -30,4 +28,3 @@ layout = TestStruct.layout
     iter.times { layout.size }
   }
 }
-

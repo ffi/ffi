@@ -1,7 +1,5 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
+require_relative 'bench_helper'
 
-require 'benchmark'
-require 'ffi'
 iter = ITER
 
 module BufferBench
@@ -109,4 +107,3 @@ puts "Benchmark FFI call(Buffer.alloc_out(4, 1, true)) performance, #{iter}x"
     iter.times { BufferBench.bench_buffer_out(FFI::Buffer.alloc_out(4, 1, true), 0) }
   }
 }
-

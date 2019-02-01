@@ -1,4 +1,4 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
+require_relative 'bench_helper'
 
 module LibTest
   extend FFI::Library
@@ -37,4 +37,3 @@ puts "Benchmark ruby method(1 arg)  performance, #{ITER}x calls"
     ITER.times { LibTest.rb_bench(1) {} }
   }
 }
-

@@ -1,7 +1,4 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
-
-require 'benchmark'
-require 'ffi'
+require_relative 'bench_helper'
 
 module StructBench
   extend FFI::Library

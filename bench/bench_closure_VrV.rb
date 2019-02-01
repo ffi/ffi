@@ -1,14 +1,14 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
+require_relative 'bench_helper'
 
 module LibTest
   extend FFI::Library
   ffi_lib LIBTEST_PATH
   callback :closureVrV, [ ], :void
-  
+
   attach_function :ffi_bench, :testClosureVrV, [ :closureVrV ], :void
   @blocking = true
   attach_function :threaded_bench, :testThreadedClosureVrV, [ :closureVrV, :int ], :void
-  
+
   def self.rb_bench(&block)
     yield
   end
@@ -51,4 +51,3 @@ puts "Benchmark ruby method(no arg)  performance, #{ITER}x calls"
     ITER.times { LibTest.rb_bench {} }
   }
 }
-

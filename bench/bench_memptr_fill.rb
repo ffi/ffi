@@ -1,7 +1,5 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
+require_relative 'bench_helper'
 
-require 'benchmark'
-require 'ffi'
 iter = ITER
 
 puts "Benchmark MemoryPointer#put_array_of_float performance, #{iter}x"
@@ -9,7 +7,7 @@ puts "Benchmark MemoryPointer#put_array_of_float performance, #{iter}x"
 5.times {
   ptr = FFI::MemoryPointer.new(:float, 8, false)
   puts Benchmark.measure {
-    iter.times { 
+    iter.times {
       ptr.put_array_of_float(0, [ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 ])
     }
   }
@@ -19,7 +17,7 @@ puts "Benchmark MemoryPointer#put_array_of_float performance, #{iter}x"
 puts "Benchmark MemoryPointer.new(:float, 8, false)).put_array_of_float performance, #{iter}x"
 5.times {
   puts Benchmark.measure {
-    iter.times { 
+    iter.times {
       ptr = FFI::MemoryPointer.new(:float, 8, false)
       ptr.put_array_of_float(0, [ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 ])
     }

@@ -1,7 +1,6 @@
-require 'benchmark'
-require 'ffi'
+require_relative 'bench_helper'
 
-iter = 100000
+iter = ITER
 
 module Posix
   extend FFI::Library
