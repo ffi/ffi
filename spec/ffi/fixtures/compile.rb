@@ -14,19 +14,14 @@ CPU = case RbConfig::CONFIG['host_cpu'].downcase
     else
       "i386"
     end
-
   when /amd64|x86_64/
     "x86_64"
-
   when /ppc64|powerpc64/
     "powerpc64"
-
   when /ppc|powerpc/
     "powerpc"
-
   when /^arm/
     "arm"
-
   else
     RbConfig::CONFIG['host_cpu']
   end
@@ -51,15 +46,16 @@ OS = case RbConfig::CONFIG['host_os'].downcase
 def compile_library(path, lib)
   dir = File.expand_path(path, File.dirname(__FILE__))
   lib = "#{dir}/#{lib}"
-  if !File.exist?(lib)
+  unless File.exist?(lib)
     output = nil
     FileUtils.cd(dir) do
-      output = system(*%{#{system('which gmake >/dev/null') && 'gmake' || 'make'} CPU=#{CPU} OS=#{OS} }.tap{|x| puts x.inspect})
+      make = system('which gmake >/dev/null') ? 'gmake' : 'make'
+      output = system(*%{#{make} CPU=#{CPU} OS=#{OS}}.tap{|x| puts x.inspect})
     end
 
-    if $?.exitstatus != 0
+    unless $?.success?
       puts "ERROR:\n#{output}"
-      raise "Unable to compile \"#{lib}\""
+      raise "Unable to compile #{lib.inspect}"
     end
   end
 
