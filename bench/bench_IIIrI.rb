@@ -7,11 +7,9 @@ module LibTest
 end
 
 
-puts "Benchmark [ :int, :int, :int ], :void performance, #{ITER}x calls"
-
+puts "Benchmark [ :int, :int, :int ], :int performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
     ITER.times { LibTest.bench(0, 1, 2) }
   }
 }
-puts "Benchmark Invoker.call [ :int, :int, :int ], :void performance, #{ITER}x calls"
