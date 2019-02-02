@@ -5,6 +5,7 @@
 
 require 'rbconfig'
 require 'fileutils'
+require 'ffi'
 
 CPU = case RbConfig::CONFIG['host_cpu'].downcase
   when /i[3456]86/
@@ -61,8 +62,6 @@ def compile_library(path, lib)
 
   lib
 end
-
-require 'ffi/platform'
 
 module TestLibrary
   PATH = compile_library(".", "libtest.#{FFI::Platform::LIBSUFFIX}")

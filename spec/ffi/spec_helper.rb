@@ -3,15 +3,11 @@
 # For licensing, see LICENSE.SPECS
 #
 
-require 'rbconfig'
-require 'fileutils'
+require_relative 'fixtures/compile'
 
 RSpec.configure do |c|
   c.filter_run_excluding :broken => true
 end
-
-require_relative 'fixtures/compile'
-require 'ffi'
 
 module TestLibrary
   def self.force_gc
