@@ -1,7 +1,5 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
+require_relative 'bench_helper'
 
-require 'benchmark'
-require 'ffi'
 iter = ITER
 
 module LibC
@@ -54,9 +52,8 @@ end
 if defined?(RUBY_ENGINE) && RUBY_ENGINE == "jruby"
   require 'java'
   puts "calling java gc"
-  10.times { 
-    java.lang.System.gc 
+  10.times {
+    java.lang.System.gc
     sleep 1
   }
 end
-

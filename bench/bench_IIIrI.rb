@@ -1,4 +1,4 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
+require_relative 'bench_helper'
 
 module LibTest
   extend FFI::Library
@@ -7,11 +7,9 @@ module LibTest
 end
 
 
-puts "Benchmark [ :int, :int, :int ], :void performance, #{ITER}x calls"
-
+puts "Benchmark [ :int, :int, :int ], :int performance, #{ITER}x calls"
 10.times {
   puts Benchmark.measure {
     ITER.times { LibTest.bench(0, 1, 2) }
   }
 }
-puts "Benchmark Invoker.call [ :int, :int, :int ], :void performance, #{ITER}x calls"

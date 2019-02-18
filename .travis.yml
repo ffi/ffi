@@ -5,6 +5,7 @@ language: ruby
 script:
   - bundle exec rake compile || bundle exec rake compile
   - bundle exec rake test
+  - ITER=10 bundle exec rake bench:all
 os:
   - linux
   - osx

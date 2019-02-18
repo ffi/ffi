@@ -1,4 +1,5 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "bench_helper"))
+require_relative 'bench_helper'
+
 module LibC
   extend FFI::Library
   ffi_lib 'c'
@@ -23,4 +24,3 @@ puts "Benchmark FFI api strlen(3), with new string performance, #{ITER}x"
     ITER.times { LibC.strlen('test' * 10) }
   }
 }
-

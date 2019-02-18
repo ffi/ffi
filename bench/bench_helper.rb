@@ -1,6 +1,18 @@
-require "rubygems"
-#require 'ffi/times' if RUBY_PLATFORM =~ /java/
 require 'benchmark'
+require 'rbconfig'
+
+lib = File.expand_path('../../lib', __FILE__)
+
+cext = "#{lib}/ffi_c.#{RbConfig::CONFIG['DLEXT']}"
+unless File.exist?(cext)
+  abort "#{cext} is not compiled. Compile it with 'rake compile' first."
+end
+
+$LOAD_PATH.unshift(lib)
 require 'ffi'
-ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
-LIBTEST_PATH = File.expand_path("../../spec/ffi/fixtures/libtest.#{FFI::Platform::LIBSUFFIX}", __FILE__)
+
+require_relative '../spec/ffi/fixtures/compile'
+
+ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100_000
+
+LIBTEST_PATH = TestLibrary::PATH
