@@ -15,11 +15,16 @@ branches:
   only:
   - master
 build_script:
-  - bundle exec rake compile || bundle exec rake compile
+  - bundle exec rake libffi compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
 test_script:
   - bundle exec rake test
 environment:
   matrix:
     - RUBYVER: "head-x64"
+      EXTCONFOPTS: "--disable-system-libffi"
     - RUBYVER: 24
+      EXTCONFOPTS: "--disable-system-libffi"
     - RUBYVER: 25-x64
+      EXTCONFOPTS: "--enable-system-libffi"
+    - RUBYVER: 25
+      EXTCONFOPTS: "--enable-system-libffi"

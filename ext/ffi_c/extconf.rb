@@ -3,6 +3,21 @@
 if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   require 'mkmf'
   require 'rbconfig'
+
+  def system_libffi_usable?
+    # We need pkg_config or ffi.h
+    libffi_ok = pkg_config("libffi") ||
+        have_header("ffi.h") ||
+        find_header("ffi.h", "/usr/local/include", "/usr/include/ffi")
+
+    # Ensure we can link to ffi_call
+    libffi_ok &&= have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
+                  have_library("libffi", "ffi_call", [ "ffi.h" ])
+
+    # And we need a libffi version recent enough to provide ffi_closure_alloc
+    libffi_ok &&= have_func("ffi_closure_alloc")
+  end
+
   dir_config("ffi_c")
 
   # recent versions of ruby add restrictive ansi and warning flags on a whim - kill them all
@@ -12,17 +27,13 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   # solaris 10 needs -c99 for <stdbool.h>
   $CFLAGS << " -std=c99" if RbConfig::CONFIG['host_os'] =~ /solaris(!?2\.11)/
 
-  if ENV['RUBY_CC_VERSION'].nil? && (pkg_config("libffi") ||
-     have_header("ffi.h") ||
-     find_header("ffi.h", "/usr/local/include", "/usr/include/ffi"))
+  # Check whether we use system libffi
+  system_libffi = enable_config('system-libffi', :try)
 
-    # We need at least ffi_call and ffi_closure_alloc
-    libffi_ok = have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
-                have_library("libffi", "ffi_call", [ "ffi.h" ])
-    libffi_ok &&= have_func("ffi_closure_alloc")
-
-    # Check if the raw api is available.
-    $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")
+  if system_libffi == :try
+    system_libffi = ENV['RUBY_CC_VERSION'].nil? && system_libffi_usable?
+  elsif system_libffi
+    abort "system libffi is not usable" unless system_libffi_usable?
   end
 
   have_header('shlwapi.h')
@@ -36,23 +47,24 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     have_func('ruby_thread_has_gvl_p')
   end
 
-  if libffi_ok
+  if system_libffi
     have_func('ffi_prep_cif_var')
+    $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")
   else
     $defs << "-DHAVE_FFI_PREP_CIF_VAR"
+    $defs << "-DUSE_INTERNAL_LIBFFI"
   end
 
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
-  $defs << "-DUSE_INTERNAL_LIBFFI" unless libffi_ok
   $defs << "-DRUBY_1_9" if RUBY_VERSION >= "1.9.0"
   $defs << "-DFFI_BUILDING" if RbConfig::CONFIG['host_os'] =~ /mswin/ # for compatibility with newer libffi
 
   create_header
 
-  $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if !libffi_ok && RbConfig::CONFIG['host_os'] =~ /mswin/
+  $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if !system_libffi && RbConfig::CONFIG['host_os'] =~ /mswin/
 
   create_makefile("ffi_c")
-  unless libffi_ok
+  unless system_libffi
     File.open("Makefile", "a") do |mf|
       mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
       if RbConfig::CONFIG['host_os'].downcase =~ /darwin/
