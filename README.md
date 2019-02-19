@@ -44,6 +44,8 @@ When installing the gem on CRuby (MRI) or Rubinius, you will need:
 
 On Linux systems running with [PaX](https://en.wikipedia.org/wiki/PaX) (Gentoo, Alpine, etc.), FFI may trigger `mprotect` errors. You may need to disable [mprotect](https://en.wikibooks.org/wiki/Grsecurity/Appendix/Grsecurity_and_PaX_Configuration_Options#Restrict_mprotect.28.29) for ruby (`paxctl -m [/path/to/ruby]`) for the time being until a solution is found.
 
+On FreeBSD systems pkgconf must be installed for the gem to be able to compile using clang. Install either via packages `pkg install pkgconf` or from ports via `devel/pkgconf`.
+
 On JRuby and TruffleRuby, there are no requirements to install the FFI gem, and `require 'ffi'` works even without installing the gem (i.e., the gem is preinstalled on these implementations).
 
 ## Installation
