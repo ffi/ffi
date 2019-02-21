@@ -43,10 +43,8 @@
 #endif
 #include <errno.h>
 #include <ruby.h>
-#if defined(HAVE_RUBY_THREAD_H)
 #include <ruby/thread.h>
-#endif
-#if defined(HAVE_NATIVETHREAD) && (defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)) && !defined(_WIN32)
+#if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
 #  include <signal.h>
 #  include <pthread.h>
 #endif
@@ -359,7 +357,7 @@ call_blocking_function(void* data)
 VALUE
 rbffi_do_blocking_call(void *data)
 {
-    rbffi_thread_blocking_region(call_blocking_function, data, (void *) -1, NULL);
+    rb_thread_call_without_gvl(call_blocking_function, data, (void *) -1, NULL);
 
     return Qnil;
 }
@@ -386,22 +384,11 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     if (unlikely(fnInfo->blocking)) {
         rbffi_blocking_call_t* bc;
 
-        /*
-         * due to the way thread switching works on older ruby variants, we
-         * cannot allocate anything passed to the blocking function on the stack
-         */
-#if defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)
+        /* allocate information passed to the blocking function on the stack */
         ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
         params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
         bc = ALLOCA_N(rbffi_blocking_call_t, 1);
         bc->retval = retval;
-#else
-        ffiValues = ALLOC_N(void *, fnInfo->parameterCount);
-        params = ALLOC_N(FFIStorage, fnInfo->parameterCount);
-        bc = ALLOC_N(rbffi_blocking_call_t, 1);
-        bc->retval = xmalloc(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
-        bc->stkretval = retval;
-#endif
         bc->cif = fnInfo->ffi_cif;
         bc->function = function;
         bc->ffiValues = ffiValues;
@@ -415,14 +402,6 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         rbffi_frame_push(&frame);
         rb_rescue2(rbffi_do_blocking_call, (VALUE) bc, rbffi_save_frame_exception, (VALUE) &frame, rb_eException, (VALUE) 0);
         rbffi_frame_pop(&frame);
-
-#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
-        memcpy(bc->stkretval, bc->retval, MAX(bc->cif.rtype->size, FFI_SIZEOF_ARG));
-        xfree(bc->params);
-        xfree(bc->ffiValues);
-        xfree(bc->retval);
-        xfree(bc);
-#endif
 
     } else {
 
