@@ -11,9 +11,6 @@ install:
   - gem install bundler --quiet --no-document
   - bundle install
 build: off
-branches:
-  only:
-  - master
 build_script:
   - bundle exec rake libffi compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
 test_script:

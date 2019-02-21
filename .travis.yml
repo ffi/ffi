@@ -19,9 +19,6 @@ rvm:
 env:
   - CC=gcc
   - CC=clang
-branches:
-  only:
-  - master
 matrix:
   allow_failures:
     - os: osx
