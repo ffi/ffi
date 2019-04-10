@@ -78,8 +78,10 @@ module CallbackSpecs
       attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
       attach_function :testCallbackReturningFunction, :testClosureVrP, [ :cbVrP ], :cbVrP
       attach_function :testCallbackVrY, :testClosureVrP, [ :cbVrY ], S8F32S32.ptr
-      attach_function :testCallbackVrT, :testClosureVrT, [ :cbVrT ], S8F32S32.by_value
-      attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32.ptr ], :void
+      if RUBY_ENGINE != "truffleruby" # struct by value not yet supported on TruffleRuby
+        attach_function :testCallbackVrT, :testClosureVrT, [ :cbVrT ], S8F32S32.by_value
+        attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32.ptr ], :void
+      end
       attach_variable :cbVrS8, :gvar_pointer, :cbVrS8
       attach_variable :pVrS8, :gvar_pointer, :pointer
       attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
@@ -275,6 +277,7 @@ module CallbackSpecs
     end
 
     it "returning struct by value" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
       skip "Segfault on 32 bit MINGW" if RUBY_PLATFORM == 'i386-mingw32'
       s = LibTest::S8F32S32.new
       s[:s8] = 0x12
@@ -288,6 +291,7 @@ module CallbackSpecs
     end
 
     it "struct by value parameter" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
       s = LibTest::S8F32S32.new
       s[:s8] = 0x12
       s[:s32] = 0x1eefbeef
@@ -840,6 +844,7 @@ module CallbackInteropSpecs
     end
 
     it "from ffi to fiddle" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
       assert_callback_in_same_thread_called_once do |block|
         func = LibTestFiddle.bind_function(:cbVrV, Fiddle::TYPE_VOID, [], &block)
         LibTestFFI.testCallbackVrV(FFI::Pointer.new(func.to_i))
@@ -847,6 +852,7 @@ module CallbackInteropSpecs
     end
 
     it "from ffi to fiddle with blocking:true" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
       assert_callback_in_same_thread_called_once do |block|
         func = LibTestFiddle.bind_function(:cbVrV, Fiddle::TYPE_VOID, [], &block)
         LibTestFFI.testCallbackVrV_blocking(FFI::Pointer.new(func.to_i))
@@ -854,6 +860,7 @@ module CallbackInteropSpecs
     end
 
     it "from fiddle to fiddle" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
       assert_callback_in_same_thread_called_once do |block|
         func = LibTestFiddle.bind_function(:cbVrV, Fiddle::TYPE_VOID, [], &block)
         LibTestFiddle.testClosureVrV(Fiddle::Pointer[func.to_i])
@@ -863,6 +870,7 @@ module CallbackInteropSpecs
     # https://github.com/ffi/ffi/issues/527
     if RUBY_ENGINE == 'ruby' && RUBY_VERSION.split('.').map(&:to_i).pack("C*") >= [2,3,0].pack("C*")
       it "C outside ffi call stack does not deadlock [#527]" do
+        skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
         path = File.join(File.dirname(__FILE__), "embed-test/embed-test.rb")
         pid = spawn(RbConfig.ruby, "-Ilib", path, { [:out, :err] => "embed-test.log" })
         begin
