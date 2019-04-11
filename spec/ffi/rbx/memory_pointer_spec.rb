@@ -37,6 +37,7 @@ describe "MemoryPointer" do
 
   it "reads back an empty string" do
     expect(FFI::Pointer::NULL.read_string(0)).to eq('')
+    expect(FFI::Pointer::NULL.read_string(0).encoding).to eq(Encoding::BINARY)
   end
   
   it "makes a pointer for a certain number of bytes" do
