@@ -47,9 +47,7 @@
 # endif
 #endif
 #include <ruby.h>
-#if defined(HAVE_RUBY_THREAD_H)
 #include <ruby/thread.h>
-#endif
 
 #include <ffi.h>
 #if defined(HAVE_NATIVETHREAD) && !defined(_WIN32)
@@ -99,10 +97,6 @@ static VALUE save_callback_exception(void* data, VALUE exc);
 #if defined(DEFER_ASYNC_CALLBACK)
 static VALUE async_cb_event(void *);
 static VALUE async_cb_call(void *);
-#endif
-
-#ifdef HAVE_RB_THREAD_CALL_WITH_GVL
-extern void *rb_thread_call_with_gvl(void *(*func)(void *), void *data1);
 #endif
 
 #ifdef HAVE_RUBY_THREAD_HAS_GVL_P
@@ -157,15 +151,9 @@ static struct gvl_callback* async_cb_list = NULL;
 # ifndef _WIN32
     static pthread_mutex_t async_cb_mutex = PTHREAD_MUTEX_INITIALIZER;
     static pthread_cond_t async_cb_cond = PTHREAD_COND_INITIALIZER;
-#  if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
-    static int async_cb_pipe[2];
-#  endif
 # else
     static HANDLE async_cb_cond;
     static CRITICAL_SECTION async_cb_lock;
-#  if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
-    static int async_cb_pipe[2];
-#  endif
 # endif
 #endif
 
@@ -344,16 +332,8 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
 #if defined(DEFER_ASYNC_CALLBACK)
         if (async_cb_thread == Qnil) {
-#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)) && defined(_WIN32)
-            _pipe(async_cb_pipe, 1024, O_BINARY);
-#elif !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
-            pipe(async_cb_pipe);
-            fcntl(async_cb_pipe[0], F_SETFL, fcntl(async_cb_pipe[0], F_GETFL) | O_NONBLOCK);
-            fcntl(async_cb_pipe[1], F_SETFL, fcntl(async_cb_pipe[1], F_GETFL) | O_NONBLOCK);
-#endif
             async_cb_thread = rb_thread_create(async_cb_event, NULL);
         }
-
 #endif
 
         fn->closure = rbffi_Closure_Alloc(fn->info->closurePool);
@@ -515,17 +495,8 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         cb.next = async_cb_list;
         async_cb_list = &cb;
 
-#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
-        pthread_mutex_unlock(&async_cb_mutex);
-        /* Only signal if the list was empty */
-        if (empty) {
-            char c;
-            write(async_cb_pipe[1], &c, 1);
-        }
-#else
         pthread_cond_signal(&async_cb_cond);
         pthread_mutex_unlock(&async_cb_mutex);
-#endif
 
         /* Wait for the thread executing the ruby callback to signal it is done */
         pthread_mutex_lock(&cb.async_mutex);
@@ -549,15 +520,7 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
         async_cb_list = &cb;
         LeaveCriticalSection(&async_cb_lock);
 
-#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
-        /* Only signal if the list was empty */
-        if (empty) {
-            char c;
-            write(async_cb_pipe[1], &c, 1);
-        }
-#else
         SetEvent(async_cb_cond);
-#endif
 
         /* Wait for the thread executing the ruby callback to signal it is done */
         WaitForSingleObject(cb.async_event, INFINITE);
@@ -575,7 +538,6 @@ struct async_wait {
 static void * async_cb_wait(void *);
 static void async_cb_stop(void *);
 
-#if defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)
 static VALUE
 async_cb_event(void* unused)
 {
@@ -583,11 +545,7 @@ async_cb_event(void* unused)
 
     w.stop = false;
     while (!w.stop) {
-#if defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL)
         rb_thread_call_without_gvl(async_cb_wait, &w, async_cb_stop, &w);
-#else
-        rb_thread_blocking_region(async_cb_wait, &w, async_cb_stop, &w);
-#endif
         if (w.cb != NULL) {
             /* Start up a new ruby thread to run the ruby callback */
             rb_thread_create(async_cb_call, w.cb);
@@ -596,69 +554,6 @@ async_cb_event(void* unused)
 
     return Qnil;
 }
-
-#elif defined(_WIN32)
-static VALUE
-async_cb_event(void* unused)
-{
-    while (true) {
-        struct gvl_callback* cb;
-        char buf[64];
-        fd_set rfds;
-
-        FD_ZERO(&rfds);
-        FD_SET(async_cb_pipe[0], &rfds);
-        rb_thread_select(async_cb_pipe[0] + 1, &rfds, NULL, NULL, NULL);
-        read(async_cb_pipe[0], buf, sizeof(buf));
-
-        EnterCriticalSection(&async_cb_lock);
-        cb = async_cb_list;
-        async_cb_list = NULL;
-        LeaveCriticalSection(&async_cb_lock);
-
-        while (cb != NULL) {
-            struct gvl_callback* next = cb->next;
-            /* Start up a new ruby thread to run the ruby callback */
-            rb_thread_create(async_cb_call, cb);
-            cb = next;
-        }
-    }
-
-    return Qnil;
-}
-#else
-static VALUE
-async_cb_event(void* unused)
-{
-    while (true) {
-        struct gvl_callback* cb;
-        char buf[64];
-
-        if (read(async_cb_pipe[0], buf, sizeof(buf)) < 0) {
-            rb_thread_wait_fd(async_cb_pipe[0]);
-            while (read(async_cb_pipe[0], buf, sizeof (buf)) < 0) {
-                if (rb_io_wait_readable(async_cb_pipe[0]) != Qtrue) {
-                    return Qfalse;
-                }
-            }
-        }
-
-        pthread_mutex_lock(&async_cb_mutex);
-        cb = async_cb_list;
-        async_cb_list = NULL;
-        pthread_mutex_unlock(&async_cb_mutex);
-
-        while (cb != NULL) {
-            struct gvl_callback* next = cb->next;
-            /* Start up a new ruby thread to run the ruby callback */
-            rb_thread_create(async_cb_call, cb);
-            cb = next;
-        }
-    }
-
-    return Qnil;
-}
-#endif
 
 #ifdef _WIN32
 static void *

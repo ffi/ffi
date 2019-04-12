@@ -94,9 +94,6 @@ typedef struct rbffi_blocking_call {
     void **ffiValues;
     void* retval;
     void* params;
-#if !(defined(HAVE_RB_THREAD_BLOCKING_REGION) || defined(HAVE_RB_THREAD_CALL_WITHOUT_GVL))
-    void* stkretval;
-#endif
 } rbffi_blocking_call_t;
 
 VALUE rbffi_do_blocking_call(void* data);

@@ -191,7 +191,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
     for (i = 0; i < paramCount; ++i) {
         VALUE rbType = rb_ary_entry(parameterTypes, i);
-        
+
         if (!rb_obj_is_kind_of(rbType, rbffi_TypeClass)) {
             rb_raise(rb_eTypeError, "wrong type.  Expected (FFI::Type)");
         }
@@ -210,7 +210,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
                 rbType = rb_const_get(rbffi_TypeClass, rb_intern("UINT32"));
                 Data_Get_Struct(rbType, Type, paramTypes[i]);
                 break;
-            
+
             case NATIVE_FLOAT32:
                 rbType = rb_const_get(rbffi_TypeClass, rb_intern("DOUBLE"));
                 Data_Get_Struct(rbType, Type, paramTypes[i]);
@@ -219,8 +219,8 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
             default:
                 break;
         }
-        
-        
+
+
         ffiParamTypes[i] = paramTypes[i]->ffiType;
         if (ffiParamTypes[i] == NULL) {
             rb_raise(rb_eArgError, "Invalid parameter type #%x", paramTypes[i]->nativeType);
@@ -254,13 +254,9 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
     rbffi_SetupCallParams(paramCount, argv, -1, paramTypes, params,
         ffiValues, NULL, 0, invoker->rbEnums);
-    
+
     rbffi_frame_push(&frame);
-#ifdef HAVE_RB_THREAD_CALL_WITHOUT_GVL
-    /* In Call.c, blocking: true is supported on older ruby variants
-     * without rb_thread_call_without_gvl by allocating on the heap instead
-     * of the stack. Since this functionality is being added later,
-     * we’re skipping support for old rubies here. */
+
     if(unlikely(invoker->blocking)) {
         rbffi_blocking_call_t* bc;
         bc = ALLOCA_N(rbffi_blocking_call_t, 1);
@@ -275,13 +271,11 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     } else {
         ffi_call(&cif, FFI_FN(invoker->function), retval, ffiValues);
     }
-#else
-    ffi_call(&cif, FFI_FN(invoker->function), retval, ffiValues);
-#endif
+
     rbffi_frame_pop(&frame);
-    
+
     rbffi_save_errno();
-    
+
     if (RTEST(frame.exc) && frame.exc != Qnil) {
         rb_exc_raise(frame.exc);
     }
