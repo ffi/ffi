@@ -44,6 +44,8 @@ CLEAN.include 'build'
 CLEAN.include 'conftest.dSYM'
 CLEAN.include 'spec/ffi/fixtures/libtest.{dylib,so,dll}'
 CLEAN.include 'spec/ffi/fixtures/*.o'
+CLEAN.include 'spec/ffi/embed-test/ext/*.{o,def}'
+CLEAN.include 'spec/ffi/embed-test/ext/Makefile'
 CLEAN.include "pkg/ffi-*-{mingw32,java}"
 CLEAN.include 'lib/1.*'
 CLEAN.include 'lib/2.*'
