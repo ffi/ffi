@@ -1,4 +1,4 @@
-# Ruby-FFI https://wiki.github.com/ffi/ffi [![Build Status](https://travis-ci.org/ffi/ffi.svg?branch=master)](https://travis-ci.org/ffi/ffi) [![Build status Windows](https://ci.appveyor.com/api/projects/status/r8wxn1sd4s794gg1/branch/master?svg=true)](https://ci.appveyor.com/project/larskanis/ffi-aofqa/branch/master)
+# Ruby-FFI https://github.com/ffi/ffi/wiki [![Build Status](https://travis-ci.org/ffi/ffi.svg?branch=master)](https://travis-ci.org/ffi/ffi) [![Build status Windows](https://ci.appveyor.com/api/projects/status/r8wxn1sd4s794gg1/branch/master?svg=true)](https://ci.appveyor.com/project/larskanis/ffi-aofqa/branch/master)
 
 ## Description
 
@@ -6,7 +6,7 @@ Ruby-FFI is a gem for programmatically loading dynamically-linked native
 libraries, binding functions within them, and calling those functions
 from Ruby code. Moreover, a Ruby-FFI extension works without changes
 on CRuby (MRI), JRuby, Rubinius and TruffleRuby. [Discover why you should write your next extension
-using Ruby-FFI](https://wiki.github.com/ffi/ffi/why-use-ffi).
+using Ruby-FFI](https://github.com/ffi/ffi/wiki/why-use-ffi).
 
 ## Features
 
@@ -33,8 +33,8 @@ MyLib.puts 'Hello, World using libc!'
 For less minimalistic and more examples you may look at:
 
 * the `samples/` folder
-* the examples on the [wiki](https://wiki.github.com/ffi/ffi)
-* the projects using FFI listed on the wiki: https://wiki.github.com/ffi/ffi/projects-using-ffi
+* the examples on the [wiki](https://github.com/ffi/ffi/wiki)
+* the projects using FFI listed on the wiki: https://github.com/ffi/ffi/wiki/projects-using-ffi
 
 ## Requirements
 
