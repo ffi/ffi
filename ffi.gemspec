@@ -8,6 +8,12 @@ Gem::Specification.new do |s|
   s.homepage = 'http://wiki.github.com/ffi/ffi'
   s.summary = 'Ruby FFI'
   s.description = 'Ruby FFI library'
+  if s.respond_to?(:metadata)
+    s.metadata['changelog_uri'] = 'https://github.com/ffi/ffi/blob/master/CHANGELOG.md'
+    s.metadata['wiki_uri'] = 'https://github.com/ffi/ffi/wiki'
+    s.metadata['bug_tracker_uri'] = 'https://github.com/ffi/ffi/issues'
+    s.metadata['source_code_uri'] = 'https://github.com/ffi/ffi/'    
+  end
   s.files = `git ls-files -z`.split("\x0").reject do |f|
     f =~ /^(bench|gen|libtest|nbproject|spec)/
   end
