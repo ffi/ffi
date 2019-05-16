@@ -75,6 +75,7 @@ describe "Callback" do
     attach_function :testCallbackVrS64, :testClosureVrLL, [ :cbVrS64 ], :long_long
     attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
+    attach_function :testCallbackReturningFunction, :testClosureVrP, [ :cbVrP ], :cbVrP
     attach_function :testCallbackVrY, :testClosureVrP, [ :cbVrY ], S8F32S32.ptr
     attach_function :testCallbackVrT, :testClosureVrT, [ :cbVrT ], S8F32S32.by_value
     attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32.ptr ], :void
@@ -264,6 +265,12 @@ describe "Callback" do
   it "returning :pointer (MemoryPointer)" do
     p = FFI::MemoryPointer.new :long
     expect(LibTest.testCallbackVrP { p }).to eq(p)
+  end
+
+  it "returning a callback function" do
+    ret = LibTest.testCallbackReturningFunction { FFI::Pointer.new(42) }
+    expect(ret).to be_kind_of(FFI::Function)
+    expect(ret.address).to eq(42)
   end
 
   it "returning struct by value" do
