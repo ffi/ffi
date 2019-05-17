@@ -138,6 +138,14 @@ describe "Buffer#put_ulong_long" do
 end
 
 describe "Reading/Writing binary strings" do
+  it "Buffer#write_bytes and read_bytes" do
+    str = "hello\0world"
+    buf = FFI::Buffer.new 11
+    buf.write_bytes(str)
+    s2 = buf.read_bytes(11)
+    expect(s2).to eq(str)
+  end
+
   it "Buffer#put_bytes" do
     str = "hello\0world"
     buf = FFI::Buffer.new 1024

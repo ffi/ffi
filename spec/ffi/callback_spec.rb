@@ -75,6 +75,7 @@ describe "Callback" do
     attach_function :testCallbackVrS64, :testClosureVrLL, [ :cbVrS64 ], :long_long
     attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
     attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
+    attach_function :testCallbackReturningFunction, :testClosureVrP, [ :cbVrP ], :cbVrP
     attach_function :testCallbackVrY, :testClosureVrP, [ :cbVrY ], S8F32S32.ptr
     attach_function :testCallbackVrT, :testClosureVrT, [ :cbVrT ], S8F32S32.by_value
     attach_function :testCallbackTrV, :testClosureTrV, [ :cbTrV, S8F32S32.ptr ], :void
@@ -264,6 +265,12 @@ describe "Callback" do
   it "returning :pointer (MemoryPointer)" do
     p = FFI::MemoryPointer.new :long
     expect(LibTest.testCallbackVrP { p }).to eq(p)
+  end
+
+  it "returning a callback function" do
+    ret = LibTest.testCallbackReturningFunction { FFI::Pointer.new(42) }
+    expect(ret).to be_kind_of(FFI::Function)
+    expect(ret.address).to eq(42)
   end
 
   it "returning struct by value" do
@@ -500,28 +507,32 @@ describe "Callback with " do
     expect(v).to eq(-1)
   end
 
+  def testCallbackU8rV(value)
+    v1 = 0xdeadbeef
+    LibTest.testCallbackU8rV(value) { |i| v1 = i }
+    expect(v1).to eq(value)
+
+    # Using a FFI::Function (v2) should be consistent with the direct callback (v1)
+    v2 = 0xdeadbeef
+    fun = FFI::Function.new(:void, [:uchar]) { |i| v2 = i }
+    LibTest.testCallbackU8rV(fun, value)
+    expect(v2).to eq(value)
+  end
+
   it ":uchar (0) argument" do
-    v = 0xdeadbeef
-    LibTest.testCallbackU8rV(0) { |i| v = i }
-    expect(v).to eq(0)
+    testCallbackU8rV(0)
   end
 
   it ":uchar (127) argument" do
-    v = 0xdeadbeef
-    LibTest.testCallbackU8rV(127) { |i| v = i }
-    expect(v).to eq(127)
+    testCallbackU8rV(127)
   end
 
   it ":uchar (128) argument" do
-    v = 0xdeadbeef
-    LibTest.testCallbackU8rV(128) { |i| v = i }
-    expect(v).to eq(128)
+    testCallbackU8rV(128)
   end
 
   it ":uchar (255) argument" do
-    v = 0xdeadbeef
-    LibTest.testCallbackU8rV(255) { |i| v = i }
-    expect(v).to eq(255)
+    testCallbackU8rV(255)
   end
 
   it ":short (0) argument" do

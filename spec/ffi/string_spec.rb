@@ -11,6 +11,7 @@ describe "String tests" do
     ffi_lib TestLibrary::PATH
     attach_function :ptr_ret_pointer, [ :pointer, :int], :string
     attach_function :string_equals, [ :string, :string ], :int
+    attach_function :pointer_string_equals, :string_equals, [ :pointer, :string ], :int
     attach_function :string_dummy, [ :string ], :void
     attach_function :string_null, [ ], :string
   end
@@ -30,6 +31,12 @@ describe "String tests" do
     str = StrLibTest.ptr_ret_pointer(mp, 0)
     expect(str).to eq("test")
     expect(str).to be_tainted
+  end
+
+  it "A String can be passed to a :pointer argument" do
+    str = "string buffer"
+    expect(StrLibTest.pointer_string_equals(str, str)).to eq(1)
+    expect(StrLibTest.pointer_string_equals(str + "a", str)).to eq(0)
   end
 
   it "Poison null byte raises error" do
