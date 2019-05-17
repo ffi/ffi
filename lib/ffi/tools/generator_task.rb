@@ -1,17 +1,6 @@
-begin
-  require 'ffi/struct_generator'
-  require 'ffi/const_generator'
-  require 'ffi/generator'
-rescue LoadError
-  # from Rakefile
-  require 'lib/ffi/struct_generator'
-  require 'lib/ffi/const_generator'
-  require 'lib/ffi/generator'
-end
-
+require 'ffi/tools/generator'
 require 'rake'
 require 'rake/tasklib'
-require 'tempfile'
 
 ##
 # Rake task that calculates C structs for FFI::Struct.

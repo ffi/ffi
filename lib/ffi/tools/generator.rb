@@ -1,3 +1,6 @@
+require 'ffi/tools/struct_generator'
+require 'ffi/tools/const_generator'
+
 module FFI
 
   # @private
