@@ -3,7 +3,49 @@ require 'ffi/tools/const_generator'
 
 module FFI
 
-  # @private
+  ##
+  # Generate files with C structs for FFI::Struct and C constants.
+  #
+  # == A simple example
+  #
+  # In file +zlib.rb.ffi+:
+  #   module Zlib
+  #     @@@
+  #     constants do |c|
+  #       c.include "zlib.h"
+  #       c.const :ZLIB_VERNUM
+  #     end
+  #     @@@
+  #
+  #     class ZStream < FFI::Struct
+  #
+  #       struct do |s|
+  #         s.name "struct z_stream_s"
+  #         s.include "zlib.h"
+  #
+  #         s.field :next_in,   :pointer
+  #         s.field :avail_in,  :uint
+  #         s.field :total_in,  :ulong
+  #       end
+  #       @@@
+  #     end
+  #   end
+  #
+  # Translate the file:
+  #   require "ffi/tools/generator"
+  #   FFI::Generator.new "zlib.rb.ffi", "zlib.rb"
+  #
+  # Generates the file +zlib.rb+ with constant values and offsets:
+  #   module Zlib
+  #   ZLIB_VERNUM = 4784
+  #
+  #   class ZStream < FFI::Struct
+  #     layout :next_in, :pointer, 0,
+  #            :avail_in, :uint, 8,
+  #            :total_in, :ulong, 16
+  #   end
+  #
+  # @see FFI::Generator::Task for easy integration in a Rakefile
   class Generator
 
     def initialize(ffi_name, rb_name, options = {})

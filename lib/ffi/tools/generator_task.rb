@@ -3,9 +3,16 @@ require 'rake'
 require 'rake/tasklib'
 
 ##
-# Rake task that calculates C structs for FFI::Struct.
-
-# @private
+# Add Rake tasks that generate files with C structs for FFI::Struct and C constants.
+#
+# @example a simple example for your Rakefile
+#   require "ffi/tools/generator_task"
+#   # Add a task to generate my_object.rb out of my_object.rb.ffi
+#   FFI::Generator::Task.new ["my_object.rb"], cflags: "-I/usr/local/mylibrary"
+#
+# The generated files are also added to the 'clear' task.
+#
+# @see FFI::Generator for a description of the file content
 class FFI::Generator::Task < Rake::TaskLib
 
   def initialize(rb_names)
