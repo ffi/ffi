@@ -1,3 +1,24 @@
+1.11.0 / 2019-05-17
+-------------------
+
+Added:
+* Add proper documentation to FFI::Generator and ::Task
+* Add gemspec metadata. #696, #698
+
+Changed:
+* Add ability to disable or force system libffi. #669
+  Use like `gem inst ffi -- --enable-system-libffi` .
+* Move FFI::Platform::CPU from C to Ruby. #663
+* Fix stdcall on Win32. #649, #669
+* Move FFI::StructByReference to Ruby. #681
+* Fix FFI::Pointer#read_string(0) to return a binary String. #692
+* Fix load paths for FFI::Generator::Task
+
+Removed:
+* Remove ruby-1.8 and 1.9 compatibility code. #683
+* Remove unused spec files. #684
+
+
 1.10.0 / 2019-01-06
 -------------------
 
