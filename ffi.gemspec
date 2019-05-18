@@ -34,7 +34,7 @@ Gem::Specification.new do |s|
   s.rdoc_options = %w[--exclude=ext/ffi_c/.*\.o$ --exclude=ffi_c\.(bundle|so)$]
   s.license = 'BSD-3-Clause'
   s.require_paths << 'ext/ffi_c'
-  s.required_ruby_version = '>= 1.9'
+  s.required_ruby_version = '>= 2.0'
   s.add_development_dependency 'rake', '~> 12.1'
   s.add_development_dependency 'rake-compiler', '~> 1.0'
   s.add_development_dependency 'rake-compiler-dock', '~> 0.7.0'
