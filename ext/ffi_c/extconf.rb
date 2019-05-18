@@ -39,8 +39,8 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   have_header('shlwapi.h')
   have_func('rb_thread_call_without_gvl') || abort("Ruby C-API function `rb_thread_call_without_gvl` is missing")
   have_func('ruby_native_thread_p')
-  if RbConfig::CONFIG['host_os'].downcase !~ /darwin/ || RUBY_VERSION >= "2.3.0"
-    # On OSX ruby_thread_has_gvl_p is detected but fails at runtime for ruby < 2.3.0
+  if RUBY_VERSION >= "2.3.0"
+    # On OSX and Linux ruby_thread_has_gvl_p() is detected but fails at runtime for ruby < 2.3.0
     have_func('ruby_thread_has_gvl_p')
   end
 
