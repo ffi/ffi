@@ -1,3 +1,11 @@
+1.11.1 / 2019-05-20
+-------------------
+
+Changed:
+* Raise required ruby version to >=2.0. #699, #700
+* Fix a possible linker error on ruby < 2.3 on Linux.
+
+
 1.11.0 / 2019-05-17
 -------------------
 
