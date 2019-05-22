@@ -8,6 +8,7 @@ Changed:
 
 1.11.0 / 2019-05-17
 -------------------
+This version was yanked on 2019-05-20 to fix an install issue on ruby-1.9.3. #700
 
 Added:
 * Add ability to disable or force use of system libffi. #669
