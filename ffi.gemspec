@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   s.version = FFI::VERSION
   s.author = 'Wayne Meissner'
   s.email = 'wmeissner@gmail.com'
-  s.homepage = 'http://wiki.github.com/ffi/ffi'
+  s.homepage = 'https://github.com/ffi/ffi/wiki'
   s.summary = 'Ruby FFI'
   s.description = 'Ruby FFI library'
   if s.respond_to?(:metadata)
