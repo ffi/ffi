@@ -7,6 +7,8 @@ require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
 require "ffi/tools/generator"
 
+# We use `SPEC_NUMBER_PLACEHOLDER`, since the generated values are
+# platform-spec.
 describe "Generator" do
   include FFI
 
@@ -47,7 +49,7 @@ describe "Generator" do
       # This file is generated from `#{input_file.to_path}'. Do not edit.
 
       module Zlib
-        ZLIB_VERNUM = 4784
+        ZLIB_VERNUM = SPEC_NUMBER_PLACEHOLDER
 
 
 
@@ -55,9 +57,9 @@ describe "Generator" do
 
         class ZStream < FFI::Struct
 
-          layout :next_in, :pointer, 0,
-                 :avail_in, :uint, 8,
-                 :total_in, :ulong, 16
+          layout :next_in, :pointer, SPEC_NUMBER_PLACEHOLDER,
+                 :avail_in, :uint, SPEC_NUMBER_PLACEHOLDER,
+                 :total_in, :ulong, SPEC_NUMBER_PLACEHOLDER
 
 
 
@@ -79,6 +81,8 @@ describe "Generator" do
 
   it "Generates FFI::Structs and C constants from a template file" do
     FFI::Generator.new input_file.to_path, output_file.to_path
-    expect(expected_output).to eq(File.read output_file)
+    output_contents = File.read(output_file)
+                          .gsub(/ \d+/, ' SPEC_NUMBER_PLACEHOLDER')
+    expect(expected_output).to eq(output_contents)
   end
 end
