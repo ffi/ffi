@@ -176,6 +176,7 @@ file types_conf => File.join("lib", "ffi", "version.rb") do |task|
   end
 end
 
+desc "Create or update type information for platform #{FFI::Platform::NAME}"
 task :types_conf => types_conf do
 end
 
