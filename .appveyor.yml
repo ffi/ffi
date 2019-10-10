@@ -23,5 +23,5 @@ environment:
       EXTCONFOPTS: "--disable-system-libffi"
     - RUBYVER: 25-x64
       EXTCONFOPTS: "--enable-system-libffi"
-    - RUBYVER: 25
+    - RUBYVER: 26
       EXTCONFOPTS: "--enable-system-libffi"
