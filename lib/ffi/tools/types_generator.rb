@@ -50,6 +50,7 @@ module FFI
 #include <sys/types.h>
 #if !(defined(WIN32))
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <sys/resource.h>
 #endif
         C
