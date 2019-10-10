@@ -88,8 +88,8 @@ static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
 static void* callback_with_gvl(void* data);
-static VALUE invoke_callback(void* data);
-static VALUE save_callback_exception(void* data, VALUE exc);
+static VALUE invoke_callback(VALUE data);
+static VALUE save_callback_exception(VALUE data, VALUE exc);
 
 #define DEFER_ASYNC_CALLBACK 1
 
@@ -658,7 +658,7 @@ callback_with_gvl(void* data)
 }
 
 static VALUE
-invoke_callback(void* data)
+invoke_callback(VALUE data)
 {
     struct gvl_callback* cb = (struct gvl_callback *) data;
 
@@ -848,7 +848,7 @@ invoke_callback(void* data)
 }
 
 static VALUE
-save_callback_exception(void* data, VALUE exc)
+save_callback_exception(VALUE data, VALUE exc)
 {
     struct gvl_callback* cb = (struct gvl_callback *) data;
 

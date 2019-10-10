@@ -96,8 +96,8 @@ typedef struct rbffi_blocking_call {
     void* params;
 } rbffi_blocking_call_t;
 
-VALUE rbffi_do_blocking_call(void* data);
-VALUE rbffi_save_frame_exception(void *data, VALUE exc);
+VALUE rbffi_do_blocking_call(VALUE data);
+VALUE rbffi_save_frame_exception(VALUE data, VALUE exc);
 
 #ifdef	__cplusplus
 }

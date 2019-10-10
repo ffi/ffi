@@ -9,9 +9,9 @@
 
 static VALUE rb_cBigDecimal = Qnil;
 static VALUE bigdecimal_load(VALUE unused);
-static VALUE bigdecimal_failed(VALUE value);
+static VALUE bigdecimal_failed(VALUE value, VALUE exc);
 
-VALUE 
+VALUE
 rbffi_longdouble_new(long double ld)
 {
     if (!RTEST(rb_cBigDecimal)) {
@@ -28,13 +28,13 @@ rbffi_longdouble_new(long double ld)
     return rb_float_new(ld);
 }
 
-long double 
+long double
 rbffi_num2longdouble(VALUE value)
 {
     if (TYPE(value) == T_FLOAT) {
         return rb_num2dbl(value);
     }
-    
+
     if (!RTEST(rb_cBigDecimal) && rb_const_defined(rb_cObject, rb_intern("BigDecimal"))) {
         rb_cBigDecimal = rb_const_get(rb_cObject, rb_intern("BigDecimal"));
     }
@@ -49,15 +49,15 @@ rbffi_num2longdouble(VALUE value)
 }
 
 
-static VALUE 
+static VALUE
 bigdecimal_load(VALUE unused)
 {
     rb_require("bigdecimal");
     return rb_const_get(rb_cObject, rb_intern("BigDecimal"));
 }
 
-static VALUE 
-bigdecimal_failed(VALUE value)
+static VALUE
+bigdecimal_failed(VALUE value, VALUE exc)
 {
     return value;
 }
