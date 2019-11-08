@@ -20,8 +20,26 @@ describe "String tests" do
     mp = FFI::MemoryPointer.new 1024
     mp.put_string(0, "test\0")
     str = mp.get_string(0)
-    expect(str.tainted?).to be true
+    expect(str).to eq("test")
+    expect(str).to be_tainted
   end
+
+  it "MemoryPointer#read_string returns a tainted string" do
+    mp = FFI::MemoryPointer.new 1024
+    mp.put_string(0, "test\0")
+    str = mp.read_string
+    expect(str).to eq("test")
+    expect(str).to be_tainted
+  end
+
+  it "MemoryPointer#write_string" do
+    mp = FFI::MemoryPointer.new 1024
+    mp.write_string("test")
+    str = mp.read_string
+    expect(str).to eq("test")
+    expect(str).to be_tainted
+  end
+
 
   it "String returned by a method is tainted" do
     mp = FFI::MemoryPointer.new :pointer

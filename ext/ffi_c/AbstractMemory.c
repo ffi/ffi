@@ -422,6 +422,31 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
 }
 
 /*
+ * call-seq: memory.read_string(length=nil)
+ * Return string contained in memory.
+ * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
+ * @return [String]
+ * @raise {IndexError} if +length+ is too great
+ * @raise {NullPointerError} if memory not initialized
+ */
+static VALUE
+memory_read_string(int argc, VALUE* argv, VALUE self)
+{
+    VALUE length = Qnil;
+    AbstractMemory* ptr = MEMORY(self);
+    long len;
+    char* end;
+    int nargs = rb_scan_args(argc, argv, "1", &length);
+
+    len = nargs > 1 && length != Qnil ? NUM2LONG(length) : (ptr->size);
+    checkRead(ptr);
+    checkBounds(ptr, 0, len);
+
+    end = memchr(ptr->address, 0, len);
+    return rb_tainted_str_new((char *) ptr->address, (end != NULL ? end - ptr->address : len));
+}
+
+/*
  * call-seq: memory.get_array_of_string(offset, count=nil)
  * Return an array of strings contained in memory.
  * @param [Numeric] offset point in memory to start from
@@ -517,6 +542,33 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
 
     memcpy(ptr->address + off, RSTRING_PTR(str), len);
     *((char *) ptr->address + off + len) = '\0';
+
+    return self;
+}
+
+/*
+ * call-seq: memory.write_string(str)
+ * @param [String] str
+ * @return [self]
+ * @raise {SecurityError} when writing unsafe string to memory
+ * @raise {IndexError} if +offset+ is too great
+ * @raise {NullPointerError} if memory not initialized
+ * Put a string in memory.
+ */
+static VALUE
+memory_write_string(VALUE self, VALUE str)
+{
+    AbstractMemory* ptr = MEMORY(self);
+    long len;
+
+    Check_Type(str, T_STRING);
+    len = RSTRING_LEN(str);
+
+    checkWrite(ptr);
+    checkBounds(ptr, 0, len + 1);
+
+    memcpy(ptr->address, RSTRING_PTR(str), len);
+    *((char *) ptr->address + len) = '\0';
 
     return self;
 }
@@ -1086,6 +1138,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
 
     rb_define_method(classMemory, "get_string", memory_get_string, -1);
     rb_define_method(classMemory, "put_string", memory_put_string, 2);
+    rb_define_method(classMemory, "read_string", memory_read_string, -1);
+    rb_define_method(classMemory, "write_string", memory_write_string, 1);
     rb_define_method(classMemory, "get_bytes", memory_get_bytes, 2);
     rb_define_method(classMemory, "put_bytes", memory_put_bytes, -1);
     rb_define_method(classMemory, "read_bytes", memory_read_bytes, 1);
