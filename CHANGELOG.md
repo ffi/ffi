@@ -10,6 +10,7 @@ Changed:
 * Remove MACOSX_DEPLOYMENT_TARGET that was targeting very old version 10.4. #647
 * Fix library name mangling for non glibc Linux/UNIX. #727
 * Fix compiler warnings raised by ruby-2.7
+* Update libffi to latest master.
 
 
 1.11.1 / 2019-05-20
