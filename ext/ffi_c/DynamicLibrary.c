@@ -164,7 +164,7 @@ library_dlerror(VALUE self)
 {
     char errmsg[1024];
     dl_error(errmsg, sizeof(errmsg));
-    return rb_tainted_str_new2(errmsg);
+    return rb_str_new2(errmsg);
 }
 
 static void
