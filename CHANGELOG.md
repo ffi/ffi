@@ -1,3 +1,10 @@
+1.11.3 / 2019-11-25
+-------------------
+
+Removed:
+* Remove support for tainted objects which cause deprecation warnings in ruby-2.7. #730
+
+
 1.11.2 / 2019-11-11
 -------------------
 
