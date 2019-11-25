@@ -298,10 +298,6 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                     param->ptr = NULL;
 
                 } else {
-                    if (rb_safe_level() >= 1 && OBJ_TAINTED(argv[argidx])) {
-                        rb_raise(rb_eSecurityError, "Unsafe string parameter");
-                    }
-
                     param->ptr = StringValueCStr(argv[argidx]);
                 }
 

@@ -724,7 +724,7 @@ invoke_callback(VALUE data)
 	      param = rbffi_longdouble_new(*(long double *) parameters[i]);
                 break;
             case NATIVE_STRING:
-                param = (*(void **) parameters[i] != NULL) ? rb_tainted_str_new2(*(char **) parameters[i]) : Qnil;
+                param = (*(void **) parameters[i] != NULL) ? rb_str_new2(*(char **) parameters[i]) : Qnil;
                 break;
             case NATIVE_POINTER:
                 param = rbffi_Pointer_NewInstance(*(void **) parameters[i]);

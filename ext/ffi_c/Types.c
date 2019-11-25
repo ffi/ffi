@@ -80,7 +80,7 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
 	  return rbffi_longdouble_new(*(long double *) ptr);
 
         case NATIVE_STRING:
-            return (*(void **) ptr != NULL) ? rb_tainted_str_new2(*(char **) ptr) : Qnil;
+            return (*(void **) ptr != NULL) ? rb_str_new2(*(char **) ptr) : Qnil;
         case NATIVE_POINTER:
             return rbffi_Pointer_NewInstance(*(void **) ptr);
         case NATIVE_BOOL:

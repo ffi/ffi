@@ -417,7 +417,7 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
     checkBounds(ptr, off, len);
 
     end = memchr(ptr->address + off, 0, len);
-    return rb_tainted_str_new((char *) ptr->address + off,
+    return rb_str_new((char *) ptr->address + off,
             (end != NULL ? end - ptr->address - off : len));
 }
 
@@ -453,7 +453,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
         
         for (i = 0; i < count; ++i) {
             const char* strptr = *((const char**) (ptr->address + off) + i);
-            rb_ary_push(retVal, (strptr == NULL ? Qnil : rb_tainted_str_new2(strptr)));
+            rb_ary_push(retVal, (strptr == NULL ? Qnil : rb_str_new2(strptr)));
         }
 
     } else {
@@ -463,7 +463,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
             if (strptr == NULL) {
                 break;
             }
-            rb_ary_push(retVal, rb_tainted_str_new2(strptr));
+            rb_ary_push(retVal, rb_str_new2(strptr));
         }
     }
 
@@ -542,7 +542,7 @@ memory_get_bytes(VALUE self, VALUE offset, VALUE length)
     checkRead(ptr);
     checkBounds(ptr, off, len);
     
-    return rb_tainted_str_new((char *) ptr->address + off, len);
+    return rb_str_new((char *) ptr->address + off, len);
 }
 
 /*
@@ -583,10 +583,6 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
     checkWrite(ptr);
     checkBounds(ptr, off, len);
 
-    if (rb_safe_level() >= 1 && OBJ_TAINTED(str)) {
-        rb_raise(rb_eSecurityError, "Writing unsafe string to memory");
-        return Qnil;
-    }
     memcpy(ptr->address + off, RSTRING_PTR(str) + idx, len);
 
     return self;
@@ -718,7 +714,7 @@ memory_op_get_strptr(AbstractMemory* ptr, long offset)
         memcpy(&tmp, ptr->address + offset, sizeof(tmp));
     }
 
-    return tmp != NULL ? rb_tainted_str_new2(tmp) : Qnil;
+    return tmp != NULL ? rb_str_new2(tmp) : Qnil;
 }
 
 static void
