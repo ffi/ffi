@@ -37,7 +37,7 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>= 2.0'
   s.add_development_dependency 'rake', '~> 12.1'
   s.add_development_dependency 'rake-compiler', '~> 1.0'
-  s.add_development_dependency 'rake-compiler-dock', '~> 0.7.0'
+  s.add_development_dependency 'rake-compiler-dock', '~> 1.0'
   s.add_development_dependency 'rspec', '~> 2.14.1'
   s.add_development_dependency 'rubygems-tasks', "~> 0.2.4"
 end
