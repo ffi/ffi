@@ -23,6 +23,8 @@ matrix:
   allow_failures:
     - os: osx
       rvm: ruby-head
+    - os: osx
+      rvm: 2.3.8
   include:
     - name: powerpc
       language: generic
