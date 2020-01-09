@@ -463,13 +463,24 @@ module StructSpecsStructTests
       expect(s.offset_of(:c)).to eq(8)
     end
 
-    it "denies redefinition of struct layouts" do
-      expect do
-        Class.new(FFI::Struct) do
-          layout :a, :int
-          layout :a, :int
-        end
-      end.to raise_error(/struct layout already defined/)
+    if FFI::VERSION < "2"
+      it "warns about redefinition of struct layouts" do
+        expect do
+          Class.new(FFI::Struct) do
+            layout :a, :int
+            layout :a, :int
+          end
+        end.to output(/Redefinition .* will be disallowed in ffi-2.0/).to_stderr
+      end
+    else
+      it "denies redefinition of struct layouts" do
+        expect do
+          Class.new(FFI::Struct) do
+            layout :a, :int
+            layout :a, :int
+          end
+        end.to raise_error(/struct layout already defined/)
+      end
     end
 
     it "allows redefinition of struct layouts in derived classes" do
