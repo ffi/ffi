@@ -38,9 +38,18 @@ For less minimalistic and more examples you may look at:
 
 ## Requirements
 
-When installing the gem on CRuby (MRI) or Rubinius, you will need:
+When installing the gem on CRuby (MRI), you will need:
 * A C compiler (e.g., Xcode on macOS, `gcc` or `clang` on everything else)
+Optionally (speeds up installation):
 * The `libffi` library and development headers - this is commonly in the `libffi-dev` or `libffi-devel` packages
+
+The ffi gem comes with a builtin libffi version, which is used, when the system libffi library is not available or too old.
+Use of the system libffi can be enforced by:
+```
+gem install ffi -- --enable-system-libffi        # to install the gem manually
+bundle config build.ffi --enable-system-libffi   # for bundle install
+```
+or prevented by `--disable-system-libffi`.
 
 On Linux systems running with [PaX](https://en.wikipedia.org/wiki/PaX) (Gentoo, Alpine, etc.), FFI may trigger `mprotect` errors. You may need to disable [mprotect](https://en.wikibooks.org/wiki/Grsecurity/Appendix/Grsecurity_and_PaX_Configuration_Options#Restrict_mprotect.28.29) for ruby (`paxctl -m [/path/to/ruby]`) for the time being until a solution is found.
 
