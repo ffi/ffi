@@ -138,7 +138,7 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
                         && RTEST(rb_funcall2(rbType, rb_intern("reference_required?"), 0, NULL)));
             break;
     }
-    
+
     return self;
 }
 
@@ -239,7 +239,7 @@ static VALUE
 struct_field_put(VALUE self, VALUE pointer, VALUE value)
 {
     StructField* f;
-    
+
     Data_Get_Struct(self, StructField, f);
     if (f->memoryOp == NULL) {
         rb_raise(rb_eArgError, "put not supported for %s", rb_obj_classname(f->rbType));
@@ -261,7 +261,7 @@ static VALUE
 function_field_get(VALUE self, VALUE pointer)
 {
     StructField* f;
-    
+
     Data_Get_Struct(self, StructField, f);
 
     return rbffi_Function_NewInstance(f->rbType, (*rbffi_AbstractMemoryOps.pointer->get)(MEMORY(pointer), f->offset));
@@ -272,7 +272,7 @@ function_field_get(VALUE self, VALUE pointer)
  * @param [AbstractMemory] pointer pointer to a {Struct}
  * @param [Function, Proc] proc
  * @return [Function]
- * Set a {Function} to memory pointed by +pointer+ as a function. 
+ * Set a {Function} to memory pointed by +pointer+ as a function.
  *
  * If a Proc is submitted as +proc+, it is automatically transformed to a {Function}.
  */
@@ -339,11 +339,11 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
 {
     StructField* f;
     ArrayType* array;
-    
+
 
     Data_Get_Struct(self, StructField, f);
     Data_Get_Struct(f->rbType, ArrayType, array);
-    
+
     if (isCharArray(array) && rb_obj_is_instance_of(value, rb_cString)) {
         VALUE argv[2];
 
@@ -501,14 +501,14 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     return self;
 }
 
-/* 
+/*
  * call-seq: [](field)
  * @param [Symbol] field
  * @return [StructLayout::Field]
  * Get a field from the layout.
  */
 static VALUE
-struct_layout_union_bang(VALUE self) 
+struct_layout_union_bang(VALUE self)
 {
     const ffi_type *alignment_types[] = { &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64,
                                           &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
@@ -627,7 +627,7 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
      */
     rbffi_StructLayoutClass = rb_define_class_under(moduleFFI, "StructLayout", ffi_Type);
     rb_global_variable(&rbffi_StructLayoutClass);
-    
+
     /*
      * Document-class: FFI::StructLayout::Field
      * A field in a {StructLayout}.

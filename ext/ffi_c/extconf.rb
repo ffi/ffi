@@ -53,7 +53,6 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   end
 
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
-  $defs << "-DRUBY_1_9" if RUBY_VERSION >= "1.9.0"
   $defs << "-DFFI_BUILDING" if RbConfig::CONFIG['host_os'] =~ /mswin/ # for compatibility with newer libffi
 
   create_header

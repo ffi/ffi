@@ -34,11 +34,7 @@
 #include "extconf.h"
 #include "AbstractMemory.h"
 #include "Type.h"
-#ifdef RUBY_1_9
 #include <ruby/st.h>
-#else
-#include <st.h>
-#endif
 
 #ifdef	__cplusplus
 extern "C" {
@@ -77,7 +73,7 @@ extern "C" {
 
         /** The number of reference tracking fields in this struct */
         int referenceFieldCount;
-        
+
         VALUE rbFieldNames;
         VALUE rbFieldMap;
         VALUE rbFields;
