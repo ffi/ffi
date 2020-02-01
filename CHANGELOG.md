@@ -1,3 +1,9 @@
+1.12.2 / 2020-02-01
+-------------------
+
+* Fix possible segfault at FFI::Struct#[] and []= after GC.compact . #742
+
+
 1.12.1 / 2020-01-14
 -------------------
 
