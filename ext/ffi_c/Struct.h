@@ -69,7 +69,17 @@ extern "C" {
         int size;
         int align;
         ffi_type** ffiTypes;
-        struct st_table* fieldSymbolTable;
+
+        /*
+        * We use the fieldName's minor 8 Bits as index to a 256 entry cache.
+        * This avoids full ruby hash lookups for repeated lookups.
+        */
+        #define FIELD_CACHE_LOOKUP(this, sym) ( &(this)->cache_row[((sym) >> 8) & 0xff] )
+
+        struct field_cache_entry {
+          VALUE fieldName;
+          StructField *field;
+        } cache_row[0x100];
 
         /** The number of reference tracking fields in this struct */
         int referenceFieldCount;

@@ -279,24 +279,25 @@ store_reference_value(StructField* f, Struct* s, VALUE value)
 }
 
 
-static VALUE
+static StructField *
 struct_field(Struct* s, VALUE fieldName)
 {
     StructLayout* layout = s->layout;
-    VALUE rbField;
+    struct field_cache_entry *p_ce = FIELD_CACHE_LOOKUP(layout, fieldName);
 
-    if (likely(SYMBOL_P(fieldName) && st_lookup(layout->fieldSymbolTable, fieldName, (st_data_t *) &rbField))) {
-        return rbField;
+    /* Do a hash lookup only if cache entry is empty or fieldName is unexpected? */
+    if (unlikely(!SYMBOL_P(fieldName) || !p_ce->fieldName || p_ce->fieldName != fieldName)) {
+        VALUE rbField = rb_hash_aref(layout->rbFieldMap, fieldName);
+        if (unlikely(NIL_P(rbField))) {
+            VALUE str = rb_funcall2(fieldName, id_to_s, 0, NULL);
+            rb_raise(rb_eArgError, "No such field '%s'", StringValuePtr(str));
+        }
+        /* Write the retrieved coder to the cache */
+        p_ce->fieldName = fieldName;
+        p_ce->field = (StructField *) DATA_PTR(rbField);
     }
 
-    // TODO does this ever return anything?
-    rbField = rb_hash_aref(layout->rbFieldMap, fieldName);
-    if (rbField == Qnil) {
-        VALUE str = rb_funcall2(fieldName, id_to_s, 0, NULL);
-        rb_raise(rb_eArgError, "No such field '%s'", StringValuePtr(str));
-    }
-
-    return rbField;
+    return p_ce->field;
 }
 
 /*
@@ -308,14 +309,11 @@ static VALUE
 struct_aref(VALUE self, VALUE fieldName)
 {
     Struct* s;
-    VALUE rbField;
     StructField* f;
 
     s = struct_validate(self);
 
-    rbField = struct_field(s, fieldName);
-    f = (StructField *) DATA_PTR(rbField);
-
+    f = struct_field(s, fieldName);
     if (f->get != NULL) {
         return (*f->get)(f, s);
 
@@ -323,7 +321,7 @@ struct_aref(VALUE self, VALUE fieldName)
         return (*f->memoryOp->get)(s->pointer, f->offset);
 
     } else {
-
+        VALUE rbField = rb_hash_aref(s->layout->rbFieldMap, fieldName);
         /* call up to the ruby code to fetch the value */
         return rb_funcall2(rbField, id_get, 1, &s->rbPointer);
     }
@@ -340,14 +338,11 @@ static VALUE
 struct_aset(VALUE self, VALUE fieldName, VALUE value)
 {
     Struct* s;
-    VALUE rbField;
     StructField* f;
-
 
     s = struct_validate(self);
 
-    rbField = struct_field(s, fieldName);
-    f = (StructField *) DATA_PTR(rbField);
+    f = struct_field(s, fieldName);
     if (f->put != NULL) {
         (*f->put)(f, s, value);
 
@@ -356,6 +351,7 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
         (*f->memoryOp->put)(s->pointer, f->offset, value);
 
     } else {
+        VALUE rbField = rb_hash_aref(s->layout->rbFieldMap, fieldName);
         /* call up to the ruby code to set the value */
         VALUE argv[2];
         argv[0] = s->rbPointer;
