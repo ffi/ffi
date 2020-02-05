@@ -311,7 +311,7 @@ trampoline_offsets(long* ctxOffset, long* fnOffset)
 static bool
 prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize)
 {
-    memcpy(code, &ffi_trampoline, trampoline_size());
+    memcpy(code, (void*) &ffi_trampoline, trampoline_size());
     /* Patch the context and function addresses into the stub code */
     *(intptr_t *)((char*)code + trampoline_ctx_offset) = (intptr_t) closure;
     *(intptr_t *)((char*)code + trampoline_func_offset) = (intptr_t) custom_trampoline;
