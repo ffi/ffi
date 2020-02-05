@@ -120,10 +120,9 @@ rbffi_MethodHandle_Free(MethodHandle* handle)
     }
 }
 
-void*
-rbffi_MethodHandle_CodeAddress(MethodHandle* handle)
+rbffi_function_anyargs rbffi_MethodHandle_CodeAddress(MethodHandle* handle)
 {
-    return handle->closure->code;
+    return (rbffi_function_anyargs) handle->closure->code;
 }
 
 #ifndef CUSTOM_TRAMPOLINE
