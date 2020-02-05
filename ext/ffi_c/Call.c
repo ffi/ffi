@@ -353,7 +353,7 @@ call_blocking_function(void* data)
 VALUE
 rbffi_do_blocking_call(VALUE data)
 {
-    rb_thread_call_without_gvl(call_blocking_function, (void*)data, (void *) -1, NULL);
+    rb_thread_call_without_gvl(call_blocking_function, (void*)data, (rb_unblock_function_t *) -1, NULL);
 
     return Qnil;
 }
