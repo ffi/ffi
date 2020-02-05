@@ -68,9 +68,6 @@
 #ifndef roundup
 #  define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
 #endif
-#ifdef _WIN32
-  typedef char* caddr_t;
-#endif
 
 #ifdef USE_RAW
 #  define METHOD_CLOSURE ffi_raw_closure
@@ -237,7 +234,7 @@ custom_trampoline(int argc, VALUE* argv, VALUE self, Closure* handle)
 
 #elif defined(__i386__) && 0
 
-static VALUE custom_trampoline(caddr_t args, Closure*);
+static VALUE custom_trampoline(void *args, Closure*);
 #define TRAMPOLINE_CTX_MAGIC (0xfee1dead)
 #define TRAMPOLINE_FUN_MAGIC (0xbeefcafe)
 
@@ -269,7 +266,7 @@ __asm__(
 );
 
 static VALUE
-custom_trampoline(caddr_t args, Closure* handle)
+custom_trampoline(void *args, Closure* handle)
 {
     FunctionType* fnInfo = (FunctionType *) handle->info;
     return (*fnInfo->invoke)(*(int *) args, *(VALUE **) (args + 4), handle->function, fnInfo);
@@ -286,10 +283,10 @@ static long trampoline_ctx_offset, trampoline_func_offset;
 static long
 trampoline_offset(int off, const long value)
 {
-    caddr_t ptr;
-    for (ptr = (caddr_t) &ffi_trampoline + off; ptr < (caddr_t) &ffi_trampoline_end; ++ptr) {
+    char *ptr;
+    for (ptr = (char *) &ffi_trampoline + off; ptr < (char *) &ffi_trampoline_end; ++ptr) {
         if (*(long *) ptr == value) {
-            return ptr - (caddr_t) &ffi_trampoline;
+            return ptr - (char *) &ffi_trampoline;
         }
     }
 
@@ -315,12 +312,10 @@ trampoline_offsets(long* ctxOffset, long* fnOffset)
 static bool
 prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize)
 {
-    caddr_t ptr = (caddr_t) code;
-
-    memcpy(ptr, &ffi_trampoline, trampoline_size());
+    memcpy(code, &ffi_trampoline, trampoline_size());
     /* Patch the context and function addresses into the stub code */
-    *(intptr_t *)(ptr + trampoline_ctx_offset) = (intptr_t) closure;
-    *(intptr_t *)(ptr + trampoline_func_offset) = (intptr_t) custom_trampoline;
+    *(intptr_t *)((char*)code + trampoline_ctx_offset) = (intptr_t) closure;
+    *(intptr_t *)((char*)code + trampoline_func_offset) = (intptr_t) custom_trampoline;
 
     return true;
 }
@@ -328,7 +323,7 @@ prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t er
 static long
 trampoline_size(void)
 {
-    return (caddr_t) &ffi_trampoline_end - (caddr_t) &ffi_trampoline;
+    return (char *) &ffi_trampoline_end - (char *) &ffi_trampoline;
 }
 
 #endif /* CUSTOM_TRAMPOLINE */
