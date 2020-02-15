@@ -144,10 +144,10 @@ prep_trampoline(void* ctx, void* code, Closure* closure, char* errmsg, size_t er
 #if defined(USE_RAW)
     ffiStatus = ffi_prep_raw_closure(code, &mh_cif, attached_method_invoke, closure);
 #else
-    ffiStatus = ffi_prep_closure(code, &mh_cif, attached_method_invoke, closure);
+    ffiStatus = ffi_prep_closure_loc(code, &mh_cif, attached_method_invoke, closure, code);
 #endif
     if (ffiStatus != FFI_OK) {
-        snprintf(errmsg, errmsgsize, "ffi_prep_closure failed.  status=%#x", ffiStatus);
+        snprintf(errmsg, errmsgsize, "ffi_prep_closure_loc failed.  status=%#x", ffiStatus);
         return false;
     }
 

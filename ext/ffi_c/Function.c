@@ -864,9 +864,9 @@ callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errm
     FunctionType* fnInfo = (FunctionType *) ctx;
     ffi_status ffiStatus;
 
-    ffiStatus = ffi_prep_closure(code, &fnInfo->ffi_cif, callback_invoke, closure);
+    ffiStatus = ffi_prep_closure_loc(code, &fnInfo->ffi_cif, callback_invoke, closure, code);
     if (ffiStatus != FFI_OK) {
-        snprintf(errmsg, errmsgsize, "ffi_prep_closure failed.  status=%#x", ffiStatus);
+        snprintf(errmsg, errmsgsize, "ffi_prep_closure_loc failed.  status=%#x", ffiStatus);
         return false;
     }
 
