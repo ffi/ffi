@@ -839,6 +839,10 @@ invoke_callback(VALUE data)
             }
             break;
 
+        case NATIVE_STRING:
+            *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
+            break;
+
         default:
             *((ffi_arg *) retval) = 0;
             break;
