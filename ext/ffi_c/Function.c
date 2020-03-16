@@ -843,10 +843,11 @@ invoke_callback(VALUE data)
         case NATIVE_STRING:
             if (TYPE(rbReturnValue) == T_DATA) {
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
-            } else if (TYPE(rbReturnValue) == T_STRING) {
-                VALUE obj = rbffi_MemoryPointer_ForString(rbReturnValue);
-
-                *((void **) retval) = ((AbstractMemory *) DATA_PTR(obj))->address;
+//            This causes the block to get run twice
+//            } else if (TYPE(rbReturnValue) == T_STRING) {
+//                VALUE obj = rbffi_MemoryPointer_ForString(rbReturnValue);
+//
+//                *((void **) retval) = ((AbstractMemory *) DATA_PTR(obj))->address;
             } else {
                 *((void **) retval) = NULL;
             }

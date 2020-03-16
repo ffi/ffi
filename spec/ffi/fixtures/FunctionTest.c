@@ -129,6 +129,11 @@ void testAsyncCallback(void (*fn)(int), int value)
 #endif
 }
 
+char *testCallback(char * (*fn)(char *), char *value)
+{
+    return fn(value);
+}
+
 #if defined(_WIN32) && !defined(_WIN64)
 struct StructUCDP {
   unsigned char a1;
