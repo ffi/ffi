@@ -45,6 +45,7 @@ extern "C" {
     extern void rbffi_MemoryPointer_Init(VALUE moduleFFI);
     extern VALUE rbffi_MemoryPointerClass;
     extern VALUE rbffi_MemoryPointer_NewInstance(long size, long count, bool clear);
+    extern VALUE rbffi_MemoryPointer_ForString(VALUE to_str);
 #ifdef	__cplusplus
 }
 #endif

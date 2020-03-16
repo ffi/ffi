@@ -844,10 +844,7 @@ invoke_callback(VALUE data)
             if (TYPE(rbReturnValue) == T_DATA) {
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
             } else if (TYPE(rbReturnValue) == T_STRING) {
-                VALUE s = StringValue(rbReturnValue);
-                VALUE args[] = { INT2FIX(1), LONG2NUM(RSTRING_LEN(s) + 1), Qfalse };
-                VALUE obj = rb_class_new_instance(3, args, rbffi_MemoryPointerClass);
-                rb_funcall(obj, rb_intern("put_string"), 2, INT2FIX(0), s);
+                VALUE obj = rbffi_MemoryPointer_ForString(rbReturnValue);
 
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(obj))->address;
             } else {

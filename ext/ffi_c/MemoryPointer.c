@@ -167,6 +167,12 @@ memptr_s_from_string(VALUE klass, VALUE to_str)
     return obj;
 }
 
+VALUE
+rbffi_MemoryPointer_ForString(VALUE to_str)
+{
+    return memptr_s_from_string(rbffi_MemoryPointerClass, to_str);
+}
+
 void
 rbffi_MemoryPointer_Init(VALUE moduleFFI)
 {
