@@ -350,8 +350,13 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
         argv[0] = INT2FIX(f->offset);
         argv[1] = value;
 
-        rb_funcall2(pointer, rb_intern("put_string"), 2, argv);
-
+        if (RSTRING_LEN(value) < array->length) {
+            rb_funcall2(pointer, rb_intern("put_string"), 2, argv);
+        } else if (RSTRING_LEN(value) == array->length) {
+            rb_funcall2(pointer, rb_intern("put_bytes"), 2, argv);
+        } else {
+            rb_raise(rb_eIndexError, "String is longer (%ld bytes) than the char array (%d bytes)", RSTRING_LEN(value), array->length);
+        }
     } else {
 #ifdef notyet
         MemoryOp* op;
