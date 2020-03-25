@@ -21,7 +21,7 @@ rbffi_longdouble_new(long double ld)
 
     if (RTEST(rb_cBigDecimal) && rb_cBigDecimal != rb_cObject) {
         char buf[128];
-        return rb_funcall(rb_cBigDecimal, rb_intern("new"), 1, rb_str_new(buf, sprintf(buf, "%.35Le", ld)));
+        return rb_funcall(rb_mKernel, rb_intern("BigDecimal"), 1, rb_str_new(buf, sprintf(buf, "%.35Le", ld)));
     }
 
     /* Fall through to handling as a float */
