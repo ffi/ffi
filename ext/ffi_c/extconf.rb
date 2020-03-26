@@ -4,11 +4,26 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   require 'mkmf'
   require 'rbconfig'
 
+  # Recent versions of macOS have removed /usr/include, which without this
+  # would break the logic below around finding/using the perfectly usable
+  # system libffi.
+  def sdk_path_if_needed
+    if File.exist?("/usr/include")
+      ""
+    elsif File.exist?("/Applications/Xcode.app")
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+    elsif File.exist?("/Library/Developer/CommandLineTools")
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+    else
+      ""
+    end
+  end
+
   def system_libffi_usable?
     # We need pkg_config or ffi.h
     libffi_ok = pkg_config("libffi") ||
         have_header("ffi.h") ||
-        find_header("ffi.h", "/usr/local/include", "/usr/include/ffi")
+        find_header("ffi.h", "/usr/local/include", "#{sdk_path_if_needed}/usr/include/ffi")
 
     # Ensure we can link to ffi_call
     libffi_ok &&= have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
