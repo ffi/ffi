@@ -7,7 +7,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 require 'bigdecimal'
 
 # long double not yet supported on TruffleRuby
-describe ":long_double arguments and return values", :if => RUBY_ENGINE != "truffleruby" do
+describe ":long_double arguments and return values", :if => RUBY_ENGINE != "truffleruby" && RUBY_PLATFORM !~ /mingw|mswin/ do
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
