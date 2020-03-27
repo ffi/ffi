@@ -41,7 +41,9 @@ rbffi_num2longdouble(VALUE value)
 
     if (RTEST(rb_cBigDecimal) && rb_cBigDecimal != rb_cObject && RTEST(rb_obj_is_kind_of(value, rb_cBigDecimal))) {
         VALUE s = rb_funcall(value, rb_intern("to_s"), 1, rb_str_new2("E"));
-        return strtold(RSTRING_PTR(s), NULL);
+        long double ret = strtold(RSTRING_PTR(s), NULL);
+        RB_GC_GUARD(s);
+        return ret;
     }
 
     /* Fall through to handling as a float */
