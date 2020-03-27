@@ -9,10 +9,6 @@ require 'rbconfig'
 require 'rspec/core/rake_task'
 require 'rubygems/package_task'
 
-def java?
-  /java/ === RUBY_PLATFORM
-end
-
 BUILD_DIR = "build"
 BUILD_EXT_DIR = File.join(BUILD_DIR, "#{RbConfig::CONFIG['arch']}", 'ffi_c', RUBY_VERSION)
 
@@ -20,17 +16,8 @@ def gem_spec
   @gem_spec ||= Gem::Specification.load('ffi.gemspec')
 end
 
-TEST_DEPS = []
-if RUBY_PLATFORM == "java"
-  RSpec::Core::RakeTask.new(:spec) do |config|
-    config.rspec_opts = YAML.load_file 'spec/spec.opts'
-  end
-else
-  RSpec::Core::RakeTask.new(:spec => :compile) do |config|
-    config.rspec_opts = YAML.load_file 'spec/spec.opts'
-  end
-
-  TEST_DEPS.unshift :compile
+RSpec::Core::RakeTask.new(:spec => :compile) do |config|
+  config.rspec_opts = YAML.load_file 'spec/spec.opts'
 end
 
 desc "Build all packages"
@@ -61,19 +48,19 @@ namespace :bench do
   bench_libs = "-Ilib" unless RUBY_PLATFORM == "java"
   bench_files = Dir["bench/bench_*.rb"].reject { |f| f == "bench/bench_helper.rb" }
   bench_files.each do |bench|
-    task File.basename(bench, ".rb")[6..-1] => TEST_DEPS do
+    task File.basename(bench, ".rb")[6..-1] => :compile do
       sh %{#{Gem.ruby} #{bench_libs} #{bench} #{ITER}}
     end
   end
-  task :all => TEST_DEPS do
+  task :all => :compile do
     bench_files.each do |bench|
       sh %{#{Gem.ruby} #{bench_libs} #{bench}}
     end
   end
 end
 
-task 'spec:run' => TEST_DEPS
-task 'spec:specdoc' => TEST_DEPS
+task 'spec:run' => :compile
+task 'spec:specdoc' => :compile
 
 task :default => :spec
 
@@ -101,7 +88,7 @@ end
 
 task 'gem:java' => 'java:gem'
 
-unless java?
+if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   require 'rake/extensiontask'
   Rake::ExtensionTask.new('ffi_c', gem_spec) do |ext|
     ext.name = 'ffi_c'                                        # indicate the name of the extension.
@@ -123,6 +110,10 @@ unless java?
     task "build/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so" do |t|
       sh "x86_64-w64-mingw32-strip -S build/x64-mingw32/stage/lib/#{ruby_version[/^\d+\.\d+/]}/ffi_c.so"
     end
+  end
+else
+  task :compile do
+    STDERR.puts "Nothing to compile on #{RUBY_ENGINE}"
   end
 end
 
