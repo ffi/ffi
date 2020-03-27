@@ -8,7 +8,11 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     # We need pkg_config or ffi.h
     libffi_ok = pkg_config("libffi") ||
         have_header("ffi.h") ||
-        find_header("ffi.h", "/usr/local/include", "/usr/include/ffi")
+        find_header("ffi.h",
+                    "/usr/local/include",
+                    "/usr/include/ffi",
+                    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ffi",
+                    "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/ffi")
 
     # Ensure we can link to ffi_call
     libffi_ok &&= have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
