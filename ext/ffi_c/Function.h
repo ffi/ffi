@@ -69,7 +69,6 @@ struct FunctionType_ {
     VALUE rbEnums;
     bool ignoreErrno;
     bool blocking;
-    bool hasStruct;
 };
 
 extern VALUE rbffi_FunctionTypeClass, rbffi_FunctionClass;
