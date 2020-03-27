@@ -27,6 +27,7 @@ matrix:
       rvm: 2.3.8
     - os: linux
       rvm: ruby-head
+    - name: powerpc
   include:
     - name: powerpc
       language: generic
