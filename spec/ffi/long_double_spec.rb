@@ -19,7 +19,7 @@ describe ":long_double arguments and return values", :if => RUBY_ENGINE != "truf
     expect(LibTest.ret_f128(0.1)).to be_within(0.01).of(0.1)
   end
 
-  it "returns first parameter with high precision" do
+  it "returns first parameter with high precision", if: FFI::Platform::LONG_DOUBLE_SIZE > 64 do
     ld =        BigDecimal("1.234567890123456789")
     tolerance = BigDecimal("0.0000000000000000001")
     expect(LibTest.ret_f128(ld)).to be_within(tolerance).of(ld)
