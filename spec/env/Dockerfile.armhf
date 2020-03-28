@@ -22,5 +22,5 @@ RUN gem install bundler --no-doc && \
 
 ENV MAKE "make -j`nproc`"
 CMD bundle install && \
-    bundle exec rake compile && \
+    bundle exec rake libffi compile && \
     bundle exec rake test

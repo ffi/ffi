@@ -1,9 +1,12 @@
 dist: trusty
 group: beta
 language: ruby
+git:
+  submodules: false
 
 script:
-  - bundle exec rake compile || bundle exec rake compile
+  - bundle exec rake libffi
+  - bundle exec rake compile
   - bundle exec rake test
   - ITER=10 bundle exec rake bench:all
 os:
