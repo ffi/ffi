@@ -36,10 +36,6 @@
 extern "C" {
 #endif
 
-#ifdef _MSC_VER
-#define strtold strtod
-#endif
-
 extern VALUE rbffi_longdouble_new(long double ld);
 extern long double rbffi_num2longdouble(VALUE value);
 

@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <float.h>
 
-#if defined (__CYGWIN__) || defined(__INTERIX)
+#if defined (__CYGWIN__) || defined(__INTERIX) || defined(_MSC_VER)
 # define strtold(str, endptr)    ((long double) strtod((str), (endptr)))
 #endif /* defined (__CYGWIN__) */
 
