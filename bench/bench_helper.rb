@@ -4,7 +4,8 @@ require 'rbconfig'
 lib = File.expand_path('../../lib', __FILE__)
 
 cext = "#{lib}/ffi_c.#{RbConfig::CONFIG['DLEXT']}"
-unless File.exist?(cext)
+if (!defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx') &&
+    !File.exist?(cext)
   abort "#{cext} is not compiled. Compile it with 'rake compile' first."
 end
 
