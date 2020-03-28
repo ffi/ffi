@@ -64,6 +64,7 @@ export_primitive_types(VALUE module)
     S(LONG, long);
     S(FLOAT, float);
     S(DOUBLE, double);
+    S(LONG_DOUBLE, long double);
     S(ADDRESS, void*);
 #undef S
 }
