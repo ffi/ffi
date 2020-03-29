@@ -10,7 +10,8 @@ module BenchGetlogin
     attach_function :getlogin, [], :string
   end
   if Posix.getlogin != Etc.getlogin
-    raise ArgumentError, "FFI getlogin returned incorrect value"
+    raise ArgumentError, "FFI getlogin returned incorrect value: " \
+      "#{Posix.getlogin.inspect} (FFI) vs #{Etc.getlogin.inspect} (Etc)"
   end
 
   puts "Benchmark FFI getlogin(2) performance, #{ITER}x"
