@@ -692,7 +692,7 @@ describe FFI::Struct, ' with a nested array of structs'  do
 end
 
 # struct by value not yet supported on TruffleRuby
-describe FFI::Struct, ' by value', :if => RUBY_ENGINE != "truffleruby" do
+describe FFI::Struct, ' by value', if: RUBY_ENGINE != "truffleruby" do
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
