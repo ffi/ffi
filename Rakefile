@@ -1,7 +1,7 @@
 require 'rubygems/tasks'
 require 'rbconfig'
 require 'rake/clean'
-require File.expand_path("./lib/ffi/version")
+require_relative "lib/ffi/version"
 
 require 'date'
 require 'fileutils'
@@ -148,14 +148,13 @@ end.each do |f|
   end
 end
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), 'lib')
-require 'ffi/platform'
+require_relative "lib/ffi/platform"
 types_conf = File.expand_path(File.join(FFI::Platform::CONF_DIR, 'types.conf'))
 logfile = File.join(File.dirname(__FILE__), 'types_log')
 
 file types_conf => File.join("lib", "ffi", "version.rb") do |task|
   require 'fileutils'
-  require 'ffi/tools/types_generator'
+  require_relative "lib/ffi/tools/types_generator"
   options = {}
   FileUtils.mkdir_p(File.dirname(task.name), { :mode => 0755 })
   File.open(task.name, File::CREAT|File::TRUNC|File::RDWR, 0644) do |f|
