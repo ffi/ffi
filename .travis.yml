@@ -8,7 +8,10 @@ script:
   - bundle exec rake libffi
   - bundle exec rake compile
   - bundle exec rake test
-  - if [[ $(ruby -v) != *truffleruby* ]]; then ITER=10 bundle exec rake bench:all; fi
+  - |
+      if [[ $(ruby -v) != *truffleruby* ]]; then
+        ITER=10 bundle exec rake bench:all
+      fi
 os:
   - linux
   - osx
