@@ -45,16 +45,15 @@ task :test => [ :spec ]
 
 namespace :bench do
   ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
-  bench_libs = "-Ilib" unless RUBY_PLATFORM == "java"
   bench_files = Dir["bench/bench_*.rb"].reject { |f| f == "bench/bench_helper.rb" }
   bench_files.each do |bench|
     task File.basename(bench, ".rb")[6..-1] => :compile do
-      sh %{#{Gem.ruby} #{bench_libs} #{bench} #{ITER}}
+      sh %{#{Gem.ruby} #{bench} #{ITER}}
     end
   end
   task :all => :compile do
     bench_files.each do |bench|
-      sh %{#{Gem.ruby} #{bench_libs} #{bench}}
+      sh %{#{Gem.ruby} #{bench}}
     end
   end
 end
