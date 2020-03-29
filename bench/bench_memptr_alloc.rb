@@ -50,7 +50,7 @@ module BenchMemptrAlloc
   }
   end
 
-  if defined?(RUBY_ENGINE) && RUBY_ENGINE == "jruby"
+  if RUBY_ENGINE == "jruby"
     require 'java'
     puts "calling java gc"
     10.times {
