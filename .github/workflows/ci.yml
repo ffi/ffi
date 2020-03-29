@@ -5,9 +5,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu, macos ]
+        os: [ ubuntu, macos, windows ]
         ruby: [ 2.3, 2.4, 2.5, 2.6, 2.7, ruby-head, truffleruby-head ]
+        exclude:
+        - os: windows
+          ruby: truffleruby-head
+        - os: windows
+          ruby: 2.3 # compilation fails
     runs-on: ${{ matrix.os }}-latest
+    env:
+      MAKE: "make" # to not try to use gmake on Windows
     steps:
     - uses: actions/checkout@v2
     - uses: ruby/setup-ruby@v1
