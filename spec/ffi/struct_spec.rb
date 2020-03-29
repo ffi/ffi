@@ -692,7 +692,7 @@ describe FFI::Struct, ' with a nested array of structs'  do
 end
 
 # struct by value not yet supported on TruffleRuby
-describe FFI::Struct, ' by value', if: RUBY_ENGINE != "truffleruby" do
+describe FFI::Struct, ' by value' do
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
@@ -714,7 +714,7 @@ describe FFI::Struct, ' by value', if: RUBY_ENGINE != "truffleruby" do
     attach_function :struct_s8s32_ret_s8s32, [ S8S32.by_value ], S8S32.by_value
     attach_function :struct_s32_ptr_s32_s8s32_ret_s32, [ :int, :pointer, :int, S8S32.by_value ], :int
     attach_function :struct_varargs_ret_struct_string, [ :int, :varargs ], StructString.by_value
-  end if RUBY_ENGINE != "truffleruby"
+  end
 
   it 'return using pre-set values' do
     s = LibTest.struct_return_s8s32
@@ -787,7 +787,7 @@ describe FFI::Struct, ' by value', if: RUBY_ENGINE != "truffleruby" do
     expect(s[:len]).to eq(string.length)
     expect(s[:bytes]).to eq(string)
   end
-end
+end if RUBY_ENGINE != "truffleruby"
 
 describe FFI::Struct, ' with an array field'  do
   module LibTest
