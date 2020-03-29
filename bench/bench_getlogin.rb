@@ -31,4 +31,4 @@ module BenchGetlogin
       iter.times { Etc.getlogin }
     }
   }
-end
+end unless FFI::Platform.windows?

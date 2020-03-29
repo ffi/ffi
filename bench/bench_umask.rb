@@ -59,4 +59,4 @@ module BenchUmask
       ITER.times { NativeFile.umask }
     }
   }
-end
+end unless FFI::Platform.windows?

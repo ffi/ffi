@@ -24,4 +24,4 @@ module BenchGetuid
       iter.times { Process.uid }
     }
   }
-end
+end unless FFI::Platform.windows?

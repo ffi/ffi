@@ -50,4 +50,4 @@ module BenchGettimeofday
       iter.times { Time.now }
     }
   }
-end
+end unless FFI::Platform.windows?
