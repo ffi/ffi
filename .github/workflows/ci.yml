@@ -1,0 +1,29 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  specs:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu, macos ]
+        ruby: [ 2.3, 2.4, 2.5, 2.6, 2.7, ruby-head, truffleruby-head ]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+
+    - run: brew install automake
+      if: matrix.os == 'macos'
+
+    - run: bundle install
+    - run: bundle exec rake libffi
+    - run: bundle exec rake compile
+
+    - run: bundle exec rake test
+
+    - run: bundle exec rake bench:all
+      if: matrix.ruby != 'truffleruby-head'
+      env:
+        ITER: 10
