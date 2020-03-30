@@ -11,6 +11,7 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
       if !sdk_path.empty? and File.directory?(sdk_path)
         header_paths << "#{sdk_path}/include/ffi"
       end
+      header_paths << "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/ffi"
     end
 
     # We need pkg_config or ffi.h
