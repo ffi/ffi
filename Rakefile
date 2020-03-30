@@ -1,7 +1,7 @@
 require 'rubygems/tasks'
 require 'rbconfig'
 require 'rake/clean'
-require File.expand_path("./lib/ffi/version")
+require_relative "lib/ffi/version"
 
 require 'date'
 require 'fileutils'
@@ -45,16 +45,15 @@ task :test => [ :spec ]
 
 namespace :bench do
   ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
-  bench_libs = "-Ilib" unless RUBY_PLATFORM == "java"
   bench_files = Dir["bench/bench_*.rb"].reject { |f| f == "bench/bench_helper.rb" }
   bench_files.each do |bench|
     task File.basename(bench, ".rb")[6..-1] => :compile do
-      sh %{#{Gem.ruby} #{bench_libs} #{bench} #{ITER}}
+      sh %{#{Gem.ruby} #{bench} #{ITER}}
     end
   end
   task :all => :compile do
     bench_files.each do |bench|
-      sh %{#{Gem.ruby} #{bench_libs} #{bench}}
+      sh %{#{Gem.ruby} #{bench}}
     end
   end
 end
@@ -149,14 +148,13 @@ end.each do |f|
   end
 end
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), 'lib')
-require 'ffi/platform'
+require_relative "lib/ffi/platform"
 types_conf = File.expand_path(File.join(FFI::Platform::CONF_DIR, 'types.conf'))
 logfile = File.join(File.dirname(__FILE__), 'types_log')
 
 file types_conf => File.join("lib", "ffi", "version.rb") do |task|
   require 'fileutils'
-  require 'ffi/tools/types_generator'
+  require_relative "lib/ffi/tools/types_generator"
   options = {}
   FileUtils.mkdir_p(File.dirname(task.name), { :mode => 0755 })
   File.open(task.name, File::CREAT|File::TRUNC|File::RDWR, 0644) do |f|

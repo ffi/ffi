@@ -8,7 +8,10 @@ script:
   - bundle exec rake libffi
   - bundle exec rake compile
   - bundle exec rake test
-  - ITER=10 bundle exec rake bench:all
+  - |
+      if [[ $(ruby -v) != *truffleruby* ]]; then
+        ITER=10 bundle exec rake bench:all
+      fi
 os:
   - linux
   - osx
@@ -32,7 +35,6 @@ matrix:
       rvm: 2.3.8
     - os: linux
       rvm: ruby-head
-    - rvm: truffleruby-head
   include:
     - name: powerpc
       language: generic
@@ -48,5 +50,8 @@ matrix:
           docker build --rm -t ffi-armhf -f spec/env/Dockerfile.armhf .
       script: |
         docker run --rm -t -v `pwd`:/ffi ffi-armhf
+    exclude:
+      - os: osx
+        rvm: truffleruby-head
 after_failure:
   - "find build -name mkmf.log | xargs cat"
