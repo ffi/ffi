@@ -1,0 +1,38 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  specs:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu, macos, windows ]
+        ruby: [ 2.3, 2.4, 2.5, 2.6, 2.7, ruby-head, truffleruby-head ]
+        exclude:
+        - os: windows
+          ruby: truffleruby-head
+        - os: windows
+          ruby: 2.3 # compilation fails
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      MAKE: "make" # to not try to use gmake on Windows
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+
+    - run: brew install automake
+      if: matrix.os == 'macos'
+
+    # Bundler 2 seems to fix installing rubygems-tasks on Ruby < 2.4
+    - run: gem install bundler
+    - run: bundle install
+    - run: bundle exec rake libffi
+    - run: bundle exec rake compile
+
+    - run: bundle exec rake test
+
+    - run: bundle exec rake bench:all
+      if: matrix.ruby != 'truffleruby-head'
+      env:
+        ITER: 10

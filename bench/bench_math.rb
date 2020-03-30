@@ -3,7 +3,7 @@ require_relative 'bench_helper'
 module BenchMath
   module FFIMath
     extend FFI::Library
-    ffi_lib 'm'
+    ffi_lib FFI::Platform.windows? ? FFI::Library::LIBC : 'm'
     attach_function :cos, [ :double ], :double
     attach_function :cosf, [ :float ], :float
   end
