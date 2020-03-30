@@ -9,8 +9,12 @@ module BenchGetlogin
     ffi_lib FFI::Library::LIBC
     attach_function :getlogin, [], :string
   end
-  if Posix.getlogin != Etc.getlogin
-    raise ArgumentError, "FFI getlogin returned incorrect value"
+
+  # getlogin(2) might return NULL, in which case Etc.getlogin uses ENV["USER"].
+  # This should not matter for this benchmark, getlogin() is still called.
+  if (Posix.getlogin || ENV["USER"]) != Etc.getlogin
+    raise ArgumentError, "FFI getlogin returned incorrect value: " \
+      "#{Posix.getlogin.inspect} (FFI) vs #{Etc.getlogin.inspect} (Etc)"
   end
 
   puts "Benchmark FFI getlogin(2) performance, #{ITER}x"
@@ -27,4 +31,4 @@ module BenchGetlogin
       iter.times { Etc.getlogin }
     }
   }
-end
+end unless FFI::Platform.windows?

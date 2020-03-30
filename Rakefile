@@ -45,7 +45,7 @@ task :test => [ :spec ]
 
 namespace :bench do
   ITER = ENV['ITER'] ? ENV['ITER'].to_i : 100000
-  bench_files = Dir["bench/bench_*.rb"].reject { |f| f == "bench/bench_helper.rb" }
+  bench_files = Dir["bench/bench_*.rb"].sort.reject { |f| f == "bench/bench_helper.rb" }
   bench_files.each do |bench|
     task File.basename(bench, ".rb")[6..-1] => :compile do
       sh %{#{Gem.ruby} #{bench} #{ITER}}
