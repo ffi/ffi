@@ -27,7 +27,7 @@ jobs:
       if: matrix.os == 'macos'
 
     # Bundler 2 seems to fix installing rubygems-tasks on Ruby < 2.4
-    - run: gem install bundler --no-document
+    - run: gem install bundler
     - run: bundle install
     - run: bundle exec rake libffi
     - run: bundle exec rake compile
