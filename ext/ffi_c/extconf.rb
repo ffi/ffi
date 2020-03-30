@@ -5,10 +5,18 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   require 'rbconfig'
 
   def system_libffi_usable?
+    header_paths = ["/usr/local/include", "/usr/include/ffi"]
+    if RbConfig::CONFIG['host_os'].include?('darwin')
+      sdk_path = `xcrun --sdk macosx --show-sdk-path`.chomp
+      if !sdk_path.empty? and File.directory?(sdk_path)
+        header_paths << "#{sdk_path}/include/ffi"
+      end
+    end
+
     # We need pkg_config or ffi.h
     libffi_ok = pkg_config("libffi") ||
         have_header("ffi.h") ||
-        find_header("ffi.h", "/usr/local/include", "/usr/include/ffi")
+        find_header("ffi.h", *header_paths)
 
     # Ensure we can link to ffi_call
     libffi_ok &&= have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
