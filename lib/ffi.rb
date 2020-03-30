@@ -8,7 +8,7 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
 
   require 'ffi/ffi'
 
-elsif RUBY_ENGINE == 'jruby'
+elsif RUBY_ENGINE == 'jruby' && Gem::Version.new(JRUBY_VERSION) >= Gem::Version.new("9.3.pre")
   JRuby::Util.load_ext("org.jruby.ext.ffi.FFIService")
   require 'ffi/ffi'
 

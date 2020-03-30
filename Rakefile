@@ -65,16 +65,9 @@ task :default => :spec
 
 namespace 'java' do
 
-  java_gem_spec = Gem::Specification.new do |s|
-    s.name = gem_spec.name
-    s.version = gem_spec.version
-    s.author = gem_spec.author
-    s.email = gem_spec.email
-    s.homepage = gem_spec.homepage
-    s.summary = gem_spec.summary
-    s.description = gem_spec.description
-    s.files = %w(LICENSE COPYING README.md CHANGELOG.md Rakefile)
-    s.license = gem_spec.license
+  java_gem_spec = gem_spec.dup.tap do |s|
+    s.files.reject! { |f| File.fnmatch?("ext/*", f) }
+    s.extensions = []
     s.platform = 'java'
   end
 
