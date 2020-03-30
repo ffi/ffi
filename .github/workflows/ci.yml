@@ -12,6 +12,8 @@ jobs:
           ruby: truffleruby-head
         - os: windows
           ruby: 2.3 # compilation fails
+        - os: macos
+          ruby: 2.3 # https://github.com/rubygems/rubygems/issues/3463
     runs-on: ${{ matrix.os }}-latest
     env:
       MAKE: "make" # to not try to use gmake on Windows
