@@ -13,8 +13,6 @@ jobs:
         - os: windows
           ruby: 2.3 # compilation fails
     runs-on: ${{ matrix.os }}-latest
-    env:
-      MAKE: "make" # to not try to use gmake on Windows
     steps:
     - uses: actions/checkout@v2
     - uses: ruby/setup-ruby@v1
