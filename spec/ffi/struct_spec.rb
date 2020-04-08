@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 #
 # This file is part of ruby-ffi.
 # For licensing, see LICENSE.SPECS
@@ -845,14 +846,14 @@ describe FFI::Struct, ' with a char array field'  do
 
   before do
     @s = LibTest::StructWithCharArray.new
-    @s.pointer.write_bytes([0, 1, 2, 3, 4, 0].pack("lC4l"))
+    @s.pointer.write_bytes([-1, 1, 2, 0, 255, -2].pack("lC4l"))
   end
 
   it 'should read values from memory' do
-    expect(@s[:before]).to eq(0)
-    expect(@s[:str].to_a).to eq([1, 2, 3, 4])
-    expect(@s[:str].to_s).to eq("\x01\x02\x03\x04".b)
-    expect(@s[:after]).to eq(0)
+    expect(@s[:before]).to eq(-1)
+    expect(@s[:str].to_a).to eq([1, 2, 0, -1])
+    expect(@s[:str].to_s).to eq("\x01\x02".b)
+    expect(@s[:after]).to eq(-2)
   end
 
   it 'should return the number of elements in the array field' do
@@ -860,7 +861,7 @@ describe FFI::Struct, ' with a char array field'  do
   end
 
   it 'should allow iteration through the array elements' do
-    @s[:str].each_with_index { |elem, i| expect(elem).to eq(i+1) }
+    @s[:str].each_with_index { |elem, i| expect(elem).to eq([1, 2, 0, -1][i]) }
   end
 
   it 'should return the pointer to the array' do
@@ -868,22 +869,21 @@ describe FFI::Struct, ' with a char array field'  do
   end
 
   it 'allows writing a shorter String to the char array' do
-    @s[:str] = "abc"
-    expect(@s[:before]).to eq(0)
-    expect(@s[:str].to_s).to eq("abc")
-    expect(@s[:after]).to eq(0)
+    @s[:str] = "äc"
+    expect(@s[:before]).to eq(-1)
+    expect(@s[:str].to_s).to eq("äc".b)
+    expect(@s[:after]).to eq(-2)
   end
 
   it 'allows writing a String of the same size to the char array' do
-    @s[:after] = -1
-    @s[:str] = "abcd"
-    expect(@s[:before]).to eq(0)
-    expect(@s[:str].to_s).to eq("abcd")
-    expect(@s[:after]).to eq(-1) # The above should not write to the next field
+    @s[:str] = "äcd"
+    expect(@s[:before]).to eq(-1)
+    expect(@s[:str].to_s).to eq("äcd".b)
+    expect(@s[:after]).to eq(-2) # The above should not write to the next field
   end
 
   it 'raises when writing a longer String to the char array' do
-    expect { @s[:str] = "abcdefg" }.to raise_error(IndexError)
+    expect { @s[:str] = "äcde" }.to raise_error(IndexError)
   end
 end
 
