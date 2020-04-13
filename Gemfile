@@ -9,7 +9,6 @@ group :development do
   # irb is a dependency of rubygems-tasks 0.2.5. irb 1.1.1 is the last version to not depend on reline,
   # which sometimes causes 'bundle install' to fail on Ruby <= 2.4: https://github.com/rubygems/rubygems/issues/3463
   gem 'irb', '1.1.1'
-  gem "rubysl", "~> 2.0", :platforms => 'rbx'
 end
 
 group :doc do
