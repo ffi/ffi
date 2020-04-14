@@ -8,8 +8,12 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
 
   require 'ffi/ffi'
 
-elsif RUBY_ENGINE == 'jruby' && Gem::Version.new(JRUBY_VERSION) >= Gem::Version.new("9.3.pre")
+elsif RUBY_ENGINE == 'jruby' && Gem::Version.new(RUBY_ENGINE_VERSION) >= Gem::Version.new("9.3.pre")
   JRuby::Util.load_ext("org.jruby.ext.ffi.FFIService")
+  require 'ffi/ffi'
+
+elsif RUBY_ENGINE == 'truffleruby' && Gem::Version.new(RUBY_ENGINE_VERSION) >= Gem::Version.new("20.1.0-dev-a")
+  require 'truffleruby/ffi_backend'
   require 'ffi/ffi'
 
 else
