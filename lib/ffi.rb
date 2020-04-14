@@ -12,7 +12,7 @@ elsif RUBY_ENGINE == 'jruby' && Gem::Version.new(RUBY_ENGINE_VERSION) >= Gem::Ve
   JRuby::Util.load_ext("org.jruby.ext.ffi.FFIService")
   require 'ffi/ffi'
 
-elsif RUBY_ENGINE == 'truffleruby' && Gem::Version.new(RUBY_ENGINE_VERSION) >= Gem::Version.new("20.1.0")
+elsif RUBY_ENGINE == 'truffleruby' && Gem::Version.new(RUBY_ENGINE_VERSION) >= Gem::Version.new("20.1.0-dev-a")
   require 'truffleruby/ffi_backend'
   require 'ffi/ffi'
 
