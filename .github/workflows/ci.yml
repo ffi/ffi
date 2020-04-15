@@ -1,7 +1,33 @@
 name: CI
 on: [push, pull_request]
 jobs:
+  system-libffi:
+    # Run on latest MRI with explicit selection of system or builtin libffi
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu, macos, windows ]
+        extconfopts: [ --disable-system-libffi, --enable-system-libffi ]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.7
+
+    - run: brew install automake libffi pkg-config
+      if: matrix.os == 'macos'
+    - run: ridk exec pacman --sync --refresh --needed --noconfirm  mingw-w64-x86_64-libffi
+      if: matrix.os == 'windows' && matrix.extconfopts == '--enable-system-libffi'
+
+    - run: bundle install
+    - run: bundle exec rake libffi
+    - run: bundle exec rake compile -- ${{ matrix.extconfopts }}
+    - run: bundle exec rake test
+
   specs:
+    # Run all specs on all ruby implementations
+    # Use automatic libffi selection on MRI
     strategy:
       fail-fast: false
       matrix:
