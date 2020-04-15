@@ -10,6 +10,8 @@ install:
   - gem --version
   - gem install bundler --quiet --no-document
   - bundle install
+  # Update to libffi-3.3 since Appveyor version fails on LongDouble specs
+  - ridk exec pacman --sync --refresh --needed --noconfirm  mingw-w64-x86_64-libffi mingw-w64-i686-libffi
 build: off
 build_script:
   - bundle exec rake libffi compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
