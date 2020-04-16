@@ -35,6 +35,7 @@ R(J, long long);
 R(LL, long long);
 R(F, float);
 R(D, double);
+R(LD, long double);
 R(P, const void*);
 
 
@@ -47,6 +48,7 @@ P(J, long long);
 P(LL, long long);
 P(F, float);
 P(D, double);
+P(LD, long double);
 P(P, const void*);
 P(UL, unsigned long);
 
