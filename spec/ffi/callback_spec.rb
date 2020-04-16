@@ -51,6 +51,7 @@ module CallbackSpecs
       callback :cbVrUL, [ ], :ulong
       callback :cbVrS64, [ ], :long_long
       callback :cbVrU64, [ ], :ulong_long
+      callback :cbVrA, [], :string
       callback :cbVrP, [], :pointer
       callback :cbVrZ, [], :bool
       callback :cbCrV, [ :char ], :void
@@ -75,6 +76,7 @@ module CallbackSpecs
       attach_function :testCallbackVrUL, :testClosureVrL, [ :cbVrUL ], :ulong
       attach_function :testCallbackVrS64, :testClosureVrLL, [ :cbVrS64 ], :long_long
       attach_function :testCallbackVrU64, :testClosureVrLL, [ :cbVrU64 ], :ulong_long
+      attach_function :testCallbackVrA, :testClosureVrP, [ :cbVrA ], :string
       attach_function :testCallbackVrP, :testClosureVrP, [ :cbVrP ], :pointer
       attach_function :testCallbackReturningFunction, :testClosureVrP, [ :cbVrP ], :cbVrP
       attach_function :testCallbackVrY, :testClosureVrP, [ :cbVrY ], S8F32S32.ptr
@@ -259,6 +261,15 @@ module CallbackSpecs
 
     it "returning bool" do
       expect(LibTest.testCallbackVrZ { true }).to be true
+    end
+
+    it "returning :string (nil)" do
+      expect(LibTest.testCallbackVrA { nil }).to be_nil
+    end
+
+    it "returning :string" do
+      str = "String ä"
+      expect(LibTest.testCallbackVrA { str }).to eq(str.b)
     end
 
     it "returning :pointer (nil)" do

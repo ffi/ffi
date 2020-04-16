@@ -793,6 +793,15 @@ invoke_callback(VALUE data)
         case NATIVE_FLOAT64:
             *((double *) retval) = NUM2DBL(rbReturnValue);
             break;
+
+        case NATIVE_STRING:
+            if (NIL_P(rbReturnValue)) {
+                *((void **) retval) = NULL;
+            } else {
+                *((void **) retval) = StringValueCStr(rbReturnValue);
+            }
+            break;
+
         case NATIVE_POINTER:
             if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
