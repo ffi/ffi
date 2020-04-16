@@ -145,7 +145,7 @@ require_relative "lib/ffi/platform"
 types_conf = File.expand_path(File.join(FFI::Platform::CONF_DIR, 'types.conf'))
 logfile = File.join(File.dirname(__FILE__), 'types_log')
 
-file types_conf => File.join("lib", "ffi", "version.rb") do |task|
+task types_conf do |task|
   require 'fileutils'
   require_relative "lib/ffi/tools/types_generator"
   options = {}
@@ -159,8 +159,7 @@ file types_conf => File.join("lib", "ffi", "version.rb") do |task|
 end
 
 desc "Create or update type information for platform #{FFI::Platform::NAME}"
-task :types_conf => types_conf do
-end
+task :types_conf => types_conf
 
 Gem::Tasks.new do |t|
   t.scm.tag.format = '%s'
