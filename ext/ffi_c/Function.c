@@ -721,7 +721,7 @@ invoke_callback(VALUE data)
                 param = rb_float_new(*(double *) parameters[i]);
                 break;
             case NATIVE_LONGDOUBLE:
-	      param = rbffi_longdouble_new(*(long double *) parameters[i]);
+                param = rbffi_longdouble_new(*(long double *) parameters[i]);
                 break;
             case NATIVE_STRING:
                 param = (*(void **) parameters[i] != NULL) ? rb_str_new2(*(char **) parameters[i]) : Qnil;
@@ -792,6 +792,9 @@ invoke_callback(VALUE data)
             break;
         case NATIVE_FLOAT64:
             *((double *) retval) = NUM2DBL(rbReturnValue);
+            break;
+        case NATIVE_LONGDOUBLE:
+            *((long double *) retval) = rbffi_num2longdouble(rbReturnValue);
             break;
         case NATIVE_POINTER:
             if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
