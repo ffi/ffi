@@ -149,7 +149,7 @@ task types_conf do |task|
   require 'fileutils'
   require_relative "lib/ffi/tools/types_generator"
   options = {}
-  FileUtils.mkdir_p(File.dirname(task.name), { :mode => 0755 })
+  FileUtils.mkdir_p(File.dirname(task.name), mode: 0755 )
   File.open(task.name, File::CREAT|File::TRUNC|File::RDWR, 0644) do |f|
     f.puts FFI::TypesGenerator.generate(options)
   end
