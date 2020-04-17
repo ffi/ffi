@@ -12,6 +12,7 @@ script:
       if [[ $(ruby -v) != *truffleruby* ]]; then
         ITER=10 bundle exec rake bench:all
       fi
+  - bundle exec rake types_conf && git --no-pager diff
 os:
   - linux
   - osx

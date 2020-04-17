@@ -27,6 +27,7 @@ jobs:
         # work around misconfiguration of libffi on MacOS with homebrew
         PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}:/usr/local/opt/libffi/lib/pkgconfig
     - run: bundle exec rake test
+    - run: bundle exec rake types_conf && git --no-pager diff
 
   specs:
     # Run all specs on all ruby implementations

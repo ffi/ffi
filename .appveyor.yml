@@ -17,6 +17,7 @@ build_script:
   - bundle exec rake libffi compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
 test_script:
   - bundle exec rake test
+  - bundle exec rake types_conf && git --no-pager diff
 environment:
   matrix:
     - RUBYVER: "head-x64"

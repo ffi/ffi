@@ -17,10 +17,11 @@ RUN ruby --version
 WORKDIR /ffi
 COPY . .
 
+ENV MAKE "make -j`nproc`"
 RUN gem install bundler --no-doc && \
     bundle install
 
-ENV MAKE "make -j`nproc`"
 CMD bundle install && \
     bundle exec rake libffi compile && \
-    bundle exec rake test
+    bundle exec rake test && \
+    bundle exec rake types_conf && git --no-pager diff
