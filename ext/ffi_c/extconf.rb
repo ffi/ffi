@@ -15,7 +15,13 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
 
     # Ensure we can link to ffi_call
     libffi_ok &&= have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
-                  have_library("libffi", "ffi_call", [ "ffi.h" ])
+                  have_library("libffi", "ffi_call", [ "ffi.h" ]) ||
+                  have_library("libffi-8", "ffi_call", [ "ffi.h" ])
+
+    if RbConfig::CONFIG['host_os'] =~ /mswin/
+      have_library('libffi_convenience')
+      have_library('shlwapi')
+    end
 
     # And we need a libffi version recent enough to provide ffi_closure_alloc
     libffi_ok &&= have_func("ffi_closure_alloc")
@@ -39,7 +45,6 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     abort "system libffi is not usable" unless system_libffi_usable?
   end
 
-  have_header('shlwapi.h')
   have_func('rb_thread_call_without_gvl') || abort("Ruby C-API function `rb_thread_call_without_gvl` is missing")
   have_func('ruby_native_thread_p')
   if RUBY_VERSION >= "2.3.0"
@@ -56,13 +61,10 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   end
 
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
-  $defs << "-DFFI_BUILDING" if RbConfig::CONFIG['host_os'] =~ /mswin/ # for compatibility with newer libffi
 
   create_header
-
-  $LOCAL_LIBS << " ./libffi/.libs/libffi_convenience.lib" if !system_libffi && RbConfig::CONFIG['host_os'] =~ /mswin/
-
   create_makefile("ffi_c")
+
   unless system_libffi
     File.open("Makefile", "a") do |mf|
       mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
