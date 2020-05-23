@@ -1,4 +1,5 @@
-require File.expand_path(File.join(File.dirname(__FILE__), "sample_helper"))
+require 'ffi'
+
 module Foo
   extend FFI::Library
   ffi_lib FFI::Library::LIBC

@@ -1,16 +1,16 @@
-require 'rubygems'
 require 'ffi'
+require 'rbconfig'
+
 class Timeval < FFI::Struct
-  rb_maj, rb_min, rb_micro = RUBY_VERSION.split('.')
-  if rb_maj.to_i >= 1 && rb_min.to_i >= 9 || RUBY_PLATFORM =~ /java/
-    layout :tv_sec => :ulong, :tv_usec => :ulong
-  else
-    layout :tv_sec, :ulong, 0, :tv_usec, :ulong, 4
-  end
+  layout tv_sec: :ulong, tv_usec: :ulong
 end
 module LibC
   extend FFI::Library
-  ffi_lib FFI::Library::LIBC
+  if FFI::Platform.windows?
+    ffi_lib RbConfig::CONFIG["LIBRUBY_SO"]
+  else
+    ffi_lib FFI::Library::LIBC
+  end
   attach_function :gettimeofday, [ :pointer, :pointer ], :int
 end
 t = Timeval.new

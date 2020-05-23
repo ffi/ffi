@@ -1,6 +1,5 @@
 require 'ffi'
 
-
 module PTY
   private
   module LibC
@@ -41,7 +40,7 @@ module PTY
     #
     exec_cmd, exec_args = build_args(args)
     pid = LibC.forkpty(mfdp, name, nil, nil)
-    raise "forkpty failed: #{LibC.strerror(FFI.errno)}" if pid < 0    
+    raise "forkpty failed: #{LibC.strerror(FFI.errno)}" if pid < 0
     if pid == 0
       LibC.execvp(exec_cmd, exec_args)
       exit 1
