@@ -172,14 +172,13 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
         VALUE typeName = rb_funcall2(rbReturnType, rb_intern("inspect"), 0, NULL);
         rb_raise(rb_eTypeError, "Invalid return type (%s)", RSTRING_PTR(typeName));
     }
-    
+
     if (rb_obj_is_kind_of(fnInfo->rbReturnType, rbffi_StructByValueClass)) {
         fnInfo->hasStruct = true;
     }
 
     Data_Get_Struct(fnInfo->rbReturnType, Type, fnInfo->returnType);
     fnInfo->ffiReturnType = fnInfo->returnType->ffiType;
-
 
 #if defined(X86_WIN32)
     rbConventionStr = (rbConvention != Qnil) ? rb_funcall2(rbConvention, rb_intern("to_s"), 0, NULL) : Qnil;
