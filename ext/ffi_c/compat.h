@@ -64,6 +64,10 @@
 #  define unlikely(x) (x)
 #endif
 
+#ifdef _MSC_VER
+#define ffi_type_longdouble ffi_type_double
+#endif
+
 #ifndef MAX
 #  define MAX(a, b) ((a) < (b) ? (b) : (a))
 #endif

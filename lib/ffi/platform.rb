@@ -61,7 +61,7 @@ module FFI
     CPU = RbConfig::CONFIG['host_cpu']
 
     ARCH = case CPU.downcase
-    when /amd64|x86_64/
+    when /amd64|x86_64|x64/
       "x86_64"
     when /i?86|x86|i86pc/
       "i386"
@@ -129,7 +129,7 @@ module FFI
     end
 
     LIBC = if IS_WINDOWS
-      RbConfig::CONFIG['RUBY_SO_NAME'].split('-')[-2] + '.dll'
+      "ucrtbase.dll"
     elsif IS_GNU
       GNU_LIBC
     elsif OS == 'cygwin'

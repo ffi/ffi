@@ -128,11 +128,7 @@ rbffi_function_anyargs rbffi_MethodHandle_CodeAddress(MethodHandle* handle)
 #ifndef CUSTOM_TRAMPOLINE
 static void attached_method_invoke(ffi_cif* cif, void* retval, METHOD_PARAMS parameters, void* user_data);
 
-static ffi_type* methodHandleParamTypes[] = {
-    &ffi_type_sint,
-    &ffi_type_pointer,
-    &ffi_type_ulong,
-};
+static ffi_type* methodHandleParamTypes[3];
 
 static ffi_cif mh_cif;
 
@@ -342,6 +338,10 @@ rbffi_MethodHandle_Init(VALUE module)
         rb_raise(rb_eFatal, "Could not locate offsets in trampoline code");
     }
 #else
+    methodHandleParamTypes[0] = &ffi_type_sint;
+    methodHandleParamTypes[1] = &ffi_type_pointer;
+    methodHandleParamTypes[2] = &ffi_type_ulong;
+
     ffiStatus = ffi_prep_cif(&mh_cif, FFI_DEFAULT_ABI, 3, &ffi_type_ulong,
             methodHandleParamTypes);
     if (ffiStatus != FFI_OK) {
