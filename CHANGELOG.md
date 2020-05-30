@@ -1,3 +1,32 @@
+1.13.0 / 2020-05-30
+-------------------
+
+Added:
+* Add TruffleRuby support. Almost all specs are running on TruffleRuby and succeed. #768
+* Add ruby source files to the java gem. This allows to ship the Ruby library code per platform java gem and add it as a default gem to JRuby. #763
+* Add FFI::Platform::LONG_DOUBLE_SIZE
+* Add bounds checks for writing to an inline char[] . #756
+* Add long double as callback return value. #771
+* Update type definitions and add types from stdint.h and stddef.h on i386-windows, x86_64-windows, x86_64-darwin, x86_64-linux, arm-linux, powerpc-linux. #749
+* Add new type definitions for powerpc-openbsd and sparcv9-openbsd. #775, #778
+
+Changed:
+* Lots of cleanups and improvements in library, specs and benchmarks.
+* Fix a lot of compiler warnings at the C-extension
+* Fix several install issues on MacOS:
+  * Look for libffi in SDK paths, since recent versions of macOS removed it from `/usr/include` . #757
+  * Fix error `ld: library not found for -lgcc_s.10.4`
+  * Don't built for i386 architecture as it is deprecated
+* Several fixes for MSVC build on Windows. #779
+* Use `ucrtbase.dll` as default C library on Windows instead of old `msvcrt.dll`. #779
+* Update builtin libffi to fix a Powerpc issue with parameters of type long
+* Allow unmodified sourcing of (the ruby code of) this gem in JRuby and TruffleRuby as a default gem. #747
+* Improve check to detect if a module has a #find_type method suitable for FFI. This fixes compatibility with stdlib `mkmf` . #776
+
+Removed:
+* Reject callback with `:string` return type at definition, because it didn't work so far and is not save to use. #751, #782
+
+
 1.12.2 / 2020-02-01
 -------------------
 
