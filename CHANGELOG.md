@@ -11,6 +11,7 @@ Added:
 * Add new type definitions for powerpc-openbsd and sparcv9-openbsd. #775, #778
 
 Changed:
+* Raise required ruby version to >= 2.3.
 * Lots of cleanups and improvements in library, specs and benchmarks.
 * Fix a lot of compiler warnings at the C-extension
 * Fix several install issues on MacOS:
