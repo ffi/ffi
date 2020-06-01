@@ -113,7 +113,7 @@ desc "build a windows gem without all the ceremony"
 task "gem:windows" do
   require "rake_compiler_dock"
   sh "bundle package"
-  RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle --local && rake cross native gem MAKE='nice make -j`nproc`'"
+  RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle --local && rake cross native gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=${RUBY_CC_VERSION/:2.2.2/}"
 end
 
 directory "ext/ffi_c/libffi"
