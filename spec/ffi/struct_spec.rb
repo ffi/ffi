@@ -185,21 +185,18 @@ module StructSpecsStructTests
       expect(mp.get_int64(4)).to eq(0xfee1deadbeef)
     end
 
-    rb_maj, rb_min = RUBY_VERSION.split('.')
-    if rb_maj.to_i >= 1 && rb_min.to_i >= 9 || RUBY_PLATFORM =~ /java/
-      it "Struct#layout withs with a hash of :name => type" do
-        class HashLayout < FFI::Struct
-          layout :a => :int, :b => :long_long
-        end
-        ll_off = (FFI::TYPE_UINT64.alignment == 4 ? 4 : 8)
-        expect(HashLayout.size).to eq(ll_off + 8)
-        mp = FFI::MemoryPointer.new(HashLayout.size)
-        s = HashLayout.new mp
-        s[:a] = 0x12345678
-        expect(mp.get_int(0)).to eq(0x12345678)
-        s[:b] = 0xfee1deadbeef
-        expect(mp.get_int64(ll_off)).to eq(0xfee1deadbeef)
+    it "Struct#layout withs with a hash of :name => type" do
+      class HashLayout < FFI::Struct
+        layout :a => :int, :b => :long_long
       end
+      ll_off = (FFI::TYPE_UINT64.alignment == 4 ? 4 : 8)
+      expect(HashLayout.size).to eq(ll_off + 8)
+      mp = FFI::MemoryPointer.new(HashLayout.size)
+      s = HashLayout.new mp
+      s[:a] = 0x12345678
+      expect(mp.get_int(0)).to eq(0x12345678)
+      s[:b] = 0xfee1deadbeef
+      expect(mp.get_int64(ll_off)).to eq(0xfee1deadbeef)
     end
 
     it "subclass overrides initialize without calling super" do

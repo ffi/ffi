@@ -339,13 +339,7 @@ static void *
 call_blocking_function(void* data)
 {
     rbffi_blocking_call_t* b = (rbffi_blocking_call_t *) data;
-#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
-    b->frame->has_gvl = false;
-#endif
     ffi_call(&b->cif, FFI_FN(b->function), b->retval, b->ffiValues);
-#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
-    b->frame->has_gvl = true;
-#endif
 
     return NULL;
 }

@@ -45,13 +45,6 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     abort "system libffi is not usable" unless system_libffi_usable?
   end
 
-  have_func('rb_thread_call_without_gvl') || abort("Ruby C-API function `rb_thread_call_without_gvl` is missing")
-  have_func('ruby_native_thread_p')
-  if RUBY_VERSION >= "2.3.0"
-    # On OSX and Linux ruby_thread_has_gvl_p() is detected but fails at runtime for ruby < 2.3.0
-    have_func('ruby_thread_has_gvl_p')
-  end
-
   if system_libffi
     have_func('ffi_prep_cif_var')
     $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")

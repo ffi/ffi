@@ -74,9 +74,6 @@ void
 rbffi_frame_push(rbffi_frame_t* frame)
 {
     memset(frame, 0, sizeof(*frame));
-#ifndef HAVE_RUBY_THREAD_HAS_GVL_P
-    frame->has_gvl = true;
-#endif
     frame->exc = Qnil;
 
 #ifdef _WIN32

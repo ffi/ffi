@@ -99,26 +99,8 @@ static VALUE async_cb_event(void *);
 static VALUE async_cb_call(void *);
 #endif
 
-#ifdef HAVE_RUBY_THREAD_HAS_GVL_P
 extern int ruby_thread_has_gvl_p(void);
-#define rbffi_thread_has_gvl_p(frame) ruby_thread_has_gvl_p()
-#else
-static int rbffi_thread_has_gvl_p(rbffi_frame_t *frame)
-{
-    return frame != NULL && frame->has_gvl;
-}
-#endif
-
-#ifdef HAVE_RUBY_NATIVE_THREAD_P
 extern int ruby_native_thread_p(void);
-#define rbffi_native_thread_p(frame) ruby_native_thread_p()
-#else
-static int rbffi_native_thread_p(rbffi_frame_t *frame)
-{
-    return frame != NULL;
-}
-#endif
-
 
 VALUE rbffi_FunctionClass = Qnil;
 
@@ -476,8 +458,8 @@ callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 
     if (cb.frame != NULL) cb.frame->exc = Qnil;
 
-    if (rbffi_native_thread_p(cb.frame)) {
-      if(rbffi_thread_has_gvl_p(cb.frame)) {
+    if (ruby_native_thread_p()) {
+      if(ruby_thread_has_gvl_p()) {
         callback_with_gvl(&cb);
       } else {
         rb_thread_call_with_gvl(callback_with_gvl, &cb);

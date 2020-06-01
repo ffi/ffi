@@ -843,12 +843,10 @@ module CallbackInteropSpecs
     end
 
     # https://github.com/ffi/ffi/issues/527
-    if RUBY_VERSION.split('.').map(&:to_i).pack("C*") >= [2,3,0].pack("C*") || RUBY_PLATFORM =~ /java/
-      it "from fiddle to ffi" do
-        assert_callback_in_same_thread_called_once do |block|
-          func = FFI::Function.new(:void, [:pointer], &block)
-          LibTestFiddle.testClosureVrV(Fiddle::Pointer[func.to_i])
-        end
+    it "from fiddle to ffi" do
+      assert_callback_in_same_thread_called_once do |block|
+        func = FFI::Function.new(:void, [:pointer], &block)
+        LibTestFiddle.testClosureVrV(Fiddle::Pointer[func.to_i])
       end
     end
 
@@ -877,7 +875,7 @@ module CallbackInteropSpecs
     end
 
     # https://github.com/ffi/ffi/issues/527
-    if RUBY_ENGINE == 'ruby' && RUBY_VERSION.split('.').map(&:to_i).pack("C*") >= [2,3,0].pack("C*")
+    if RUBY_ENGINE == 'ruby'
       it "C outside ffi call stack does not deadlock [#527]" do
         skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
         path = File.join(File.dirname(__FILE__), "embed-test/embed-test.rb")
