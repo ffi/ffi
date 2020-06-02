@@ -150,23 +150,6 @@ memptr_release(Pointer* ptr)
     xfree(ptr);
 }
 
-/*
- * call-seq: from_string(s)
- * @param [String] s string
- * @return [MemoryPointer]
- * Create a {MemoryPointer} with +s+ inside.
- */
-static VALUE
-memptr_s_from_string(VALUE klass, VALUE to_str)
-{
-    VALUE s = StringValue(to_str);
-    VALUE args[] = { INT2FIX(1), LONG2NUM(RSTRING_LEN(s) + 1), Qfalse };
-    VALUE obj = rb_class_new_instance(3, args, klass);
-    rb_funcall(obj, rb_intern("put_string"), 2, INT2FIX(0), s);
-
-    return obj;
-}
-
 void
 rbffi_MemoryPointer_Init(VALUE moduleFFI)
 {
@@ -192,6 +175,4 @@ rbffi_MemoryPointer_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(rbffi_MemoryPointerClass, memptr_allocate);
     rb_define_method(rbffi_MemoryPointerClass, "initialize", memptr_initialize, -1);
-    rb_define_singleton_method(rbffi_MemoryPointerClass, "from_string", memptr_s_from_string, 1);
 }
-
