@@ -13,18 +13,17 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
                     "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ffi") ||
         (find_header("ffi.h", `xcrun --sdk macosx --show-sdk-path`.strip + "/usr/include/ffi") rescue false)
 
-    # Ensure we can link to ffi_call
-    libffi_ok &&= have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
-                  have_library("libffi", "ffi_call", [ "ffi.h" ]) ||
-                  have_library("libffi-8", "ffi_call", [ "ffi.h" ])
+    # Ensure we can link to ffi_prep_closure_loc
+    libffi_ok &&= have_library("ffi", "ffi_prep_closure_loc", [ "ffi.h" ]) ||
+                  have_library("libffi", "ffi_prep_closure_loc", [ "ffi.h" ]) ||
+                  have_library("libffi-8", "ffi_prep_closure_loc", [ "ffi.h" ])
 
     if RbConfig::CONFIG['host_os'] =~ /mswin/
       have_library('libffi_convenience')
       have_library('shlwapi')
     end
 
-    # And we need a libffi version recent enough to provide ffi_closure_alloc
-    libffi_ok &&= have_func("ffi_closure_alloc")
+    libffi_ok
   end
 
   dir_config("ffi_c")
