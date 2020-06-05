@@ -6,13 +6,6 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
-module CTest
-  extend FFI::Library
-  ffi_lib FFI::Library::LIBC
-
-  attach_function :strcat, [:pointer, :pointer], :pointer
-end
-
 describe "MemoryPointer" do
   it "makes a pointer from a string" do
     m = FFI::MemoryPointer.from_string("FFI is Awesome")
