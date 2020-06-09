@@ -1,3 +1,14 @@
+1.13.1 / 2020-06-09
+-------------------
+
+Changed:
+* Revert use of `ucrtbase.dll` as default C library on Windows-MINGW.
+  `ucrtbase.dll` is still used on MSWIN target. #790
+* Test for `ffi_prep_closure_loc()` to make sure we can use this function.
+  This fixes incorrect use of system libffi on MacOS Mojave (10.14). #787
+* Update types.conf on x86_64-dragonflybsd
+
+
 1.13.0 / 2020-06-01
 -------------------
 
