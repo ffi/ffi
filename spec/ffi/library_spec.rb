@@ -103,8 +103,7 @@ describe "Library" do
 
     it "raises LoadError on garbage in library file" do
       path = File.dirname(TestLibrary::PATH)
-      file = File.basename(TestLibrary::PATH)
-      garbage = File.join(path, "ldscript.so")
+      garbage = File.join(path, "garbage.so")
       File.binwrite garbage, "\xDE\xAD\xBE\xEF"
 
       expect {
