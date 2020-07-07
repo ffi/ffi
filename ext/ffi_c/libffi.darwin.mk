@@ -79,7 +79,7 @@ endif
 $(LIBFFI):	$(LIBTARGETS)
 	# Assemble into a FAT (x86_64, i386, ppc) library
 	@mkdir -p "$(@D)"
-	/usr/bin/libtool -static -o $@ \
+	lipo -create -output $@ \
 	    $(foreach arch, $(ARCHES),"$(BUILD_DIR)"/libffi-$(arch)/.libs/libffi_convenience.a)
 	@mkdir -p "$(LIBFFI_BUILD_DIR)"/include
 	$(RM) "$(LIBFFI_BUILD_DIR)"/include/ffi.h
