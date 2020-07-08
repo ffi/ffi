@@ -96,6 +96,112 @@ rbffi_frame_pop(rbffi_frame_t* frame)
 #endif
 }
 
+#if defined(HAVE_RB_CURRENT_THREAD_SCHEDULER)
+#if defined(_WIN32)
+#error TODO: Implement support for Ruby-3 scheduler on Windows
+#else
+
+struct BlockingThread {
+    pthread_t tid;
+    void *(*fn)(void *);
+    void *data;
+    void (*ubf)(void *);
+    void *data2;
+    VALUE retval;
+    int wrfd;
+    int rdfd;
+};
+
+static void*
+rbffi_blocking_thread(void* args)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) args;
+    char c = 'r';
+    VALUE retval;
+
+    retval = (VALUE)(*thr->fn)(thr->data);
+
+    pthread_testcancel();
+
+    thr->retval = retval;
+
+    write(thr->wrfd, &c, sizeof(c));
+
+    return NULL;
+}
+
+static VALUE
+wait_for_thread(VALUE data)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) data;
+    char c;
+
+    while (read(thr->rdfd, &c, 1) < 1 && rb_io_wait_readable(thr->rdfd) == Qtrue) {
+        ;
+    }
+    return Qnil;
+}
+
+static VALUE
+cleanup_blocking_thread(VALUE data, VALUE exc)
+{
+    struct BlockingThread* thr = (struct BlockingThread *) data;
+
+    if (thr->ubf != (void (*)(void *)) -1) {
+        (*thr->ubf)(thr->data2);
+    } else {
+        pthread_kill(thr->tid, SIGVTALRM);
+    }
+
+    return exc;
+}
+
+void *
+rbffi_blocking_region(void *(*func)(void *), void *data1, void (*ubf)(void *), void *data2)
+{
+    struct BlockingThread* thr;
+    int fd[2];
+    VALUE exc;
+
+    if (pipe(fd) < 0) {
+        rb_raise(rb_eSystemCallError, "pipe(2) failed");
+        return NULL;
+    }
+    fcntl(fd[0], F_SETFL, fcntl(fd[0], F_GETFL) | O_NONBLOCK);
+
+    thr = ALLOCA_N(struct BlockingThread, 1);
+    thr->rdfd = fd[0];
+    thr->wrfd = fd[1];
+    thr->fn = func;
+    thr->data = data1;
+    thr->ubf = ubf;
+    thr->data2 = data2;
+    thr->retval = Qnil;
+
+    if (pthread_create(&thr->tid, NULL, rbffi_blocking_thread, thr) != 0) {
+        close(fd[0]);
+        close(fd[1]);
+        rb_raise(rb_eSystemCallError, "pthread_create(3) failed");
+        return NULL;
+    }
+
+    exc = rb_rescue2(wait_for_thread, (VALUE) thr, cleanup_blocking_thread, (VALUE) thr,
+        rb_eException);
+
+    pthread_join(thr->tid, NULL);
+    close(fd[1]);
+    close(fd[0]);
+
+    if (exc != Qnil) {
+        rb_exc_raise(exc);
+    }
+
+    return NULL;
+}
+#endif /* !_WIN32 */
+#endif /* defined(HAVE_RB_CURRENT_THREAD_SCHEDULER) */
+
+
 #ifndef _WIN32
 static struct thread_data* thread_data_init(void);
 

@@ -37,6 +37,7 @@
 # include "win32/stdint.h"
 #endif
 #include <ruby.h>
+#include <ruby/io.h>
 #include "extconf.h"
 
 #ifdef	__cplusplus
@@ -72,6 +73,8 @@ typedef struct rbffi_frame {
 rbffi_frame_t* rbffi_frame_current(void);
 void rbffi_frame_push(rbffi_frame_t* frame);
 void rbffi_frame_pop(rbffi_frame_t* frame);
+
+void *rbffi_blocking_region(void *(*func)(void *), void *data1, void (*ubf)(void *), void *data2);
 
 #ifdef	__cplusplus
 }
