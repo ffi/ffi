@@ -135,10 +135,12 @@ static VALUE memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary); \
 static VALUE \
 memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
 { \
-    long count = RARRAY_LEN(ary); \
+    long count; \
     long off = NUM2LONG(offset); \
     AbstractMemory* memory = MEMORY(self); \
     long i; \
+    Check_Type(ary, T_ARRAY); \
+    count = RARRAY_LEN(ary); \
     checkWrite(memory); \
     checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
@@ -209,13 +211,13 @@ SWAPU16(uint16_t x)
         ((x >> 40) & 0x000000000000ff00ULL) | \
         ((x >> 56) & 0x00000000000000ffULL))
 
-static inline int32_t 
+static inline int32_t
 SWAPS32(int32_t x)
 {
     return bswap32(x);
 }
 
-static inline uint32_t 
+static inline uint32_t
 SWAPU32(uint32_t x)
 {
     return bswap32(x);
@@ -450,7 +452,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
         int i;
 
         checkBounds(ptr, off, count * sizeof (char*));
-        
+
         for (i = 0; i < count; ++i) {
             const char* strptr = *((const char**) (ptr->address + off) + i);
             rb_ary_push(retVal, (strptr == NULL ? Qnil : rb_str_new2(strptr)));
@@ -477,7 +479,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
  * @param [Numeric] count number of strings to get. If nil, return all strings
  * @return [Array<String>]
  */
-static VALUE 
+static VALUE
 memory_read_array_of_string(int argc, VALUE* argv, VALUE self)
 {
     VALUE* rargv = ALLOCA_N(VALUE, argc + 1);
@@ -535,13 +537,13 @@ memory_get_bytes(VALUE self, VALUE offset, VALUE length)
 {
     AbstractMemory* ptr = MEMORY(self);
     long off, len;
-    
+
     off = NUM2LONG(offset);
     len = NUM2LONG(length);
 
     checkRead(ptr);
     checkBounds(ptr, off, len);
-    
+
     return rb_str_new((char *) ptr->address + off, len);
 }
 
@@ -595,7 +597,7 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
  * equivalent to :
  *  memory.get_bytes(0, length)
  */
-static VALUE 
+static VALUE
 memory_read_bytes(VALUE self, VALUE length)
 {
     return memory_get_bytes(self, INT2FIX(0), length);
@@ -610,7 +612,7 @@ memory_read_bytes(VALUE self, VALUE length)
  * equivalent to :
  *  memory.put_bytes(0, str, index, length)
  */
-static VALUE 
+static VALUE
 memory_write_bytes(int argc, VALUE* argv, VALUE self)
 {
     VALUE* wargv = ALLOCA_N(VALUE, argc + 1);
@@ -643,7 +645,7 @@ memory_type_size(VALUE self)
  * Document-method: []
  * call-seq: memory[idx]
  * @param [Numeric] idx index to access in memory
- * @return 
+ * @return
  * Memory read accessor.
  */
 static VALUE
@@ -748,9 +750,9 @@ MemoryOps rbffi_AbstractMemoryOps = {
 void
 rbffi_AbstractMemory_Init(VALUE moduleFFI)
 {
-    /* 
+    /*
      * Document-class: FFI::AbstractMemory
-     * 
+     *
      * {AbstractMemory} is the base class for many memory management classes such as {Buffer}.
      *
      * This class has a lot of methods to work with integers :
@@ -778,8 +780,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
      */
     VALUE classMemory = rb_define_class_under(moduleFFI, "AbstractMemory", rb_cObject);
     rbffi_AbstractMemoryClass = classMemory;
-    /* 
-     * Document-variable: FFI::AbstractMemory 
+    /*
+     * Document-variable: FFI::AbstractMemory
      */
     rb_global_variable(&rbffi_AbstractMemoryClass);
     rb_define_alloc_func(classMemory, memory_allocate);
@@ -807,13 +809,13 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "read_array_of_" #type, memory_read_array_of_##type, 1); \
     rb_define_method(classMemory, "write_array_of_u" #type, memory_write_array_of_u##type, 1); \
     rb_define_method(classMemory, "read_array_of_u" #type, memory_read_array_of_u##type, 1);
-    
+
     INT(int8);
     INT(int16);
     INT(int32);
     INT(int64);
     INT(long);
-    
+
 #define ALIAS(name, old) \
     rb_define_alias(classMemory, "put_" #name, "put_" #old); \
     rb_define_alias(classMemory, "get_" #name, "get_" #old); \
@@ -831,12 +833,12 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_alias(classMemory, "read_array_of_" #name, "read_array_of_" #old); \
     rb_define_alias(classMemory, "write_array_of_u" #name, "write_array_of_u" #old); \
     rb_define_alias(classMemory, "read_array_of_u" #name, "read_array_of_u" #old);
-    
+
     ALIAS(char, int8);
     ALIAS(short, int16);
     ALIAS(int, int32);
     ALIAS(long_long, int64);
-    
+
     /*
      * Document-method: put_float32
      * call-seq: memory.put_float32offset, value)

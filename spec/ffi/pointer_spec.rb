@@ -114,6 +114,10 @@ describe "Pointer" do
         expect(array[j]).to eq(val)
       end
     end
+    it "#write_array_of_type should raise an error with non-array argument" do
+      memory = FFI::MemoryPointer.new FFI::TYPE_INT8, 1
+      expect { memory.write_array_of_int8(0) }.to raise_error(TypeError)
+    end
   end
 
   describe 'NULL' do
@@ -291,7 +295,7 @@ describe "AutoPointer" do
       aptr = ptr_class.new(FFI::Pointer.new(:int, 0xdeadbeef))
       expect(aptr.type_size).to eq(FFI.type_size(:int))
     end
-    
+
     it "[] offset should match wrapped Pointer" do
       mptr = FFI::MemoryPointer.new(:int, 1024)
       aptr = ptr_class.new(FFI::Pointer.new(:int, mptr))
