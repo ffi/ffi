@@ -141,7 +141,7 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     long i; \
     Check_Type(ary, T_ARRAY); \
     count = RARRAY_LEN(ary); \
-    checkWrite(memory); \
+    if (likely(count > 0)) checkWrite(memory); \
     checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
         type tmp = (type) VAL(toNative(RARRAY_PTR(ary)[i]), swap); \
@@ -164,7 +164,7 @@ memory_get_array_of_##name(VALUE self, VALUE offset, VALUE length) \
     AbstractMemory* memory = MEMORY(self); \
     VALUE retVal = rb_ary_new2(count); \
     long i; \
-    checkRead(memory); \
+    if (likely(count > 0)) checkRead(memory); \
     checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; ++i) { \
         type tmp; \
