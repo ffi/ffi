@@ -157,14 +157,14 @@ ptr_initialize_copy(VALUE self, VALUE other)
 {
     AbstractMemory* src;
     Pointer* dst;
-    
+
     Data_Get_Struct(self, Pointer, dst);
     src = POINTER(other);
     if (src->size == LONG_MAX) {
         rb_raise(rb_eRuntimeError, "cannot duplicate unbounded memory area");
         return Qnil;
     }
-    
+
     if ((dst->memory.flags & (MEM_RD | MEM_WR)) != (MEM_RD | MEM_WR)) {
         rb_raise(rb_eRuntimeError, "cannot duplicate unreadable/unwritable memory area");
         return Qnil;
@@ -180,13 +180,13 @@ ptr_initialize_copy(VALUE self, VALUE other)
         rb_raise(rb_eNoMemError, "failed to allocate memory size=%lu bytes", src->size);
         return Qnil;
     }
-    
+
     dst->allocated = true;
     dst->autorelease = true;
     dst->memory.address = (void *) (((uintptr_t) dst->storage + 0x7) & (uintptr_t) ~0x7ULL);
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
-    
+
     /* finally, copy the actual memory contents */
     memcpy(dst->memory.address, src->address, src->size);
 
@@ -199,7 +199,7 @@ slice(VALUE self, long offset, long size)
     AbstractMemory* ptr;
     Pointer* p;
     VALUE retval;
-    
+
     Data_Get_Struct(self, AbstractMemory, ptr);
     checkBounds(ptr, offset, size == LONG_MAX ? 1 : size);
 
@@ -214,7 +214,7 @@ slice(VALUE self, long offset, long size)
     return retval;
 }
 
-/* 
+/*
  * Document-method: +
  * call-seq: ptr + offset
  * @param [Numeric] offset
@@ -237,7 +237,7 @@ ptr_plus(VALUE self, VALUE offset)
  * @param [Numeric] offset
  * @param [Numeric] length
  * @return [Pointer]
- * Return a new {Pointer} from an existing one. This pointer points on same contents 
+ * Return a new {Pointer} from an existing one. This pointer points on same contents
  * from +offset+ for a length +length+.
  */
 static VALUE
@@ -256,7 +256,7 @@ ptr_inspect(VALUE self)
 {
     char buf[100];
     Pointer* ptr;
-    
+
     Data_Get_Struct(self, Pointer, ptr);
 
     if (ptr->memory.size != LONG_MAX) {
@@ -295,7 +295,7 @@ static VALUE
 ptr_equals(VALUE self, VALUE other)
 {
     Pointer* ptr;
-    
+
     Data_Get_Struct(self, Pointer, ptr);
 
     if (NIL_P(other)) {
@@ -314,7 +314,7 @@ static VALUE
 ptr_address(VALUE self)
 {
     Pointer* ptr;
-    
+
     Data_Get_Struct(self, Pointer, ptr);
 
     return ULL2NUM((uintptr_t) ptr->memory.address);
@@ -331,7 +331,7 @@ ptr_address(VALUE self)
  * @overload order
  *  @return [:big, :little] endianness of +self+
  * @overload order(order)
- *  @param  [Symbol] order endianness to set (+:little+, +:big+ or +:network+). +:big+ and +:network+ 
+ *  @param  [Symbol] order endianness to set (+:little+, +:big+ or +:network+). +:big+ and +:network+
  *   are synonymous.
  *  @return [self]
  */
@@ -395,7 +395,7 @@ ptr_free(VALUE self)
 
     } else {
         VALUE caller = rb_funcall(rb_funcall(Qnil, rb_intern("caller"), 0), rb_intern("first"), 0);
-        
+
         rb_warn("calling free on non allocated pointer %s from %s", RSTRING_PTR(ptr_inspect(self)), RSTRING_PTR(rb_str_to_str(caller)));
     }
 
@@ -408,7 +408,7 @@ ptr_type_size(VALUE self)
     Pointer* ptr;
 
     Data_Get_Struct(self, Pointer, ptr);
-    
+
     return INT2NUM(ptr->memory.typeSize);
 }
 
@@ -440,7 +440,7 @@ ptr_autorelease_p(VALUE self)
     Pointer* ptr;
 
     Data_Get_Struct(self, Pointer, ptr);
-    
+
     return ptr->autorelease ? Qtrue : Qfalse;
 }
 
@@ -472,9 +472,11 @@ rbffi_Pointer_Init(VALUE moduleFFI)
      * Pointer class is used to manage C pointers with ease. A {Pointer} object is defined by his
      * {#address} (as a C pointer). It permits additions with an integer for pointer arithmetic.
      *
-     * ==Autorelease
-     * A pointer object may autorelease his contents when freed (by default). This behaviour may be
-     * changed with {#autorelease=} method.
+     * == Autorelease
+     * By default a pointer object frees its content when it's garbage collected.
+     * Therefore it's usually not necessary to call {#free} explicit.
+     * This behaviour may be changed with {#autorelease=} method.
+     * If it's set to +true+, the memory isn't freed by the garbage collector, but stays valid until +free()+ is called on C level or when the process terminates.
      */
     rbffi_PointerClass = rb_define_class_under(moduleFFI, "Pointer", ffi_AbstractMemory);
     /*
