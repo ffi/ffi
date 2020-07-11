@@ -476,7 +476,7 @@ rbffi_Pointer_Init(VALUE moduleFFI)
      * By default a pointer object frees its content when it's garbage collected.
      * Therefore it's usually not necessary to call {#free} explicit.
      * This behaviour may be changed with {#autorelease=} method.
-     * If it's set to +true+, the memory isn't freed by the garbage collector, but stays valid until +free()+ is called on C level or when the process terminates.
+     * If it's set to +false+, the memory isn't freed by the garbage collector, but stays valid until +free()+ is called on C level or when the process terminates.
      */
     rbffi_PointerClass = rb_define_class_under(moduleFFI, "Pointer", ffi_AbstractMemory);
     /*
