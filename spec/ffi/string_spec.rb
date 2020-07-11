@@ -96,4 +96,30 @@ describe "String tests" do
     ptrary.write_array_of_pointer(ary)
     expect { ptrary.get_array_of_string(-1) }.to raise_error(IndexError)
   end
+
+  describe "#write_string" do
+    it "does not write a final \\0 when given no length" do
+      ptr = FFI::MemoryPointer.new(8)
+      ptr.write_int64(-1)
+      ptr.write_string("abc")
+      expect(ptr.read_bytes(4)).to eq("abc\xFF".b)
+    end
+
+    it "does not write a final \\0 when given a length" do
+      ptr = FFI::MemoryPointer.new(8)
+      ptr.write_int64(-1)
+      ptr.write_string("abc", 3)
+      expect(ptr.read_bytes(4)).to eq("abc\xFF".b)
+    end
+  end
+
+  describe "#put_string" do
+    it "writes a final \\0" do
+      ptr = FFI::MemoryPointer.new(8)
+      ptr.write_int64(-1)
+      ptr.put_string(0, "abc")
+      expect(ptr.read_bytes(4)).to eq("abc\x00")
+      expect(ptr.read_string).to eq("abc")
+    end
+  end
 end
