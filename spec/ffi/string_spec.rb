@@ -98,11 +98,13 @@ describe "String tests" do
   end
 
   describe "#write_string" do
-    it "does not write a final \\0 when given no length" do
+    # https://github.com/ffi/ffi/issues/805
+    it "writes a final \\0 when given no length" do
       ptr = FFI::MemoryPointer.new(8)
       ptr.write_int64(-1)
       ptr.write_string("abc")
-      expect(ptr.read_bytes(4)).to eq("abc\xFF".b)
+      expect(ptr.read_bytes(4)).to eq("abc\x00")
+      expect(ptr.read_string).to eq("abc")
     end
 
     it "does not write a final \\0 when given a length" do

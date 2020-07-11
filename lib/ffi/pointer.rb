@@ -97,11 +97,15 @@ module FFI
     # @param [Numeric] len length of string to return
     # @return [self]
     # Write +str+ in pointer's contents, or first +len+ bytes if 
-    # +len+ is not +nil+.
+    # +len+ is not +nil+. A final \0 byte is written if +len+ is not given.
     def write_string(str, len=nil)
-      len = str.bytesize unless len
-      # Write the string data without NUL termination
-      put_bytes(0, str, 0, len)
+      if len
+        # No NUL termination
+        put_bytes(0, str, 0, len)
+      else
+        # With NUL termination
+        put_string(0, str)
+      end
     end unless method_defined?(:write_string)
 
     # @param [Type] type type of data to read from pointer's contents
