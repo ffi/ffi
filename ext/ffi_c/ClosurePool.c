@@ -66,6 +66,11 @@
 
 #include "ClosurePool.h"
 
+#if (defined(__arm64__) && defined(__APPLE__))
+#define USE_FFI_ALLOC 1
+#else
+#define USE_FFI_ALLOC 0
+#endif
 
 #ifndef roundup
 #  define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
@@ -115,7 +120,11 @@ cleanup_closure_pool(ClosurePool* pool)
 
     for (memory = pool->blocks; memory != NULL; ) {
         Memory* next = memory->next;
+#if !USE_FFI_ALLOC
         freePage(memory->code);
+#else
+        ffi_closure_free(memory->code);
+#endif
         free(memory->data);
         free(memory);
         memory = next;
@@ -133,6 +142,8 @@ rbffi_ClosurePool_Free(ClosurePool* pool)
         }
     }
 }
+
+#if !USE_FFI_ALLOC
 
 Closure*
 rbffi_Closure_Alloc(ClosurePool* pool)
@@ -169,6 +180,7 @@ rbffi_Closure_Alloc(ClosurePool* pool)
         closure->next = &list[i + 1];
         closure->pool = pool;
         closure->code = ((char *)code + (i * trampolineSize));
+        closure->pcl  = closure->code;
 
         if (!(*pool->prep)(pool->ctx, closure->code, closure, errmsg, sizeof(errmsg))) {
             goto error;
@@ -205,6 +217,57 @@ error:
     return NULL;
 }
 
+#else
+
+Closure*
+rbffi_Closure_Alloc(ClosurePool* pool)
+{
+    Closure *closure = NULL;
+    Memory* block = NULL;
+    void *code = NULL;
+    void *pcl = NULL;
+    char errmsg[256];
+
+    block = calloc(1, sizeof(*block));
+    closure = calloc(1, sizeof(*closure));
+    pcl = ffi_closure_alloc(sizeof(ffi_closure), &code);
+
+    if (block == NULL || closure == NULL || pcl == NULL) {
+        snprintf(errmsg, sizeof(errmsg), "failed to allocate a page. errno=%d (%s)", errno, strerror(errno));
+        goto error;
+    }
+
+    closure->pool = pool;
+    closure->code = code;
+    closure->pcl = pcl;
+
+    if (!(*pool->prep)(pool->ctx, closure->code, closure, errmsg, sizeof(errmsg))) {
+        goto error;
+    }
+
+    /* Track the allocated page + Closure memory area */
+    block->data = closure;
+    block->code = pcl;
+    pool->blocks = block;
+
+    /* Thread the new block onto the free list, apart from the first one. */
+    pool->refcnt++;
+
+    return closure;
+
+error:
+    free(block);
+    free(closure);
+    if (pcl != NULL) {
+        ffi_closure_free(pcl);
+    }
+
+    rb_raise(rb_eRuntimeError, "%s", errmsg);
+    return NULL;
+}
+
+#endif /* !USE_FFI_ALLOC */
+
 void
 rbffi_Closure_Free(Closure* closure)
 {
@@ -240,6 +303,8 @@ getPageSize()
 #endif
 }
 
+#if !USE_FFI_ALLOC
+
 static void*
 allocatePage(void)
 {
@@ -271,6 +336,8 @@ protectPage(void* page)
     return mprotect(page, pageSize, PROT_READ | PROT_EXEC) == 0;
 #endif
 }
+
+#endif /* !USE_FFI_ALLOC */
 
 void
 rbffi_ClosurePool_Init(VALUE module)
