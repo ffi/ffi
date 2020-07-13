@@ -36,6 +36,8 @@ struct Closure_ {
     void* info;      /* opaque handle for storing closure-instance specific data */
     void* function;  /* closure-instance specific function, called by custom trampoline */
     void* code;      /* The native trampoline code location */
+    void* pcl;
+
     struct ClosurePool_* pool;
     Closure* next;
 };
