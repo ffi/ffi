@@ -91,6 +91,23 @@ static inline void* getPointer(VALUE value, int type);
 
 static ID id_to_ptr, id_map_symbol, id_to_native;
 
+static VALUE rbffi_pin_string_content(VALUE str)
+{
+#ifdef RSTRING_EMBED_LEN_MAX
+    if (likely(RB_TYPE_P(str, T_STRING)) && !unlikely(RB_OBJ_FROZEN(str))){
+        /* Expand the string capacity so we aren't using embedded string memory
+         * but heap memory for the string content.
+         * This is to avoid relocation of the content by GC.compact
+         */
+        long expand_len = RSTRING_EMBED_LEN_MAX + 1 - RSTRING_LEN(str);
+        if (likely(expand_len > 0)) {
+            rb_str_modify_expand( str, expand_len );
+        }
+    }
+#endif
+    return str;
+}
+
 void
 rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
         FFIStorage* paramStorage, void** ffiValues,
@@ -298,7 +315,9 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                     param->ptr = NULL;
 
                 } else {
-                    param->ptr = StringValueCStr(argv[argidx]);
+                    VALUE str = argv[argidx];
+                    rbffi_pin_string_content(str);
+                    param->ptr = StringValueCStr(str);
                 }
 
                 ADJ(param, ADDRESS);
@@ -435,6 +454,7 @@ getPointer(VALUE value, int type)
 
     } else if (type == T_STRING) {
 
+        rbffi_pin_string_content(value);
         return StringValuePtr(value);
 
     } else if (type == T_NIL) {

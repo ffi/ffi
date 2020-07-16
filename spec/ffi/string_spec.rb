@@ -23,6 +23,11 @@ describe "String tests" do
     expect(StrLibTest.pointer_buffer_equals(str + "a", str + "b", str.bytesize + 1)).to eq(0)
   end
 
+  it "Frozen String can be passed to :pointer and :string argument" do
+    str = "string buffer".freeze
+    expect(StrLibTest.pointer_buffer_equals(str, str, str.bytesize)).to eq(1)
+  end
+
   it "Poison null byte raises error" do
     s = "123\0abc"
     expect{ StrLibTest.pointer_buffer_equals("", s, 0) }.to raise_error(ArgumentError)
@@ -98,4 +103,12 @@ describe "String tests" do
     ptrary.write_array_of_pointer(ary)
     expect { ptrary.get_array_of_string(-1) }.to raise_error(IndexError)
   end
+
+  it "with GC.compact" do
+    skip "GC.compact is unavailable" unless GC.respond_to?(:compact)
+
+    out = external_run("rspec", "gc_compact.rb")
+    expect(out).to match(/ 0 failures/)
+  end
+
 end

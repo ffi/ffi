@@ -32,3 +32,6 @@ string_null(void)
     return NULL;
 }
 
+void store_string(char* str, char **ptr) {
+    *ptr = str;
+}
