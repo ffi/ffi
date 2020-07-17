@@ -290,7 +290,7 @@ struct_field(Struct* s, VALUE fieldName)
         VALUE rbField = rb_hash_aref(layout->rbFieldMap, fieldName);
         if (unlikely(NIL_P(rbField))) {
             VALUE str = rb_funcall2(fieldName, id_to_s, 0, NULL);
-            rb_raise(rb_eArgError, "No such field '%s'", StringValuePtr(str));
+            rb_raise(rb_eArgError, "No such field '%s'", StringValueCStr(str));
         }
         /* Write the retrieved coder to the cache */
         p_ce->fieldName = fieldName;
