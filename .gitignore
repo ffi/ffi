@@ -20,6 +20,6 @@ vendor
 Gemfile.lock
 types_log
 *.gem
-embed-test.log
+embed-test.rb.log
 spec/ffi/embed-test/ext/Makefile
 spec/ffi/embed-test/ext/embed_test.bundle
