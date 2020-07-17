@@ -5,8 +5,7 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
-# Skip platforms that don't implement Process.fork
-unless RUBY_ENGINE == "truffleruby" or FFI::Platform.windows?
+if Process.respond_to?(:fork)
   describe "Callback in conjunction with fork()" do
 
     module LibTest
