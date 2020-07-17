@@ -27,7 +27,6 @@ unless RUBY_ENGINE == "truffleruby" or FFI::Platform.windows?
     end
 
     it "works with forked process and free()" do
-      func = LibTest.ffi_libraries.first.find_function("testClosureVrL")
       cbf = FFI::Function.new(FFI::Type::LONG, []) { 234 }
 
       fork do
