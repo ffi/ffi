@@ -71,13 +71,12 @@ module FFI
       "powerpc"
     when /sparcv9|sparc64/
       "sparcv9"
+    when /arm64|aarch64/  # MacOS calls it "arm64", other operating systems "aarch64"
+      "aarch64"
+    when /^arm/
+      "arm"
     else
-      case RbConfig::CONFIG['host_cpu']
-      when /^arm/
-        "arm"
-      else
-        RbConfig::CONFIG['host_cpu']
-      end
+      RbConfig::CONFIG['host_cpu']
     end
 
     private
