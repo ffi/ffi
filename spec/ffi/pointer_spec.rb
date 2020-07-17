@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 #
 # This file is part of ruby-ffi.
 # For licensing, see LICENSE.SPECS
@@ -15,6 +16,7 @@ module PointerTestLib
     # NetBSD uses #define instead of typedef for these
     attach_function :ptr_ret_int32_t, :ptr_ret___int32_t, [ :pointer, :int ], :int
   end
+  attach_function :ptr_ret_int64_t, [ :pointer, :int ], :int64_t
   attach_function :ptr_from_address, [ FFI::Platform::ADDRESS_SIZE == 32 ? :uint : :ulong_long ], :pointer
   attach_function :ptr_set_pointer, [ :pointer, :int, :pointer ], :void
   attach_function :ptr_ret_pointer, [ :pointer, :int ], :pointer
@@ -60,6 +62,11 @@ describe "Pointer" do
 
   it "Bignum cannot be used as a Pointer argument" do
     expect { PointerTestLib.ptr_ret_int32_t(0xfee1deadbeefcafebabe, 0) }.to raise_error(ArgumentError)
+  end
+
+  it "String can be used as a Pointer argument" do
+    s = "123\0abö"
+    expect( PointerTestLib.ptr_ret_int64_t(s, 0) ).to eq(s.unpack("q")[0])
   end
 
   it "#to_ptr" do
