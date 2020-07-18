@@ -59,7 +59,6 @@ module StructSpecsStructTests
         attach_function :ptr_ret_int32_t, :ptr_ret___int32_t, [ :pointer, :int ], :int
       end
       attach_function :ptr_from_address, [ :ulong ], :pointer
-      attach_function :string_equals, [ :string, :string ], :int
       [ 's8', 's16', 's32', 's64', 'f32', 'f64', 'long' ].each do |t|
         attach_function "struct_align_#{t}", [ :pointer ], StructTypes[t]
       end
