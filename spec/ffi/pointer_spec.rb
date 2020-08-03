@@ -143,6 +143,11 @@ describe "Pointer" do
     it 'returns true when compared with nil' do
       expect((FFI::Pointer::NULL == nil)).to be true
     end
+    it 'should not raise an error when attempting read/write zero length array' do
+      null_ptr = FFI::Pointer::NULL
+      expect( null_ptr.read_array_of_uint(0) ).to eq([])
+      null_ptr.write_array_of_uint([])
+    end
   end
 
   it "Pointer.size returns sizeof pointer on platform" do
