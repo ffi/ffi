@@ -117,6 +117,7 @@ rbffi_MethodHandle_Free(MethodHandle* handle)
 {
     if (handle != NULL) {
         rbffi_Closure_Free(handle->closure);
+        xfree(handle);
     }
 }
 
