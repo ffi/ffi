@@ -50,7 +50,7 @@ module FFI
       "dragonflybsd"
     when /sunos|solaris/
       "solaris"
-    when /mingw|mswin/
+    when /mingw|mswin|msys/
       "windows"
     else
       RbConfig::CONFIG['host_os'].downcase
