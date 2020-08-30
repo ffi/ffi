@@ -47,4 +47,4 @@ describe ":long_double arguments and return values" do
       expect(v).to be_within(0.01).of(0.1)
     end
   end
-end if RUBY_ENGINE != "truffleruby"
+end unless ['truffleruby', 'jruby'].include?(RUBY_ENGINE)
