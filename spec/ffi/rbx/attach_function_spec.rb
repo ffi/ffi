@@ -35,4 +35,4 @@ module RbxAttachFunctionSpecs
       expect(t[:tv_usec]).to be_kind_of(Numeric)
     end
   end
-end
+end unless RUBY_ENGINE == 'jruby'
