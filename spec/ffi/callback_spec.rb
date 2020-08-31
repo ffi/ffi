@@ -58,7 +58,7 @@ module CallbackSpecs
       callback :cbIrV, [ :int ], :void
       callback :cbLrV, [ :long ], :void
       callback :cbULrV, [ :ulong ], :void
-      callback :cbLrV, [ :long_long ], :void
+      callback :cbLLrV, [ :long_long ], :void
       callback :cbVrT, [ ], S8F32S32.by_value
       callback :cbTrV, [ S8F32S32.by_value ], :void
       callback :cbYrV, [ S8F32S32.ptr ], :void
@@ -446,6 +446,7 @@ module CallbackSpecs
           attach_function :testCallbackAsArgument_2, :testArgumentClosure, [ :cb_with_cb_argument, :int ], :int
         end).to be_an_instance_of FFI::Function
       end
+
       it 'should be able to use the callback argument' do
         module LibTest
           extend FFI::Library
@@ -469,6 +470,7 @@ module CallbackSpecs
         expect(callback_arg_called).to be true
         expect(callback_with_callback_arg_called).to be true
       end
+
       it 'function returns callable object' do
         module LibTest
           extend FFI::Library
