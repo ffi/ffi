@@ -256,11 +256,11 @@ VALUE
 rbffi_Function_ForProc(VALUE rbFunctionInfo, VALUE proc)
 {
     VALUE callback, cbref, cbTable;
-    Function* fp;
 
     cbref = RTEST(rb_ivar_defined(proc, id_cb_ref)) ? rb_ivar_get(proc, id_cb_ref) : Qnil;
     /* If the first callback reference has the same function function signature, use it */
     if (cbref != Qnil && CLASS_OF(cbref) == rbffi_FunctionClass) {
+        Function* fp;
         Data_Get_Struct(cbref, Function, fp);
         if (fp->rbFunctionInfo == rbFunctionInfo) {
             return cbref;
@@ -279,8 +279,10 @@ rbffi_Function_ForProc(VALUE rbFunctionInfo, VALUE proc)
         rb_ivar_set(proc, id_cb_ref, callback);
     } else {
         /* The proc instance has been used as more than one type of callback, store extras in a hash */
-        cbTable = rb_hash_new();
-        rb_ivar_set(proc, id_cbtable, cbTable);
+        if(cbTable == Qnil) {
+          cbTable = rb_hash_new();
+          rb_ivar_set(proc, id_cbtable, cbTable);
+        }
         rb_hash_aset(cbTable, rbFunctionInfo, callback);
     }
 
