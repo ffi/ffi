@@ -364,17 +364,13 @@ module StructSpecsStructTests
     int_field_test(:int, [ 0, 0x7fffffff, -0x80000000, -1 ])
     int_field_test(:uint, [ 0, 0x7fffffff, 0x80000000, 0xffffffff ])
     int_field_test(:long_long, [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ])
-    if RUBY_ENGINE != 'jruby' # https://github.com/jnr/jffi/issues/87
-      int_field_test(:ulong_long, [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ])
-    end
+    int_field_test(:ulong_long, [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ])
     if FFI::Platform::LONG_SIZE == 32
       int_field_test(:long, [ 0, 0x7fffffff, -0x80000000, -1 ])
       int_field_test(:ulong, [ 0, 0x7fffffff, 0x80000000, 0xffffffff ])
     else
       int_field_test(:long, [ 0, 0x7fffffffffffffff, -0x8000000000000000, -1 ])
-      if RUBY_ENGINE != 'jruby' # https://github.com/jruby/jruby/issues/6376
-        int_field_test(:ulong, [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ])
-      end
+      int_field_test(:ulong, [ 0, 0x7fffffffffffffff, 0x8000000000000000, 0xffffffffffffffff ])
     end
 
     it ":float field r/w" do
