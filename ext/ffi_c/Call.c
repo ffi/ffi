@@ -34,13 +34,8 @@
 #endif
 #include <sys/types.h>
 #include <stdio.h>
-#ifndef _MSC_VER
-# include <stdint.h>
-# include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-# include "win32/stdint.h"
-#endif
+#include <stdint.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <ruby.h>
 #include <ruby/thread.h>

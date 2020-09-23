@@ -31,13 +31,8 @@
 # include <sys/param.h>
 #endif
 # include <sys/types.h>
-#ifndef _MSC_VER
-# include <stdint.h>
-# include <stdbool.h>
-#else
-# include "win32/stdint.h"
-# include "win32/stdbool.h"
-#endif
+#include <stdint.h>
+#include <stdbool.h>
 #include <ruby.h>
 #include <ctype.h>
 #include "rbffi_endian.h"

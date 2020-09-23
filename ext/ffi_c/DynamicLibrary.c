@@ -29,9 +29,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
-#ifndef _MSC_VER
-#  include <stdint.h>
-#endif
+#include <stdint.h>
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 # include <winsock2.h>
 # define _WINSOCKAPI_
@@ -41,9 +39,6 @@
 # include <dlfcn.h>
 #endif
 #include <ruby.h>
-#if defined(_MSC_VER) && !defined(INT8_MIN)
-#  include "win32/stdint.h"
-#endif
 
 #include <ffi.h>
 

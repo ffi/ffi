@@ -37,15 +37,8 @@
 #endif
 
 #include <stdio.h>
-#ifndef _MSC_VER
-# include <stdint.h>
-# include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-# if !defined(INT8_MIN)
-#  include "win32/stdint.h"
-# endif
-#endif
+#include <stdint.h>
+#include <stdbool.h>
 #include <ruby.h>
 #include <ruby/thread.h>
 

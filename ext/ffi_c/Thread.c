@@ -28,12 +28,7 @@
  */
 
 #include <stddef.h>
-#ifndef _MSC_VER
 #include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-# include "win32/stdint.h"
-#endif
 
 #if defined(__CYGWIN__) || !defined(_WIN32)
 # include <pthread.h>

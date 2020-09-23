@@ -31,12 +31,9 @@
 #include <sys/types.h>
 #ifndef _MSC_VER
 # include <sys/param.h>
-# include <stdint.h>
-# include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-# include "win32/stdint.h"
 #endif
+#include <stdint.h>
+#include <stdbool.h>
 #include <ruby.h>
 #include "rbffi.h"
 #include "compat.h"
