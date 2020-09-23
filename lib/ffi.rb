@@ -8,11 +8,11 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
 
   require 'ffi/ffi'
 
-elsif RUBY_ENGINE == 'jruby' && Gem::Version.new(RUBY_ENGINE_VERSION) >= Gem::Version.new("9.3.pre")
+elsif RUBY_ENGINE == 'jruby' && (RUBY_ENGINE_VERSION.split('.').map(&:to_i) <=> [9, 3]) >= 0
   JRuby::Util.load_ext("org.jruby.ext.ffi.FFIService")
   require 'ffi/ffi'
 
-elsif RUBY_ENGINE == 'truffleruby' && Gem::Version.new(RUBY_ENGINE_VERSION) >= Gem::Version.new("20.1.0-dev-a")
+elsif RUBY_ENGINE == 'truffleruby' && (RUBY_ENGINE_VERSION.split('.').map(&:to_i) <=> [20, 1, 0]) >= 0
   require 'truffleruby/ffi_backend'
   require 'ffi/ffi'
 
