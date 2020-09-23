@@ -102,16 +102,16 @@ describe "String tests" do
     it "writes a final \\0 when given no length" do
       ptr = FFI::MemoryPointer.new(8)
       ptr.write_int64(-1)
-      ptr.write_string("abc")
-      expect(ptr.read_bytes(4)).to eq("abc\x00")
-      expect(ptr.read_string).to eq("abc")
+      ptr.write_string("äbc")
+      expect(ptr.read_bytes(5)).to eq("äbc\x00".b)
+      expect(ptr.read_string).to eq("äbc".b)
     end
 
-    it "does not write a final \\0 when given a length" do
+    it "writes a final \\0 when given a length" do
       ptr = FFI::MemoryPointer.new(8)
       ptr.write_int64(-1)
-      ptr.write_string("abc", 3)
-      expect(ptr.read_bytes(4)).to eq("abc\xFF".b)
+      ptr.write_string("äbcd", 3)
+      expect(ptr.read_bytes(5)).to eq("äb\x00\xFF".b)
     end
   end
 
@@ -119,9 +119,9 @@ describe "String tests" do
     it "writes a final \\0" do
       ptr = FFI::MemoryPointer.new(8)
       ptr.write_int64(-1)
-      ptr.put_string(0, "abc")
-      expect(ptr.read_bytes(4)).to eq("abc\x00")
-      expect(ptr.read_string).to eq("abc")
+      ptr.put_string(0, "äbc")
+      expect(ptr.read_bytes(5)).to eq("äbc\x00".b)
+      expect(ptr.read_string).to eq("äbc".b)
     end
   end
 end
