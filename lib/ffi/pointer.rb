@@ -97,12 +97,12 @@ module FFI
     # @param [Numeric] len length of string to return
     # @return [self]
     # Write +str+ in pointer's contents.
-    # If +len+ is given, write the first +len+ bytes of +str+
-    # and append a final \0 byte after the string.
+    # If +len+ is given, write the first +len+ bytes of +str+.
+    # In both cases a final \0 byte is written after the string.
     def write_string(str, len=nil)
       if len
         put_bytes(0, str, 0, len)
-        put_bytes(len, "\0")
+        put_char(len, 0)
       else
         put_string(0, str)
       end
