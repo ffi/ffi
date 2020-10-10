@@ -1026,4 +1026,58 @@ describe "variable-length arrays" do
     expect { expect(s[:data][1]).to == 0x12345678 }.to raise_error(IndexError)
   end
 end
+
+describe "Struct order" do
+  before :all do
+    @struct = Class.new(FFI::Struct) do
+      layout :value, :int32
+    end
+  end
+
+  before :each do
+    @pointer = @struct.new
+    @pointer.pointer.write_string("\x1\x2\x3\x4")
+    @pointer
+  end
+
+  it "should return the system order by default" do
+    expect(@pointer.order).to eq(OrderHelper::ORDER)
+  end
+
+  it "should return a new struct if there is no change" do
+    expect(@pointer.order(OrderHelper::ORDER)).to_not be @pointer
+  end
+
+  it "should return a new struct if there is a change" do
+    expect(@pointer.order(OrderHelper::OTHER_ORDER)).to_not be @pointer
+  end
+
+  it "can be set to :little" do
+    expect(@pointer.order(:little).order).to eq(:little)
+  end
+
+  it "can be set to :big" do
+    expect(@pointer.order(:big).order).to eq(:big)
+  end
+
+  it "can be set to :network, which sets it to :big" do
+    expect(@pointer.order(:network).order).to eq(:big)
+  end
+
+  it "cannot be set to other symbols" do
+    expect { @pointer.order(:unknown) }.to raise_error(ArgumentError)
+  end
+
+  it "can be used to read in little order" do
+    expect(@pointer.order(:little)[:value]).to eq(67305985)
+  end
+
+  it "can be used to read in big order" do
+    expect(@pointer.order(:big)[:value]).to eq(16909060)
+  end
+
+  it "can be used to read in network order" do
+    expect(@pointer.order(:network)[:value]).to eq(16909060)
+  end
+end
 end
