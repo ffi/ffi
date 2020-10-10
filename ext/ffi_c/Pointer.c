@@ -358,6 +358,8 @@ ptr_order(int argc, VALUE* argv, VALUE self)
 
             } else if (id == rb_intern("big") || id == rb_intern("network")) {
                 order = BIG_ENDIAN;
+            } else {
+                rb_raise(rb_eArgError, "unknown byte order");
             }
         }
         if (order != BYTE_ORDER) {
