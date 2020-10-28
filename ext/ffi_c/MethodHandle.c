@@ -34,13 +34,8 @@
 # include <sys/mman.h>
 #endif
 #include <stdio.h>
-#ifndef _MSC_VER
-# include <stdint.h>
-# include <stdbool.h>
-#else
-# include "win32/stdint.h"
-# include "win32/stdbool.h"
-#endif
+#include <stdint.h>
+#include <stdbool.h>
 #ifndef _WIN32
 # include <unistd.h>
 #endif

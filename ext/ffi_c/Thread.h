@@ -30,12 +30,7 @@
 #ifndef RBFFI_THREAD_H
 #define	RBFFI_THREAD_H
 
-#ifndef _MSC_VER
-# include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-# include "win32/stdint.h"
-#endif
+#include <stdbool.h>
 #include <ruby.h>
 #include "extconf.h"
 

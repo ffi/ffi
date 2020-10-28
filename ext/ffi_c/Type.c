@@ -28,7 +28,7 @@
  */
 
 #ifndef _MSC_VER
-#include <sys/param.h>
+# include <sys/param.h>
 #endif
 
 #include <sys/types.h>

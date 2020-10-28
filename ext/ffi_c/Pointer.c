@@ -27,13 +27,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MSC_VER
-# include <stdint.h>
-# include <stdbool.h>
-#else
-# include "win32/stdint.h"
-# include "win32/stdbool.h"
-#endif
+#include <stdint.h>
+#include <stdbool.h>
 #include <limits.h>
 #include <ruby.h>
 #include "rbffi.h"

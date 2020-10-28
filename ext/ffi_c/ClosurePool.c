@@ -34,13 +34,8 @@
 #  include <sys/mman.h>
 #endif
 #include <stdio.h>
-#ifndef _MSC_VER
-# include <stdint.h>
-# include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-# include "win32/stdint.h"
-#endif
+#include <stdint.h>
+#include <stdbool.h>
 #if defined(__CYGWIN__) || !defined(_WIN32)
 #  include <unistd.h>
 #else
@@ -51,9 +46,6 @@
 #include <errno.h>
 #include <ruby.h>
 
-#if defined(_MSC_VER) && !defined(INT8_MIN)
-#  include "win32/stdint.h"
-#endif
 #include <ffi.h>
 #include "rbffi.h"
 #include "compat.h"
