@@ -1036,7 +1036,7 @@ describe "Struct order" do
 
   before :each do
     @pointer = @struct.new
-    @pointer.pointer.write_string("\x1\x2\x3\x4")
+    @pointer.pointer.write_bytes("\x1\x2\x3\x4")
     @pointer
   end
 
