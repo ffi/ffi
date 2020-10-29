@@ -181,6 +181,53 @@ describe "Pointer" do
       expect(FFI::MemoryPointer.new(:int, 1).type_size).to eq(FFI.type_size(:int))
     end
   end
+
+  describe "#order" do
+    it "should return the system order by default" do
+      expect(FFI::Pointer.new(0x0).order).to eq(OrderHelper::ORDER)
+    end
+
+    it "should return self if there is no change" do
+      pointer = FFI::Pointer.new(0x0)
+      expect(pointer.order(OrderHelper::ORDER)).to be pointer
+    end
+
+    it "should return a new pointer if there is a change" do
+      pointer = FFI::Pointer.new(0x0)
+      expect(pointer.order(OrderHelper::OTHER_ORDER)).to_not be pointer
+    end
+
+    it "can be set to :little" do
+      expect(FFI::Pointer.new(0x0).order(:little).order).to eq(:little)
+    end
+
+    it "can be set to :big" do
+      expect(FFI::Pointer.new(0x0).order(:big).order).to eq(:big)
+    end
+
+    it "can be set to :network, which sets it to :big" do
+      expect(FFI::Pointer.new(0x0).order(:network).order).to eq(:big)
+    end
+
+    it "cannot be set to other symbols" do
+      expect { FFI::Pointer.new(0x0).order(:unknown) }.to raise_error(ArgumentError)
+    end
+
+    it "can be used to read in little order" do
+      pointer = FFI::MemoryPointer.from_string("\x1\x2\x3\x4").order(:little)
+      expect(pointer.read_int32).to eq(67305985)
+    end
+
+    it "can be used to read in big order" do
+      pointer = FFI::MemoryPointer.from_string("\x1\x2\x3\x4").order(:big)
+      expect(pointer.read_int32).to eq(16909060)
+    end
+
+    it "can be used to read in network order" do
+      pointer = FFI::MemoryPointer.from_string("\x1\x2\x3\x4").order(:network)
+      expect(pointer.read_int32).to eq(16909060)
+    end
+  end
 end
 
 describe "AutoPointer" do

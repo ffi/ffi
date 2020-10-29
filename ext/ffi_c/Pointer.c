@@ -328,7 +328,7 @@ ptr_address(VALUE self)
  * @overload order(order)
  *  @param  [Symbol] order endianness to set (+:little+, +:big+ or +:network+). +:big+ and +:network+
  *   are synonymous.
- *  @return [self]
+ *  @return a new pointer with the new order
  */
 static VALUE
 ptr_order(int argc, VALUE* argv, VALUE self)
@@ -353,6 +353,8 @@ ptr_order(int argc, VALUE* argv, VALUE self)
 
             } else if (id == rb_intern("big") || id == rb_intern("network")) {
                 order = BIG_ENDIAN;
+            } else {
+                rb_raise(rb_eArgError, "unknown byte order");
             }
         }
         if (order != BYTE_ORDER) {

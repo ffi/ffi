@@ -43,3 +43,16 @@ def external_run(cmd, rb_file, options: [], timeout: 10)
   end
   File.read(log)
 end
+
+module OrderHelper
+  case FFI::Platform::BYTE_ORDER
+  when FFI::Platform::LITTLE_ENDIAN
+    ORDER = :little
+    OTHER_ORDER = :big
+  when FFI::Platform::BIG_ENDIAN
+    ORDER = :big
+    OTHER_ORDER = :little
+  else
+    raise
+  end
+end
