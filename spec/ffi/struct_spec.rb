@@ -1079,5 +1079,5 @@ describe "Struct order" do
   it "can be used to read in network order" do
     expect(@pointer.order(:network)[:value]).to eq(16909060)
   end
-end
+end if RUBY_ENGINE != "truffleruby"
 end
