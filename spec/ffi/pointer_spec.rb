@@ -227,7 +227,7 @@ describe "Pointer" do
       pointer = FFI::MemoryPointer.from_string("\x1\x2\x3\x4").order(:network)
       expect(pointer.read_int32).to eq(16909060)
     end
-  end
+  end if RUBY_ENGINE != "truffleruby"
 end
 
 describe "AutoPointer" do
