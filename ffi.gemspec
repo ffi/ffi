@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
     s.metadata['mailing_list_uri'] = 'http://groups.google.com/group/ruby-ffi'
   end
   s.files = `git ls-files -z`.split("\x0").reject do |f|
-    f =~ /^(bench|gen|libtest|nbproject|spec)/
+    f =~ /^(\.|bench|gen|libtest|nbproject|spec)/
   end
 
   # Add libffi git files
