@@ -74,7 +74,11 @@ module FFI
     when /arm64|aarch64/  # MacOS calls it "arm64", other operating systems "aarch64"
       "aarch64"
     when /^arm/
-      "arm"
+      if OS == "darwin"   # Ruby before 3.0 reports "arm" instead of "arm64" as host_cpu on darwin
+        "aarch64"
+      else
+        "arm"
+      end
     else
       RbConfig::CONFIG['host_cpu']
     end
