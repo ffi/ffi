@@ -66,8 +66,9 @@ From rubygems:
 or from the git repository on github:
 
     git clone git://github.com/ffi/ffi.git
-    git submodule update --init --recursive
     cd ffi
+    git submodule update --init --recursive
+    bundle install
     rake install
 
 ## License
