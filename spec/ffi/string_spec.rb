@@ -99,19 +99,77 @@ describe "String tests" do
 
   describe "#write_string" do
     # https://github.com/ffi/ffi/issues/805
-    it "writes a final \\0 when given no length" do
-      ptr = FFI::MemoryPointer.new(8)
-      ptr.write_int64(-1)
-      ptr.write_string("äbc")
-      expect(ptr.read_bytes(5)).to eq("äbc\x00".b)
-      expect(ptr.read_string).to eq("äbc".b)
+    describe "with no length given" do
+      it "writes a final \\0" do
+        ptr = FFI::MemoryPointer.new(8)
+        ptr.write_int64(-1)
+        ptr.write_string("äbc")
+        expect(ptr.read_bytes(5)).to eq("äbc\x00".b)
+        expect(ptr.read_string).to eq("äbc".b)
+      end
+
+      it "doesn't write anything when size is exceeded" do
+        ptr = FFI::MemoryPointer.new(8)
+        ptr.write_int64(-1)
+        expect do
+          ptr.write_string("äbcdefgh")
+        end.to raise_error(IndexError, /out of bounds/i)
+        expect(ptr.read_int64).to eq(-1)
+      end
+
+      if FFI::VERSION < "2"
+        it "prints a warning if final \\0 doesn't fit into memory" do
+          ptr = FFI::MemoryPointer.new(5)
+          expect do
+            ptr.write_string("äbcd")
+          end.to output(/memory to small/i).to_stderr
+          expect(ptr.read_string).to eq("äbcd".b)
+        end
+      else
+        it "denies writing if final \\0 doesn't fit into memory" do
+          ptr = FFI::MemoryPointer.new(5)
+          expect do
+            ptr.write_string("äbcd")
+          end.to raise_error(IndexError, /out of bounds/i)
+          expect(ptr.read_string).to eq("".b)
+        end
+      end
     end
 
-    it "writes a final \\0 when given a length" do
-      ptr = FFI::MemoryPointer.new(8)
-      ptr.write_int64(-1)
-      ptr.write_string("äbcd", 3)
-      expect(ptr.read_bytes(5)).to eq("äb\x00\xFF".b)
+    describe "with a length" do
+      it "writes a final \\0" do
+        ptr = FFI::MemoryPointer.new(8)
+        ptr.write_int64(-1)
+        ptr.write_string("äbcd", 3)
+        expect(ptr.read_bytes(5)).to eq("äb\x00\xFF".b)
+      end
+
+      it "doesn't write anything when size is exceeded" do
+        ptr = FFI::MemoryPointer.new(8)
+        ptr.write_int64(-1)
+        expect do
+          ptr.write_string("äbcdefghi", 9)
+        end.to raise_error(IndexError, /out of bounds/i)
+        expect(ptr.read_int64).to eq(-1)
+      end
+
+      if FFI::VERSION < "2"
+        it "prints a warning if final \\0 doesn't fit into memory" do
+          ptr = FFI::MemoryPointer.new(5)
+          expect do
+            ptr.write_string("äbcde", 5)
+          end.to output(/memory to small/i).to_stderr
+          expect(ptr.read_string).to eq("äbcd".b)
+        end
+      else
+        it "denies writing if final \\0 doesn't fit into memory" do
+          ptr = FFI::MemoryPointer.new(5)
+          expect do
+            ptr.write_string("äbcde", 5)
+          end.to raise_error(IndexError, /out of bounds/i)
+          expect(ptr.read_string).to eq("".b)
+        end
+      end
     end
   end
 

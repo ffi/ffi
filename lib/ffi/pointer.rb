@@ -101,10 +101,20 @@ module FFI
     # In both cases a final \0 byte is written after the string.
     def write_string(str, len=nil)
       if len
-        put_bytes(0, str, 0, len)
-        put_char(len, 0)
+        if len == size
+          warn "[DEPRECATION] Memory to small to write a final 0-byte in #{caller[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
+          put_bytes(0, str, 0, len)
+        else
+          put_char(len, 0) # Check size before writing str
+          put_bytes(0, str, 0, len)
+        end
       else
-        put_string(0, str)
+        if str.bytesize == size
+          warn "[DEPRECATION] Memory to small to write a final 0-byte in #{caller[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
+          put_bytes(0, str)
+        else
+          put_string(0, str)
+        end
       end
     end unless method_defined?(:write_string)
 
