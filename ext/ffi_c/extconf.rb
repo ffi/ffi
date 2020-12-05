@@ -52,6 +52,11 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     $defs << "-DUSE_INTERNAL_LIBFFI"
   end
 
+  ffi_alloc_default = RbConfig::CONFIG['host_os'] =~ /darwin/i && RbConfig::CONFIG['host'] =~ /arm/i
+  if enable_config('libffi-alloc', ffi_alloc_default)
+    $defs << "-DUSE_FFI_ALLOC"
+  end
+
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 
   create_header

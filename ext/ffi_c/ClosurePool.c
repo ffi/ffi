@@ -58,12 +58,6 @@
 
 #include "ClosurePool.h"
 
-#if (defined(__arm64__) && defined(__APPLE__))
-#define USE_FFI_ALLOC 1
-#else
-#define USE_FFI_ALLOC 0
-#endif
-
 #ifndef roundup
 #  define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
 #endif
