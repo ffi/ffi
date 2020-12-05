@@ -65,16 +65,16 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   unless system_libffi
     File.open("Makefile", "a") do |mf|
       mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
-      if RbConfig::CONFIG['host_os'].downcase =~ /darwin/
-        if RbConfig::CONFIG['host'] =~ /arm/
+      if RbConfig::CONFIG['host_os'] =~ /darwin/i
+        if RbConfig::CONFIG['host'] =~ /arm/i
           mf.puts "LIBFFI_HOST=--host=aarch64-apple-#{RbConfig::CONFIG['host_os']}"
         end
         mf.puts "include ${srcdir}/libffi.darwin.mk"
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /bsd/
+      elsif RbConfig::CONFIG['host_os'] =~ /bsd/i
         mf.puts '.include "${srcdir}/libffi.bsd.mk"'
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin64/
+      elsif RbConfig::CONFIG['host_os'] =~ /mswin64/i
         mf.puts '!include $(srcdir)/libffi.vc64.mk'
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin32/
+      elsif RbConfig::CONFIG['host_os'] =~ /mswin32/i
         mf.puts '!include $(srcdir)/libffi.vc.mk'
       else
         mf.puts "include ${srcdir}/libffi.mk"
