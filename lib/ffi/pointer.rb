@@ -102,7 +102,7 @@ module FFI
     def write_string(str, len=nil)
       if len
         if len == size
-          warn "[DEPRECATION] Memory to small to write a final 0-byte in #{caller[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
+          warn "[DEPRECATION] Memory too small to write a final 0-byte in #{caller(1, 1)[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
           put_bytes(0, str, 0, len)
         else
           put_char(len, 0) # Check size before writing str
@@ -110,7 +110,7 @@ module FFI
         end
       else
         if str.bytesize == size
-          warn "[DEPRECATION] Memory to small to write a final 0-byte in #{caller[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
+          warn "[DEPRECATION] Memory too small to write a final 0-byte in #{caller(1, 1)[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
           put_bytes(0, str)
         else
           put_string(0, str)

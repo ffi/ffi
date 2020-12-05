@@ -122,7 +122,7 @@ describe "String tests" do
           ptr = FFI::MemoryPointer.new(5)
           expect do
             ptr.write_string("äbcd")
-          end.to output(/memory to small/i).to_stderr
+          end.to output(/memory too small/i).to_stderr
           expect(ptr.read_string).to eq("äbcd".b)
         end
       else
@@ -158,7 +158,7 @@ describe "String tests" do
           ptr = FFI::MemoryPointer.new(5)
           expect do
             ptr.write_string("äbcde", 5)
-          end.to output(/memory to small/i).to_stderr
+          end.to output(/memory too small/i).to_stderr
           expect(ptr.read_string).to eq("äbcd".b)
         end
       else
