@@ -90,7 +90,7 @@ module FFI
     # Same as:
     #  ptr.write_string(str, len)   # with len not nil
     def write_string_length(str, len)
-      put_bytes(0, str, 0, len)
+      write_bytes(str, 0, len)
     end unless method_defined?(:write_string_length)
 
     # @param [String] str string to write
@@ -103,15 +103,15 @@ module FFI
       if len
         if len == size
           warn "[DEPRECATION] Memory too small to write a final 0-byte in #{caller(1, 1)[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
-          put_bytes(0, str, 0, len)
+          write_bytes(str, 0, len)
         else
           put_char(len, 0) # Check size before writing str
-          put_bytes(0, str, 0, len)
+          write_bytes(str, 0, len)
         end
       else
         if str.bytesize == size
           warn "[DEPRECATION] Memory too small to write a final 0-byte in #{caller(1, 1)[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
-          put_bytes(0, str)
+          write_bytes(str)
         else
           put_string(0, str)
         end
