@@ -61,6 +61,9 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     File.open("Makefile", "a") do |mf|
       mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
       if RbConfig::CONFIG['host_os'].downcase =~ /darwin/
+        if RbConfig::CONFIG['host'] =~ /arm/
+          mf.puts "LIBFFI_HOST=--host=aarch64-apple-#{RbConfig::CONFIG['host_os']}"
+        end
         mf.puts "include ${srcdir}/libffi.darwin.mk"
       elsif RbConfig::CONFIG['host_os'].downcase =~ /bsd/
         mf.puts '.include "${srcdir}/libffi.bsd.mk"'
