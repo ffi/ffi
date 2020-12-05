@@ -85,12 +85,12 @@ module FFI
     # @param [String] str string to write
     # @param [Numeric] len length of string to return
     # @return [self]
-    # Write +len+ first bytes of +str+ in pointer's contents.
+    # Write +len+ first bytes of +str+ in pointer's contents and a final \0 byte.
     #
     # Same as:
     #  ptr.write_string(str, len)   # with len not nil
     def write_string_length(str, len)
-      write_bytes(str, 0, len)
+      write_string(str, len)
     end unless method_defined?(:write_string_length)
 
     # @param [String] str string to write
