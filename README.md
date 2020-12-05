@@ -71,6 +71,13 @@ or from the git repository on github:
     bundle install
     rake install
 
+### Install options:
+
+* `--enable-system-libffi` : Force usage of system libffi
+* `--disable-system-libffi` : Force usage of builtin libffi
+* `--enable-libffi-alloc` : Force closure allocation by libffi
+* `--disable-libffi-alloc` : Force closure allocation by builtin method
+
 ## License
 
 The ffi library is covered by the BSD license, also see the LICENSE file.
