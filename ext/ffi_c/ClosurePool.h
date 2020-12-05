@@ -35,8 +35,8 @@ typedef struct Closure_ Closure;
 struct Closure_ {
     void* info;      /* opaque handle for storing closure-instance specific data */
     void* function;  /* closure-instance specific function, called by custom trampoline */
-    void* code;      /* The native trampoline code location */
-    void* pcl;
+    void* code;      /* Executable address for the native trampoline code location */
+    void* pcl;       /* Writeable address for the native trampoline code location */
 
     struct ClosurePool_* pool;
     Closure* next;
