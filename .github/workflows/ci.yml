@@ -8,6 +8,7 @@ jobs:
       matrix:
         os: [ ubuntu, macos, windows ]
         extconfopts: [ --disable-system-libffi, --enable-system-libffi ]
+        extconfopts2: [ --disable-libffi-alloc, --enable-libffi-alloc ]
     runs-on: ${{ matrix.os }}-latest
     steps:
     - uses: actions/checkout@v2
@@ -22,7 +23,7 @@ jobs:
 
     - run: bundle install
     - run: bundle exec rake libffi
-    - run: bundle exec rake compile -- ${{ matrix.extconfopts }}
+    - run: bundle exec rake compile -- ${{ matrix.extconfopts }} ${{ matrix.extconfopts2 }}
       env:
         # work around misconfiguration of libffi on MacOS with homebrew
         PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}:/usr/local/opt/libffi/lib/pkgconfig
