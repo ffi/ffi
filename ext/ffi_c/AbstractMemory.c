@@ -499,7 +499,7 @@ memory_read_array_of_string(int argc, VALUE* argv, VALUE self)
  * @raise {SecurityError} when writing unsafe string to memory
  * @raise {IndexError} if +offset+ is too great
  * @raise {NullPointerError} if memory not initialized
- * Put a string in memory.
+ * Put a string in memory. Writes a final \0 byte.
  */
 static VALUE
 memory_put_string(VALUE self, VALUE offset, VALUE str)
