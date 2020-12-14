@@ -63,7 +63,7 @@ module FFI
     ARCH = case CPU.downcase
     when /amd64|x86_64|x64/
       "x86_64"
-    when /i?86|x86|i86pc/
+    when /i\d86|x86|i86pc/
       "i386"
     when /ppc64|powerpc64/
       "powerpc64"
