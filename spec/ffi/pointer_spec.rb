@@ -236,7 +236,7 @@ describe "Pointer" do
     it "should have size limit" do
       expect(FFI::Pointer.new(0).slice(0, 10).size_limit?).to be true
     end
-  end if RUBY_ENGINE != "truffleruby"
+  end
 end
 
 describe "AutoPointer" do
