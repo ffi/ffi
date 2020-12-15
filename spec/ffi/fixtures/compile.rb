@@ -23,7 +23,11 @@ module TestLibrary
     when /ppc|powerpc/
       "powerpc"
     when /^arm/
-      "arm"
+      if RbConfig::CONFIG['host_os'] =~ /darwin/
+        "aarch64"
+      else
+        "arm"
+      end
     else
       RbConfig::CONFIG['host_cpu']
     end
