@@ -50,6 +50,11 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   else
     $defs << "-DHAVE_FFI_PREP_CIF_VAR"
     $defs << "-DUSE_INTERNAL_LIBFFI"
+
+    # Ensure libffi symbols aren't exported when using static libffi.
+    # This is to avoid interference with other gems like fiddle.
+    # See https://github.com/ffi/ffi/issues/835
+    append_ldflags "-Wl,--exclude-libs,ALL"
   end
 
   ffi_alloc_default = RbConfig::CONFIG['host_os'] =~ /darwin/i && RbConfig::CONFIG['host'] =~ /arm/i
