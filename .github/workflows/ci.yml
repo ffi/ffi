@@ -37,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu, macos, windows ]
-        ruby: [ 2.3, 2.4, 2.5, 2.6, 2.7, ruby-head, truffleruby-head ]
+        ruby: [ 2.3, 2.4, 2.5, 2.6, 2.7, ruby-head, truffleruby-head, jruby-head ]
         exclude:
         - os: windows
           ruby: truffleruby-head
@@ -58,8 +58,9 @@ jobs:
     - run: bundle exec rake compile
 
     - run: bundle exec rake test
+      continue-on-error: ${{ matrix.ruby == 'jruby-head' }}
 
     - run: bundle exec rake bench:all
-      if: matrix.ruby != 'truffleruby-head'
+      if: ${{ matrix.ruby != 'truffleruby-head' && matrix.ruby != 'jruby-head' }}
       env:
         ITER: 10
