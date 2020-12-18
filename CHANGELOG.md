@@ -1,3 +1,28 @@
+1.14.0 / 2020-12-18
+-------------------
+
+Added:
+* Add types.conf for x86_64-msys, x86_64-haiku, aarch64-openbsd and aarch64-darwin (alias arm64-darwin)
+* Add method AbstractMemory#size_limit? . #829
+* Add new extconf option --enable-libffi-alloc which is enabled per default on Apple M1 (arm64-darwin).
+
+Changed:
+* Do NULL pointer check only when array length > 0 . #305
+* Raise an error on an unknown order argument. #830
+* Change FFI::Pointer#write_string to terminate with a NUL byte like other string methods. #805
+* Update bundled libffi to latest master.
+
+Removed:
+* Remove win32/stdint.h and stdbool.h because of copyright issue.  #693
+
+Fixed:
+* Fix possible UTF-8 load error in loader script interpretation. #792
+* Fix segfault on non-array argument to #write_array_of_*
+* Fix memory leak in MethodHandle . #815
+* Fix possible segfault in combination with fiddle or other libffi using gems . #835
+* Fix possibility to use ffi ruby gem with JRuby-9.3 . #763
+
+
 1.13.1 / 2020-06-09
 -------------------
 
