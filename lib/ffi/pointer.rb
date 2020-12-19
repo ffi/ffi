@@ -85,37 +85,23 @@ module FFI
     # @param [String] str string to write
     # @param [Numeric] len length of string to return
     # @return [self]
-    # Write +len+ first bytes of +str+ in pointer's contents and a final \0 byte.
+    # Write +len+ first bytes of +str+ in pointer's contents.
     #
     # Same as:
     #  ptr.write_string(str, len)   # with len not nil
     def write_string_length(str, len)
-      write_string(str, len)
+      put_bytes(0, str, 0, len)
     end unless method_defined?(:write_string_length)
 
     # @param [String] str string to write
     # @param [Numeric] len length of string to return
     # @return [self]
-    # Write +str+ in pointer's contents.
-    # If +len+ is given, write the first +len+ bytes of +str+.
-    # In both cases a final \0 byte is written after the string.
+    # Write +str+ in pointer's contents, or first +len+ bytes if 
+    # +len+ is not +nil+.
     def write_string(str, len=nil)
-      if len
-        if len == size
-          warn "[DEPRECATION] Memory too small to write a final 0-byte in #{caller(1, 1)[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
-          write_bytes(str, 0, len)
-        else
-          put_char(len, 0) # Check size before writing str
-          write_bytes(str, 0, len)
-        end
-      else
-        if str.bytesize == size
-          warn "[DEPRECATION] Memory too small to write a final 0-byte in #{caller(1, 1)[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
-          write_bytes(str)
-        else
-          put_string(0, str)
-        end
-      end
+      len = str.bytesize unless len
+      # Write the string data without NUL termination
+      put_bytes(0, str, 0, len)
     end unless method_defined?(:write_string)
 
     # @param [Type] type type of data to read from pointer's contents
