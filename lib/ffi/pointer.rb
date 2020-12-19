@@ -88,25 +88,25 @@ module FFI
     # Write +len+ first bytes of +str+ in pointer's contents.
     #
     # This method is deprecated, please use write_bytes(str, 0, len) instead.
-    # If you intend to append a final \0 byte, use an additional put_char(len, 0) or use write_string(str.byteslice(0, len)).
+    # If you intend to append a final \0 byte, use an additional put_char(len, 0).
     #
     # Same as:
     #  ptr.write_string(str, len)   # with len not nil
     def write_string_length(str, len)
-      warn "[DEPRECATION] #{caller(1, 1)[0]}: write_string_length is deprecated, please use write_bytes(str, 0, len) instead. If you intend to append a \\0, use an additional put_char(len, 0) or use write_string(str.byteslice(0, len))."
+      warn "[DEPRECATION] #{caller(1, 1)[0]}: write_string_length is deprecated, please use write_bytes(str, 0, len) instead. If you intend to append a \\0, use an additional put_char(len, 0)."
       write_bytes(str, 0, len)
     end unless method_defined?(:write_string_length)
 
     # @param [String] str string to write
     # @param [Numeric] len numbers of bytes from +str+ to write. Passing a len is deprecated, please use write_bytes(str, 0, len) instead.
-    #                      If you intend to append a final \0 byte, use an additional put_char(len, 0) or use write_string(str.byteslice(0, len)).
+    #                      If you intend to append a final \0 byte, use an additional put_char(len, 0).
     # @return [self]
     # Write +str+ in pointer's contents.
     # If +len+ is given, write the first +len+ bytes of +str+.
     # A final \0 byte is written after the string, unless +len+ is given.
     def write_string(str, len=nil)
       if len
-        warn "[DEPRECATION] #{caller(1, 1)[0]}: write_string(str, len) is deprecated, please use write_bytes(str, 0, len) instead. If you intend to append a \\0, use an additional put_char(len, 0) or use write_string(str.byteslice(0, len))."
+        warn "[DEPRECATION] #{caller(1, 1)[0]}: write_string(str, len) is deprecated, please use write_bytes(str, 0, len) instead. If you intend to append a \\0, use an additional put_char(len, 0)."
         write_bytes(str, 0, len)
       else
         if str.bytesize == size
