@@ -1,3 +1,11 @@
+1.14.1 / 2020-12-19
+-------------------
+
+Changed:
+* Revert changes to FFI::Pointer#write_string made in ffi-1.14.0.
+  It turned out that it can cause hard to find errors. #857
+
+
 1.14.0 / 2020-12-18
 -------------------
 
