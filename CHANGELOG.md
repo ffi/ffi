@@ -3,7 +3,7 @@
 
 Changed:
 * Revert changes to FFI::Pointer#write_string made in ffi-1.14.0.
-  It turned out that it can cause hard to find errors. #857
+  It breaks compatibilty in a way that can cause hard to find errors. #857
 
 
 1.14.0 / 2020-12-18
