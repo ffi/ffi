@@ -163,6 +163,16 @@ describe "String tests" do
           end.to output(/memory too small/i).to_stderr
           expect(ptr.read_string).to eq("äbcd".b)
         end
+
+        it "prints a warning if the given len is the same as str.bytesize and does not write \\0" do
+          ptr = FFI::MemoryPointer.new(30)
+          ptr.put_uint8(5, 42)
+          expect do
+            ptr.write_string("äbcd", 5)
+          end.to output(/memory too small/i).to_stderr
+          expect(ptr.read_bytes(5)).to eq("äbcd".b)
+          expect(ptr.get_uint8(5)).to eq(42)
+        end
       else
         it "denies writing if final \\0 doesn't fit into memory" do
           ptr = FFI::MemoryPointer.new(5)
