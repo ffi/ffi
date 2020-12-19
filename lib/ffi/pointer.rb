@@ -101,13 +101,8 @@ module FFI
     # In both cases a final \0 byte is written after the string.
     def write_string(str, len=nil)
       if len
-        if len == size
-          warn "[DEPRECATION] Memory too small to write a final 0-byte in #{caller(1, 1)[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
-          write_bytes(str, 0, len)
-        else
-          put_char(len, 0) # Check size before writing str
-          write_bytes(str, 0, len)
-        end
+        warn "[DEPRECATION] #{caller(1, 1)[0]}: write_string(str, len) is deprecated, please use write_bytes(str, 0, len) instead. If you intend to append a \\0, use an additional put_char or use write_string(str.byteslice(0, len))."
+        write_bytes(str, 0, len)
       else
         if str.bytesize == size
           warn "[DEPRECATION] Memory too small to write a final 0-byte in #{caller(1, 1)[0]}. This will raise an error in ffi-2.0. Please use write_bytes instead or enlarge the memory region."
