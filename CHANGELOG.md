@@ -29,6 +29,7 @@ Fixed:
 * Fix memory leak in MethodHandle . #815
 * Fix possible segfault in combination with fiddle or other libffi using gems . #835
 * Fix possibility to use ffi ruby gem with JRuby-9.3 . #763
+* Fix a GC issue, when a callback Proc is used on more than 2 callback signatures. #820
 
 
 1.13.1 / 2020-06-09
