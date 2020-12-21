@@ -1,3 +1,10 @@
+1.14.2 / 2020-12-21
+-------------------
+
+Fixed:
+* Fix builtin libffi on newer Ubuntu caused by an outdated Makefile.in . #863
+
+
 1.14.1 / 2020-12-19
 -------------------
 
