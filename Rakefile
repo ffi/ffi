@@ -37,6 +37,13 @@ CLEAN.include "pkg/ffi-*-{mingw32,java}"
 CLEAN.include 'lib/1.*'
 CLEAN.include 'lib/2.*'
 
+# clean all shipped files, that are not in git
+CLEAN.include(
+    gem_spec.files -
+    `git --git-dir ext/ffi_c/libffi/.git ls-files -z`.split("\x0").map { |f| File.join("ext/ffi_c/libffi", f) } -
+    `git ls-files -z`.split("\x0")
+)
+
 task :distclean => :clobber
 
 desc "Test the extension"
