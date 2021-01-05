@@ -1,3 +1,5 @@
+image: Visual Studio 2019
+
 install:
   - SET PATH=C:\Ruby%RUBYVER%\bin;%PATH%
   - SET RAKEOPT=-rdevkit
