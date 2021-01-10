@@ -30,11 +30,7 @@
 #ifndef RBFFI_POINTER_H
 #define	RBFFI_POINTER_H
 
-#ifndef _MSC_VER
 # include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-#endif
 
 #ifdef	__cplusplus
 extern "C" {

@@ -31,11 +31,7 @@
 #ifndef RBFFI_MEMORYPOINTER_H
 #define	RBFFI_MEMORYPOINTER_H
 
-#ifndef _MSC_VER
 # include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-#endif
 #include <ruby.h>
 
 #ifdef	__cplusplus
