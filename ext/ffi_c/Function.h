@@ -34,11 +34,7 @@
 extern "C" {
 #endif
 
-#ifndef _MSC_VER
 # include <stdbool.h>
-#else
-# include "win32/stdbool.h"
-#endif
 
 #include <ffi.h>
 
