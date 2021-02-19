@@ -24,6 +24,7 @@ describe FFI::Function do
   context 'when called with a block' do
     it 'creates a thread for dispatching callbacks and sets its name' do
       skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+      skip "not yet supported on JRuby" if RUBY_ENGINE == 'jruby'
 
       FFI::Function.new(:int, []) { 5 } # Trigger initialization
 
