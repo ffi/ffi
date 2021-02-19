@@ -310,6 +310,8 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 #if defined(DEFER_ASYNC_CALLBACK)
         if (async_cb_thread == Qnil) {
             async_cb_thread = rb_thread_create(async_cb_event, NULL);
+            // Name thread, for better debugging
+            rb_funcall(async_cb_thread, rb_intern("name="), 1, rb_str_new2("FFI::Function Callback Dispatcher"));
         }
 #endif
 
