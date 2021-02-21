@@ -34,4 +34,15 @@ describe "async callback" do
     expect(called).to be true
     expect(v).to eq(0x7fffffff)
   end
+
+  it "sets the name of the thread that runs the callback" do
+    skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+    skip "not yet supported on JRuby" if RUBY_ENGINE == "jruby"
+
+    thread_name = nil
+
+    LibTest.testAsyncCallback(proc { thread_name = Thread.current.name }, 0)
+
+    expect(thread_name).to eq("FFI::Function Callback Runner")
+  end
 end

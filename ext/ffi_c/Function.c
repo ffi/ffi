@@ -310,7 +310,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 #if defined(DEFER_ASYNC_CALLBACK)
         if (async_cb_thread == Qnil) {
             async_cb_thread = rb_thread_create(async_cb_event, NULL);
-            // Name thread, for better debugging
+            /* Name thread, for better debugging */
             rb_funcall(async_cb_thread, rb_intern("name="), 1, rb_str_new2("FFI::Function Callback Dispatcher"));
         }
 #endif
@@ -527,7 +527,9 @@ async_cb_event(void* unused)
         rb_thread_call_without_gvl(async_cb_wait, &w, async_cb_stop, &w);
         if (w.cb != NULL) {
             /* Start up a new ruby thread to run the ruby callback */
-            rb_thread_create(async_cb_call, w.cb);
+            VALUE new_thread = rb_thread_create(async_cb_call, w.cb);
+            /* Name thread, for better debugging */
+            rb_funcall(new_thread, rb_intern("name="), 1, rb_str_new2("FFI::Function Callback Runner"));
         }
     }
 
