@@ -39,10 +39,10 @@ describe "async callback" do
     skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
     skip "not yet supported on JRuby" if RUBY_ENGINE == "jruby"
 
-    thread_name = nil
+    callback_runner_thread = nil
 
-    LibTest.testAsyncCallback(proc { thread_name = Thread.current.name }, 0)
+    LibTest.testAsyncCallback(proc { callback_runner_thread = Thread.current }, 0)
 
-    expect(thread_name).to eq("FFI::Function Callback Runner")
+    expect(callback_runner_thread.name).to eq("FFI::Function Callback Runner")
   end
 end
