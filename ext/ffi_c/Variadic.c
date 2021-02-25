@@ -168,7 +168,8 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     ffi_type* ffiReturnType;
     Type** paramTypes;
     VALUE* argv;
-    int paramCount = 0, fixedCount = 0, i;
+    VALUE* callbackParameters = NULL;
+    int paramCount = 0, fixedCount = 0, callbackCount = 0, i;
     ffi_status ffiStatus;
     rbffi_frame_t frame = { 0 };
 
@@ -211,6 +212,16 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
                 Data_Get_Struct(rbType, Type, paramTypes[i]);
                 break;
 
+            case NATIVE_FUNCTION:
+            case NATIVE_CALLBACK:
+                if (!rb_obj_is_kind_of(rbType, rbffi_FunctionTypeClass)) {
+                    VALUE typeName = rb_funcall2(rbType, rb_intern("inspect"), 0, NULL);
+                    rb_raise(rb_eTypeError, "Incorrect parameter type (%s)", RSTRING_PTR(typeName));
+                }
+                REALLOC_N(callbackParameters, VALUE, callbackCount + 1);
+                callbackParameters[callbackCount++] = rbType;
+                break;
+
             default:
                 break;
         }
@@ -248,7 +259,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     }
 
     rbffi_SetupCallParams(paramCount, argv, -1, paramTypes, params,
-        ffiValues, NULL, 0, invoker->rbEnums);
+        ffiValues, callbackParameters, callbackCount, invoker->rbEnums);
 
     rbffi_frame_push(&frame);
 
