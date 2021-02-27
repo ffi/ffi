@@ -49,6 +49,7 @@ module CallbackSpecs
       callback :cbVrU32, [ ], :uint
       callback :cbVrL, [ ], :long
       callback :cbVrUL, [ ], :ulong
+      callback :cbVrD, [ ], :double
       callback :cbVrS64, [ ], :long_long
       callback :cbVrU64, [ ], :ulong_long
       callback :cbVrP, [], :pointer
@@ -86,7 +87,7 @@ module CallbackSpecs
       attach_variable :pVrS8, :gvar_pointer, :pointer
       attach_function :testGVarCallbackVrS8, :testClosureVrB, [ :pointer ], :char
       attach_function :testOptionalCallbackCrV, :testOptionalClosureBrV, [ :cbCrV, :char ], :void
-
+      attach_function :testCallbackVrDva, :testClosureVrDva, [ :double, :varargs ], :double
     end
 
     it "returning :char (0)" do
@@ -259,6 +260,11 @@ module CallbackSpecs
 
     it "returning bool" do
       expect(LibTest.testCallbackVrZ { true }).to be true
+    end
+
+    it "returning double" do
+      pr = proc { 42.0 }
+      expect(LibTest.testCallbackVrDva(3.0, :cbVrD, pr)).to eq(45.0)
     end
 
     it "returning :pointer (nil)" do
