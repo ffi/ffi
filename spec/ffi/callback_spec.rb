@@ -264,7 +264,7 @@ module CallbackSpecs
 
     it "returning double" do
       pr = proc { 42.0 }
-      expect(LibTest.testCallbackVrDva(3.0, :cbVrD, pr)).to eq(45.0)
+      expect(LibTest.testCallbackVrDva(3.0, :cbVrD, pr)).to be_within(0.0000001).of(45.0)
     end
 
     it "returning :pointer (nil)" do
