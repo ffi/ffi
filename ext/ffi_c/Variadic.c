@@ -169,7 +169,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     Type** paramTypes;
     VALUE* argv;
     VALUE* callbackParameters;
-    int paramCount = 0, fixedCount = 0, callbackCount = 0, callbackIndex = 0, i;
+    int paramCount = 0, fixedCount = 0, callbackCount = 0, i;
     ffi_status ffiStatus;
     rbffi_frame_t frame = { 0 };
 
@@ -183,6 +183,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     params = ALLOCA_N(FFIStorage, paramCount);
     ffiValues = ALLOCA_N(void*, paramCount);
     argv = ALLOCA_N(VALUE, paramCount);
+    callbackParameters = ALLOCA_N(VALUE, paramCount);
     retval = alloca(MAX(invoker->returnType->ffiType->size, FFI_SIZEOF_ARG));
 
     for (i = 0; i < paramCount; ++i) {
@@ -193,16 +194,6 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
         }
         Data_Get_Struct(rbType, Type, paramTypes[i]);
 
-        switch (paramTypes[i]->nativeType) {
-            case NATIVE_FUNCTION:
-            case NATIVE_CALLBACK:
-                callbackCount++;
-        }
-    }
-    callbackParameters = ALLOCA_N(VALUE, callbackCount);
-
-    for (i = 0; i < paramCount; ++i) {
-        VALUE rbType;
         switch (paramTypes[i]->nativeType) {
             case NATIVE_INT8:
             case NATIVE_INT16:
@@ -224,12 +215,11 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
 
             case NATIVE_FUNCTION:
             case NATIVE_CALLBACK:
-                rbType = rb_ary_entry(parameterTypes, i);
                 if (!rb_obj_is_kind_of(rbType, rbffi_FunctionTypeClass)) {
                     VALUE typeName = rb_funcall2(rbType, rb_intern("inspect"), 0, NULL);
                     rb_raise(rb_eTypeError, "Incorrect parameter type (%s)", RSTRING_PTR(typeName));
                 }
-                callbackParameters[callbackIndex++] = rbType;
+                callbackParameters[callbackCount++] = rbType;
                 break;
 
             default:
