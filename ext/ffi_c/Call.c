@@ -310,7 +310,6 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
 
 
             case NATIVE_FUNCTION:
-            case NATIVE_CALLBACK:
                 if (callbackProc != Qnil) {
                     param->ptr = callback_param(callbackProc, callbackParameters[cbidx++]);
                 } else {

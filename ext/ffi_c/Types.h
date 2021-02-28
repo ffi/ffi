@@ -51,20 +51,19 @@ typedef enum {
     NATIVE_FLOAT64,
     NATIVE_LONGDOUBLE,
     NATIVE_POINTER,
-    NATIVE_CALLBACK,
     NATIVE_FUNCTION,
     NATIVE_BUFFER_IN,
     NATIVE_BUFFER_OUT,
     NATIVE_BUFFER_INOUT,
     NATIVE_CHAR_ARRAY,
     NATIVE_BOOL,
-    
+
     /** An immutable string.  Nul terminated, but only copies in to the native function */
     NATIVE_STRING,
-    
+
     /** The function takes a variable number of arguments */
     NATIVE_VARARGS,
-    
+
     /** Struct-by-value param or result */
     NATIVE_STRUCT,
 

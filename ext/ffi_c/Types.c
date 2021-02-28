@@ -85,10 +85,9 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
             return rbffi_Pointer_NewInstance(*(void **) ptr);
         case NATIVE_BOOL:
             return ((unsigned char) *(ffi_arg *) ptr) ? Qtrue : Qfalse;
-        
-        case NATIVE_FUNCTION:
-        case NATIVE_CALLBACK: {
-            return *(void **) ptr != NULL 
+
+        case NATIVE_FUNCTION: {
+            return *(void **) ptr != NULL
                     ? rbffi_Function_NewInstance(rbType, rbffi_Pointer_NewInstance(*(void **) ptr))
                     : Qnil;
         }
@@ -116,15 +115,15 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
 
             values[0] = rbffi_NativeValue_ToRuby(m->type, m->rbType, ptr);
             values[1] = Qnil;
-            
+
 
             rbReturnValue = rb_funcall2(m->rbConverter, id_from_native, 2, values);
             RB_GC_GUARD(values[0]);
             RB_GC_GUARD(rbType);
-            
+
             return rbReturnValue;
         }
-    
+
         default:
             rb_raise(rb_eRuntimeError, "Unknown type: %d", type->nativeType);
             return Qnil;

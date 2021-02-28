@@ -711,7 +711,6 @@ invoke_callback(VALUE data)
                 break;
 
             case NATIVE_FUNCTION:
-            case NATIVE_CALLBACK:
             case NATIVE_STRUCT:
                 param = rbffi_NativeValue_ToRuby(paramType, rbParamType, parameters[i]);
                 break;
@@ -787,7 +786,6 @@ invoke_callback(VALUE data)
             break;
 
         case NATIVE_FUNCTION:
-        case NATIVE_CALLBACK:
             if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
 
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;

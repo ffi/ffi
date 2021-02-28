@@ -123,7 +123,6 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
 
     switch (field->type->nativeType == NATIVE_MAPPED ? ((MappedType *) field->type)->type->nativeType : field->type->nativeType) {
         case NATIVE_FUNCTION:
-        case NATIVE_CALLBACK:
         case NATIVE_POINTER:
             field->referenceRequired = true;
             break;

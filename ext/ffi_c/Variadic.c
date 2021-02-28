@@ -214,7 +214,6 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
                 break;
 
             case NATIVE_FUNCTION:
-            case NATIVE_CALLBACK:
                 if (!rb_obj_is_kind_of(rbType, rbffi_FunctionTypeClass)) {
                     VALUE typeName = rb_funcall2(rbType, rb_intern("inspect"), 0, NULL);
                     rb_raise(rb_eTypeError, "Incorrect parameter type (%s)", RSTRING_PTR(typeName));
