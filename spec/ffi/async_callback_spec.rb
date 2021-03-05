@@ -48,6 +48,6 @@ describe "async callback" do
 
     LibTest.testAsyncCallback(proc { callback_runner_thread = Thread.current }, 0)
 
-    expect(callback_runner_thread.name).to eq("FFI::Function Callback Runner")
+    expect(callback_runner_thread.name).to eq("FFI Callback Runner")
   end
 end

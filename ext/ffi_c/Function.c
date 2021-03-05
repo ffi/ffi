@@ -311,7 +311,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         if (async_cb_thread == Qnil) {
             async_cb_thread = rb_thread_create(async_cb_event, NULL);
             /* Name thread, for better debugging */
-            rb_funcall(async_cb_thread, rb_intern("name="), 1, rb_str_new2("FFI::Function Callback Dispatcher"));
+            rb_funcall(async_cb_thread, rb_intern("name="), 1, rb_str_new2("FFI Callback Dispatcher"));
         }
 #endif
 
@@ -529,7 +529,7 @@ async_cb_event(void* unused)
             /* Start up a new ruby thread to run the ruby callback */
             VALUE new_thread = rb_thread_create(async_cb_call, w.cb);
             /* Name thread, for better debugging */
-            rb_funcall(new_thread, rb_intern("name="), 1, rb_str_new2("FFI::Function Callback Runner"));
+            rb_funcall(new_thread, rb_intern("name="), 1, rb_str_new2("FFI Callback Runner"));
         }
     }
 

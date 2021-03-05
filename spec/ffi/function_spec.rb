@@ -26,7 +26,7 @@ describe FFI::Function do
       skip 'this is MRI-specific' if RUBY_ENGINE == 'truffleruby' || RUBY_ENGINE == 'jruby'
       FFI::Function.new(:int, []) { 5 } # Trigger initialization
 
-      expect(Thread.list.map(&:name)).to include('FFI::Function Callback Dispatcher')
+      expect(Thread.list.map(&:name)).to include('FFI Callback Dispatcher')
     end
   end
 
