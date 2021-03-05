@@ -5,10 +5,7 @@ group :development do
   gem 'rake-compiler', '~> 1.0.3'
   gem 'rake-compiler-dock', '~> 1.0'
   gem 'rspec', '~> 3.0'
-  # irb is a dependency of rubygems-tasks 0.2.5.
-  # irb versions > 1.1.1 depend on reline,
-  # which sometimes causes 'bundle install' to fail on Ruby <= 2.4: https://github.com/rubygems/rubygems/issues/3463
-  gem 'rubygems-tasks', '>= 0.2', '< 0.2.5', :require => 'rubygems/tasks'
+  gem 'bundler', '~> 2.0'
 end
 
 group :doc do
