@@ -3,6 +3,7 @@
 
 Fixed:
 * Fix MSVC build
+* Fix async callbacks in conjunction with fork(). #884
 
 Added:
 * Allow to pass callbacks in varargs. #885
