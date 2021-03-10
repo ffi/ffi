@@ -27,9 +27,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+// ruby.h first to provide _GNU_SOURCE which gives us dlvsym if available
+#include <ruby.h>
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdint.h>
+
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 # include <winsock2.h>
 # define _WINSOCKAPI_
@@ -38,7 +43,6 @@
 #else
 # include <dlfcn.h>
 #endif
-#include <ruby.h>
 
 #include <ffi.h>
 
@@ -68,11 +72,17 @@ static VALUE LibraryClass = Qnil, SymbolClass = Qnil;
 static void* dl_open(const char* name, int flags);
 static void dl_error(char* buf, int size);
 #define dl_sym(handle, name) GetProcAddress(handle, name)
+#define dl_vsym(handle, name, symbol) GetProcAddress(handle,name)
 #define dl_close(handle) FreeLibrary(handle)
 #else
 # define dl_open(name, flags) dlopen(name, flags != 0 ? flags : RTLD_LAZY)
 # define dl_error(buf, size) do { snprintf(buf, size, "%s", dlerror()); } while(0)
 # define dl_sym(handle, name) dlsym(handle, name)
+#ifdef __USE_GNU
+# define dl_vsym(handle,name,symbol) dlvsym(handle,name,symbol)
+#else
+# define dl_vsym(handle,name,symbol) dlsym(handle,name)
+#endif
 # define dl_close(handle) dlclose(handle)
 #endif
 
@@ -147,6 +157,20 @@ library_dlsym(VALUE self, VALUE name)
     Data_Get_Struct(self, Library, library);
     address = dl_sym(library->handle, StringValueCStr(name));
     
+    return address != NULL ? symbol_new(self, address, name) : Qnil;
+}
+
+static VALUE
+library_dlvsym(VALUE self, VALUE name, VALUE symbol)
+{
+    Library* library;
+    void* address = NULL;
+    Check_Type(name, T_STRING);
+    Check_Type(symbol, T_STRING);
+
+    Data_Get_Struct(self, Library, library);
+    address = dl_vsym(library->handle, StringValueCStr(name), StringValueCStr(symbol));
+
     return address != NULL ? symbol_new(self, address, name) : Qnil;
 }
 
@@ -300,6 +324,7 @@ rbffi_DynamicLibrary_Init(VALUE moduleFFI)
      * @return [FFI::DynamicLibrary::Symbol] library function symbol
      */
     rb_define_method(LibraryClass, "find_function", library_dlsym, 1);
+    rb_define_method(LibraryClass, "find_function_version", library_dlvsym, 2);
     /*
      * Document-method: find_variable
      * call-seq: find_variable(name)
