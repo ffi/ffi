@@ -62,6 +62,10 @@ On JRuby and TruffleRuby, there are no requirements to install the FFI gem, and 
 From rubygems:
 
     [sudo] gem install ffi
+    
+From a Gemfile using git or GitHub
+
+    gem 'ffi', github: 'ffi/ffi', submodules: true
 
 or from the git repository on github:
 
