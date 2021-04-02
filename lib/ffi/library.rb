@@ -87,12 +87,27 @@ module FFI
       raise RuntimeError.new("must only be extended by module") unless mod.kind_of?(Module)
     end
 
+    # The default search paths.
+    DEFAULT_SEARCH_PATHS = ['/usr/lib/','/usr/local/lib/','/opt/local/lib/'].freeze
+
+    # @param name the name of the library to search for
+    # @param search_paths the search paths to look within
+    def find_library_path(libname, search_paths)
+      search_paths.each do |search_path|
+        full_path = File.join(search_path, libname)
+        if File.exist?(full_path)
+          return full_path
+        end
+      end
+
+      return nil
+    end
 
     # @param [Array] names names of libraries to load
     # @return [Array<DynamicLibrary>]
     # @raise {LoadError} if a library cannot be opened
     # Load native libraries.
-    def ffi_lib(*names)
+    def ffi_lib(*names, search_paths: DEFAULT_SEARCH_PATHS)
       raise LoadError.new("library names list must not be empty") if names.empty?
 
       lib_flags = defined?(@ffi_lib_flags) ? @ffi_lib_flags : FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL
@@ -124,13 +139,9 @@ module FFI
               if ldscript
                 retry
               else
-                # TODO better library lookup logic
                 unless libname.start_with?("/") || FFI::Platform.windows?
-                  path = ['/usr/lib/','/usr/local/lib/','/opt/local/lib/'].find do |pth|
-                    File.exist?(pth + libname)
-                  end
-                  if path
-                    libname = path + libname
+                  if path = find_library_path(libname, search_paths)
+                    libname = path
                     retry
                   end
                 end
