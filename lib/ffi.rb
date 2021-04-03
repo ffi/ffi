@@ -1,5 +1,4 @@
-if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
-  Object.send(:remove_const, :FFI) if defined?(::FFI)
+if RUBY_ENGINE == 'ruby'
   begin
     require RUBY_VERSION.split('.')[0, 2].join('.') + '/ffi_c'
   rescue Exception
