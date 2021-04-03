@@ -5,7 +5,7 @@ group :development do
   gem 'rake-compiler', '~> 1.0.3'
   gem 'rake-compiler-dock', '~> 1.0'
   gem 'rspec', '~> 3.0'
-  gem 'bundler', '~> 2.0'
+  gem 'bundler', '>= 1.16', '< 3'
 end
 
 group :doc do
