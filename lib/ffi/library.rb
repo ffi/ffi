@@ -28,6 +28,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.#
 
+require 'shellwords'
+
 module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = Object.new
 
@@ -83,16 +85,83 @@ module FFI
     # @return [nil]
     # @raise {RuntimeError} if +mod+ is not a Module
     # Test if extended object is a Module. If not, raise RuntimeError.
-    def self.extended(mod)
-      raise RuntimeError.new("must only be extended by module") unless mod.kind_of?(Module)
+    def self.extended(target)
+      raise RuntimeError.new("must only be extended by module") unless target.kind_of?(Module)
+
+      target.instance_variable_set(:@ffi_libs, Array.new)
     end
 
+    # The default search paths.
+    DEFAULT_SEARCH_PATHS = ['/usr/lib/','/usr/local/lib/','/opt/local/lib/'].freeze
+
+    # @param name the file name of the library to search for
+    # @param search_paths the search paths to look within
+    def find_library_path(libname, search_paths)
+      search_paths.each do |search_path|
+        full_path = File.join(search_path, libname)
+        if File.exist?(full_path)
+          return full_path
+        end
+      end
+
+      return nil
+    end
+
+    DEFAULT_FLAGS = FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL
+
+    def load_library(name, flags: DEFAULT_FLAGS)
+      if library = FFI::DynamicLibrary.open(name, flags)
+        @ffi_libs << library
+
+        return library
+      end
+
+    rescue LoadError
+      return nil
+    end
+    
+    def load_library_from_config(config_path, flags: DEFAULT_FLAGS)
+      search_paths = []
+      names = []
+
+      return false unless output = ::IO.popen([config_path, "--libs"]).read
+
+      arguments = ::Shellwords.split(output)
+
+      arguments.each do |argument|
+        if match = argument.match(/\A(-[lL])(.*)\z/)
+          command, value = match.captures
+          case command
+          when '-L'
+            search_paths << value
+          when '-l'
+            names << value
+          end
+        end
+      end
+
+      libraries = []
+
+      names.each do |name|
+        library_name = FFI.map_library_name(name)
+
+        if path = find_library_path(library_name, search_paths)
+          if library = load_library(path, flags: flags)
+            libraries << library
+          end
+        end
+      end
+
+      if libraries.any?
+        return libraries
+      end
+    end
 
     # @param [Array] names names of libraries to load
     # @return [Array<DynamicLibrary>]
     # @raise {LoadError} if a library cannot be opened
     # Load native libraries.
-    def ffi_lib(*names)
+    def ffi_lib(*names, search_paths: DEFAULT_SEARCH_PATHS)
       raise LoadError.new("library names list must not be empty") if names.empty?
 
       lib_flags = defined?(@ffi_lib_flags) ? @ffi_lib_flags : FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL
@@ -124,13 +193,9 @@ module FFI
               if ldscript
                 retry
               else
-                # TODO better library lookup logic
                 unless libname.start_with?("/") || FFI::Platform.windows?
-                  path = ['/usr/lib/','/usr/local/lib/','/opt/local/lib/'].find do |pth|
-                    File.exist?(pth + libname)
-                  end
-                  if path
-                    libname = path + libname
+                  if path = find_library_path(libname, search_paths)
+                    libname = path
                     retry
                   end
                 end
