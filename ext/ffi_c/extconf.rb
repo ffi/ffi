@@ -57,6 +57,9 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     append_ldflags "-Wl,--exclude-libs,ALL"
   end
 
+  # Some linux archs need explicit linking to pthread, see https://github.com/ffi/ffi/issues/893
+  append_ldflags "-pthread"
+
   ffi_alloc_default = RbConfig::CONFIG['host_os'] =~ /darwin/i && RbConfig::CONFIG['host'] =~ /arm|aarch64/i
   if enable_config('libffi-alloc', ffi_alloc_default)
     $defs << "-DUSE_FFI_ALLOC"
