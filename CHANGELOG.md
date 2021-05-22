@@ -1,3 +1,12 @@
+1.15.1 / 2021-05-22
+-------------------
+
+Fixed:
+* Append -pthread to linker options. #893
+* Use arm or aarch64 to identify Apple ARM CPU arch. #899
+* Allow overriding `gcc` with the `CC` env var in `const_generator.rb` and `struct_generator.rb`. #897
+
+
 1.15.0 / 2021-03-05
 -------------------
 
