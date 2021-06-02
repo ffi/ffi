@@ -1,0 +1,14 @@
+VERS_1 {
+  global:
+    testElfVersionSymbol_v1;
+};
+
+VERS_2.0 {
+  global:
+    testElfVersionSymbol_v20;
+} VERS_1;
+
+VERS_2.1 {
+  global:
+    *;
+} VERS_2.0;
