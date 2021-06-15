@@ -4,7 +4,7 @@ module BenchTime
   module Posix
     extend FFI::Library
     ffi_lib FFI::Library::LIBC
-    if RUBY_PLATFORM =~ /mswin/
+    if RUBY_PLATFORM =~ /mswin/ || FFI::Library::LIBC =~ /ucrt/
       attach_function :time, :_time64, [ :buffer_out ], :uint64, ignore_error: true
     else
       attach_function :time, [ :buffer_out ], :ulong, ignore_error: true
