@@ -16,10 +16,12 @@ jobs:
       with:
         ruby-version: 2.7
 
-    - run: brew install automake libffi pkg-config
-      if: matrix.os == 'macos'
-    - run: ridk exec sh -c "pacman --sync --refresh --needed --noconfirm  ${MINGW_PACKAGE_PREFIX}-libffi"
-      if: matrix.os == 'windows' && matrix.extconfopts == '--enable-system-libffi'
+    - if: matrix.os == 'macos'
+      run: brew install automake libffi pkg-config
+
+    - if: matrix.os == 'windows' && matrix.extconfopts == '--enable-system-libffi'
+      shell: cmd
+      run: ridk exec sh -c "pacman --sync --refresh --needed --noconfirm  ${MINGW_PACKAGE_PREFIX}-libffi"
 
     - run: bundle install
     - run: bundle exec rake libffi
