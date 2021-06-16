@@ -18,7 +18,7 @@ jobs:
 
     - run: brew install automake libffi pkg-config
       if: matrix.os == 'macos'
-    - run: ridk exec pacman --sync --refresh --needed --noconfirm  mingw-w64-x86_64-libffi
+    - run: ridk exec sh -c "pacman --sync --refresh --needed --noconfirm  ${MINGW_PACKAGE_PREFIX}-libffi"
       if: matrix.os == 'windows' && matrix.extconfopts == '--enable-system-libffi'
 
     - run: bundle install
