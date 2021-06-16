@@ -1,3 +1,14 @@
+1.15.2 / 2021-06-16
+-------------------
+
+Added:
+* Add support for Windows MINGW-UCRT build. #903
+* Add `/opt/homebrew/lib/` to fallback search paths to improve homebrew support. #880 #882
+
+Changed:
+* Regenerate `types.conf` for FreeBSD12 aarch64. #902
+
+
 1.15.1 / 2021-05-22
 -------------------
 
