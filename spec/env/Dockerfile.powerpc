@@ -11,7 +11,8 @@ RUN apt-get update -qq && \
     git \
     libtool \
     make \
-    ruby-dev
+    ruby-dev \
+    zlib1g-dev
 RUN ruby --version
 
 WORKDIR /ffi
