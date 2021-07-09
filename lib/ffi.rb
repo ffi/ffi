@@ -7,7 +7,7 @@ if RUBY_ENGINE == 'ruby'
 
   require 'ffi/ffi'
 
-elsif RUBY_ENGINE == 'jruby' && (RUBY_ENGINE_VERSION.split('.').map(&:to_i) <=> [9, 3]) >= 0
+elsif RUBY_ENGINE == 'jruby' && (RUBY_ENGINE_VERSION.split('.').map(&:to_i) <=> [9, 2, 20]) >= 0
   JRuby::Util.load_ext("org.jruby.ext.ffi.FFIService")
   require 'ffi/ffi'
 
