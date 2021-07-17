@@ -126,6 +126,10 @@ ifneq ($(or $(findstring linux, $(OS)), $(findstring solaris, $(OS))),)
   LD += $(MODELFLAG)
 endif
 
+ifneq ($(or $(findstring linux, $(OS)), $(findstring solaris, $(OS))),)
+  LDFLAGS += -Wl,--version-script,versionscript
+endif
+
 LIBTEST = $(LIBNAME)
 
 all:	$(LIBTEST)
@@ -134,7 +138,7 @@ $(TEST_BUILD_DIR)/%.o : $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	$(CCACHE) $(CC) $(CFLAGS) -c $< -o $@
 
-$(LIBTEST):  $(TEST_OBJS)
+$(LIBTEST):  $(TEST_OBJS) versionscript
 	$(CC) -o $@ $(LDFLAGS) $(TEST_OBJS) -lm
 
 clean::
