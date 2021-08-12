@@ -84,7 +84,7 @@ module FFI
     # @raise {RuntimeError} if +mod+ is not a Module
     # Test if extended object is a Module. If not, raise RuntimeError.
     def self.extended(mod)
-      raise RuntimeError.new("must only be extended by module") unless mod.kind_of?(Module)
+      raise RuntimeError.new("must only be extended by module") unless mod.kind_of?(::Module)
     end
 
 
