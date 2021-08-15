@@ -38,7 +38,7 @@
 #include "rbffi_endian.h"
 #include "Platform.h"
 
-#if defined(__GNU__) || defined(__GLIBC__)
+#if defined(__GNU__) || (defined(__GLIBC__) && !defined(__UCLIBC__))
 # include <gnu/lib-names.h>
 #endif
 
@@ -71,7 +71,7 @@ rbffi_Platform_Init(VALUE moduleFFI)
     rb_define_const(PlatformModule, "BYTE_ORDER", INT2FIX(BYTE_ORDER));
     rb_define_const(PlatformModule, "LITTLE_ENDIAN", INT2FIX(LITTLE_ENDIAN));
     rb_define_const(PlatformModule, "BIG_ENDIAN", INT2FIX(BIG_ENDIAN));
-#if defined(__GNU__) || defined(__GLIBC__)
+#if defined(__GNU__) || (defined(__GLIBC__) && !defined(__UCLIBC__))
     rb_define_const(PlatformModule, "GNU_LIBC", rb_str_new2(LIBC_SO));
 #endif
     export_primitive_types(PlatformModule);
