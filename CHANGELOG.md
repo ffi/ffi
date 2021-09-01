@@ -1,3 +1,14 @@
+1.15.4 / 2021-09-01
+-------------------
+
+Fixed:
+* Fix build for uClibc. #913
+* Correct module lookup when including `ffi-module` gem. #912
+
+Changed:
+* Use ruby code of the ffi gem in JRuby-9.2.20+. #915
+
+
 1.15.3 / 2021-06-16
 -------------------
 
