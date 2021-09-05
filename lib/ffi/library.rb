@@ -266,11 +266,11 @@ module FFI
           begin
             function = nil
             function_names(cname, arg_types).find do |fname|
-                if versions.empty?
-                  function = lib.find_function(fname)
-                else
-                  versions.find { |v| function = lib.find_function_version(fname, v) }
-                end
+              if versions.empty?
+                function = lib.find_function(fname)
+              else
+                versions.find { |v| function = lib.find_function_version(fname, v) }
+              end
             end
             raise LoadError unless function
 
