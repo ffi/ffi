@@ -71,7 +71,7 @@
 #define FLOAT32_ADJ (4)
 #define FLOAT64_ADJ (8)
 #define ADDRESS_ADJ (sizeof(void *))
-#define LONGDOUBLE_ADJ (ffi_type_longdouble.alignment)
+#define LONGDOUBLE_ADJ (ffi_type_longdouble.alignment > sizeof(long double) ? ffi_type_longdouble.alignment : sizeof(long double))
 
 #endif /* USE_RAW */
 
