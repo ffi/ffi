@@ -86,7 +86,7 @@ task 'gem:java' => 'java:gem'
 
 FfiGemHelper.install_tasks
 # Register windows gems to be pushed to rubygems.org
-Bundler::GemHelper.instance.cross_platforms = %w[x86-mingw32 x64-mingw32]
+Bundler::GemHelper.instance.cross_platforms = %w[x86-mingw32 x64-mingw-ucrt x64-mingw32]
 
 if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   require 'rake/extensiontask'
@@ -108,11 +108,25 @@ else
 end
 
 
-desc "build a windows gem without all the ceremony"
-task "gem:windows" do
-  require "rake_compiler_dock"
-  sh "bundle package"
-  RakeCompilerDock.sh "sudo apt-get update && sudo apt-get install -y libltdl-dev && bundle --local && rake cross native gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=${RUBY_CC_VERSION/:2.2.2/}"
+namespace "gem" do
+  task 'prepare' do
+    require 'rake_compiler_dock'
+    sh "bundle package --all"
+  end
+
+  Bundler::GemHelper.instance.cross_platforms.each do |plat|
+    desc "Build all native binary gems in parallel"
+    multitask 'native' => plat
+
+    desc "Build the native gem for #{plat}"
+    task plat => 'prepare' do
+      RakeCompilerDock.sh <<-EOT, platform: plat
+        sudo apt-get update &&
+        sudo apt-get install -y libltdl-dev && bundle --local &&
+        rake cross native gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=${RUBY_CC_VERSION/:2.2.2/}
+      EOT
+    end
+  end
 end
 
 directory "ext/ffi_c/libffi"
