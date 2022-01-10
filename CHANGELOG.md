@@ -1,3 +1,17 @@
+1.15.5 / 2022-01-10
+-------------------
+
+Fixed:
+* Fix long double argument or return values on 32bit i686. #849
+* FFI::ConstGenerator: avoid usage of the same binary file simultaneously. #929
+
+Added:
+* Add Windows fat binary gem for Ruby-3.1
+
+Removed:
+* Remove Windows fat binary gem for Ruby < 2.4
+
+
 1.15.4 / 2021-09-01
 -------------------
 
