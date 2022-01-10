@@ -18,7 +18,7 @@ RSpec::Core::RakeTask.new(:spec => :compile) do |config|
 end
 
 desc "Build all packages"
-task :package => %w[ gem:java gem:windows ]
+task :package => %w[ gem:java gem:native ]
 
 CLOBBER.include 'lib/ffi/types.conf'
 CLOBBER.include 'pkg'
@@ -119,7 +119,7 @@ namespace "gem" do
     multitask 'native' => plat
 
     desc "Build the native gem for #{plat}"
-    task plat => 'prepare' do
+    task plat => ['prepare', 'build'] do
       RakeCompilerDock.sh <<-EOT, platform: plat
         sudo apt-get update &&
         sudo apt-get install -y libltdl-dev && bundle --local &&

@@ -13,7 +13,7 @@ class FfiGemHelper < Bundler::GemHelper
       update_history
     end
 
-    task "release:rubygem_push" => ["gem:windows", "gem:java"]
+    task "release:rubygem_push" => ["gem:native", "gem:java"]
   end
 
   def hfile
