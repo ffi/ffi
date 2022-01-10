@@ -13,7 +13,7 @@ install:
   - ridk exec bash -c "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
   - ridk exec bash -c "pacman -U --noconfirm --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
   # Update to libffi-3.3 since Appveyor version fails on LongDouble specs
-  - ridk exec pacman --sync --refresh --needed --noconfirm  mingw-w64-x86_64-libffi mingw-w64-i686-libffi
+  - ridk exec pacman --sync --refresh --needed --noconfirm  mingw-w64-x86_64-libffi mingw-w64-i686-libffi autoconf automake libtool
 build: off
 build_script:
   - bundle exec rake libffi compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
