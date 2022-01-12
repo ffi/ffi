@@ -123,7 +123,7 @@ namespace "gem" do
       RakeCompilerDock.sh <<-EOT, platform: plat
         sudo apt-get update &&
         sudo apt-get install -y libltdl-dev && bundle --local &&
-        rake cross native gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=${RUBY_CC_VERSION/:2.2.2/}
+        rake native:#{plat} pkg/#{gem_spec.full_name}-#{plat}.gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=${RUBY_CC_VERSION/:2.2.2/}
       EOT
     end
   end
