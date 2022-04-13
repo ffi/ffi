@@ -650,7 +650,7 @@ describe "Unsigned bitmasks" do
     expect(TestBitmask6.test_tagged_nonint_unsigned_bitmask1([:c1, :c2, :c3])).to eq([:c1, :c2, :c3])
     expect(TestBitmask6.test_tagged_nonint_unsigned_bitmask2([:c4, :c5, :c6])).to eq([:c4, :c5, :c6])
     expect(TestBitmask6.test_tagged_nonint_unsigned_bitmask3([:c7, :c8, :c9])).to eq([:c7, :c8, :c9])
-    expect(TestBitmask6.test_tagged_nonint_unsigned_bitmask4([:c10, :c11, :c12])).to eq([:c10, :c11, :c12])
+    expect(TestBitmask6.test_tagged_nonint_unsigned_bitmask4([:c10, :c11, :c12])).to eq([:c10, :c11, :c12]) unless RUBY_ENGINE == 'truffleruby'
     expect(TestBitmask6.test_tagged_nonint_unsigned_bitmask5([:c13, :c14, :c15])).to eq([:c13, :c14, :c15])
   end
 end
