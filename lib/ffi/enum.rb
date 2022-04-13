@@ -280,15 +280,13 @@ module FFI
     # @param ctx unused
     # @return [Array<Symbol, Integer>] list of symbol names corresponding to val, plus an optional remainder if some bits don't match any constant
     def from_native(val, ctx)
-      list = @kv_map.select { |_, v| v & val != 0 }.keys
+      flags = @kv_map.select { |_, v| v & val != 0 }
+      list = flags.keys
       # If there are unmatch flags,
       # return them in an integer,
       # else information can be lost.
       # Similar to Enum behavior.
-      remainder = val ^ list.inject(0) do |tmp, o|
-        v = @kv_map[o]
-        if v then tmp |= v else tmp end
-      end
+      remainder = val ^ flags.values.reduce(0, :|)
       list.push remainder unless remainder == 0
       return list
     end

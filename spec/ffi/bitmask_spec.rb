@@ -248,6 +248,23 @@ describe "A tagged typedef bitmask" do
     expect(TestBitmask4.test_tagged_nonint_bitmask6([1<<14,1<<42,1<<43])).to eq([:c26,:c28,1<<43])
   end
 
+  it "only remainder is given if only undefined mask are returned" do
+    expect(TestBitmask3.test_tagged_typedef_bitmask1(1<<4)).to eq([1<<4])
+    expect(TestBitmask3.test_tagged_typedef_bitmask1([1<<4])).to eq([1<<4])
+    expect(TestBitmask3.test_tagged_typedef_bitmask2(1<<6)).to eq([1<<6])
+    expect(TestBitmask3.test_tagged_typedef_bitmask2([1<<6])).to eq([1<<6])
+    expect(TestBitmask3.test_tagged_typedef_bitmask3(1<<7)).to eq([1<<7])
+    expect(TestBitmask3.test_tagged_typedef_bitmask3([1<<7])).to eq([1<<7])
+    expect(TestBitmask3.test_tagged_typedef_bitmask4(1<<9)).to eq([1<<9])
+    expect(TestBitmask3.test_tagged_typedef_bitmask4([1<<9])).to eq([1<<9])
+    expect(TestBitmask4.test_tagged_nonint_bitmask4(1<<10)).to eq([1<<10])
+    expect(TestBitmask4.test_tagged_nonint_bitmask4([1<<10])).to eq([1<<10])
+    expect(TestBitmask4.test_tagged_nonint_bitmask5(1<<16)).to eq([1<<16])
+    expect(TestBitmask4.test_tagged_nonint_bitmask5([1<<16])).to eq([1<<16])
+    expect(TestBitmask4.test_tagged_nonint_bitmask6(1<<43)).to eq([1<<43])
+    expect(TestBitmask4.test_tagged_nonint_bitmask6([1<<43])).to eq([1<<43])
+  end
+
   it "wrong constants rejected" do
     expect { TestBitmask3.test_tagged_typedef_bitmask1([:c2,:c4,:c5]) }.to raise_error(ArgumentError)
     expect { TestBitmask3.test_tagged_typedef_bitmask2([:c6,:c8,:c9]) }.to raise_error(ArgumentError)
