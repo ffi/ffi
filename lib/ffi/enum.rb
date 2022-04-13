@@ -240,7 +240,7 @@ module FFI
       when Symbol
         flat_query.inject(0) do |val, o|
           v = @kv_map[o]
-          if v then val |= v else val end
+          if v then val | v else val end
         end
       when Integer, ->(o) { o.respond_to?(:to_int) }
         val = flat_query.inject(0) { |mask, o| mask |= o.to_int }
@@ -265,11 +265,11 @@ module FFI
         when Symbol
           v = @kv_map[o]
           raise ArgumentError, "invalid bitmask value, #{o.inspect}" unless v
-          val |= v
+          val | v
         when Integer
-          val |= o
+          val | o
         when ->(obj) { obj.respond_to?(:to_int) }
-          val |= o.to_int
+          val | o.to_int
         else
           raise ArgumentError, "invalid bitmask value, #{o.inspect}"
         end
