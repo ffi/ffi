@@ -220,7 +220,7 @@ module FFI
     #  @param [Symbol] query
     #  @return [Integer]
     # @overload [](query)
-    #  Get bitmaks value from symbol array
+    #  Get bitmask value from symbol array
     #  @param [Array<Symbol>] query
     #  @return [Integer]
     # @overload [](*query)
