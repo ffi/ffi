@@ -192,6 +192,7 @@ module FFI
     #   @param [nil, Symbol] tag name of new Bitmask
     def initialize(*args)
       @native_type = args.first.kind_of?(FFI::Type) ? args.shift : Type::INT
+      @signed = [Type::INT8, Type::INT16, Type::INT32, Type::INT64].include?(@native_type)
       info, @tag = *args
       @kv_map = Hash.new
       unless info.nil?
@@ -260,7 +261,7 @@ module FFI
     def to_native(query, ctx)
       return 0 if query.nil?
       flat_query = [query].flatten
-      flat_query.inject(0) do |val, o|
+      res = flat_query.inject(0) do |val, o|
         case o
         when Symbol
           v = @kv_map[o]
@@ -274,6 +275,12 @@ module FFI
           raise ArgumentError, "invalid bitmask value, #{o.inspect}"
         end
       end
+      # Take two's complement of positive values bigger than the max value
+      # for the type when native type is signed.
+      if @signed && res >= (1 << (@native_type.size * 8 - 1))
+        res = -(-res & ((1 << (@native_type.size * 8)) - 1))
+      end
+      res
     end
 
     # @param [Integer] val
@@ -282,6 +289,8 @@ module FFI
     def from_native(val, ctx)
       flags = @kv_map.select { |_, v| v & val != 0 }
       list = flags.keys
+      # force an unsigned value of the correct size
+      val &= (1 << (@native_type.size * 8)) - 1 if @signed
       # If there are unmatch flags,
       # return them in an integer,
       # else information can be lost.
