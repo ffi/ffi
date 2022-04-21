@@ -21,7 +21,7 @@ describe "Managed Struct" do
   it "should be the right class" do
     class WhatClassAmI < FFI::ManagedStruct
       layout :i, :int
-      def self.release
+      def self.release(_ptr)
       end
     end
 
@@ -31,7 +31,7 @@ describe "Managed Struct" do
   it "should build with self reference" do
     class ClassWithSelfRef < FFI::ManagedStruct
       layout :data, self.ptr
-      def self.release
+      def self.release(_ptr)
       end
     end
 
