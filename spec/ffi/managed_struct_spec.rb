@@ -39,11 +39,11 @@ describe "Managed Struct" do
   end
 
   # see #427
-  it "should release memory properly", :broken => true do
+  it "should release memory properly" do
     class PleaseReleaseMe < FFI::ManagedStruct
       layout :i, :int
       @@count = 0
-      def self.release
+      def self.release(_ptr)
         @@count += 1
       end
       def self.wait_gc(count)
@@ -53,16 +53,17 @@ describe "Managed Struct" do
           TestLibrary.force_gc
           sleep 0.05 if @@count < count
         end
+        @@count
       end
     end
 
     loop_count = 30
     wiggle_room = 5
 
-    expect(PleaseReleaseMe).to receive(:release).at_least(loop_count-wiggle_room).times
     loop_count.times do
       PleaseReleaseMe.new(ManagedStructTestLib.ptr_from_address(0x12345678))
     end
-    PleaseReleaseMe.wait_gc loop_count
+    calls = PleaseReleaseMe.wait_gc(loop_count)
+    expect(calls).to be >= loop_count-wiggle_room
   end
 end
