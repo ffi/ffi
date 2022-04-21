@@ -7,12 +7,6 @@ install:
   - gem --version
   - gem install bundler --quiet --no-document
   - bundle install
-  # Update MSYS2 keyring according to https://www.msys2.org/news/#2020-06-29-new-packagers
-  - C:\msys64\usr\bin\curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz
-  - C:\msys64\usr\bin\curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig
-  - ridk exec bash -c "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"
-  - ridk exec bash -c "pacman -U --noconfirm --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"
-  # Update to libffi-3.3 since Appveyor version fails on LongDouble specs
   - ridk exec pacman --sync --refresh --needed --noconfirm  mingw-w64-x86_64-libffi mingw-w64-i686-libffi autoconf automake libtool
 build: off
 build_script:
