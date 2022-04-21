@@ -7,7 +7,7 @@ install:
   - gem --version
   - gem install bundler --quiet --no-document
   - bundle install
-  - ridk exec pacman --sync --refresh --needed --noconfirm  mingw-w64-x86_64-libffi mingw-w64-i686-libffi autoconf automake libtool
+  - ridk exec sh -c "pacman -S --noconfirm --needed ${MINGW_PACKAGE_PREFIX}-libffi ${MINGW_PACKAGE_PREFIX}-gcc autoconf automake libtool"
 build: off
 build_script:
   - bundle exec rake libffi compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
@@ -16,7 +16,7 @@ test_script:
   - bundle exec rake types_conf && git --no-pager diff
 environment:
   matrix:
-    - RUBYVER: 25-x64
+    - RUBYVER: 25
       EXTCONFOPTS: "--enable-system-libffi"
-    - RUBYVER: 26
+    - RUBYVER: 31-x64
       EXTCONFOPTS: "--enable-system-libffi"
