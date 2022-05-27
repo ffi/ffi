@@ -121,9 +121,90 @@ describe "Pointer" do
         expect(array[j]).to eq(val)
       end
     end
+
     it "#write_array_of_type should raise an error with non-array argument" do
       memory = FFI::MemoryPointer.new FFI::TYPE_INT8, 1
       expect { memory.write_array_of_int8(0) }.to raise_error(TypeError)
+    end
+
+    it "\#{write,read}_size_t" do
+      value = 227
+      value = (value << 32) + value  if FFI::Platform::ADDRESS_SIZE == 64
+      memory = FFI::MemoryPointer.new :size_t, 2
+      memory.put_size_t(memory.type_size, value)
+      val = memory.get_size_t(memory.type_size)
+      expect(value).to eq(val)
+    end
+
+    it "\#{write,read}_ssize_t" do
+      value = -227
+      value = (value << 32) + value  if FFI::Platform::ADDRESS_SIZE == 64
+      memory = FFI::MemoryPointer.new :ssize_t, 2
+      memory.put_ssize_t(memory.type_size, value)
+      val = memory.get_ssize_t(memory.type_size)
+      expect(value).to eq(val)
+    end
+
+    it "\#{write,read}_size_t" do
+      value = 227
+      value = (value << 32) + value  if FFI::Platform::ADDRESS_SIZE == 64
+      memory = FFI::MemoryPointer.new :size_t
+      memory.write_size_t(value)
+      val = memory.read_size_t
+      expect(value).to eq(val)
+    end
+
+    it "\#{write,read}_ssize_t" do
+      value = -227
+      value = (value << 32) + value  if FFI::Platform::ADDRESS_SIZE == 64
+      memory = FFI::MemoryPointer.new :ssize_t
+      memory.write_ssize_t(value)
+      val = memory.read_ssize_t
+      expect(value).to eq(val)
+    end
+
+    it "\#{get,put}_array_of_size_t" do
+      values = [10, 227, 32]
+      values.map! { |v| (v << 32) + v } if FFI::Platform::ADDRESS_SIZE == 64
+      memory = FFI::MemoryPointer.new :size_t, values.size + 1
+      memory.put_array_of_size_t(memory.type_size, values)
+      array = memory.get_array_of_size_t(memory.type_size, values.size)
+      values.each_with_index do |val, j|
+        expect(array[j]).to eq(val)
+      end
+    end
+
+    it "\#{get,put}_array_of_ssize_t" do
+      values = [10, -227, 32]
+      values.map! { |v| (v << 32) + v } if FFI::Platform::ADDRESS_SIZE == 64
+      memory = FFI::MemoryPointer.new :ssize_t, values.size + 1
+      memory.put_array_of_ssize_t(memory.type_size, values)
+      array = memory.get_array_of_ssize_t(memory.type_size, values.size)
+      values.each_with_index do |val, j|
+        expect(array[j]).to eq(val)
+      end
+    end
+
+    it "\#{write,read}_array_of_size_t" do
+      values = [10, 227, 32]
+      values.map! { |v| (v << 32) + v } if FFI::Platform::ADDRESS_SIZE == 64
+      memory = FFI::MemoryPointer.new :size_t, values.size
+      memory.write_array_of_size_t(values)
+      array = memory.read_array_of_size_t(values.size)
+      values.each_with_index do |val, j|
+        expect(array[j]).to eq(val)
+      end
+    end
+
+    it "\#{write,read}_array_of_ssize_t" do
+      values = [10, -227, 32]
+      values.map! { |v| (v << 32) + v } if FFI::Platform::ADDRESS_SIZE == 64
+      memory = FFI::MemoryPointer.new :ssize_t, values.size
+      memory.write_array_of_ssize_t(values)
+      array = memory.read_array_of_ssize_t(values.size)
+      values.each_with_index do |val, j|
+        expect(array[j]).to eq(val)
+      end
     end
   end
 
