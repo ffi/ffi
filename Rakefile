@@ -1,7 +1,6 @@
 require 'rbconfig'
 require 'date'
 require 'fileutils'
-require 'rbconfig'
 require 'yaml'
 require 'rspec/core/rake_task'
 require 'rubygems/package_task'
