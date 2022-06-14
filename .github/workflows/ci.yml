@@ -1,5 +1,8 @@
 name: CI
 on: [push, pull_request]
+permissions:
+  contents: read
+
 jobs:
   system-libffi:
     # Run on latest MRI with explicit selection of system or builtin libffi
