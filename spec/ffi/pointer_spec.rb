@@ -237,6 +237,14 @@ describe "Pointer" do
       expect(FFI::Pointer.new(0).slice(0, 10).size_limit?).to be true
     end
   end
+
+  describe "#initialise" do
+    it 'can use adresses with high bit set' do
+      max_address = 2**FFI::Platform::ADDRESS_SIZE - 1
+      pointer = FFI::Pointer.new(:uint8, max_address)
+      expect(pointer.address).to eq(max_address)
+    end
+  end
 end
 
 describe "AutoPointer" do
