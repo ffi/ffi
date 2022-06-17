@@ -112,7 +112,7 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
     switch (TYPE(rbAddress)) {
         case T_FIXNUM:
         case T_BIGNUM:
-            p->memory.address = (void*) (uintptr_t) NUM2LL(rbAddress);
+            p->memory.address = (void*) (uintptr_t) NUM2ULL(rbAddress);
             p->memory.size = LONG_MAX;
             if (p->memory.address == NULL) {
                 p->memory.flags = 0;
