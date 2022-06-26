@@ -126,7 +126,12 @@ module FFI
               else
                 # TODO better library lookup logic
                 unless libname.start_with?("/") || FFI::Platform.windows?
-                  path = ['/usr/lib/','/usr/local/lib/','/opt/local/lib/', '/opt/homebrew/lib/'].find do |pth|
+                  path_candidates = if FFI::Platform::ARCH == 'aarch64' && FFI::Platform.mac?
+                    ['/opt/homebrew/lib/','/usr/lib/','/usr/local/lib/','/opt/local/lib/']
+                  else
+                    ['/usr/lib/','/usr/local/lib/','/opt/local/lib/','/opt/homebrew/lib/']
+                  end
+                  path = path_candidates.find do |pth|
                     File.exist?(pth + libname)
                   end
                   if path
