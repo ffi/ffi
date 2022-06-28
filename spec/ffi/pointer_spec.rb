@@ -244,7 +244,7 @@ describe "Pointer" do
       pointer = FFI::Pointer.new(:uint8, max_address)
       expect(pointer.address).to eq(max_address)
     end
-  end if RUBY_ENGINE != "truffleruby"
+  end if (RUBY_ENGINE != "truffleruby" && RUBY_ENGINE != "jruby")
 end
 
 describe "AutoPointer" do
