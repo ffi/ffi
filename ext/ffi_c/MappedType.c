@@ -144,6 +144,16 @@ mapped_from_native(int argc, VALUE* argv, VALUE self)
     return rb_funcall2(m->rbConverter, id_from_native, argc, argv);
 }
 
+static VALUE
+mapped_converter(VALUE self)
+{
+    MappedType*m = NULL;
+
+    Data_Get_Struct(self, MappedType, m);
+
+    return m->rbConverter;
+}
+
 void
 rbffi_MappedType_Init(VALUE moduleFFI)
 {
@@ -164,5 +174,6 @@ rbffi_MappedType_Init(VALUE moduleFFI)
     rb_define_method(rbffi_MappedTypeClass, "native_type", mapped_native_type, 0);
     rb_define_method(rbffi_MappedTypeClass, "to_native", mapped_to_native, -1);
     rb_define_method(rbffi_MappedTypeClass, "from_native", mapped_from_native, -1);
+    rb_define_method(rbffi_MappedTypeClass, "converter", mapped_converter, 0);
 }
 

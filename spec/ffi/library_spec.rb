@@ -193,6 +193,15 @@ describe "Library" do
       end
       expect(mod.bool_return_true).to be true
     end
+
+    it "can reveal the function type" do
+      mod = Module.new do |m|
+        m.extend FFI::Library
+        ffi_lib File.expand_path(TestLibrary::PATH)
+        attach_function :bool_return_true, [ ], :bool
+      end
+      expect(mod.class_variable_get(:@@bool_return_true).type.result_type).to eq FFI::Type::BOOL
+    end
   end
 
   def gvar_lib(name, type)

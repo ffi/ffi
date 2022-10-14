@@ -460,6 +460,16 @@ function_release(VALUE self)
     return self;
 }
 
+static VALUE
+function_type(VALUE self)
+{
+    Function* fn;
+
+    Data_Get_Struct(self, Function, fn);
+
+    return fn->rbFunctionInfo;
+}
+
 static void
 callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data)
 {
@@ -890,6 +900,7 @@ rbffi_Function_Init(VALUE moduleFFI)
     rb_define_method(rbffi_FunctionClass, "call", function_call, -1);
     rb_define_method(rbffi_FunctionClass, "attach", function_attach, 2);
     rb_define_method(rbffi_FunctionClass, "free", function_release, 0);
+    rb_define_method(rbffi_FunctionClass, "type", function_type, 0);
     rb_define_method(rbffi_FunctionClass, "autorelease=", function_set_autorelease, 1);
     /*
      * call-seq: autorelease

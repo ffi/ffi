@@ -37,6 +37,10 @@ describe "Function with variadic arguments" do
     expect(LibTest.pack_varargs2(buf, :c1, "ii", :int, :c3, :int, :c4)).to eq(:c2)
   end
 
+  it "can reveal its return" do
+    expect(LibTest.class_variable_get(:@@testBlockingRWva).return_type).to eq(FFI::Type::CHAR)
+  end
+
   it 'can wrap a blocking function with varargs' do
     handle = LibTest.testBlockingOpen
     expect(handle).not_to be_null
