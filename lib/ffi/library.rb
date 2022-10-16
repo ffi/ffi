@@ -85,8 +85,26 @@ module FFI
     # Test if extended object is a Module. If not, raise RuntimeError.
     def self.extended(mod)
       raise RuntimeError.new("must only be extended by module") unless mod.kind_of?(::Module)
-    end
 
+      return if mod.respond_to?(:attached_functions)
+
+      mod.module_eval <<-code, __FILE__, __LINE__
+        @@ffi_getters = {}
+        def self.attached_getters
+          @@ffi_getters
+        end
+
+        @@ffi_setters = {}
+        def self.attached_setters
+          @@ffi_setters
+        end
+
+        @@ffi_functions = {}
+        def self.attached_functions
+          @@ffi_functions
+        end
+      code
+    end
 
     # @param [Array] names names of libraries to load
     # @return [Array<DynamicLibrary>]
@@ -348,6 +366,7 @@ module FFI
           def self.#{mname}
             @@ffi_gvar_#{mname}
           end
+          @@ffi_getters[:#{mname}] = type
         code
 
       else
@@ -365,6 +384,8 @@ module FFI
           def self.#{mname}=(value)
             @@ffi_gvar_#{mname}[:gvar] = value
           end
+          @@ffi_getters[:#{mname}] = type
+          @@ffi_setters[:#{mname}=] = type
         code
 
       end

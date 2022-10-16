@@ -38,7 +38,7 @@ describe "Function with variadic arguments" do
   end
 
   it "can reveal its return" do
-    expect(LibTest.class_variable_get(:@@testBlockingRWva).return_type).to eq(FFI::Type::CHAR)
+    expect(LibTest.attached_functions[:testBlockingWRva]).to eq([[FFI::Type::POINTER, FFI::Type::CHAR, :varargs], FFI::Type::INT8])
   end
 
   it 'can wrap a blocking function with varargs' do

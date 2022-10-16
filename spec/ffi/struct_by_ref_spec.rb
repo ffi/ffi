@@ -41,7 +41,7 @@ describe FFI::Struct, ' by_ref' do
   end
 
   it "can reveal the mapped type converter" do
-    param_type = @api.class_variable_get(:@@struct_test).type.param_types[0]
+    param_type = @api.attached_functions[:struct_test][0][0]
     expect(param_type.converter).to be_a(FFI::StructByReference)
   end
 end

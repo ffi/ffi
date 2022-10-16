@@ -198,9 +198,11 @@ describe "Library" do
       mod = Module.new do |m|
         m.extend FFI::Library
         ffi_lib File.expand_path(TestLibrary::PATH)
-        attach_function :bool_return_true, [ ], :bool
+        attach_function :bool_return_true, [ :string ], :bool
       end
-      expect(mod.class_variable_get(:@@bool_return_true).type.result_type).to eq FFI::Type::BOOL
+      expect(mod.attached_functions).to eq(
+        { bool_return_true: [[FFI::Type::STRING], FFI::Type::BOOL] }
+      )
     end
   end
 
@@ -329,6 +331,8 @@ describe "Library" do
       lib.gvar[:data] = i
       val = GlobalStruct.new(lib.get)
       expect(val[:data]).to eq(i)
+
+      expect(lib.attached_getters).to eq({ gvar: GlobalStruct })
     end
   end
 end

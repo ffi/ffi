@@ -53,7 +53,9 @@ describe FFI::Function do
   end
 
   it 'can be attached to a module' do
-    module Foo; end
+    module Foo
+      class_variable_set(:@@ffi_functions, {})
+    end
     fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
     fp.attach(Foo, 'add')
     expect(Foo.add(10, 10)).to eq(20)
@@ -63,6 +65,7 @@ describe FFI::Function do
     fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
     foo = Object.new
     class << foo
+      class_variable_set(:@@ffi_functions, {})
       def singleton_class
         class << self; self; end
       end

@@ -29,61 +29,39 @@ module Tapioca
       class FFI < Compiler
         def decorate
           root.create_path(constant) do |mod|
-            constant.class_variables.each do |class_var|
-              candidate = constant.class_variable_get(class_var)
-              if candidate.is_a?(::FFI::Function)
-                method_name = class_var.to_s.gsub(/\A@*/, "")
-                if candidate.respond_to?(:type)
-                  mod.create_method(
-                    method_name,
-                    parameters: params_for(candidate.type.param_types),
-                    return_type: return_type_for(candidate.type.result_type),
-                    class_method: true,
-                  )
-                else
-                  mod.create_method(
-                    method_name,
-                    parameters: [create_rest_param("args", type: "T.untyped")],
-                    return_type: "T.untyped",
-                    class_method: true,
-                  )
-                end
-              elsif candidate.is_a?(::FFI::VariadicInvoker)
-                param_types =
-                  params_for(candidate.instance_variable_get(:@fixed)) + [create_rest_param("rest", type: "T.untyped")]
-                mod.create_method(
-                  class_var.to_s.gsub(/\A@*/, ""),
-                  parameters: param_types,
-                  return_type: (
-                    if candidate.respond_to?(:return_type)
-                      return_type_for(candidate.return_type)
-                    else
-                      "T.untyped"
-                    end
-                  ),
-                  class_method: true,
-                )
-              elsif candidate.is_a?(::FFI::Struct) && class_var =~ /\A@@ffi_gvar_(.+)\z/
-                getter = T.must(::Regexp.last_match(1))
-                return_type = return_type_for(candidate.layout.fields[0].type)
-                mod.create_method(
-                  getter,
-                  parameters: [],
-                  return_type: return_type,
-                  class_method: true,
-                )
-                setter = "#{getter}="
-                if constant.respond_to?(setter)
-                  mod.create_method(
-                    setter,
-                    parameters: [
-                      create_param("value", type: type_for(candidate.layout.fields[0].type)),
-                    ],
-                    return_type: return_type,
-                    class_method: true,
-                  )
-                end
-              end
+            constant.attached_functions.each do |method_name, (param_types, return_type)|
+              varargs = param_types[-1] == :varargs
+              param_types.pop if varargs
+              mod.create_method(
+                method_name,
+                parameters: params_for(param_types) +
+                  if varargs
+                    [create_rest_param("rest", type: "T.untyped")]
+                  else
+                    []
+                  end,
+                return_type: return_type_for(return_type),
+                class_method: true,
+              )
+            end
+
+            constant.attached_getters.each do |getter, type|
+              return_type = return_type_for(type)
+              mod.create_method(
+                getter,
+                parameters: [],
+                return_type: return_type,
+                class_method: true,
+              )
+            end
+
+            constant.attached_setters.each do |setter, type|
+              mod.create_method(
+                setter,
+                parameters: [create_param("value", type: type_for(type))],
+                return_type: return_type,
+                class_method: true,
+              )
             end
           end
         end
@@ -158,8 +136,6 @@ module Tapioca
         end
 
         def mapped_type_for(ffi_type)
-          return "T::Untyped" unless ffi_type.respond_to?(:converter)
-
           converter = ffi_type.converter
 
           if converter.is_a?(::FFI::StructByReference)

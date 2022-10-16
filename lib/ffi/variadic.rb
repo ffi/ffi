@@ -62,8 +62,13 @@ module FFI
       def #{mname}(#{params})
         @@#{mname}.#{call}(#{params})
       end
+      @@ffi_functions[:#{mname}] = [invoker.fixed_param_types + [:varargs], invoker.result_type]
       code
       invoker
+    end
+
+    def fixed_param_types
+      @fixed
     end
   end
 end

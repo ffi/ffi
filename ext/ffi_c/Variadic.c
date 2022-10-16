@@ -157,7 +157,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
 }
 
 static VALUE
-variadic_return_type(VALUE self)
+variadic_result_type(VALUE self)
 {
     VariadicInvoker* invoker;
 
@@ -308,6 +308,5 @@ rbffi_Variadic_Init(VALUE moduleFFI)
 
     rb_define_method(classVariadicInvoker, "initialize", variadic_initialize, 4);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoke, 2);
-    rb_define_method(classVariadicInvoker, "return_type", variadic_return_type, 0);
+    rb_define_method(classVariadicInvoker, "result_type", variadic_result_type, 0);
 }
-

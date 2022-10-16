@@ -376,9 +376,11 @@ static VALUE
 function_attach(VALUE self, VALUE module, VALUE name)
 {
     Function* fn;
+    FunctionType* info;
     char var[1024];
 
     Data_Get_Struct(self, Function, fn);
+    Data_Get_Struct(fn->rbFunctionInfo, FunctionType, info);
 
     if (fn->info->parameterCount == -1) {
         rb_raise(rb_eRuntimeError, "cannot attach variadic functions");
@@ -403,9 +405,12 @@ function_attach(VALUE self, VALUE module, VALUE name)
     rb_define_singleton_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
 
-
     rb_define_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
+
+    rb_hash_aset(rb_cv_get(module, "@@ffi_functions"),
+            ID2SYM(rb_intern(StringValueCStr(name))),
+            rb_ary_new3(2, info->rbParameterTypes, info->rbReturnType));
 
     return self;
 }
@@ -458,16 +463,6 @@ function_release(VALUE self)
     fn->closure = NULL;
 
     return self;
-}
-
-static VALUE
-function_type(VALUE self)
-{
-    Function* fn;
-
-    Data_Get_Struct(self, Function, fn);
-
-    return fn->rbFunctionInfo;
 }
 
 static void
@@ -900,7 +895,6 @@ rbffi_Function_Init(VALUE moduleFFI)
     rb_define_method(rbffi_FunctionClass, "call", function_call, -1);
     rb_define_method(rbffi_FunctionClass, "attach", function_attach, 2);
     rb_define_method(rbffi_FunctionClass, "free", function_release, 0);
-    rb_define_method(rbffi_FunctionClass, "type", function_type, 0);
     rb_define_method(rbffi_FunctionClass, "autorelease=", function_set_autorelease, 1);
     /*
      * call-seq: autorelease
