@@ -22,6 +22,8 @@ module TestLibrary
       "powerpc64"
     when /ppc|powerpc/
       "powerpc"
+    when /sparcv9|sparc64/
+      "sparcv9"
     when /^arm/
       if RbConfig::CONFIG['host_os'] =~ /darwin/
         "aarch64"
