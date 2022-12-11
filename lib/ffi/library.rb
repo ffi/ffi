@@ -28,6 +28,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.#
 
+require 'ffi/dynamic_library'
+
 module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = Object.new
 
@@ -95,62 +97,11 @@ module FFI
     def ffi_lib(*names)
       raise LoadError.new("library names list must not be empty") if names.empty?
 
-      lib_flags = defined?(@ffi_lib_flags) ? @ffi_lib_flags : FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL
-      ffi_libs = names.map do |name|
+      lib_flags = defined?(@ffi_lib_flags) && @ffi_lib_flags
 
-        if name == FFI::CURRENT_PROCESS
-          FFI::DynamicLibrary.open(nil, FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL)
-
-        else
-          libnames = (name.is_a?(::Array) ? name : [ name ]).map(&:to_s).map { |n| [ n, FFI.map_library_name(n) ].uniq }.flatten.compact
-          lib = nil
-          errors = {}
-
-          libnames.each do |libname|
-            begin
-              orig = libname
-              lib = FFI::DynamicLibrary.open(libname, lib_flags)
-              break if lib
-
-            rescue Exception => ex
-              ldscript = false
-              if ex.message =~ /(([^ \t()])+\.so([^ \t:()])*):([ \t])*(invalid ELF header|file too short|invalid file format)/
-                if File.binread($1) =~ /(?:GROUP|INPUT) *\( *([^ \)]+)/
-                  libname = $1
-                  ldscript = true
-                end
-              end
-
-              if ldscript
-                retry
-              else
-                # TODO better library lookup logic
-                unless libname.start_with?("/") || FFI::Platform.windows?
-                  path = ['/usr/lib/','/usr/local/lib/','/opt/local/lib/', '/opt/homebrew/lib/'].find do |pth|
-                    File.exist?(pth + libname)
-                  end
-                  if path
-                    libname = path + libname
-                    retry
-                  end
-                end
-
-                libr = (orig == libname ? orig : "#{orig} #{libname}")
-                errors[libr] = ex
-              end
-            end
-          end
-
-          if lib.nil?
-            raise LoadError.new(errors.values.join(".\n"))
-          end
-
-          # return the found lib
-          lib
-        end
+      @ffi_libs = names.map do |name|
+        FFI::DynamicLibrary.send(:load_library, name, lib_flags)
       end
-
-      @ffi_libs = ffi_libs
     end
 
     # Set the calling convention for {#attach_function} and {#callback}
