@@ -74,7 +74,7 @@ module FFI
 
       # LoadError for C ext & JRuby, RuntimeError for TruffleRuby
       rescue LoadError, RuntimeError => ex
-        if ex.message =~ /(([^ \t()])+\.so([^ \t:()])*):([ \t])*(invalid ELF header|file too short|invalid file format)/
+        if ex.message =~ /(([^ \t()'])+\.so([^ \t:()'])*)[:']([ \t\(])*(invalid ELF header|file too short|invalid file format|not a mach-o file)/
           if File.binread($1) =~ /(?:GROUP|INPUT) *\( *([^ \)]+)/
             return try_load($1, flags, errors)
           end
