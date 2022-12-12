@@ -88,7 +88,7 @@ describe "Library" do
       }.to raise_error(LoadError)
     end
 
-    it "interprets INPUT() in loader scripts", unless: FFI::Platform.windows? do
+    it "interprets INPUT() in linker scripts", unless: FFI::Platform.windows? do
       path = File.dirname(TestLibrary::PATH)
       file = File.basename(TestLibrary::PATH)
       script = File.join(path, "ldscript.so")
