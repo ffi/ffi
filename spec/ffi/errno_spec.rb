@@ -25,7 +25,6 @@ describe "FFI.errno" do
         LibTest.setErrno(0x2A)
         expect(FFI.errno).to eq(0x2A)
       when "windows"
-        skip "not yet supported on JRuby on Windows (https://github.com/jruby/jruby/issues/7521)" if RUBY_ENGINE == "jruby"
         expect(FFI::LastError.winapi_error).to eq(0x12345678)
         expect(FFI.errno).to eq(0x12345678)
       else
