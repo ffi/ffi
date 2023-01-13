@@ -76,9 +76,9 @@ module FFI
     #  going to be useful if you subclass {AutoPointer}, and override
     #  #release, which by default does nothing.
     def initialize(ptr, proc=nil, &block)
+      raise TypeError, "Invalid pointer" if ptr.nil? || !ptr.kind_of?(Pointer) ||
+          ptr.kind_of?(MemoryPointer) || ptr.kind_of?(AutoPointer)
       super(ptr.type_size, ptr)
-      raise TypeError, "Invalid pointer" if ptr.nil? || !ptr.kind_of?(Pointer) \
-        || ptr.kind_of?(MemoryPointer) || ptr.kind_of?(AutoPointer)
 
       @releaser = if proc
                     if not proc.respond_to?(:call)
