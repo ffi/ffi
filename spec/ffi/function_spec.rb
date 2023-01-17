@@ -10,7 +10,16 @@ describe FFI::Function do
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :testFunctionAdd, [:int, :int, :pointer], :int
+
+    if FFI::Platform::IS_GNU
+      attach_function :testElfVersionSymbol, [], :int
+      attach_function :testElfVersionSymbol_v20_v1, :testElfVersionSymbol, [], :int, versions: ["VERS_2.0", "VERS_1"]
+      attach_function :testElfVersionSymbol_v1_v20, :testElfVersionSymbol, [], :int, versions: ["VERS_1", "VERS_2.0"]
+      attach_function :testElfVersionSymbol_v3_v21, :testElfVersionSymbol, [], :int, versions: ["VERS_3", "VERS_2.1"]
+      attach_function :testElfVersionSymbol_v20, :testElfVersionSymbol, [], :int, versions: "VERS_2.0"
+    end
   end
+
   before do
     @libtest = FFI::DynamicLibrary.open(TestLibrary::PATH,
                                         FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_GLOBAL)
@@ -102,5 +111,34 @@ describe FFI::Function do
   it 'can\'t explicity free itself if not previously allocated' do
     fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
     expect { fp.free }.to raise_error RuntimeError
+  end
+
+  if FFI::Platform::IS_GNU
+    describe 'version symbols in ELF libraries' do
+      it 'should resolve properly' do
+        expect( LibTest.testElfVersionSymbol_v1_v20 ).to eq(1)
+        expect( LibTest.testElfVersionSymbol_v20_v1 ).to eq(20)
+        expect( LibTest.testElfVersionSymbol_v3_v21 ).to eq(21)
+        expect( LibTest.testElfVersionSymbol_v20 ).to eq(20)
+        expect( LibTest.testElfVersionSymbol ).to eq(21)
+      end
+
+      it 'should fail, if no suitable version found' do
+        expect do
+          Module.new do
+            extend FFI::Library
+            ffi_lib TestLibrary::PATH
+            attach_function :testElfVersionSymbol, [], :int, versions: ["VERS_3", "VERS_4"]
+          end
+        end.to raise_error(FFI::NotFoundError)
+      end
+
+      it 'can be looked up by find_function_version' do
+        fp = @libtest.find_function_version('testElfVersionSymbol', "VERS_1")
+        fun = FFI::Function.new(:int, [], fp)
+
+        expect(fun.call).to eq(1)
+      end
+    end
   end
 end

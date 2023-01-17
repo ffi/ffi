@@ -10,6 +10,7 @@
 #endif
 
 #ifndef _WIN32
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -149,4 +150,25 @@ struct StructUCDP {
 void __stdcall testStdcallManyParams(long *a1, char a2, short int a3, int a4, __int64 a5,
             struct StructUCDP a6, struct StructUCDP *a7, float a8, double a9) {
 }
+#endif
+
+#ifdef __USE_GNU
+int testElfVersionSymbol_v1 (void)
+{
+	return 1;
+}
+
+int testElfVersionSymbol_v20 (void)
+{
+	return 20;
+}
+
+int testElfVersionSymbol_v21 (void)
+{
+	return 21;
+}
+
+__asm__(".symver testElfVersionSymbol_v1, testElfVersionSymbol@VERS_1");
+__asm__(".symver testElfVersionSymbol_v20, testElfVersionSymbol@VERS_2.0");
+__asm__(".symver testElfVersionSymbol_v21, testElfVersionSymbol@@VERS_2.1");
 #endif

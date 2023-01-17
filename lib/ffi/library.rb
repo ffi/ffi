@@ -117,6 +117,13 @@ module FFI
       @ffi_convention
     end
 
+    # Set the default version(s) for "#{attach_function}" (GNU only)
+    # @param [Array<String>|String] the default list of versions to search
+    # @return [Array<String>|String]
+    def ffi_lib_versions(versions)
+      @versions = versions
+    end
+
     # @see #ffi_lib
     # @return [Array<FFI::DynamicLibrary>] array of currently loaded FFI libraries
     # @raise [LoadError] if no libraries have been loaded (using {#ffi_lib})
@@ -176,6 +183,7 @@ module FFI
     # @param [Symbol] returns type of return value
     # @option options [Boolean] :blocking (@blocking) set to true if the C function is a blocking call
     # @option options [Symbol] :convention (:default) calling convention (see {#ffi_convention})
+    # @option options [Array<String>] :versions ([]) list of versions to search (see {#ffi_lib_versions})
     # @option options [FFI::Enums] :enums
     # @option options [Hash] :type_map
     #
@@ -193,10 +201,14 @@ module FFI
         :type_map => defined?(@ffi_typedefs) ? @ffi_typedefs : nil,
         :blocking => defined?(@blocking) && @blocking,
         :enums => defined?(@ffi_enums) ? @ffi_enums : nil,
+        :versions => defined?(@versions) && @versions ? @versions : nil
       }
 
       @blocking = false
       options.merge!(opts) if opts && opts.is_a?(Hash)
+
+      versions = options.delete(:versions) || []
+      versions = [versions] unless versions.is_a?(Array)
 
       # Try to locate the function in any of the libraries
       invokers = []
@@ -205,7 +217,11 @@ module FFI
           begin
             function = nil
             function_names(cname, arg_types).find do |fname|
-              function = lib.find_function(fname)
+              if versions.empty?
+                function = lib.find_function(fname)
+              else
+                versions.find { |v| function = lib.find_function_version(fname, v) }
+              end
             end
             raise LoadError unless function
 
@@ -221,7 +237,7 @@ module FFI
         end
       end
       invoker = invokers.compact.shift
-      raise FFI::NotFoundError.new(cname.to_s, ffi_libraries.map { |lib| lib.name }) unless invoker
+      raise FFI::NotFoundError.new(cname.to_s, ffi_libraries.map { |lib| lib.name }, versions) unless invoker
 
       invoker.attach(self, mname.to_s)
       invoker
