@@ -37,7 +37,7 @@ $(LIBFFI):
 		echo "Configuring libffi"; \
 		cd "$(LIBFFI_BUILD_DIR)" && \
 		/usr/bin/env CC="$(CC)" LD="$(LD)" CFLAGS="$(LIBFFI_CFLAGS)" GREP_OPTIONS="" \
-		/bin/sh $(LIBFFI_CONFIGURE) $(LIBFFI_HOST) > /dev/null; \
+		/bin/sh $(LIBFFI_CONFIGURE) $(LIBFFI_HOST) --disable-shared --enable-static > /dev/null; \
 	fi
 	cd "$(LIBFFI_BUILD_DIR)" && $(MAKE)
 
@@ -56,7 +56,7 @@ build_ffi = \
 	    echo "Configuring libffi for $(1)"; \
 	    cd "$(BUILD_DIR)"/libffi-$(1) && \
 	      env CC="$(CCACHE) $(CC)" CFLAGS="-arch $(1) $(LIBFFI_CFLAGS)" LDFLAGS="-arch $(1)" \
-		$(LIBFFI_CONFIGURE) --host=$(1)-apple-darwin > /dev/null; \
+		$(LIBFFI_CONFIGURE) --host=$(1)-apple-darwin --disable-shared --enable-static > /dev/null; \
 	fi); \
 	$(MAKE) -C "$(BUILD_DIR)"/libffi-$(1)
 
