@@ -19,7 +19,7 @@ INCFLAGS := -I${LIBFFI_BUILD_DIR}/include -I${INCFLAGS}
 LIBFFI = ${LIBFFI_BUILD_DIR}/.libs/libffi_convenience.a
 LIBFFI_AUTOGEN = ${LIBFFI_SRC_DIR}/autogen.sh
 LIBFFI_CONFIGURE = ${LIBFFI_SRC_DIR}/configure --disable-shared --enable-static \
-	--with-pic=yes --disable-dependency-tracking --disable-docs
+	--with-pic=yes --disable-dependency-tracking --disable-docs $(LIBFFI_DEBUG)
 
 $(OBJS):	${LIBFFI}
 

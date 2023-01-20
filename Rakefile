@@ -100,6 +100,8 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     ext.cross_compiling do |spec|
       spec.files.reject! { |path| File.fnmatch?('ext/*', path) }
     end
+    # Enable debug info for 'rake compile' but not for 'gem install'
+    ext.config_options << "--enable-debug"
 
   end
 else
