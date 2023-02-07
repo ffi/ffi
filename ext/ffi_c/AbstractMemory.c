@@ -86,8 +86,7 @@ static VALUE memory_put_##name(VALUE self, VALUE offset, VALUE value); \
 static VALUE \
 memory_put_##name(VALUE self, VALUE offset, VALUE value) \
 { \
-    AbstractMemory* memory; \
-    Data_Get_Struct(self, AbstractMemory, memory); \
+    AbstractMemory* memory = MEMORY(self); \
     memory_op_put_##name(memory, NUM2LONG(offset), value); \
     return self; \
 } \
@@ -95,8 +94,7 @@ static VALUE memory_write_##name(VALUE self, VALUE value); \
 static VALUE \
 memory_write_##name(VALUE self, VALUE value) \
 { \
-    AbstractMemory* memory; \
-    Data_Get_Struct(self, AbstractMemory, memory); \
+    AbstractMemory* memory = MEMORY(self); \
     memory_op_put_##name(memory, 0, value); \
     return self; \
 } \
@@ -114,16 +112,14 @@ static VALUE memory_get_##name(VALUE self, VALUE offset); \
 static VALUE \
 memory_get_##name(VALUE self, VALUE offset) \
 { \
-    AbstractMemory* memory; \
-    Data_Get_Struct(self, AbstractMemory, memory); \
+    AbstractMemory* memory = MEMORY(self); \
     return memory_op_get_##name(memory, NUM2LONG(offset)); \
 } \
 static VALUE memory_read_##name(VALUE self); \
 static VALUE \
 memory_read_##name(VALUE self) \
 { \
-    AbstractMemory* memory; \
-    Data_Get_Struct(self, AbstractMemory, memory); \
+    AbstractMemory* memory = MEMORY(self); \
     return memory_op_get_##name(memory, 0); \
 } \
 static MemoryOp memory_op_##name = { memory_op_get_##name, memory_op_put_##name }; \
@@ -319,11 +315,7 @@ memory_clear(VALUE self)
 static VALUE
 memory_size(VALUE self)
 {
-    AbstractMemory* ptr;
-
-    Data_Get_Struct(self, AbstractMemory, ptr);
-
-    return LONG2NUM(ptr->size);
+    return LONG2NUM(MEMORY_LEN(self));
 }
 
 /*
@@ -337,14 +329,13 @@ memory_size(VALUE self)
 static VALUE
 memory_get(VALUE self, VALUE type_name, VALUE offset)
 {
-    AbstractMemory* ptr;
     VALUE nType;
     Type *type;
 
     nType = rbffi_Type_Lookup(type_name);
     if(NIL_P(nType)) goto undefined_type;
 
-    Data_Get_Struct(self, AbstractMemory, ptr);
+    AbstractMemory* ptr = MEMORY(self);
     Data_Get_Struct(nType, Type, type);
 
     MemoryOp *op = get_memory_op(type);
@@ -369,14 +360,13 @@ undefined_type: {
 static VALUE
 memory_put(VALUE self, VALUE type_name, VALUE offset, VALUE value)
 {
-    AbstractMemory* ptr;
     VALUE nType;
     Type *type;
 
     nType = rbffi_Type_Lookup(type_name);
     if(NIL_P(nType)) goto undefined_type;
 
-    Data_Get_Struct(self, AbstractMemory, ptr);
+    AbstractMemory* ptr = MEMORY(self);
     Data_Get_Struct(nType, Type, type);
 
     MemoryOp *op = get_memory_op(type);
@@ -433,7 +423,6 @@ static VALUE
 memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
 {
     VALUE offset = Qnil, countnum = Qnil, retVal = Qnil;
-    AbstractMemory* ptr;
     long off;
     int count;
 
@@ -442,7 +431,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
     count = (countnum == Qnil ? 0 : NUM2INT(countnum));
     retVal = rb_ary_new2(count);
 
-    Data_Get_Struct(self, AbstractMemory, ptr);
+    AbstractMemory* ptr = MEMORY(self);
     checkRead(ptr);
 
     if (countnum != Qnil) {
@@ -631,10 +620,7 @@ memory_write_bytes(int argc, VALUE* argv, VALUE self)
 static VALUE
 memory_type_size(VALUE self)
 {
-    AbstractMemory* ptr;
-
-    Data_Get_Struct(self, AbstractMemory, ptr);
-
+    AbstractMemory* ptr = MEMORY(self);
     return INT2NUM(ptr->typeSize);
 }
 
@@ -648,10 +634,8 @@ memory_type_size(VALUE self)
 static VALUE
 memory_aref(VALUE self, VALUE idx)
 {
-    AbstractMemory* ptr;
+    AbstractMemory* ptr = MEMORY(self);
     VALUE rbOffset = Qnil;
-
-    Data_Get_Struct(self, AbstractMemory, ptr);
 
     rbOffset = ULONG2NUM(NUM2ULONG(idx) * ptr->typeSize);
 
@@ -667,11 +651,7 @@ memory_address(VALUE obj)
 static VALUE
 memory_copy_from(VALUE self, VALUE rbsrc, VALUE rblen)
 {
-    AbstractMemory* dst;
-
-    Data_Get_Struct(self, AbstractMemory, dst);
-
-    memcpy(dst->address, rbffi_AbstractMemory_Cast(rbsrc, rbffi_AbstractMemoryClass)->address, NUM2INT(rblen));
+    memcpy(MEMORY_PTR(self), MEMORY_PTR(rbsrc), NUM2INT(rblen));
 
     return self;
 }
@@ -680,8 +660,7 @@ AbstractMemory*
 rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass)
 {
     if (rb_obj_is_kind_of(obj, klass)) {
-        AbstractMemory* memory;
-        Data_Get_Struct(obj, AbstractMemory, memory);
+        AbstractMemory* memory = RTYPEDDATA_DATA(obj);
         return memory;
     }
 

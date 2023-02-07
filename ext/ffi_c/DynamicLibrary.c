@@ -57,10 +57,19 @@ typedef struct LibrarySymbol_ {
 static VALUE library_initialize(VALUE self, VALUE libname, VALUE libflags);
 static void library_free(Library* lib);
 
-
 static VALUE symbol_allocate(VALUE klass);
 static VALUE symbol_new(VALUE library, void* address, VALUE name);
-static void symbol_mark(LibrarySymbol* sym);
+static void symbol_mark(void *);
+
+static const rb_data_type_t symbol_data_type = {
+    .wrap_struct_name = "FFI::DynamicLibrary::Symbol",
+    .function = {
+        .dmark = symbol_mark,
+        .dfree = RUBY_DEFAULT_FREE,
+        .dsize = NULL,
+    },
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
 
 static VALUE LibraryClass = Qnil, SymbolClass = Qnil;
 
@@ -198,7 +207,7 @@ static VALUE
 symbol_allocate(VALUE klass)
 {
     LibrarySymbol* sym;
-    VALUE obj = Data_Make_Struct(klass, LibrarySymbol, NULL, -1, sym);
+    VALUE obj = TypedData_Make_Struct(SymbolClass, LibrarySymbol, &symbol_data_type, sym);
     sym->name = Qnil;
     sym->library = Qnil;
     sym->base.rbParent = Qnil;
@@ -224,7 +233,7 @@ static VALUE
 symbol_new(VALUE library, void* address, VALUE name)
 {
     LibrarySymbol* sym;
-    VALUE obj = Data_Make_Struct(SymbolClass, LibrarySymbol, symbol_mark, -1, sym);
+    VALUE obj = TypedData_Make_Struct(SymbolClass, LibrarySymbol, &symbol_data_type, sym);
 
     sym->base.memory.address = address;
     sym->base.memory.size = LONG_MAX;
@@ -237,10 +246,12 @@ symbol_new(VALUE library, void* address, VALUE name)
 }
 
 static void
-symbol_mark(LibrarySymbol* sym)
+symbol_mark(void *data)
 {
+    LibrarySymbol *sym = (LibrarySymbol *)data;
     rb_gc_mark(sym->library);
     rb_gc_mark(sym->name);
+    rb_gc_mark(sym->base.rbParent);
 }
 
 /*
@@ -254,7 +265,7 @@ symbol_inspect(VALUE self)
     LibrarySymbol* sym;
     char buf[256];
 
-    Data_Get_Struct(self, LibrarySymbol, sym);
+    TypedData_Get_Struct(self, LibrarySymbol, &symbol_data_type, sym);
     snprintf(buf, sizeof(buf), "#<FFI::Library::Symbol name=%s address=%p>",
              StringValueCStr(sym->name), sym->base.memory.address);
     return rb_str_new2(buf);

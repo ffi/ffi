@@ -38,11 +38,6 @@ extern "C" {
 
 #include "AbstractMemory.h"
 
-extern void rbffi_Pointer_Init(VALUE moduleFFI);
-extern VALUE rbffi_Pointer_NewInstance(void* addr);
-extern VALUE rbffi_PointerClass;
-extern VALUE rbffi_NullPointerSingleton;
-
 typedef struct Pointer {
     AbstractMemory memory;
     VALUE rbParent;
@@ -50,6 +45,12 @@ typedef struct Pointer {
     bool autorelease;
     bool allocated;
 } Pointer;
+
+extern void rbffi_Pointer_Init(VALUE moduleFFI);
+extern VALUE rbffi_Pointer_NewInstance(void* addr);
+extern Pointer *rbffi_Pointer_Cast(VALUE obj, VALUE klass);
+extern VALUE rbffi_PointerClass;
+extern VALUE rbffi_NullPointerSingleton;
 
 #ifdef	__cplusplus
 }

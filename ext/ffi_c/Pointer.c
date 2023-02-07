@@ -36,13 +36,50 @@
 #include "AbstractMemory.h"
 #include "Pointer.h"
 
-#define POINTER(obj) rbffi_AbstractMemory_Cast((obj), rbffi_PointerClass)
+#define POINTER(obj) rbffi_Pointer_Cast((obj), rbffi_PointerClass)
 
 VALUE rbffi_PointerClass = Qnil;
 VALUE rbffi_NullPointerSingleton = Qnil;
 
-static void ptr_release(Pointer* ptr);
-static void ptr_mark(Pointer* ptr);
+static void
+ptr_release(void *data)
+{
+    Pointer *ptr = (Pointer *)data;
+    if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
+        xfree(ptr->storage);
+        ptr->storage = NULL;
+    }
+    xfree(ptr);
+}
+
+static void
+ptr_mark(void *data)
+{
+    Pointer *ptr = (Pointer *)data;
+    rb_gc_mark(ptr->rbParent);
+}
+
+static const rb_data_type_t pointer_data_type = {
+    .wrap_struct_name = "FFI::Pointer",
+    .function = {
+        .dmark = ptr_mark,
+        .dfree = ptr_release,
+        .dsize = NULL,
+    },
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
+Pointer*
+rbffi_Pointer_Cast(VALUE obj, VALUE klass)
+{
+    if (rb_obj_is_kind_of(obj, klass)) {
+        Pointer* ptr = RTYPEDDATA_DATA(obj);
+        return ptr;
+    }
+
+    rb_raise(rb_eArgError, "Invalid Pointer object");
+    return NULL;
+}
 
 VALUE
 rbffi_Pointer_NewInstance(void* addr)
@@ -54,7 +91,7 @@ rbffi_Pointer_NewInstance(void* addr)
         return rbffi_NullPointerSingleton;
     }
 
-    obj = Data_Make_Struct(rbffi_PointerClass, Pointer, NULL, -1, p);
+    obj = TypedData_Make_Struct(rbffi_PointerClass, Pointer, &pointer_data_type, p);
     p->memory.address = addr;
     p->memory.size = LONG_MAX;
     p->memory.flags = (addr == NULL) ? 0 : (MEM_RD | MEM_WR);
@@ -70,7 +107,7 @@ ptr_allocate(VALUE klass)
     Pointer* p;
     VALUE obj;
 
-    obj = Data_Make_Struct(klass, Pointer, ptr_mark, ptr_release, p);
+    obj = TypedData_Make_Struct(klass, Pointer, &pointer_data_type, p);
     p->rbParent = Qnil;
     p->memory.flags = MEM_RD | MEM_WR;
 
@@ -91,11 +128,9 @@ ptr_allocate(VALUE klass)
 static VALUE
 ptr_initialize(int argc, VALUE* argv, VALUE self)
 {
-    Pointer* p;
+    Pointer* p = POINTER(self);
     VALUE rbType = Qnil, rbAddress = Qnil;
     int typeSize = 1;
-
-    Data_Get_Struct(self, Pointer, p);
 
     switch (rb_scan_args(argc, argv, "11", &rbType, &rbAddress)) {
         case 1:
@@ -121,10 +156,8 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
 
         default:
             if (rb_obj_is_kind_of(rbAddress, rbffi_PointerClass)) {
-                Pointer* orig;
-
                 p->rbParent = rbAddress;
-                Data_Get_Struct(rbAddress, Pointer, orig);
+                Pointer* orig = POINTER(rbAddress);
                 p->memory = orig->memory;
             } else {
                 rb_raise(rb_eTypeError, "wrong argument type, expected Integer or FFI::Pointer");
@@ -150,11 +183,9 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
 static VALUE
 ptr_initialize_copy(VALUE self, VALUE other)
 {
-    AbstractMemory* src;
-    Pointer* dst;
+    AbstractMemory* src = MEMORY(other);
+    Pointer* dst = POINTER(self);
 
-    Data_Get_Struct(self, Pointer, dst);
-    src = POINTER(other);
     if (src->size == LONG_MAX) {
         rb_raise(rb_eRuntimeError, "cannot duplicate unbounded memory area");
         return Qnil;
@@ -191,11 +222,10 @@ ptr_initialize_copy(VALUE self, VALUE other)
 static VALUE
 slice(VALUE self, long offset, long size)
 {
-    AbstractMemory* ptr;
+    AbstractMemory* ptr = MEMORY(self);
     Pointer* p;
     VALUE retval;
 
-    Data_Get_Struct(self, AbstractMemory, ptr);
     checkBounds(ptr, offset, size == LONG_MAX ? 1 : size);
 
     retval = Data_Make_Struct(rbffi_PointerClass, Pointer, ptr_mark, -1, p);
@@ -219,12 +249,9 @@ slice(VALUE self, long offset, long size)
 static VALUE
 ptr_plus(VALUE self, VALUE offset)
 {
-    AbstractMemory* ptr;
     long off = NUM2LONG(offset);
-
-    Data_Get_Struct(self, AbstractMemory, ptr);
-
-    return slice(self, off, ptr->size == LONG_MAX ? LONG_MAX : ptr->size - off);
+    long size = MEMORY_LEN(self);
+    return slice(self, off, size == LONG_MAX ? LONG_MAX : size - off);
 }
 
 /*
@@ -250,9 +277,7 @@ static VALUE
 ptr_inspect(VALUE self)
 {
     char buf[100];
-    Pointer* ptr;
-
-    Data_Get_Struct(self, Pointer, ptr);
+    Pointer* ptr = POINTER(self);
 
     if (ptr->memory.size != LONG_MAX) {
         snprintf(buf, sizeof(buf), "#<%s address=%p size=%lu>",
@@ -273,11 +298,7 @@ ptr_inspect(VALUE self)
 static VALUE
 ptr_null_p(VALUE self)
 {
-    Pointer* ptr;
-
-    Data_Get_Struct(self, Pointer, ptr);
-
-    return ptr->memory.address == NULL ? Qtrue : Qfalse;
+    return MEMORY_PTR(self) == NULL ? Qtrue : Qfalse;
 }
 
 /*
@@ -289,15 +310,11 @@ ptr_null_p(VALUE self)
 static VALUE
 ptr_equals(VALUE self, VALUE other)
 {
-    Pointer* ptr;
-
-    Data_Get_Struct(self, Pointer, ptr);
-
     if (NIL_P(other)) {
-        return ptr->memory.address == NULL ? Qtrue : Qfalse;
+        return MEMORY_PTR(self) == NULL ? Qtrue : Qfalse;
     }
 
-    return ptr->memory.address == POINTER(other)->address ? Qtrue : Qfalse;
+    return MEMORY_PTR(self) == MEMORY_PTR(other) ? Qtrue : Qfalse;
 }
 
 /*
@@ -308,11 +325,7 @@ ptr_equals(VALUE self, VALUE other)
 static VALUE
 ptr_address(VALUE self)
 {
-    Pointer* ptr;
-
-    Data_Get_Struct(self, Pointer, ptr);
-
-    return ULL2NUM((uintptr_t) ptr->memory.address);
+    return ULL2NUM((uintptr_t)MEMORY_PTR(self));
 }
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -333,9 +346,8 @@ ptr_address(VALUE self)
 static VALUE
 ptr_order(int argc, VALUE* argv, VALUE self)
 {
-    Pointer* ptr;
+    Pointer* ptr = POINTER(self);
 
-    Data_Get_Struct(self, Pointer, ptr);
     if (argc == 0) {
         int order = (ptr->memory.flags & MEM_SWAP) == 0 ? BYTE_ORDER : SWAPPED_ORDER;
         return order == BIG_ENDIAN ? ID2SYM(rb_intern("big")) : ID2SYM(rb_intern("little"));
@@ -358,10 +370,8 @@ ptr_order(int argc, VALUE* argv, VALUE self)
             }
         }
         if (order != BYTE_ORDER) {
-            Pointer* p2;
             VALUE retval = slice(self, 0, ptr->memory.size);
-
-            Data_Get_Struct(retval, Pointer, p2);
+            Pointer* p2 = POINTER(retval);
             p2->memory.flags |= MEM_SWAP;
             return retval;
         }
@@ -379,9 +389,7 @@ ptr_order(int argc, VALUE* argv, VALUE self)
 static VALUE
 ptr_free(VALUE self)
 {
-    Pointer* ptr;
-
-    Data_Get_Struct(self, Pointer, ptr);
+    Pointer* ptr = POINTER(self);
 
     if (ptr->allocated) {
         if (ptr->storage != NULL) {
@@ -402,10 +410,7 @@ ptr_free(VALUE self)
 static VALUE
 ptr_type_size(VALUE self)
 {
-    Pointer* ptr;
-
-    Data_Get_Struct(self, Pointer, ptr);
-
+    Pointer* ptr = POINTER(self);
     return INT2NUM(ptr->memory.typeSize);
 }
 
@@ -418,11 +423,8 @@ ptr_type_size(VALUE self)
 static VALUE
 ptr_autorelease(VALUE self, VALUE autorelease)
 {
-    Pointer* ptr;
-
-    Data_Get_Struct(self, Pointer, ptr);
+    Pointer* ptr = POINTER(self);
     ptr->autorelease = autorelease == Qtrue;
-
     return autorelease;
 }
 
@@ -434,28 +436,8 @@ ptr_autorelease(VALUE self, VALUE autorelease)
 static VALUE
 ptr_autorelease_p(VALUE self)
 {
-    Pointer* ptr;
-
-    Data_Get_Struct(self, Pointer, ptr);
-
+    Pointer* ptr = POINTER(self);
     return ptr->autorelease ? Qtrue : Qfalse;
-}
-
-
-static void
-ptr_release(Pointer* ptr)
-{
-    if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
-        xfree(ptr->storage);
-        ptr->storage = NULL;
-    }
-    xfree(ptr);
-}
-
-static void
-ptr_mark(Pointer* ptr)
-{
-    rb_gc_mark(ptr->rbParent);
 }
 
 void

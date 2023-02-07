@@ -75,8 +75,6 @@ typedef struct Function_ {
     VALUE rbFunctionInfo;
 } Function;
 
-static void function_mark(Function *);
-static void function_free(Function *);
 static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
@@ -132,35 +130,19 @@ static struct gvl_callback* async_cb_list = NULL;
 # endif
 #endif
 
-
-static VALUE
-function_allocate(VALUE klass)
-{
-    Function *fn;
-    VALUE obj;
-
-    obj = Data_Make_Struct(klass, Function, function_mark, function_free, fn);
-
-    fn->base.memory.flags = MEM_RD;
-    fn->base.rbParent = Qnil;
-    fn->rbProc = Qnil;
-    fn->rbFunctionInfo = Qnil;
-    fn->autorelease = true;
-
-    return obj;
-}
-
 static void
-function_mark(Function *fn)
+function_mark(void *data)
 {
+    Function *fn = (Function *)data;
     rb_gc_mark(fn->base.rbParent);
     rb_gc_mark(fn->rbProc);
     rb_gc_mark(fn->rbFunctionInfo);
 }
 
 static void
-function_free(Function *fn)
+function_free(void *data)
 {
+    Function *fn = (Function *)data;
     if (fn->methodHandle != NULL) {
         rbffi_MethodHandle_Free(fn->methodHandle);
     }
@@ -170,6 +152,33 @@ function_free(Function *fn)
     }
 
     xfree(fn);
+}
+
+static const rb_data_type_t function_data_type = {
+    .wrap_struct_name = "FFI::Function",
+    .function = {
+        .dmark = function_mark,
+        .dfree = function_free,
+        .dsize = NULL,
+    },
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+};
+
+static VALUE
+function_allocate(VALUE klass)
+{
+    Function *fn;
+    VALUE obj;
+
+    obj = TypedData_Make_Struct(klass, Function, &function_data_type, fn);
+
+    fn->base.memory.flags = MEM_RD;
+    fn->base.rbParent = Qnil;
+    fn->rbProc = Qnil;
+    fn->rbFunctionInfo = Qnil;
+    fn->autorelease = true;
+
+    return obj;
 }
 
 /*
@@ -254,7 +263,7 @@ rbffi_Function_ForProc(VALUE rbFunctionInfo, VALUE proc)
     /* If the first callback reference has the same function function signature, use it */
     if (cbref != Qnil && CLASS_OF(cbref) == rbffi_FunctionClass) {
         Function* fp;
-        Data_Get_Struct(cbref, Function, fp);
+        TypedData_Get_Struct(cbref, Function, &function_data_type, fp);
         if (fp->rbFunctionInfo == rbFunctionInfo) {
             return cbref;
         }
@@ -298,17 +307,16 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 {
     Function* fn = NULL;
 
-    Data_Get_Struct(self, Function, fn);
+    TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
-    fn->rbFunctionInfo = rbFunctionInfo;
+    RB_OBJ_WRITE(self, &fn->rbFunctionInfo, rbFunctionInfo);
 
     Data_Get_Struct(fn->rbFunctionInfo, FunctionType, fn->info);
 
     if (rb_obj_is_kind_of(rbProc, rbffi_PointerClass)) {
-        Pointer* orig;
-        Data_Get_Struct(rbProc, Pointer, orig);
+        Pointer* orig = rbffi_Pointer_Cast(rbProc, rbffi_PointerClass);
         fn->base.memory = orig->memory;
-        fn->base.rbParent = rbProc;
+        RB_OBJ_WRITE(self, &fn->base.rbParent, rbProc);
 
     } else if (rb_obj_is_kind_of(rbProc, rb_cProc) || rb_respond_to(rbProc, id_call)) {
         if (fn->info->closurePool == NULL) {
@@ -344,7 +352,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
                 rb_obj_classname(rbProc));
     }
 
-    fn->rbProc = rbProc;
+    RB_OBJ_WRITE(self, &fn->rbProc, rbProc);
 
     return self;
 }
@@ -360,7 +368,7 @@ function_call(int argc, VALUE* argv, VALUE self)
 {
     Function* fn;
 
-    Data_Get_Struct(self, Function, fn);
+    TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
     return (*fn->info->invoke)(argc, argv, fn->base.memory.address, fn->info);
 }
@@ -378,7 +386,7 @@ function_attach(VALUE self, VALUE module, VALUE name)
     Function* fn;
     char var[1024];
 
-    Data_Get_Struct(self, Function, fn);
+    TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
     if (fn->info->parameterCount == -1) {
         rb_raise(rb_eRuntimeError, "cannot attach variadic functions");
@@ -421,7 +429,7 @@ function_set_autorelease(VALUE self, VALUE autorelease)
 {
     Function* fn;
 
-    Data_Get_Struct(self, Function, fn);
+    TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
     fn->autorelease = RTEST(autorelease);
 
@@ -433,7 +441,7 @@ function_autorelease_p(VALUE self)
 {
     Function* fn;
 
-    Data_Get_Struct(self, Function, fn);
+    TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
     return fn->autorelease ? Qtrue : Qfalse;
 }
@@ -448,7 +456,7 @@ function_release(VALUE self)
 {
     Function* fn;
 
-    Data_Get_Struct(self, Function, fn);
+    TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
     if (fn->closure == NULL) {
         rb_raise(rb_eRuntimeError, "cannot free function which was not allocated");
