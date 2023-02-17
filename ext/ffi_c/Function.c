@@ -395,10 +395,15 @@ function_attach(VALUE self, VALUE module, VALUE name)
     }
 
     /*
-     * Stash the Function in a module variable so it does not get garbage collected
+     * Stash the Function in a hash so it does not get garbage collected
      */
-    snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
-    rb_cv_set(module, var, self);
+    VALUE funcs = rb_const_get(module, rb_intern("FFI_FUNCTIONS"));
+    if (NIL_P(funcs)) {
+        funcs = rb_hash_new();
+        rb_const_set(module, rb_intern("FFI_FUNCTIONS"), funcs);
+    }
+
+    rb_hash_aset(funcs, name, self);
 
     rb_define_singleton_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
