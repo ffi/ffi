@@ -45,7 +45,7 @@ typedef struct BuiltinType_ {
     char* name;
 } BuiltinType;
 
-static void builtin_type_free(BuiltinType *);
+static void builtin_type_free(void *);
 
 VALUE rbffi_TypeClass = Qnil;
 
@@ -54,11 +54,32 @@ static VALUE moduleNativeType = Qnil;
 static VALUE typeMap = Qnil, sizeMap = Qnil;
 static ID id_find_type = 0, id_type_size = 0, id_size = 0;
 
+const rb_data_type_t rbffi_type_data_type = { /* extern */
+  .wrap_struct_name = "FFI::Type",
+  .function = {
+      .dmark = NULL,
+      .dfree = RUBY_TYPED_DEFAULT_FREE,
+      .dsize = NULL,
+  },
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
+static const rb_data_type_t builtin_type_data_type = {
+  .wrap_struct_name = "FFI::Type::Builtin",
+  .function = {
+      .dmark = NULL,
+      .dfree = builtin_type_free,
+      .dsize = NULL,
+  },
+  .parent = &rbffi_type_data_type,
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 static VALUE
 type_allocate(VALUE klass)
 {
     Type* type;
-    VALUE obj = Data_Make_Struct(klass, Type, NULL, -1, type);
+    VALUE obj = TypedData_Make_Struct(klass, Type, &rbffi_type_data_type, type);
 
     type->nativeType = -1;
     type->ffiType = &ffi_type_void;
@@ -78,12 +99,12 @@ type_initialize(VALUE self, VALUE value)
     Type* type;
     Type* other;
 
-    Data_Get_Struct(self, Type, type);
+    TypedData_Get_Struct(self, Type, &rbffi_type_data_type, type);
 
     if (FIXNUM_P(value)) {
         type->nativeType = FIX2INT(value);
     } else if (rb_obj_is_kind_of(value, rbffi_TypeClass)) {
-        Data_Get_Struct(value, Type, other);
+        TypedData_Get_Struct(value, Type, &rbffi_type_data_type, other);
         type->nativeType = other->nativeType;
         type->ffiType = other->ffiType;
     } else {
@@ -103,7 +124,7 @@ type_size(VALUE self)
 {
     Type *type;
 
-    Data_Get_Struct(self, Type, type);
+    TypedData_Get_Struct(self, Type, &rbffi_type_data_type, type);
 
     return INT2FIX(type->ffiType->size);
 }
@@ -118,7 +139,7 @@ type_alignment(VALUE self)
 {
     Type *type;
 
-    Data_Get_Struct(self, Type, type);
+    TypedData_Get_Struct(self, Type, &rbffi_type_data_type, type);
 
     return INT2FIX(type->ffiType->alignment);
 }
@@ -134,7 +155,7 @@ type_inspect(VALUE self)
     char buf[100];
     Type *type;
 
-    Data_Get_Struct(self, Type, type);
+    TypedData_Get_Struct(self, Type, &rbffi_type_data_type, type);
 
     snprintf(buf, sizeof(buf), "#<%s:%p size=%d alignment=%d>",
             rb_obj_classname(self), type, (int) type->ffiType->size, (int) type->ffiType->alignment);
@@ -148,7 +169,7 @@ builtin_type_new(VALUE klass, int nativeType, ffi_type* ffiType, const char* nam
     BuiltinType* type;
     VALUE obj = Qnil;
 
-    obj = Data_Make_Struct(klass, BuiltinType, NULL, builtin_type_free, type);
+    obj = TypedData_Make_Struct(klass, BuiltinType, &builtin_type_data_type, type);
     
     type->name = strdup(name);
     type->type.nativeType = nativeType;
@@ -158,8 +179,9 @@ builtin_type_new(VALUE klass, int nativeType, ffi_type* ffiType, const char* nam
 }
 
 static void
-builtin_type_free(BuiltinType *type)
+builtin_type_free(void *data)
 {
+    BuiltinType *type = (BuiltinType *)data;
     free(type->name);
     xfree(type);
 }
@@ -175,7 +197,7 @@ builtin_type_inspect(VALUE self)
     char buf[100];
     BuiltinType *type;
 
-    Data_Get_Struct(self, BuiltinType, type);
+    TypedData_Get_Struct(self, BuiltinType, &builtin_type_data_type, type);
     snprintf(buf, sizeof(buf), "#<%s:%s size=%d alignment=%d>",
             rb_obj_classname(self), type->name, (int) type->type.ffiType->size, type->type.ffiType->alignment);
 
@@ -198,7 +220,7 @@ rbffi_type_size(VALUE type)
         if ((nType = rb_hash_lookup(typeMap, type)) != Qnil) {
             if (rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
                 Type* type;
-                Data_Get_Struct(nType, Type, type);
+                TypedData_Get_Struct(nType, Type, &rbffi_type_data_type, type);
                 return (int) type->ffiType->size;
             
             } else if (rb_respond_to(nType, id_size)) {

@@ -33,7 +33,7 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   $CFLAGS.gsub!(/[\s+]-ansi/, '')
   $CFLAGS.gsub!(/[\s+]-std=[^\s]+/, '')
   # solaris 10 needs -c99 for <stdbool.h>
-  $CFLAGS << " -std=c99" if RbConfig::CONFIG['host_os'] =~ /solaris(!?2\.11)/
+  $CFLAGS << " -g -std=c99" if RbConfig::CONFIG['host_os'] =~ /solaris(!?2\.11)/
 
   # Check whether we use system libffi
   system_libffi = enable_config('system-libffi', :try)

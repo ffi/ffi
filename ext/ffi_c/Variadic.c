@@ -128,7 +128,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
         rb_raise(rb_eTypeError, "Invalid return type (%s)", RSTRING_PTR(typeName));
     }
 
-    Data_Get_Struct(rbReturnType, Type, invoker->returnType);
+    TypedData_Get_Struct(rbReturnType, Type, &rbffi_type_data_type, invoker->returnType);
 
     invoker->paramCount = -1;
 
@@ -142,7 +142,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
             VALUE typeName = rb_funcall2(entry, rb_intern("inspect"), 0, NULL);
             rb_raise(rb_eTypeError, "Invalid parameter type (%s)", RSTRING_PTR(typeName));
         }
-        Data_Get_Struct(rbType, Type, type);
+        TypedData_Get_Struct(rbType, Type, &rbffi_type_data_type, type);
         if (type->nativeType != NATIVE_VARARGS) {
             rb_ary_push(fixed, entry);
         }
@@ -192,25 +192,25 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
         if (!rb_obj_is_kind_of(rbType, rbffi_TypeClass)) {
             rb_raise(rb_eTypeError, "wrong type.  Expected (FFI::Type)");
         }
-        Data_Get_Struct(rbType, Type, paramTypes[i]);
+        TypedData_Get_Struct(rbType, Type, &rbffi_type_data_type, paramTypes[i]);
 
         switch (paramTypes[i]->nativeType) {
             case NATIVE_INT8:
             case NATIVE_INT16:
             case NATIVE_INT32:
                 rbType = rb_const_get(rbffi_TypeClass, rb_intern("INT32"));
-                Data_Get_Struct(rbType, Type, paramTypes[i]);
+                TypedData_Get_Struct(rbType, Type, &rbffi_type_data_type, paramTypes[i]);
                 break;
             case NATIVE_UINT8:
             case NATIVE_UINT16:
             case NATIVE_UINT32:
                 rbType = rb_const_get(rbffi_TypeClass, rb_intern("UINT32"));
-                Data_Get_Struct(rbType, Type, paramTypes[i]);
+                TypedData_Get_Struct(rbType, Type, &rbffi_type_data_type, paramTypes[i]);
                 break;
 
             case NATIVE_FLOAT32:
                 rbType = rb_const_get(rbffi_TypeClass, rb_intern("DOUBLE"));
-                Data_Get_Struct(rbType, Type, paramTypes[i]);
+                TypedData_Get_Struct(rbType, Type, &rbffi_type_data_type, paramTypes[i]);
                 break;
 
             case NATIVE_FUNCTION:

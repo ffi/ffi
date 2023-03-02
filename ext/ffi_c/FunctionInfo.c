@@ -51,8 +51,19 @@
 
 static VALUE fntype_allocate(VALUE klass);
 static VALUE fntype_initialize(int argc, VALUE* argv, VALUE self);
-static void fntype_mark(FunctionType*);
-static void fntype_free(FunctionType *);
+static void fntype_mark(void *);
+static void fntype_free(void *);
+
+const rb_data_type_t rbffi_fntype_data_type = { /* extern */
+  .wrap_struct_name = "FFI::FunctionType",
+  .function = {
+      .dmark = fntype_mark,
+      .dfree = fntype_free,
+      .dsize = NULL,
+  },
+  .parent = &rbffi_type_data_type,
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
 
 VALUE rbffi_FunctionTypeClass = Qnil;
 
@@ -60,7 +71,7 @@ static VALUE
 fntype_allocate(VALUE klass)
 {
     FunctionType* fnInfo;
-    VALUE obj = Data_Make_Struct(klass, FunctionType, fntype_mark, fntype_free, fnInfo);
+    VALUE obj = TypedData_Make_Struct(klass, FunctionType, &rbffi_fntype_data_type, fnInfo);
 
     fnInfo->type.ffiType = &ffi_type_pointer;
     fnInfo->type.nativeType = NATIVE_FUNCTION;
@@ -74,8 +85,9 @@ fntype_allocate(VALUE klass)
 }
 
 static void
-fntype_mark(FunctionType* fnInfo)
+fntype_mark(void *data)
 {
+    FunctionType *fnInfo = (FunctionType *)data;
     rb_gc_mark(fnInfo->rbReturnType);
     rb_gc_mark(fnInfo->rbParameterTypes);
     rb_gc_mark(fnInfo->rbEnums);
@@ -85,8 +97,9 @@ fntype_mark(FunctionType* fnInfo)
 }
 
 static void
-fntype_free(FunctionType* fnInfo)
+fntype_free(void *data)
 {
+    FunctionType *fnInfo = (FunctionType *)data;
     xfree(fnInfo->parameterTypes);
     xfree(fnInfo->ffiParameterTypes);
     xfree(fnInfo->nativeParameterTypes);
@@ -129,7 +142,7 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
 
     Check_Type(rbParamTypes, T_ARRAY);
 
-    Data_Get_Struct(self, FunctionType, fnInfo);
+    TypedData_Get_Struct(self, FunctionType, &rbffi_fntype_data_type, fnInfo);
     fnInfo->parameterCount = (int) RARRAY_LEN(rbParamTypes);
     fnInfo->parameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->parameterTypes));
     fnInfo->ffiParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(ffi_type *));
@@ -158,7 +171,7 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
         }
 
         rb_ary_push(fnInfo->rbParameterTypes, type);
-        Data_Get_Struct(type, Type, fnInfo->parameterTypes[i]);
+        TypedData_Get_Struct(type, Type, &rbffi_type_data_type, fnInfo->parameterTypes[i]);
         fnInfo->ffiParameterTypes[i] = fnInfo->parameterTypes[i]->ffiType;
         fnInfo->nativeParameterTypes[i] = fnInfo->parameterTypes[i]->nativeType;
     }
@@ -173,7 +186,7 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
         fnInfo->hasStruct = true;
     }
 
-    Data_Get_Struct(fnInfo->rbReturnType, Type, fnInfo->returnType);
+    TypedData_Get_Struct(fnInfo->rbReturnType, Type, &rbffi_type_data_type, fnInfo->returnType);
     fnInfo->ffiReturnType = fnInfo->returnType->ffiType;
 
 #if defined(X86_WIN32)
@@ -212,7 +225,7 @@ fntype_result_type(VALUE self)
 {
     FunctionType* ft;
 
-    Data_Get_Struct(self, FunctionType, ft);
+    TypedData_Get_Struct(self, FunctionType, &rbffi_fntype_data_type, ft);
 
     return ft->rbReturnType;
 }
@@ -227,7 +240,7 @@ fntype_param_types(VALUE self)
 {
     FunctionType* ft;
 
-    Data_Get_Struct(self, FunctionType, ft);
+    TypedData_Get_Struct(self, FunctionType, &rbffi_fntype_data_type, ft);
 
     return rb_ary_dup(ft->rbParameterTypes);
 }

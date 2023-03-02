@@ -345,7 +345,7 @@ memory_get(VALUE self, VALUE type_name, VALUE offset)
     if(NIL_P(nType)) goto undefined_type;
 
     Data_Get_Struct(self, AbstractMemory, ptr);
-    Data_Get_Struct(nType, Type, type);
+    TypedData_Get_Struct(nType, Type, &rbffi_type_data_type, type);
 
     MemoryOp *op = get_memory_op(type);
     if(op == NULL) goto undefined_type;
@@ -377,7 +377,7 @@ memory_put(VALUE self, VALUE type_name, VALUE offset, VALUE value)
     if(NIL_P(nType)) goto undefined_type;
 
     Data_Get_Struct(self, AbstractMemory, ptr);
-    Data_Get_Struct(nType, Type, type);
+    TypedData_Get_Struct(nType, Type, &rbffi_type_data_type, type);
 
     MemoryOp *op = get_memory_op(type);
     if(op == NULL) goto undefined_type;

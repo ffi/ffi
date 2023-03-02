@@ -50,7 +50,6 @@ void rbffi_MappedType_Init(VALUE moduleFFI);
 
 extern VALUE rbffi_MappedTypeClass;
 
-
 #ifdef	__cplusplus
 }
 #endif

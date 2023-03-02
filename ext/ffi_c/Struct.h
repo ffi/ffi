@@ -42,6 +42,9 @@ extern "C" {
 
     extern void rbffi_Struct_Init(VALUE ffiModule);
     extern void rbffi_StructLayout_Init(VALUE ffiModule);
+    extern const rb_data_type_t rbffi_struct_layout_data_type;
+    extern const rb_data_type_t rbffi_struct_field_data_type;
+
     typedef struct StructField_ StructField;
     typedef struct StructLayout_ StructLayout;
     typedef struct Struct_ Struct;

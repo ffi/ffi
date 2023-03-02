@@ -33,8 +33,20 @@
 
 static VALUE array_type_s_allocate(VALUE klass);
 static VALUE array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength);
-static void array_type_mark(ArrayType *);
-static void array_type_free(ArrayType *);
+static void array_type_mark(void *);
+static void array_type_free(void *);
+
+const rb_data_type_t rbffi_array_type_data_type = { /* extern */
+  .wrap_struct_name = "FFI::ArrayType",
+  .function = {
+      .dmark = array_type_mark,
+      .dfree = array_type_free,
+      .dsize = NULL,
+  },
+  .parent = &rbffi_type_data_type,
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 
 VALUE rbffi_ArrayTypeClass = Qnil;
 
@@ -44,7 +56,7 @@ array_type_s_allocate(VALUE klass)
     ArrayType* array;
     VALUE obj;
 
-    obj = Data_Make_Struct(klass, ArrayType, array_type_mark, array_type_free, array);
+    obj = TypedData_Make_Struct(klass, ArrayType, &rbffi_array_type_data_type, array);
 
     array->base.nativeType = NATIVE_ARRAY;
     array->base.ffiType = xcalloc(1, sizeof(*array->base.ffiType));
@@ -57,14 +69,16 @@ array_type_s_allocate(VALUE klass)
 }
 
 static void
-array_type_mark(ArrayType *array)
+array_type_mark(void *data)
 {
+    ArrayType *array = (ArrayType *)data;
     rb_gc_mark(array->rbComponentType);
 }
 
 static void
-array_type_free(ArrayType *array)
+array_type_free(void *data)
 {
+    ArrayType *array = (ArrayType *)data;
     xfree(array->base.ffiType);
     xfree(array->ffiTypes);
     xfree(array);
@@ -84,12 +98,12 @@ array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
     ArrayType* array;
     int i;
 
-    Data_Get_Struct(self, ArrayType, array);
+    TypedData_Get_Struct(self, ArrayType, &rbffi_array_type_data_type, array);
 
     array->length = NUM2UINT(rbLength);
     array->rbComponentType = rbComponentType;
-    Data_Get_Struct(rbComponentType, Type, array->componentType);
-    
+    TypedData_Get_Struct(rbComponentType, Type, &rbffi_type_data_type, array->componentType);
+
     array->ffiTypes = xcalloc(array->length + 1, sizeof(*array->ffiTypes));
     array->base.ffiType->elements = array->ffiTypes;
     array->base.ffiType->size = array->componentType->ffiType->size * array->length;
@@ -112,7 +126,7 @@ array_type_length(VALUE self)
 {
     ArrayType* array;
 
-    Data_Get_Struct(self, ArrayType, array);
+    TypedData_Get_Struct(self, ArrayType, &rbffi_array_type_data_type, array);
 
     return UINT2NUM(array->length);
 }
@@ -127,7 +141,7 @@ array_type_element_type(VALUE self)
 {
     ArrayType* array;
 
-    Data_Get_Struct(self, ArrayType, array);
+    TypedData_Get_Struct(self, ArrayType, &rbffi_array_type_data_type, array);
 
     return array->rbComponentType;
 }
