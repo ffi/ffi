@@ -825,7 +825,9 @@ invoke_callback(VALUE data)
 
         case NATIVE_STRUCT:
             if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_StructClass)) {
-                AbstractMemory* memory = ((Struct *) DATA_PTR(rbReturnValue))->pointer;
+                Struct* s;
+                TypedData_Get_Struct(rbReturnValue, Struct, &rbffi_struct_data_type, s);
+                AbstractMemory* memory = s->pointer;
 
                 if (memory->address != NULL) {
                     memcpy(retval, memory->address, returnType->ffiType->size);

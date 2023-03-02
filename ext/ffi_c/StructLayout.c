@@ -53,8 +53,17 @@
 
 static void struct_layout_mark(StructLayout *);
 static void struct_layout_free(StructLayout *);
-static void struct_field_mark(StructField* );
+static void struct_field_mark(void *data);
 
+const rb_data_type_t rbffi_struct_field_data_type = { /* extern */
+    .wrap_struct_name = "FFI::StructLayout::Field",
+    .function = {
+        .dmark = struct_field_mark,
+        .dfree = RUBY_TYPED_DEFAULT_FREE,
+        .dsize = NULL,
+    },
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
 VALUE rbffi_StructLayoutFieldClass = Qnil;
 VALUE rbffi_StructLayoutNumberFieldClass = Qnil, rbffi_StructLayoutPointerFieldClass = Qnil;
 VALUE rbffi_StructLayoutStringFieldClass = Qnil;
@@ -69,7 +78,7 @@ struct_field_allocate(VALUE klass)
     StructField* field;
     VALUE obj;
 
-    obj = Data_Make_Struct(klass, StructField, struct_field_mark, -1, field);
+    obj = TypedData_Make_Struct(klass, StructField, &rbffi_struct_field_data_type, field);
     field->rbType = Qnil;
     field->rbName = Qnil;
 
@@ -77,8 +86,9 @@ struct_field_allocate(VALUE klass)
 }
 
 static void
-struct_field_mark(StructField* f)
+struct_field_mark(void *data)
 {
+    StructField *f = (StructField *)data;
     rb_gc_mark(f->rbType);
     rb_gc_mark(f->rbName);
 }
@@ -98,7 +108,7 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     StructField* field;
     int nargs;
 
-    Data_Get_Struct(self, StructField, field);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, field);
 
     nargs = rb_scan_args(argc, argv, "3", &rbName, &rbOffset, &rbType);
 
@@ -147,7 +157,7 @@ static VALUE
 struct_field_offset(VALUE self)
 {
     StructField* field;
-    Data_Get_Struct(self, StructField, field);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, field);
     return UINT2NUM(field->offset);
 }
 
@@ -160,7 +170,7 @@ static VALUE
 struct_field_size(VALUE self)
 {
     StructField* field;
-    Data_Get_Struct(self, StructField, field);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, field);
     return UINT2NUM(field->type->ffiType->size);
 }
 
@@ -173,7 +183,7 @@ static VALUE
 struct_field_alignment(VALUE self)
 {
     StructField* field;
-    Data_Get_Struct(self, StructField, field);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, field);
     return UINT2NUM(field->type->ffiType->alignment);
 }
 
@@ -186,7 +196,7 @@ static VALUE
 struct_field_type(VALUE self)
 {
     StructField* field;
-    Data_Get_Struct(self, StructField, field);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, field);
 
     return field->rbType;
 }
@@ -200,7 +210,7 @@ static VALUE
 struct_field_name(VALUE self)
 {
     StructField* field;
-    Data_Get_Struct(self, StructField, field);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, field);
     return field->rbName;
 }
 
@@ -215,7 +225,7 @@ struct_field_get(VALUE self, VALUE pointer)
 {
     StructField* f;
 
-    Data_Get_Struct(self, StructField, f);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, f);
     if (f->memoryOp == NULL) {
         rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(f->rbType));
         return Qnil;
@@ -236,7 +246,7 @@ struct_field_put(VALUE self, VALUE pointer, VALUE value)
 {
     StructField* f;
 
-    Data_Get_Struct(self, StructField, f);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, f);
     if (f->memoryOp == NULL) {
         rb_raise(rb_eArgError, "put not supported for %s", rb_obj_classname(f->rbType));
         return self;
@@ -258,7 +268,7 @@ function_field_get(VALUE self, VALUE pointer)
 {
     StructField* f;
 
-    Data_Get_Struct(self, StructField, f);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, f);
 
     return rbffi_Function_NewInstance(f->rbType, (*rbffi_AbstractMemoryOps.pointer->get)(MEMORY(pointer), f->offset));
 }
@@ -278,7 +288,7 @@ function_field_put(VALUE self, VALUE pointer, VALUE proc)
     StructField* f;
     VALUE value = Qnil;
 
-    Data_Get_Struct(self, StructField, f);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, f);
 
     if (NIL_P(proc) || rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
         value = proc;
@@ -313,7 +323,7 @@ array_field_get(VALUE self, VALUE pointer)
     ArrayType* array;
     VALUE argv[2];
 
-    Data_Get_Struct(self, StructField, f);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, f);
     Data_Get_Struct(f->rbType, ArrayType, array);
 
     argv[0] = pointer;
@@ -337,7 +347,7 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
     ArrayType* array;
 
 
-    Data_Get_Struct(self, StructField, f);
+    TypedData_Get_Struct(self, StructField, &rbffi_struct_field_data_type, f);
     Data_Get_Struct(f->rbType, ArrayType, array);
 
     if (isCharArray(array) && rb_obj_is_instance_of(value, rb_cString)) {
@@ -470,7 +480,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
         }
         rbName = rb_funcall2(rbField, rb_intern("name"), 0, NULL);
 
-        Data_Get_Struct(rbField, StructField, field);
+        TypedData_Get_Struct(rbField, StructField, &rbffi_struct_field_data_type, field);
         layout->fields[i] = field;
 
         if (field->type == NULL || field->type->ffiType == NULL) {
