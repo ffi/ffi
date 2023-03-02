@@ -97,7 +97,7 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
             AbstractMemory* mem;
             VALUE rbMemory = rbffi_MemoryPointer_NewInstance(1, sbv->base.ffiType->size, false);
 
-            Data_Get_Struct(rbMemory, AbstractMemory, mem);
+            TypedData_Get_Struct(rbMemory, AbstractMemory, &rbffi_abstract_memory_data_type, mem);
             memcpy(mem->address, ptr, sbv->base.ffiType->size);
             RB_GC_GUARD(rbMemory);
             RB_GC_GUARD(rbType);

@@ -86,6 +86,7 @@ struct AbstractMemory_ {
 };
 
 
+extern const rb_data_type_t rbffi_abstract_memory_data_type;
 extern VALUE rbffi_AbstractMemoryClass;
 extern MemoryOps rbffi_AbstractMemoryOps;
 

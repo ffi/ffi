@@ -40,6 +40,7 @@ extern "C" {
 
 extern void rbffi_Pointer_Init(VALUE moduleFFI);
 extern VALUE rbffi_Pointer_NewInstance(void* addr);
+extern const rb_data_type_t rbffi_pointer_data_type;
 extern VALUE rbffi_PointerClass;
 extern VALUE rbffi_NullPointerSingleton;
 

@@ -39,7 +39,7 @@
 
 
 static VALUE memptr_allocate(VALUE klass);
-static void memptr_release(Pointer* ptr);
+static void memptr_release(void *data);
 static VALUE memptr_malloc(VALUE self, long size, long count, bool clear);
 static VALUE memptr_free(VALUE self);
 
@@ -53,11 +53,22 @@ rbffi_MemoryPointer_NewInstance(long size, long count, bool clear)
     return memptr_malloc(memptr_allocate(rbffi_MemoryPointerClass), size, count, clear);
 }
 
+static const rb_data_type_t memory_pointer_data_type = {
+    .wrap_struct_name = "FFI::MemoryPointer",
+    .function = {
+        .dmark = NULL,
+        .dfree = memptr_release,
+        .dsize = NULL,
+    },
+    .parent = &rbffi_pointer_data_type,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 static VALUE
 memptr_allocate(VALUE klass)
 {
     Pointer* p;
-    VALUE obj = Data_Make_Struct(klass, Pointer, NULL, memptr_release, p);
+    VALUE obj = TypedData_Make_Struct(klass, Pointer, &memory_pointer_data_type, p);
     p->rbParent = Qnil;
     p->memory.flags = MEM_RD | MEM_WR;
 
@@ -94,7 +105,7 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
     Pointer* p;
     unsigned long msize;
 
-    Data_Get_Struct(self, Pointer, p);
+    TypedData_Get_Struct(self, Pointer, &memory_pointer_data_type, p);
 
     msize = size * count;
 
@@ -122,7 +133,7 @@ memptr_free(VALUE self)
 {
     Pointer* ptr;
 
-    Data_Get_Struct(self, Pointer, ptr);
+    TypedData_Get_Struct(self, Pointer, &memory_pointer_data_type, ptr);
 
     if (ptr->allocated) {
         if (ptr->storage != NULL) {
@@ -136,8 +147,9 @@ memptr_free(VALUE self)
 }
 
 static void
-memptr_release(Pointer* ptr)
+memptr_release(void *data)
 {
+    Pointer *ptr = (Pointer *)data;
     if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
         xfree(ptr->storage);
         ptr->storage = NULL;
