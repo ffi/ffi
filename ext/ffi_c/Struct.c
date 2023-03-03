@@ -79,7 +79,9 @@ static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
 static inline char*
 memory_address(VALUE self)
 {
-    return ((AbstractMemory *)DATA_PTR((self)))->address;
+    AbstractMemory *mem;
+    TypedData_Get_Struct(self, AbstractMemory, &rbffi_abstract_memory_data_type, mem);
+    return mem->address;
 }
 
 static VALUE
@@ -236,7 +238,7 @@ struct_malloc(Struct* s)
         rb_raise(rb_eRuntimeError, "invalid pointer in struct");
     }
 
-    s->pointer = (AbstractMemory *) DATA_PTR(s->rbPointer);
+    TypedData_Get_Struct(s->rbPointer, AbstractMemory, &rbffi_abstract_memory_data_type, s->pointer);
 }
 
 static void
@@ -384,7 +386,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
 
 
     Data_Get_Struct(self, Struct, s);
-    Data_Get_Struct(pointer, AbstractMemory, memory);
+    TypedData_Get_Struct(pointer, AbstractMemory, &rbffi_abstract_memory_data_type, memory);
     layout = struct_layout(self);
 
     if ((int) layout->base.ffiType->size > memory->size) {
@@ -536,7 +538,7 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
     array->rbMemory = rbMemory;
     array->rbField = rbField;
 
-    Data_Get_Struct(rbMemory, AbstractMemory, array->memory);
+    TypedData_Get_Struct(rbMemory, AbstractMemory, &rbffi_abstract_memory_data_type, array->memory);
     TypedData_Get_Struct(rbField, StructField, &rbffi_struct_field_data_type, array->field);
     TypedData_Get_Struct(array->field->rbType, ArrayType, &rbffi_array_type_data_type, array->arrayType);
     TypedData_Get_Struct(array->arrayType->rbComponentType, Type, &rbffi_type_data_type, array->componentType);

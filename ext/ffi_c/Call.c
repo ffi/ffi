@@ -420,7 +420,9 @@ getPointer(VALUE value, int type)
 {
     if (likely(type == T_DATA && rb_obj_is_kind_of(value, rbffi_AbstractMemoryClass))) {
 
-        return ((AbstractMemory *) DATA_PTR(value))->address;
+        AbstractMemory *mem;
+        TypedData_Get_Struct(value, AbstractMemory, &rbffi_abstract_memory_data_type, mem);
+        return mem->address;
 
     } else if (type == T_DATA && rb_obj_is_kind_of(value, rbffi_StructClass)) {
 
@@ -439,7 +441,9 @@ getPointer(VALUE value, int type)
 
         VALUE ptr = rb_funcall2(value, id_to_ptr, 0, NULL);
         if (rb_obj_is_kind_of(ptr, rbffi_AbstractMemoryClass) && TYPE(ptr) == T_DATA) {
-            return ((AbstractMemory *) DATA_PTR(ptr))->address;
+            AbstractMemory *mem;
+            TypedData_Get_Struct(ptr, AbstractMemory, &rbffi_abstract_memory_data_type, mem);
+            return mem->address;
         }
         rb_raise(rb_eArgError, "to_ptr returned an invalid pointer");
     }
@@ -466,14 +470,16 @@ callback_param(VALUE proc, VALUE cbInfo)
     /* Handle Function pointers here */
     if (rb_obj_is_kind_of(proc, rbffi_FunctionClass)) {
         AbstractMemory* ptr;
-        Data_Get_Struct(proc, AbstractMemory, ptr);
+        TypedData_Get_Struct(proc, AbstractMemory, &rbffi_abstract_memory_data_type, ptr);
         return ptr->address;
     }
 
     callback = rbffi_Function_ForProc(cbInfo, proc);
     RB_GC_GUARD(callback);
 
-    return ((AbstractMemory *) DATA_PTR(callback))->address;
+    AbstractMemory *mem;
+    TypedData_Get_Struct(callback, AbstractMemory, &rbffi_abstract_memory_data_type, mem);
+    return mem->address;
 }
 
 
