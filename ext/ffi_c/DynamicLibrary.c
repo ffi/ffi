@@ -56,12 +56,22 @@ typedef struct LibrarySymbol_ {
 
 
 static VALUE library_initialize(VALUE self, VALUE libname, VALUE libflags);
-static void library_free(Library* lib);
+static void library_free(void *);
 
 
 static VALUE symbol_allocate(VALUE klass);
 static VALUE symbol_new(VALUE library, void* address, VALUE name);
 static void symbol_mark(void *data);
+
+static const rb_data_type_t rbffi_library_data_type = {
+    .wrap_struct_name = "FFI::DynamicLibrary",
+    .function = {
+        .dmark = NULL,
+        .dfree = library_free,
+        .dsize = NULL,
+    },
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
 
 static const rb_data_type_t library_symbol_data_type = {
     .wrap_struct_name = "FFI::DynamicLibrary::Symbol",
@@ -92,7 +102,7 @@ static VALUE
 library_allocate(VALUE klass)
 {
     Library* library;
-    return Data_Make_Struct(klass, Library, NULL, library_free, library);
+    return TypedData_Make_Struct(klass, Library, &rbffi_library_data_type, library);
 }
 
 /*
@@ -125,9 +135,9 @@ library_initialize(VALUE self, VALUE libname, VALUE libflags)
 
     Check_Type(libflags, T_FIXNUM);
 
-    Data_Get_Struct(self, Library, library);
+    TypedData_Get_Struct(self, Library, &rbffi_library_data_type, library);
     flags = libflags != Qnil ? NUM2UINT(libflags) : 0;
-    
+
     library->handle = dl_open(libname != Qnil ? StringValueCStr(libname) : NULL, flags);
     if (library->handle == NULL) {
         char errmsg[1024];
@@ -156,9 +166,9 @@ library_dlsym(VALUE self, VALUE name)
     void* address = NULL;
     Check_Type(name, T_STRING);
 
-    Data_Get_Struct(self, Library, library);
+    TypedData_Get_Struct(self, Library, &rbffi_library_data_type, library);
     address = dl_sym(library->handle, StringValueCStr(name));
-    
+
     return address != NULL ? symbol_new(self, address, name) : Qnil;
 }
 
@@ -175,8 +185,10 @@ library_dlerror(VALUE self)
 }
 
 static void
-library_free(Library* library)
+library_free(void *data)
 {
+    Library *library = (Library*)data;
+
     /* dlclose() on MacOS tends to segfault - avoid it */
 #ifndef __APPLE__
     if (library->handle != NULL) {
