@@ -38,17 +38,29 @@
 
 static VALUE mapped_allocate(VALUE);
 static VALUE mapped_initialize(VALUE, VALUE);
-static void mapped_mark(MappedType *);
+static void mapped_mark(void *);
 static ID id_native_type, id_to_native, id_from_native;
 
 VALUE rbffi_MappedTypeClass = Qnil;
+
+static const rb_data_type_t mapped_type_data_type = {
+  .wrap_struct_name = "FFI::Type::Mapped",
+  .function = {
+      .dmark = mapped_mark,
+      .dfree = RUBY_TYPED_DEFAULT_FREE,
+      .dsize = NULL,
+  },
+  .parent = &rbffi_type_data_type,
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 
 static VALUE
 mapped_allocate(VALUE klass)
 {
     MappedType* m;
 
-    VALUE obj = Data_Make_Struct(klass, MappedType, mapped_mark, -1, m);
+    VALUE obj = TypedData_Make_Struct(klass, MappedType, &mapped_type_data_type, m);
 
     m->rbConverter = Qnil;
     m->rbType = Qnil;
@@ -81,23 +93,24 @@ mapped_initialize(VALUE self, VALUE rbConverter)
     if (!rb_respond_to(rbConverter, id_from_native)) {
         rb_raise(rb_eNoMethodError, "from_native method not implemented");
     }
-    
-    Data_Get_Struct(self, MappedType, m);
+
+    TypedData_Get_Struct(self, MappedType, &mapped_type_data_type, m);
     m->rbType = rb_funcall2(rbConverter, id_native_type, 0, NULL);
     if (!(rb_obj_is_kind_of(m->rbType, rbffi_TypeClass))) {
         rb_raise(rb_eTypeError, "native_type did not return instance of FFI::Type");
     }
 
     m->rbConverter = rbConverter;
-    Data_Get_Struct(m->rbType, Type, m->type);
+    TypedData_Get_Struct(m->rbType, Type, &rbffi_type_data_type, m->type);
     m->base.ffiType = m->type->ffiType;
-    
+
     return self;
 }
 
 static void
-mapped_mark(MappedType* m)
+mapped_mark(void* data)
 {
+    MappedType* m = (MappedType*)data;
     rb_gc_mark(m->rbType);
     rb_gc_mark(m->rbConverter);
 }
@@ -111,7 +124,7 @@ static VALUE
 mapped_native_type(VALUE self)
 {
     MappedType*m = NULL;
-    Data_Get_Struct(self, MappedType, m);
+    TypedData_Get_Struct(self, MappedType, &mapped_type_data_type, m);
 
     return m->rbType;
 }
@@ -124,9 +137,8 @@ static VALUE
 mapped_to_native(int argc, VALUE* argv, VALUE self)
 {
     MappedType*m = NULL;
-    
-    Data_Get_Struct(self, MappedType, m);
-    
+    TypedData_Get_Struct(self, MappedType, &mapped_type_data_type, m);
+
     return rb_funcall2(m->rbConverter, id_to_native, argc, argv);
 }
 
@@ -138,8 +150,7 @@ static VALUE
 mapped_from_native(int argc, VALUE* argv, VALUE self)
 {
     MappedType*m = NULL;
-    
-    Data_Get_Struct(self, MappedType, m);
+    TypedData_Get_Struct(self, MappedType, &mapped_type_data_type, m);
 
     return rb_funcall2(m->rbConverter, id_from_native, argc, argv);
 }

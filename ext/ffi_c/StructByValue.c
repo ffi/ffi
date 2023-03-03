@@ -49,17 +49,28 @@
 
 static VALUE sbv_allocate(VALUE);
 static VALUE sbv_initialize(VALUE, VALUE);
-static void sbv_mark(StructByValue *);
-static void sbv_free(StructByValue *);
+static void sbv_mark(void *);
+static void sbv_free(void *);
 
 VALUE rbffi_StructByValueClass = Qnil;
+
+static const rb_data_type_t sbv_type_data_type = {
+  .wrap_struct_name = "FFI::StructByValue",
+  .function = {
+      .dmark = sbv_mark,
+      .dfree = sbv_free,
+      .dsize = NULL,
+  },
+  .parent = &rbffi_type_data_type,
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
 
 static VALUE
 sbv_allocate(VALUE klass)
 {
     StructByValue* sbv;
 
-    VALUE obj = Data_Make_Struct(klass, StructByValue, sbv_mark, sbv_free, sbv);
+    VALUE obj = TypedData_Make_Struct(klass, StructByValue, &sbv_type_data_type, sbv);
 
     sbv->rbStructClass = Qnil;
     sbv->rbStructLayout = Qnil;
@@ -85,8 +96,8 @@ sbv_initialize(VALUE self, VALUE rbStructClass)
         rb_raise(rb_eTypeError, "wrong type in @layout ivar (expected FFI::StructLayout)");
     }
 
-    Data_Get_Struct(rbLayout, StructLayout, layout);
-    Data_Get_Struct(self, StructByValue, sbv);
+    TypedData_Get_Struct(rbLayout, StructLayout, &rbffi_struct_layout_data_type, layout);
+    TypedData_Get_Struct(self, StructByValue, &sbv_type_data_type, sbv);
     sbv->rbStructClass = rbStructClass;
     sbv->rbStructLayout = rbLayout;
 
@@ -97,15 +108,17 @@ sbv_initialize(VALUE self, VALUE rbStructClass)
 }
 
 static void
-sbv_mark(StructByValue *sbv)
+sbv_mark(void *data)
 {
+    StructByValue *sbv = (StructByValue *)data;
     rb_gc_mark(sbv->rbStructClass);
     rb_gc_mark(sbv->rbStructLayout);
 }
 
 static void
-sbv_free(StructByValue *sbv)
+sbv_free(void *data)
 {
+    StructByValue *sbv = (StructByValue *)data;
     xfree(sbv->base.ffiType);
     xfree(sbv);
 }
@@ -116,7 +129,7 @@ sbv_layout(VALUE self)
 {
     StructByValue* sbv;
 
-    Data_Get_Struct(self, StructByValue, sbv);
+    TypedData_Get_Struct(self, StructByValue, &sbv_type_data_type, sbv);
     return sbv->rbStructLayout;
 }
 
@@ -125,7 +138,7 @@ sbv_struct_class(VALUE self)
 {
     StructByValue* sbv;
 
-    Data_Get_Struct(self, StructByValue, sbv);
+    TypedData_Get_Struct(self, StructByValue, &sbv_type_data_type, sbv);
 
     return sbv->rbStructClass;
 }

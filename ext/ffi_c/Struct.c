@@ -123,7 +123,7 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
         rb_raise(rb_eRuntimeError, "Invalid Struct layout");
     }
 
-    Data_Get_Struct(s->rbLayout, StructLayout, s->layout);
+    TypedData_Get_Struct(s->rbLayout, StructLayout, &rbffi_struct_layout_data_type, s->layout);
 
     if (rbPointer != Qnil) {
         s->pointer = MEMORY(rbPointer);
@@ -203,7 +203,7 @@ struct_layout(VALUE self)
 
     if (s->layout == NULL) {
         s->rbLayout = struct_class_layout(CLASS_OF(self));
-        Data_Get_Struct(s->rbLayout, StructLayout, s->layout);
+        TypedData_Get_Struct(s->rbLayout, StructLayout, &rbffi_struct_layout_data_type, s->layout);
     }
 
     return s->layout;
@@ -291,7 +291,7 @@ struct_field(Struct* s, VALUE fieldName)
         }
         /* Write the retrieved coder to the cache */
         p_ce->fieldName = fieldName;
-        p_ce->field = (StructField *) DATA_PTR(rbField);
+        TypedData_Get_Struct(rbField, StructField, &rbffi_struct_field_data_type, p_ce->field);
     }
 
     return p_ce->field;
@@ -432,7 +432,7 @@ struct_set_layout(VALUE self, VALUE layout)
         return Qnil;
     }
 
-    Data_Get_Struct(layout, StructLayout, s->layout);
+    TypedData_Get_Struct(layout, StructLayout, &rbffi_struct_layout_data_type, s->layout);
     rb_ivar_set(self, id_layout_ivar, layout);
 
     return self;
@@ -526,9 +526,9 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
     array->rbField = rbField;
 
     Data_Get_Struct(rbMemory, AbstractMemory, array->memory);
-    Data_Get_Struct(rbField, StructField, array->field);
-    Data_Get_Struct(array->field->rbType, ArrayType, array->arrayType);
-    Data_Get_Struct(array->arrayType->rbComponentType, Type, array->componentType);
+    TypedData_Get_Struct(rbField, StructField, &rbffi_struct_field_data_type, array->field);
+    TypedData_Get_Struct(array->field->rbType, ArrayType, &rbffi_array_type_data_type, array->arrayType);
+    TypedData_Get_Struct(array->arrayType->rbComponentType, Type, &rbffi_type_data_type, array->componentType);
 
     array->op = get_memory_op(array->componentType);
     if (array->op == NULL && array->componentType->nativeType == NATIVE_MAPPED) {
@@ -641,7 +641,7 @@ inline_array_aset(VALUE self, VALUE rbIndex, VALUE rbValue)
 
     } else {
         ArrayType* arrayType;
-        Data_Get_Struct(array->field->rbType, ArrayType, arrayType);
+        TypedData_Get_Struct(array->field->rbType, ArrayType, &rbffi_array_type_data_type, arrayType);
 
         rb_raise(rb_eArgError, "set not supported for %s", rb_obj_classname(arrayType->rbComponentType));
         return Qnil;

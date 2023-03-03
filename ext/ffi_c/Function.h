@@ -68,6 +68,7 @@ struct FunctionType_ {
     bool hasStruct;
 };
 
+extern const rb_data_type_t rbffi_fntype_data_type;
 extern VALUE rbffi_FunctionTypeClass, rbffi_FunctionClass;
 
 void rbffi_Function_Init(VALUE moduleFFI);

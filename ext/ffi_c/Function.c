@@ -302,7 +302,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
     fn->rbFunctionInfo = rbFunctionInfo;
 
-    Data_Get_Struct(fn->rbFunctionInfo, FunctionType, fn->info);
+    TypedData_Get_Struct(fn->rbFunctionInfo, FunctionType, &rbffi_fntype_data_type, fn->info);
 
     if (rb_obj_is_kind_of(rbProc, rbffi_PointerClass)) {
         Pointer* orig;

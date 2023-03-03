@@ -48,6 +48,7 @@ typedef struct ArrayType_ {
 } ArrayType;
 
 extern void rbffi_ArrayType_Init(VALUE moduleFFI);
+extern const rb_data_type_t rbffi_array_type_data_type;
 extern VALUE rbffi_ArrayTypeClass;
 
 
