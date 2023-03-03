@@ -101,6 +101,8 @@ extern "C" {
         VALUE rbPointer;
     };
 
+    extern const rb_data_type_t rbffi_struct_data_type;
+    extern const rb_data_type_t rbffi_struct_field_data_type;
     extern VALUE rbffi_StructClass, rbffi_StructLayoutClass;
     extern VALUE rbffi_StructLayoutFieldClass, rbffi_StructLayoutFunctionFieldClass;
     extern VALUE rbffi_StructLayoutArrayFieldClass;

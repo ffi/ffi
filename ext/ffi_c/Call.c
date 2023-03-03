@@ -426,7 +426,9 @@ getPointer(VALUE value, int type)
 
     } else if (type == T_DATA && rb_obj_is_kind_of(value, rbffi_StructClass)) {
 
-        AbstractMemory* memory = ((Struct *) DATA_PTR(value))->pointer;
+        Struct* s;
+        TypedData_Get_Struct(value, Struct, &rbffi_struct_data_type, s);
+        AbstractMemory* memory = s->pointer;
         return memory != NULL ? memory->address : NULL;
 
     } else if (type == T_STRING) {
