@@ -62,20 +62,29 @@ typedef struct VariadicInvoker_ {
     bool blocking;
 } VariadicInvoker;
 
-
 static VALUE variadic_allocate(VALUE klass);
 static VALUE variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes,
         VALUE rbReturnType, VALUE options);
-static void variadic_mark(VariadicInvoker *);
+static void variadic_mark(void *);
 
 static VALUE classVariadicInvoker = Qnil;
+
+static const rb_data_type_t variadic_data_type = {
+  .wrap_struct_name = "FFI::VariadicInvoker",
+  .function = {
+      .dmark = variadic_mark,
+      .dfree = RUBY_TYPED_DEFAULT_FREE,
+      .dsize = NULL,
+  },
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
 
 
 static VALUE
 variadic_allocate(VALUE klass)
 {
     VariadicInvoker *invoker;
-    VALUE obj = Data_Make_Struct(klass, VariadicInvoker, variadic_mark, -1, invoker);
+    VALUE obj = TypedData_Make_Struct(klass, VariadicInvoker, &variadic_data_type, invoker);
 
     invoker->rbAddress = Qnil;
     invoker->rbEnums = Qnil;
@@ -86,8 +95,9 @@ variadic_allocate(VALUE klass)
 }
 
 static void
-variadic_mark(VariadicInvoker *invoker)
+variadic_mark(void *data)
 {
+    VariadicInvoker *invoker = (VariadicInvoker *)data;
     rb_gc_mark(invoker->rbEnums);
     rb_gc_mark(invoker->rbAddress);
     rb_gc_mark(invoker->rbReturnType);
@@ -108,7 +118,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     Check_Type(options, T_HASH);
     convention = rb_hash_aref(options, ID2SYM(rb_intern("convention")));
 
-    Data_Get_Struct(self, VariadicInvoker, invoker);
+    TypedData_Get_Struct(self, VariadicInvoker, &variadic_data_type, invoker);
     invoker->rbEnums = rb_hash_aref(options, ID2SYM(rb_intern("enums")));
     invoker->rbAddress = rbFunction;
     invoker->function = rbffi_AbstractMemory_Cast(rbFunction, rbffi_PointerClass)->address;
@@ -176,7 +186,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     Check_Type(parameterTypes, T_ARRAY);
     Check_Type(parameterValues, T_ARRAY);
 
-    Data_Get_Struct(self, VariadicInvoker, invoker);
+    TypedData_Get_Struct(self, VariadicInvoker, &variadic_data_type, invoker);
     paramCount = (int) RARRAY_LEN(parameterTypes);
     paramTypes = ALLOCA_N(Type *, paramCount);
     ffiParamTypes = ALLOCA_N(ffi_type *, paramCount);
