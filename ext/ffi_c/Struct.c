@@ -65,7 +65,7 @@ static void struct_mark(Struct *);
 static void struct_free(Struct *);
 static VALUE struct_class_layout(VALUE klass);
 static void struct_malloc(Struct* s);
-static void inline_array_mark(InlineArray *);
+static void inline_array_mark(void *);
 static void store_reference_value(StructField* f, Struct* s, VALUE value);
 
 VALUE rbffi_StructClass = Qnil;
@@ -489,13 +489,23 @@ struct_order(int argc, VALUE* argv, VALUE self)
     }
 }
 
+static const rb_data_type_t inline_array_data_type = {
+    .wrap_struct_name = "FFI::Struct::InlineArray",
+    .function = {
+        .dmark = inline_array_mark,
+        .dfree = RUBY_TYPED_DEFAULT_FREE,
+        .dsize = NULL,
+    },
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 static VALUE
 inline_array_allocate(VALUE klass)
 {
     InlineArray* array;
     VALUE obj;
 
-    obj = Data_Make_Struct(klass, InlineArray, inline_array_mark, -1, array);
+    obj = TypedData_Make_Struct(klass, InlineArray, &inline_array_data_type, array);
     array->rbField = Qnil;
     array->rbMemory = Qnil;
 
@@ -503,8 +513,9 @@ inline_array_allocate(VALUE klass)
 }
 
 static void
-inline_array_mark(InlineArray* array)
+inline_array_mark(void *data)
 {
+    InlineArray *array = (InlineArray *)data;
     rb_gc_mark(array->rbField);
     rb_gc_mark(array->rbMemory);
 }
@@ -521,7 +532,7 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
 {
     InlineArray* array;
 
-    Data_Get_Struct(self, InlineArray, array);
+    TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
     array->rbMemory = rbMemory;
     array->rbField = rbField;
 
@@ -550,7 +561,7 @@ inline_array_size(VALUE self)
 {
     InlineArray* array;
 
-    Data_Get_Struct(self, InlineArray, array);
+    TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
 
     return UINT2NUM(((ArrayType *) array->field->type)->length);
 }
@@ -575,7 +586,7 @@ inline_array_aref(VALUE self, VALUE rbIndex)
 {
     InlineArray* array;
 
-    Data_Get_Struct(self, InlineArray, array);
+    TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
 
     if (array->op != NULL) {
         VALUE rbNativeValue = array->op->get(array->memory,
@@ -611,7 +622,7 @@ inline_array_aset(VALUE self, VALUE rbIndex, VALUE rbValue)
 {
     InlineArray* array;
 
-    Data_Get_Struct(self, InlineArray, array);
+    TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
 
     if (array->op != NULL) {
         if (unlikely(array->componentType->nativeType == NATIVE_MAPPED)) {
@@ -661,7 +672,7 @@ inline_array_each(VALUE self)
 
     int i;
 
-    Data_Get_Struct(self, InlineArray, array);
+    TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
 
     for (i = 0; i < array->length; ++i) {
         rb_yield(inline_array_aref(self, INT2FIX(i)));
@@ -682,7 +693,7 @@ inline_array_to_a(VALUE self)
     VALUE obj;
     int i;
 
-    Data_Get_Struct(self, InlineArray, array);
+    TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
     obj = rb_ary_new2(array->length);
 
 
@@ -705,7 +716,7 @@ inline_array_to_s(VALUE self)
     InlineArray* array;
     VALUE argv[2];
 
-    Data_Get_Struct(self, InlineArray, array);
+    TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
 
     if (array->componentType->nativeType != NATIVE_INT8 && array->componentType->nativeType != NATIVE_UINT8) {
         VALUE dummy = Qnil;
@@ -728,7 +739,7 @@ inline_array_to_ptr(VALUE self)
 {
     InlineArray* array;
 
-    Data_Get_Struct(self, InlineArray, array);
+    TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
 
     return rb_funcall(array->rbMemory, rb_intern("slice"), 2,
         UINT2NUM(array->field->offset), UINT2NUM(array->arrayType->base.ffiType->size));
