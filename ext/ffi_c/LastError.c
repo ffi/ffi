@@ -91,30 +91,42 @@ thread_data_free(void *ptr)
 }
 
 #else
+static const rb_data_type_t thread_data_data_type = {
+    .wrap_struct_name = "FFI::ThreadData",
+    .function = {
+        .dmark = NULL,
+        .dfree = RUBY_TYPED_DEFAULT_FREE,
+        .dsize = NULL,
+    },
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 static ID id_thread_data;
 
 static ThreadData*
 thread_data_init(void)
 {
-    ThreadData* td;
+    ThreadData *td;
     VALUE obj;
 
-    obj = Data_Make_Struct(rb_cObject, ThreadData, NULL, -1, td);
+    obj = TypedData_Make_Struct(rb_cObject, ThreadData, &thread_data_data_type, td);
     rb_thread_local_aset(rb_thread_current(), id_thread_data, obj);
 
     return td;
 }
 
 static inline ThreadData*
-thread_data_get()
+thread_data_get(void)
 {
     VALUE obj = rb_thread_local_aref(rb_thread_current(), id_thread_data);
 
-    if (obj != Qnil && TYPE(obj) == T_DATA) {
-        return (ThreadData *) DATA_PTR(obj);
+    if (NIL_P(obj)) {
+        return thread_data_init();
     }
 
-    return thread_data_init();
+    ThreadData *td;
+    TypedData_Get_Struct(obj, ThreadData, &thread_data_data_type, td);
+    return td;
 }
 
 #endif
