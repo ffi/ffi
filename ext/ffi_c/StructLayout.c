@@ -406,12 +406,8 @@ array_field_put(VALUE self, VALUE pointer, VALUE value)
                 VALUE entry = rb_ary_entry(value, i);
                 Struct* s;
 
-                if (!rb_obj_is_kind_of(entry, rbffi_StructClass)) {
-                    rb_raise(rb_eTypeError, "array element not an instance of FFI::Struct");
-                    break;
-                }
+                TypedData_Get_Struct(entry, Struct, &rbffi_struct_data_type, s);
 
-                Data_Get_Struct(entry, Struct, s);
                 checkRead(s->pointer);
                 checkBounds(s->pointer, 0, array->componentType->ffiType->size);
 
