@@ -5,6 +5,7 @@
 
 require_relative 'fixtures/compile'
 require 'timeout'
+require 'objspace'
 
 RSpec.configure do |c|
   c.filter_run_excluding :broken => true

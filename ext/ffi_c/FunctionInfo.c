@@ -53,16 +53,19 @@ static VALUE fntype_allocate(VALUE klass);
 static VALUE fntype_initialize(int argc, VALUE* argv, VALUE self);
 static void fntype_mark(void *);
 static void fntype_free(void *);
+static size_t fntype_memsize(const void *);
 
 const rb_data_type_t rbffi_fntype_data_type = { /* extern */
-  .wrap_struct_name = "FFI::FunctionType",
-  .function = {
-      .dmark = fntype_mark,
-      .dfree = fntype_free,
-      .dsize = NULL,
-  },
-  .parent = &rbffi_type_data_type,
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    .wrap_struct_name = "FFI::FunctionType",
+    .function = {
+        .dmark = fntype_mark,
+        .dfree = fntype_free,
+        .dsize = fntype_memsize,
+    },
+    .parent = &rbffi_type_data_type,
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 VALUE rbffi_FunctionTypeClass = Qnil;
@@ -75,9 +78,9 @@ fntype_allocate(VALUE klass)
 
     fnInfo->type.ffiType = &ffi_type_pointer;
     fnInfo->type.nativeType = NATIVE_FUNCTION;
-    fnInfo->rbReturnType = Qnil;
-    fnInfo->rbParameterTypes = Qnil;
-    fnInfo->rbEnums = Qnil;
+    RB_OBJ_WRITE(obj, &fnInfo->rbReturnType, Qnil);
+    RB_OBJ_WRITE(obj, &fnInfo->rbParameterTypes, Qnil);
+    RB_OBJ_WRITE(obj, &fnInfo->rbEnums, Qnil);
     fnInfo->invoke = rbffi_CallFunction;
     fnInfo->closurePool = NULL;
 
@@ -108,6 +111,23 @@ fntype_free(void *data)
         rbffi_ClosurePool_Free(fnInfo->closurePool);
     }
     xfree(fnInfo);
+}
+
+static size_t
+fntype_memsize(const void *data)
+{
+    const FunctionType *fnInfo = (const FunctionType *)data;
+
+    size_t memsize = sizeof(FunctionType);
+    memsize += fnInfo->callbackCount * sizeof(VALUE);
+
+    memsize += fnInfo->parameterCount * (
+        sizeof(*fnInfo->parameterTypes)
+        + sizeof(ffi_type *)
+        + sizeof(*fnInfo->nativeParameterTypes)
+    );
+
+    return memsize;
 }
 
 /*
@@ -147,8 +167,8 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
     fnInfo->parameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->parameterTypes));
     fnInfo->ffiParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(ffi_type *));
     fnInfo->nativeParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->nativeParameterTypes));
-    fnInfo->rbParameterTypes = rb_ary_new2(fnInfo->parameterCount);
-    fnInfo->rbEnums = rbEnums;
+    RB_OBJ_WRITE(self, &fnInfo->rbParameterTypes, rb_ary_new2(fnInfo->parameterCount));
+    RB_OBJ_WRITE(self, &fnInfo->rbEnums, rbEnums);
     fnInfo->blocking = RTEST(rbBlocking);
     fnInfo->hasStruct = false;
 
@@ -163,7 +183,7 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
 
         if (rb_obj_is_kind_of(type, rbffi_FunctionTypeClass)) {
             REALLOC_N(fnInfo->callbackParameters, VALUE, fnInfo->callbackCount + 1);
-            fnInfo->callbackParameters[fnInfo->callbackCount++] = type;
+            RB_OBJ_WRITE(self, &fnInfo->callbackParameters[fnInfo->callbackCount++], type);
         }
 
         if (rb_obj_is_kind_of(type, rbffi_StructByValueClass)) {
@@ -176,7 +196,7 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
         fnInfo->nativeParameterTypes[i] = fnInfo->parameterTypes[i]->nativeType;
     }
 
-    fnInfo->rbReturnType = rbffi_Type_Lookup(rbReturnType);
+    RB_OBJ_WRITE(self, &fnInfo->rbReturnType, rbffi_Type_Lookup(rbReturnType));
     if (!RTEST(fnInfo->rbReturnType)) {
         VALUE typeName = rb_funcall2(rbReturnType, rb_intern("inspect"), 0, NULL);
         rb_raise(rb_eTypeError, "Invalid return type (%s)", RSTRING_PTR(typeName));
