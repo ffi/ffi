@@ -183,7 +183,8 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
 
         if (rb_obj_is_kind_of(type, rbffi_FunctionTypeClass)) {
             REALLOC_N(fnInfo->callbackParameters, VALUE, fnInfo->callbackCount + 1);
-            RB_OBJ_WRITE(self, &fnInfo->callbackParameters[fnInfo->callbackCount++], type);
+            RB_OBJ_WRITE(self, &fnInfo->callbackParameters[fnInfo->callbackCount], type);
+            fnInfo->callbackCount++;
         }
 
         if (rb_obj_is_kind_of(type, rbffi_StructByValueClass)) {
