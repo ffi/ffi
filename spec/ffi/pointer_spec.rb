@@ -381,5 +381,13 @@ describe "AutoPointer" do
       expect(mptr[1].read_uint).to eq(0xcafebabe)
     end
   end
+
+  it "has a memsize function", skip: RUBY_ENGINE != "ruby" do
+    base_size = ObjectSpace.memsize_of(Object.new)
+
+    pointer = FFI::Pointer.new(:int, 0xdeadbeef)
+    size = ObjectSpace.memsize_of(pointer)
+    expect(size).to be > base_size
+  end
 end
 

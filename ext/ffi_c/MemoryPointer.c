@@ -40,6 +40,7 @@
 
 static VALUE memptr_allocate(VALUE klass);
 static void memptr_release(void *data);
+static size_t memptr_memsize(const void *data);
 static VALUE memptr_malloc(VALUE self, long size, long count, bool clear);
 static VALUE memptr_free(VALUE self);
 
@@ -58,10 +59,12 @@ static const rb_data_type_t memory_pointer_data_type = {
     .function = {
         .dmark = NULL,
         .dfree = memptr_release,
-        .dsize = NULL,
+        .dsize = memptr_memsize,
     },
     .parent = &rbffi_pointer_data_type,
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static VALUE
@@ -69,7 +72,7 @@ memptr_allocate(VALUE klass)
 {
     Pointer* p;
     VALUE obj = TypedData_Make_Struct(klass, Pointer, &memory_pointer_data_type, p);
-    p->rbParent = Qnil;
+    RB_OBJ_WRITE(obj, &p->rbParent, Qnil);
     p->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
@@ -155,6 +158,17 @@ memptr_release(void *data)
         ptr->storage = NULL;
     }
     xfree(ptr);
+}
+
+static size_t
+memptr_memsize(const void *data)
+{
+    const Pointer *ptr = (const Pointer *)data;
+    size_t memsize = sizeof(Pointer);
+    if (ptr->allocated) {
+        memsize += ptr->memory.size;
+    }
+    return memsize;
 }
 
 /*

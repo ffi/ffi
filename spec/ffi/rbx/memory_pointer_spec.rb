@@ -189,4 +189,12 @@ describe "MemoryPointer" do
     end
     expect(block_executed).to be true
   end
+
+  it "has a memsize function", skip: RUBY_ENGINE != "ruby" do
+    base_size = ObjectSpace.memsize_of(Object.new)
+
+    pointer = FFI::MemoryPointer.from_string("FFI is Awesome")
+    size = ObjectSpace.memsize_of(pointer)
+    expect(size).to be > base_size
+  end
 end

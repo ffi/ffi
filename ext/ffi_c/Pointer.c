@@ -43,16 +43,19 @@ VALUE rbffi_NullPointerSingleton = Qnil;
 
 static void ptr_release(void *data);
 static void ptr_mark(void *data);
+static size_t ptr_memsize(const void *data);
 
 const rb_data_type_t rbffi_pointer_data_type = { /* extern */
     .wrap_struct_name = "FFI::Pointer",
     .function = {
         .dmark = ptr_mark,
         .dfree = ptr_release,
-        .dsize = NULL,
+        .dsize = ptr_memsize,
     },
     .parent = &rbffi_abstract_memory_data_type,
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 VALUE
@@ -70,7 +73,7 @@ rbffi_Pointer_NewInstance(void* addr)
     p->memory.size = LONG_MAX;
     p->memory.flags = (addr == NULL) ? 0 : (MEM_RD | MEM_WR);
     p->memory.typeSize = 1;
-    p->rbParent = Qnil;
+    RB_OBJ_WRITE(obj, &p->rbParent, Qnil);
 
     return obj;
 }
@@ -82,7 +85,7 @@ ptr_allocate(VALUE klass)
     VALUE obj;
 
     obj = TypedData_Make_Struct(klass, Pointer, &rbffi_pointer_data_type, p);
-    p->rbParent = Qnil;
+    RB_OBJ_WRITE(obj, &p->rbParent, Qnil);
     p->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
@@ -134,7 +137,7 @@ ptr_initialize(int argc, VALUE* argv, VALUE self)
             if (rb_obj_is_kind_of(rbAddress, rbffi_PointerClass)) {
                 Pointer* orig;
 
-                p->rbParent = rbAddress;
+                RB_OBJ_WRITE(self, &p->rbParent, rbAddress);
                 TypedData_Get_Struct(rbAddress, Pointer, &rbffi_pointer_data_type, orig);
                 p->memory = orig->memory;
             } else {
@@ -215,7 +218,7 @@ slice(VALUE self, long offset, long size)
     p->memory.size = size;
     p->memory.flags = ptr->flags;
     p->memory.typeSize = ptr->typeSize;
-    p->rbParent = self;
+    RB_OBJ_WRITE(retval, &p->rbParent, self);
 
     return retval;
 }
@@ -469,6 +472,17 @@ ptr_mark(void *data)
 {
     Pointer *ptr = (Pointer *)data;
     rb_gc_mark(ptr->rbParent);
+}
+
+static size_t
+ptr_memsize(const void *data)
+{
+    const Pointer *ptr = (const Pointer *)data;
+    size_t memsize = sizeof(Pointer);
+    if (ptr->allocated) {
+        memsize += ptr->memory.size;
+    }
+    return memsize;
 }
 
 void

@@ -55,6 +55,7 @@
 # define RB_OBJ_STRING(obj) StringValueCStr(obj)
 #endif
 
+static size_t memsize(const void *data);
 static inline char* memory_address(VALUE self);
 VALUE rbffi_AbstractMemoryClass = Qnil;
 static VALUE NullPointerErrorClass = Qnil;
@@ -65,9 +66,11 @@ const rb_data_type_t rbffi_abstract_memory_data_type = { /* extern */
     .function = {
         .dmark = NULL,
         .dfree = RUBY_TYPED_DEFAULT_FREE,
-        .dsize = NULL,
+        .dsize = memsize,
     },
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static VALUE
@@ -80,6 +83,13 @@ memory_allocate(VALUE klass)
 
     return obj;
 }
+
+static size_t
+memsize(const void *data)
+{
+    return sizeof(AbstractMemory);
+}
+
 #define VAL(x, swap) (unlikely(((memory->flags & MEM_SWAP) != 0)) ? swap((x)) : (x))
 
 #define NUM_OP(name, type, toNative, fromNative, swap) \
