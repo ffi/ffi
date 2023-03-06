@@ -51,6 +51,7 @@ static VALUE sbv_allocate(VALUE);
 static VALUE sbv_initialize(VALUE, VALUE);
 static void sbv_mark(void *);
 static void sbv_free(void *);
+static size_t sbv_memsize(const void *);
 
 VALUE rbffi_StructByValueClass = Qnil;
 
@@ -59,10 +60,12 @@ static const rb_data_type_t sbv_type_data_type = {
   .function = {
       .dmark = sbv_mark,
       .dfree = sbv_free,
-      .dsize = NULL,
+      .dsize = sbv_memsize,
   },
   .parent = &rbffi_type_data_type,
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+  // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+  // macro to update VALUE references, as to trigger write barriers.
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static VALUE
@@ -72,8 +75,8 @@ sbv_allocate(VALUE klass)
 
     VALUE obj = TypedData_Make_Struct(klass, StructByValue, &sbv_type_data_type, sbv);
 
-    sbv->rbStructClass = Qnil;
-    sbv->rbStructLayout = Qnil;
+    RB_OBJ_WRITE(obj, &sbv->rbStructClass, Qnil);
+    RB_OBJ_WRITE(obj, &sbv->rbStructLayout, Qnil);
     sbv->base.nativeType = NATIVE_STRUCT;
 
     sbv->base.ffiType = xcalloc(1, sizeof(*sbv->base.ffiType));
@@ -98,8 +101,8 @@ sbv_initialize(VALUE self, VALUE rbStructClass)
 
     TypedData_Get_Struct(rbLayout, StructLayout, &rbffi_struct_layout_data_type, layout);
     TypedData_Get_Struct(self, StructByValue, &sbv_type_data_type, sbv);
-    sbv->rbStructClass = rbStructClass;
-    sbv->rbStructLayout = rbLayout;
+    RB_OBJ_WRITE(self, &sbv->rbStructClass, rbStructClass);
+    RB_OBJ_WRITE(self, &sbv->rbStructLayout, rbLayout);
 
     /* We can just use everything from the ffi_type directly */
     *sbv->base.ffiType = *layout->base.ffiType;
@@ -123,6 +126,12 @@ sbv_free(void *data)
     xfree(sbv);
 }
 
+static size_t
+sbv_memsize(const void *data)
+{
+    const StructByValue *sbv = (const StructByValue *)data;
+    return sizeof(StructByValue) + sizeof(*sbv->base.ffiType);
+}
 
 static VALUE
 sbv_layout(VALUE self)
