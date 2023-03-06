@@ -66,6 +66,7 @@ static VALUE variadic_allocate(VALUE klass);
 static VALUE variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes,
         VALUE rbReturnType, VALUE options);
 static void variadic_mark(void *);
+static size_t variadic_memsize(const void *);
 
 static VALUE classVariadicInvoker = Qnil;
 
@@ -74,9 +75,11 @@ static const rb_data_type_t variadic_data_type = {
   .function = {
       .dmark = variadic_mark,
       .dfree = RUBY_TYPED_DEFAULT_FREE,
-      .dsize = NULL,
+      .dsize = variadic_memsize,
   },
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+  // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+  // macro to update VALUE references, as to trigger write barriers.
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 
@@ -86,9 +89,9 @@ variadic_allocate(VALUE klass)
     VariadicInvoker *invoker;
     VALUE obj = TypedData_Make_Struct(klass, VariadicInvoker, &variadic_data_type, invoker);
 
-    invoker->rbAddress = Qnil;
-    invoker->rbEnums = Qnil;
-    invoker->rbReturnType = Qnil;
+    RB_OBJ_WRITE(obj, &invoker->rbAddress, Qnil);
+    RB_OBJ_WRITE(obj, &invoker->rbEnums, Qnil);
+    RB_OBJ_WRITE(obj, &invoker->rbReturnType, Qnil);
     invoker->blocking = false;
 
     return obj;
@@ -101,6 +104,12 @@ variadic_mark(void *data)
     rb_gc_mark(invoker->rbEnums);
     rb_gc_mark(invoker->rbAddress);
     rb_gc_mark(invoker->rbReturnType);
+}
+
+static size_t
+variadic_memsize(const void *data)
+{
+    return sizeof(VariadicInvoker);
 }
 
 static VALUE
@@ -119,8 +128,8 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     convention = rb_hash_aref(options, ID2SYM(rb_intern("convention")));
 
     TypedData_Get_Struct(self, VariadicInvoker, &variadic_data_type, invoker);
-    invoker->rbEnums = rb_hash_aref(options, ID2SYM(rb_intern("enums")));
-    invoker->rbAddress = rbFunction;
+    RB_OBJ_WRITE(self, &invoker->rbEnums, rb_hash_aref(options, ID2SYM(rb_intern("enums"))));
+    RB_OBJ_WRITE(self, &invoker->rbAddress, rbFunction);
     invoker->function = rbffi_AbstractMemory_Cast(rbFunction, rbffi_PointerClass)->address;
     invoker->blocking = RTEST(rb_hash_aref(options, ID2SYM(rb_intern("blocking"))));
 
@@ -132,7 +141,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     invoker->abi = FFI_DEFAULT_ABI;
 #endif
 
-    invoker->rbReturnType = rbffi_Type_Lookup(rbReturnType);
+    RB_OBJ_WRITE(self, &invoker->rbReturnType, rbffi_Type_Lookup(rbReturnType));
     if (!RTEST(invoker->rbReturnType)) {
         VALUE typeName = rb_funcall2(rbReturnType, rb_intern("inspect"), 0, NULL);
         rb_raise(rb_eTypeError, "Invalid return type (%s)", RSTRING_PTR(typeName));
