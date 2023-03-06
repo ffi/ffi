@@ -53,7 +53,9 @@
 
 static void struct_layout_mark(void *);
 static void struct_layout_free(void *);
+static size_t struct_layout_memsize(const void *);
 static void struct_field_mark(void *);
+static size_t struct_field_memsize(const void *);
 
 VALUE rbffi_StructLayoutFieldClass = Qnil;
 VALUE rbffi_StructLayoutNumberFieldClass = Qnil, rbffi_StructLayoutPointerFieldClass = Qnil;
@@ -67,10 +69,12 @@ const rb_data_type_t rbffi_struct_layout_data_type = { /* extern */
   .function = {
       .dmark = struct_layout_mark,
       .dfree = struct_layout_free,
-      .dsize = NULL,
+      .dsize = struct_layout_memsize,
   },
   .parent = &rbffi_type_data_type,
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+  // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+  // macro to update VALUE references, as to trigger write barriers.
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 const rb_data_type_t rbffi_struct_field_data_type = { /* extern */
@@ -78,10 +82,12 @@ const rb_data_type_t rbffi_struct_field_data_type = { /* extern */
   .function = {
       .dmark = struct_field_mark,
       .dfree = RUBY_TYPED_DEFAULT_FREE,
-      .dsize = NULL,
+      .dsize = struct_field_memsize,
   },
   .parent = &rbffi_type_data_type,
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+  // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+  // macro to update VALUE references, as to trigger write barriers.
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static VALUE
@@ -91,8 +97,8 @@ struct_field_allocate(VALUE klass)
     VALUE obj;
 
     obj = TypedData_Make_Struct(klass, StructField, &rbffi_struct_field_data_type, field);
-    field->rbType = Qnil;
-    field->rbName = Qnil;
+    RB_OBJ_WRITE(obj, &field->rbType, Qnil);
+    RB_OBJ_WRITE(obj, &field->rbName, Qnil);
 
     return obj;
 }
@@ -103,6 +109,12 @@ struct_field_mark(void *data)
     StructField *f = (StructField *)data;
     rb_gc_mark(f->rbType);
     rb_gc_mark(f->rbName);
+}
+
+static size_t
+struct_field_memsize(const void *data)
+{
+    return sizeof(StructField);
 }
 
 /*
@@ -137,8 +149,8 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
     }
 
     field->offset = NUM2UINT(rbOffset);
-    field->rbName = (TYPE(rbName) == T_SYMBOL) ? rbName : rb_str_intern(rbName);
-    field->rbType = rbType;
+    RB_OBJ_WRITE(self, &field->rbName, (TYPE(rbName) == T_SYMBOL) ? rbName : rb_str_intern(rbName));
+    RB_OBJ_WRITE(self, &field->rbType, rbType);
     TypedData_Get_Struct(field->rbType, Type, &rbffi_type_data_type, field->type);
     field->memoryOp = get_memory_op(field->type);
     field->referenceIndex = -1;
@@ -619,10 +631,9 @@ struct_layout_mark(void *data)
     rb_gc_mark(layout->rbFieldMap);
     rb_gc_mark(layout->rbFieldNames);
     rb_gc_mark(layout->rbFields);
-    /* Clear the cache, to be safe from changes of fieldName VALUE by GC.compact.
-     * TODO: Move cache clearing to compactation callback provided by Ruby-2.7+.
-     */
-    memset(&layout->cache_row, 0, sizeof(layout->cache_row));
+    for (size_t index = 0; index < FIELD_CACHE_ROWS; index++) {
+        rb_gc_mark(layout->cache_row[index].fieldName);
+    }
 }
 
 static void
@@ -635,6 +646,15 @@ struct_layout_free(void *data)
     xfree(layout);
 }
 
+static size_t
+struct_layout_memsize(const void * data)
+{
+    const StructLayout *layout = (const StructLayout *)data;
+    size_t memsize = sizeof(StructLayout);
+    memsize += layout->fieldCount * (sizeof(StructField *) + sizeof(ffi_type *));
+    memsize += sizeof(*layout->base.ffiType);
+    return memsize;
+}
 
 void
 rbffi_StructLayout_Init(VALUE moduleFFI)

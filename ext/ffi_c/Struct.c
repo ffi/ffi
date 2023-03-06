@@ -317,7 +317,7 @@ struct_field(Struct* s, VALUE fieldName)
             rb_raise(rb_eArgError, "No such field '%s'", StringValueCStr(str));
         }
         /* Write the retrieved coder to the cache */
-        p_ce->fieldName = fieldName;
+        RB_OBJ_WRITE(s->rbLayout, &p_ce->fieldName, fieldName);
         TypedData_Get_Struct(rbField, StructField, &rbffi_struct_field_data_type, p_ce->field);
     }
 
