@@ -73,17 +73,6 @@ const rb_data_type_t rbffi_abstract_memory_data_type = { /* extern */
     .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
-static VALUE
-memory_allocate(VALUE klass)
-{
-    AbstractMemory* memory;
-    VALUE obj;
-    obj = TypedData_Make_Struct(klass, AbstractMemory, &rbffi_abstract_memory_data_type, memory);
-    memory->flags = MEM_RD | MEM_WR;
-
-    return obj;
-}
-
 static size_t
 memsize(const void *data)
 {
@@ -803,7 +792,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
      * Document-variable: FFI::AbstractMemory
      */
     rb_global_variable(&rbffi_AbstractMemoryClass);
-    rb_define_alloc_func(classMemory, memory_allocate);
+    rb_undef_alloc_func(classMemory);
 
     NullPointerErrorClass = rb_define_class_under(moduleFFI, "NullPointerError", rb_eRuntimeError);
     /* Document-variable: NullPointerError */
