@@ -46,7 +46,7 @@ static VALUE memptr_free(VALUE self);
 
 VALUE rbffi_MemoryPointerClass;
 
-#define MEMPTR(obj) ((MemoryPointer *) rbffi_AbstractMemory_Cast(obj, rbffi_MemoryPointerClass))
+#define MEMPTR(obj) ((MemoryPointer *) rbffi_AbstractMemory_Cast(obj, &memory_pointer_data_type))
 
 VALUE
 rbffi_MemoryPointer_NewInstance(long size, long count, bool clear)

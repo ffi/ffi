@@ -36,7 +36,7 @@
 #include "AbstractMemory.h"
 #include "Pointer.h"
 
-#define POINTER(obj) rbffi_AbstractMemory_Cast((obj), rbffi_PointerClass)
+#define POINTER(obj) rbffi_AbstractMemory_Cast((obj), &rbffi_pointer_data_type)
 
 VALUE rbffi_PointerClass = Qnil;
 VALUE rbffi_NullPointerSingleton = Qnil;

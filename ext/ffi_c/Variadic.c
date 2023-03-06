@@ -130,7 +130,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     TypedData_Get_Struct(self, VariadicInvoker, &variadic_data_type, invoker);
     RB_OBJ_WRITE(self, &invoker->rbEnums, rb_hash_aref(options, ID2SYM(rb_intern("enums"))));
     RB_OBJ_WRITE(self, &invoker->rbAddress, rbFunction);
-    invoker->function = rbffi_AbstractMemory_Cast(rbFunction, rbffi_PointerClass)->address;
+    invoker->function = rbffi_AbstractMemory_Cast(rbFunction, &rbffi_pointer_data_type)->address;
     invoker->blocking = RTEST(rb_hash_aref(options, ID2SYM(rb_intern("blocking"))));
 
 #if defined(X86_WIN32)

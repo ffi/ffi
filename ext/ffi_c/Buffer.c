@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2008-2010 Wayne Meissner
  * Copyright (C) 2009 Aman Gupta <aman@tmm1.net>
- * 
+ *
  * Copyright (c) 2008-2013, Ruby FFI project contributors
  * All rights reserved.
  *
@@ -39,7 +39,7 @@
 #define BUFFER_EMBED_MAXLEN (8)
 typedef struct Buffer {
     AbstractMemory memory;
-    
+
     union {
         VALUE rbParent; /* link to parent buffer */
         char* storage; /* start of malloc area */
@@ -105,7 +105,7 @@ buffer_release(void *data)
         xfree(ptr->data.storage);
         ptr->data.storage = NULL;
     }
-    
+
     xfree(ptr);
 }
 
@@ -140,11 +140,11 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
 
         /* ensure the memory is aligned on at least a 8 byte boundary */
         p->memory.address = (void *) (((uintptr_t) p->data.storage + 0x7) & (uintptr_t) ~0x7ULL);
-    
+
         if (p->memory.size > 0 && (nargs < 3 || RTEST(rbClear))) {
             memset(p->memory.address, 0, p->memory.size);
         }
-    
+
     } else {
         p->memory.flags |= MEM_EMBED;
         p->memory.address = (void *) &p->data.embed[0];
@@ -169,7 +169,7 @@ buffer_initialize_copy(VALUE self, VALUE other)
     Buffer* dst;
 
     TypedData_Get_Struct(self, Buffer, &buffer_data_type, dst);
-    src = rbffi_AbstractMemory_Cast(other, BufferClass);
+    src = rbffi_AbstractMemory_Cast(other, &buffer_data_type);
     if ((dst->memory.flags & MEM_EMBED) == 0 && dst->data.storage != NULL) {
         xfree(dst->data.storage);
     }
@@ -178,11 +178,11 @@ buffer_initialize_copy(VALUE self, VALUE other)
         rb_raise(rb_eNoMemError, "failed to allocate memory size=%lu bytes", src->size);
         return Qnil;
     }
-    
+
     dst->memory.address = (void *) (((uintptr_t) dst->data.storage + 0x7) & (uintptr_t) ~0x7ULL);
     dst->memory.size = src->size;
     dst->memory.typeSize = src->typeSize;
-    
+
     /* finally, copy the actual buffer contents */
     memcpy(dst->memory.address, src->address, src->size);
 
@@ -259,7 +259,7 @@ buffer_inspect(VALUE self)
     TypedData_Get_Struct(self, Buffer, &buffer_data_type, ptr);
 
     snprintf(tmp, sizeof(tmp), "#<FFI:Buffer:%p address=%p size=%ld>", ptr, ptr->memory.address, ptr->memory.size);
-    
+
     return rb_str_new2(tmp);
 }
 
@@ -396,7 +396,7 @@ rbffi_Buffer_Init(VALUE moduleFFI)
     rb_define_alias(rb_singleton_class(BufferClass), "new_in", "alloc_in");
     rb_define_alias(rb_singleton_class(BufferClass), "new_out", "alloc_out");
     rb_define_alias(rb_singleton_class(BufferClass), "new_inout", "alloc_inout");
-    
+
     rb_define_method(BufferClass, "initialize", buffer_initialize, -1);
     rb_define_method(BufferClass, "initialize_copy", buffer_initialize_copy, 1);
     rb_define_method(BufferClass, "order", buffer_order, -1);
