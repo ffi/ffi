@@ -56,7 +56,7 @@ typedef struct LibrarySymbol_ {
 
 static VALUE library_initialize(VALUE self, VALUE libname, VALUE libflags);
 static void library_free(void *);
-
+static size_t library_memsize(const void *);
 
 static VALUE symbol_allocate(VALUE klass);
 static VALUE symbol_new(VALUE library, void* address, VALUE name);
@@ -68,9 +68,11 @@ static const rb_data_type_t rbffi_library_data_type = {
     .function = {
         .dmark = NULL,
         .dfree = library_free,
-        .dsize = NULL,
+        .dsize = library_memsize,
     },
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static const rb_data_type_t library_symbol_data_type = {
@@ -198,6 +200,12 @@ library_free(void *data)
     }
 #endif
     xfree(library);
+}
+
+static size_t
+library_memsize(const void *data)
+{
+    return sizeof(Library);
 }
 
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
