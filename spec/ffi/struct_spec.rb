@@ -1027,6 +1027,19 @@ describe "variable-length arrays" do
   end
 end
 
+describe "Struct memsize", skip: RUBY_ENGINE != "ruby" do
+  it "has a memsize function" do
+    base_size = ObjectSpace.memsize_of(Object.new)
+
+    c = Class.new(FFI::Struct) do
+      layout :b, :bool
+    end
+    struct = c.new
+    size = ObjectSpace.memsize_of(struct)
+    expect(size).to be > base_size
+  end
+end
+
 describe "Struct order" do
   before :all do
     @struct = Class.new(FFI::Struct) do

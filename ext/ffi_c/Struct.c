@@ -63,19 +63,23 @@ typedef struct InlineArray_ {
 
 static void struct_mark(void *data);
 static void struct_free(void *data);
+static size_t struct_memsize(const void *);
 static VALUE struct_class_layout(VALUE klass);
-static void struct_malloc(Struct* s);
+static void struct_malloc(VALUE self, Struct* s);
 static void inline_array_mark(void *);
-static void store_reference_value(StructField* f, Struct* s, VALUE value);
+static size_t inline_array_memsize(const void *);
+static void store_reference_value(VALUE self, StructField* f, Struct* s, VALUE value);
 
 const rb_data_type_t rbffi_struct_data_type = { /* extern */
     .wrap_struct_name = "FFI::Struct",
     .function = {
         .dmark = struct_mark,
         .dfree = struct_free,
-        .dsize = NULL,
+        .dsize = struct_memsize,
     },
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 VALUE rbffi_StructClass = Qnil;
 
@@ -99,8 +103,8 @@ struct_allocate(VALUE klass)
     Struct* s;
     VALUE obj = TypedData_Make_Struct(klass, Struct, &rbffi_struct_data_type, s);
 
-    s->rbPointer = Qnil;
-    s->rbLayout = Qnil;
+    RB_OBJ_WRITE(obj, &s->rbPointer, Qnil);
+    RB_OBJ_WRITE(obj, &s->rbLayout, Qnil);
 
     return obj;
 }
@@ -125,9 +129,10 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 
     /* Call up into ruby code to adjust the layout */
     if (nargs > 1) {
-        s->rbLayout = rb_funcall2(CLASS_OF(self), id_layout, (int) RARRAY_LEN(rest), RARRAY_PTR(rest));
+        VALUE rbLayout = rb_funcall2(CLASS_OF(self), id_layout, (int) RARRAY_LEN(rest), RARRAY_PTR(rest));
+        RB_OBJ_WRITE(self, &s->rbLayout, rbLayout);
     } else {
-        s->rbLayout = struct_class_layout(klass);
+        RB_OBJ_WRITE(self, &s->rbLayout, struct_class_layout(klass));
     }
 
     if (!rb_obj_is_kind_of(s->rbLayout, rbffi_StructLayoutClass)) {
@@ -138,9 +143,9 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 
     if (rbPointer != Qnil) {
         s->pointer = MEMORY(rbPointer);
-        s->rbPointer = rbPointer;
+        RB_OBJ_WRITE(self, &s->rbPointer, rbPointer);
     } else {
-        struct_malloc(s);
+        struct_malloc(self, s);
     }
 
     return self;
@@ -163,7 +168,7 @@ struct_initialize_copy(VALUE self, VALUE other)
         return self;
     }
 
-    dst->rbLayout = src->rbLayout;
+    RB_OBJ_WRITE(self, &dst->rbLayout, src->rbLayout);
     dst->layout = src->layout;
 
     /*
@@ -172,17 +177,20 @@ struct_initialize_copy(VALUE self, VALUE other)
      * be longer than just this struct.
      */
     if (src->pointer->address != NULL) {
-        dst->rbPointer = rbffi_MemoryPointer_NewInstance(1, src->layout->size, false);
+        RB_OBJ_WRITE(self, &dst->rbPointer, rbffi_MemoryPointer_NewInstance(1, src->layout->size, false));
         dst->pointer = MEMORY(dst->rbPointer);
         memcpy(dst->pointer->address, src->pointer->address, src->layout->size);
     } else {
-        dst->rbPointer = src->rbPointer;
+        RB_OBJ_WRITE(self, &dst->rbPointer, src->rbPointer);
         dst->pointer = src->pointer;
     }
 
     if (src->layout->referenceFieldCount > 0) {
         dst->rbReferences = ALLOC_N(VALUE, dst->layout->referenceFieldCount);
         memcpy(dst->rbReferences, src->rbReferences, dst->layout->referenceFieldCount * sizeof(VALUE));
+        for (size_t index = 0; index < dst->layout->referenceFieldCount; index++) {
+            RB_OBJ_WRITTEN(self, Qundef, &dst->rbReferences[index]);
+        }
     }
 
     return self;
@@ -214,7 +222,7 @@ struct_layout(VALUE self)
     }
 
     if (s->layout == NULL) {
-        s->rbLayout = struct_class_layout(CLASS_OF(self));
+        RB_OBJ_WRITE(self, &s->rbLayout, struct_class_layout(CLASS_OF(self)));
         TypedData_Get_Struct(s->rbLayout, StructLayout, &rbffi_struct_layout_data_type, s->layout);
     }
 
@@ -232,18 +240,17 @@ struct_validate(VALUE self)
     }
 
     if (s->pointer == NULL) {
-        struct_malloc(s);
+        struct_malloc(self, s);
     }
 
     return s;
 }
 
 static void
-struct_malloc(Struct* s)
+struct_malloc(VALUE self, Struct* s)
 {
     if (s->rbPointer == Qnil) {
-        s->rbPointer = rbffi_MemoryPointer_NewInstance(s->layout->size, 1, true);
-
+        RB_OBJ_WRITE(self, &s->rbPointer, rbffi_MemoryPointer_NewInstance(s->layout->size, 1, true));
     } else if (!rb_obj_is_kind_of(s->rbPointer, rbffi_AbstractMemoryClass)) {
         rb_raise(rb_eRuntimeError, "invalid pointer in struct");
     }
@@ -270,9 +277,15 @@ struct_free(void *data)
     xfree(s);
 }
 
+static size_t
+struct_memsize(const void *data)
+{
+    const Struct *s = (const Struct *)data;
+    return sizeof(Struct) + (s->layout->referenceFieldCount * sizeof(VALUE));
+}
 
 static void
-store_reference_value(StructField* f, Struct* s, VALUE value)
+store_reference_value(VALUE self, StructField* f, Struct* s, VALUE value)
 {
     if (unlikely(f->referenceIndex == -1)) {
         rb_raise(rb_eRuntimeError, "put_reference_value called for non-reference type");
@@ -282,11 +295,11 @@ store_reference_value(StructField* f, Struct* s, VALUE value)
         int i;
         s->rbReferences = ALLOC_N(VALUE, s->layout->referenceFieldCount);
         for (i = 0; i < s->layout->referenceFieldCount; ++i) {
-            s->rbReferences[i] = Qnil;
+            RB_OBJ_WRITE(self, &s->rbReferences[i], Qnil);
         }
     }
 
-    s->rbReferences[f->referenceIndex] = value;
+    RB_OBJ_WRITE(self, &s->rbReferences[f->referenceIndex], value);
 }
 
 
@@ -371,7 +384,7 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
     }
 
     if (f->referenceRequired) {
-        store_reference_value(f, s, value);
+        store_reference_value(self, f, s, value);
     }
 
     return value;
@@ -407,7 +420,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
     }
 
     s->pointer = MEMORY(pointer);
-    s->rbPointer = pointer;
+    RB_OBJ_WRITE(self, &s->rbPointer, pointer);
     rb_ivar_set(self, id_pointer_ivar, pointer);
 
     return self;
@@ -508,9 +521,11 @@ static const rb_data_type_t inline_array_data_type = {
     .function = {
         .dmark = inline_array_mark,
         .dfree = RUBY_TYPED_DEFAULT_FREE,
-        .dsize = NULL,
+        .dsize = inline_array_memsize,
     },
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static VALUE
@@ -520,8 +535,8 @@ inline_array_allocate(VALUE klass)
     VALUE obj;
 
     obj = TypedData_Make_Struct(klass, InlineArray, &inline_array_data_type, array);
-    array->rbField = Qnil;
-    array->rbMemory = Qnil;
+    RB_OBJ_WRITE(obj, &array->rbMemory, Qnil);
+    RB_OBJ_WRITE(obj, &array->rbField, Qnil);
 
     return obj;
 }
@@ -532,6 +547,12 @@ inline_array_mark(void *data)
     InlineArray *array = (InlineArray *)data;
     rb_gc_mark(array->rbField);
     rb_gc_mark(array->rbMemory);
+}
+
+static size_t
+inline_array_memsize(const void *data)
+{
+    return sizeof(InlineArray);
 }
 
 /*
@@ -547,8 +568,8 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
     InlineArray* array;
 
     TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
-    array->rbMemory = rbMemory;
-    array->rbField = rbField;
+    RB_OBJ_WRITE(self, &array->rbMemory, rbMemory);
+    RB_OBJ_WRITE(self, &array->rbField, rbField);
 
     TypedData_Get_Struct(rbMemory, AbstractMemory, &rbffi_abstract_memory_data_type, array->memory);
     TypedData_Get_Struct(rbField, StructField, &rbffi_struct_field_data_type, array->field);
