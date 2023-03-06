@@ -35,16 +35,19 @@ static VALUE array_type_s_allocate(VALUE klass);
 static VALUE array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength);
 static void array_type_mark(void *);
 static void array_type_free(void *);
+static size_t array_type_memsize(const void *);
 
 const rb_data_type_t rbffi_array_type_data_type = { /* extern */
   .wrap_struct_name = "FFI::ArrayType",
   .function = {
       .dmark = array_type_mark,
       .dfree = array_type_free,
-      .dsize = NULL,
+      .dsize = array_type_memsize,
   },
   .parent = &rbffi_type_data_type,
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+  // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+  // macro to update VALUE references, as to trigger write barriers.
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 
@@ -63,7 +66,7 @@ array_type_s_allocate(VALUE klass)
     array->base.ffiType->type = FFI_TYPE_STRUCT;
     array->base.ffiType->size = 0;
     array->base.ffiType->alignment = 0;
-    array->rbComponentType = Qnil;
+    RB_OBJ_WRITE(obj, &array->rbComponentType, Qnil);
 
     return obj;
 }
@@ -84,6 +87,15 @@ array_type_free(void *data)
     xfree(array);
 }
 
+static size_t
+array_type_memsize(const void *data)
+{
+    const ArrayType *array = (const ArrayType *)data;
+    size_t memsize = sizeof(ArrayType);
+    memsize += array->length * sizeof(*array->ffiTypes);
+    memsize += sizeof(*array->base.ffiType);
+    return memsize;
+}
 
 /*
  * call-seq: initialize(component_type, length)
@@ -101,7 +113,7 @@ array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
     TypedData_Get_Struct(self, ArrayType, &rbffi_array_type_data_type, array);
 
     array->length = NUM2UINT(rbLength);
-    array->rbComponentType = rbComponentType;
+    RB_OBJ_WRITE(self, &array->rbComponentType, rbComponentType);
     TypedData_Get_Struct(rbComponentType, Type, &rbffi_type_data_type, array->componentType);
 
     array->ffiTypes = xcalloc(array->length + 1, sizeof(*array->ffiTypes));

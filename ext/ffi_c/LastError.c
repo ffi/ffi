@@ -91,14 +91,21 @@ thread_data_free(void *ptr)
 }
 
 #else
+static size_t
+thread_data_memsize(const void *data) {
+    return sizeof(ThreadData);
+}
+
 static const rb_data_type_t thread_data_data_type = {
     .wrap_struct_name = "FFI::ThreadData",
     .function = {
         .dmark = NULL,
         .dfree = RUBY_TYPED_DEFAULT_FREE,
-        .dsize = NULL,
+        .dsize = thread_data_memsize,
     },
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static ID id_thread_data;
