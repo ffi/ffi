@@ -322,4 +322,21 @@ describe "Library" do
       expect(val[:data]).to eq(i)
     end
   end
+
+  describe "Symbol" do
+    before do
+      @libtest = FFI::DynamicLibrary.open(
+        TestLibrary::PATH,
+        FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_GLOBAL,
+      )
+    end
+
+    it "has a memsize function", skip: RUBY_ENGINE != "ruby" do
+      base_size = ObjectSpace.memsize_of(Object.new)
+
+      symbol = @libtest.find_symbol("gvar_gstruct_set")
+      size = ObjectSpace.memsize_of(symbol)
+      expect(size).to be > base_size
+    end
+  end
 end
