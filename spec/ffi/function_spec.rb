@@ -103,4 +103,12 @@ describe FFI::Function do
     fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
     expect { fp.free }.to raise_error RuntimeError
   end
+
+  it 'has a memsize function', skip: RUBY_ENGINE != "ruby" do
+    base_size = ObjectSpace.memsize_of(Object.new)
+
+    function = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
+    size = ObjectSpace.memsize_of(function)
+    expect(size).to be > base_size
+  end
 end

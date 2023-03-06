@@ -77,6 +77,7 @@ typedef struct Function_ {
 
 static void function_mark(void *data);
 static void function_free(void *data);
+static size_t function_memsize(const void *data);
 static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
 static void callback_invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
 static bool callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errmsgsize);
@@ -100,10 +101,12 @@ static const rb_data_type_t function_data_type = {
     .function = {
         .dmark = function_mark,
         .dfree = function_free,
-        .dsize = NULL,
+        .dsize = function_memsize,
     },
     .parent = &rbffi_pointer_data_type,
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 VALUE rbffi_FunctionClass = Qnil;
@@ -153,9 +156,9 @@ function_allocate(VALUE klass)
     obj = TypedData_Make_Struct(klass, Function, &function_data_type, fn);
 
     fn->base.memory.flags = MEM_RD;
-    fn->base.rbParent = Qnil;
-    fn->rbProc = Qnil;
-    fn->rbFunctionInfo = Qnil;
+    RB_OBJ_WRITE(obj, &fn->base.rbParent, Qnil);
+    RB_OBJ_WRITE(obj, &fn->rbProc, Qnil);
+    RB_OBJ_WRITE(obj, &fn->rbFunctionInfo, Qnil);
     fn->autorelease = true;
 
     return obj;
@@ -183,6 +186,20 @@ function_free(void *data)
     }
 
     xfree(fn);
+}
+
+static size_t
+function_memsize(const void *data)
+{
+    const Function *fn = (const Function *)data;
+    size_t memsize = sizeof(Function);
+
+    // Would be nice to better account for MethodHandle and Closure too.
+    if (fn->closure) {
+        memsize += sizeof(Closure);
+    }
+
+    return memsize;
 }
 
 /*
@@ -313,7 +330,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
     TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
-    fn->rbFunctionInfo = rbFunctionInfo;
+    RB_OBJ_WRITE(self, &fn->rbFunctionInfo, rbFunctionInfo);
 
     TypedData_Get_Struct(fn->rbFunctionInfo, FunctionType, &rbffi_fntype_data_type, fn->info);
 
@@ -321,7 +338,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         Pointer* orig;
         TypedData_Get_Struct(rbProc, Pointer, &rbffi_pointer_data_type, orig);
         fn->base.memory = orig->memory;
-        fn->base.rbParent = rbProc;
+        RB_OBJ_WRITE(self, &fn->base.rbParent, rbProc);
 
     } else if (rb_obj_is_kind_of(rbProc, rb_cProc) || rb_respond_to(rbProc, id_call)) {
         if (fn->info->closurePool == NULL) {
@@ -357,7 +374,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
                 rb_obj_classname(rbProc));
     }
 
-    fn->rbProc = rbProc;
+    RB_OBJ_WRITE(self, &fn->rbProc, rbProc);
 
     return self;
 }
