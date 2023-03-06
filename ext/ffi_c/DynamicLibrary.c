@@ -50,7 +50,6 @@
 
 typedef struct LibrarySymbol_ {
     Pointer base;
-    VALUE library;
     VALUE name;
 } LibrarySymbol;
 
@@ -62,6 +61,7 @@ static void library_free(void *);
 static VALUE symbol_allocate(VALUE klass);
 static VALUE symbol_new(VALUE library, void* address, VALUE name);
 static void symbol_mark(void *data);
+static size_t symbol_memsize(const void *data);
 
 static const rb_data_type_t rbffi_library_data_type = {
     .wrap_struct_name = "FFI::DynamicLibrary",
@@ -78,10 +78,12 @@ static const rb_data_type_t library_symbol_data_type = {
     .function = {
         .dmark = symbol_mark,
         .dfree = RUBY_TYPED_DEFAULT_FREE,
-        .dsize = NULL,
+        .dsize = symbol_memsize,
     },
     .parent = &rbffi_pointer_data_type,
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static VALUE LibraryClass = Qnil, SymbolClass = Qnil;
@@ -223,9 +225,8 @@ symbol_allocate(VALUE klass)
 {
     LibrarySymbol* sym;
     VALUE obj = TypedData_Make_Struct(klass, LibrarySymbol, &library_symbol_data_type, sym);
-    sym->name = Qnil;
-    sym->library = Qnil;
-    sym->base.rbParent = Qnil;
+    RB_OBJ_WRITE(obj, &sym->base.rbParent, Qnil);
+    RB_OBJ_WRITE(obj, &sym->name, Qnil);
 
     return obj;
 }
@@ -254,8 +255,8 @@ symbol_new(VALUE library, void* address, VALUE name)
     sym->base.memory.size = LONG_MAX;
     sym->base.memory.typeSize = 1;
     sym->base.memory.flags = MEM_RD | MEM_WR;
-    sym->library = library;
-    sym->name = name;
+    RB_OBJ_WRITE(obj, &sym->base.rbParent, library);
+    RB_OBJ_WRITE(obj, &sym->name, name);
 
     return obj;
 }
@@ -264,8 +265,14 @@ static void
 symbol_mark(void *data)
 {
     LibrarySymbol *sym = (LibrarySymbol *)data;
-    rb_gc_mark(sym->library);
+    rb_gc_mark(sym->base.rbParent);
     rb_gc_mark(sym->name);
+}
+
+static size_t
+symbol_memsize(const void *data)
+{
+    return sizeof(LibrarySymbol);
 }
 
 /*
@@ -356,4 +363,3 @@ rbffi_DynamicLibrary_Init(VALUE moduleFFI)
 #undef DEF
 
 }
-
