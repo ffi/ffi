@@ -280,7 +280,7 @@ symbol_inspect(VALUE self)
     char buf[256];
 
     TypedData_Get_Struct(self, LibrarySymbol, &library_symbol_data_type, sym);
-    snprintf(buf, sizeof(buf), "#<FFI::Library::Symbol name=%s address=%p>",
+    snprintf(buf, sizeof(buf), "#<FFI::DynamicLibrary::Symbol name=%s address=%p>",
              StringValueCStr(sym->name), sym->base.memory.address);
     return rb_str_new2(buf);
 }
