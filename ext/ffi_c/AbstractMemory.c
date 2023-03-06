@@ -693,22 +693,17 @@ memory_copy_from(VALUE self, VALUE rbsrc, VALUE rblen)
 
     TypedData_Get_Struct(self, AbstractMemory, &rbffi_abstract_memory_data_type, dst);
 
-    memcpy(dst->address, rbffi_AbstractMemory_Cast(rbsrc, rbffi_AbstractMemoryClass)->address, NUM2INT(rblen));
+    memcpy(dst->address, rbffi_AbstractMemory_Cast(rbsrc, &rbffi_abstract_memory_data_type)->address, NUM2INT(rblen));
 
     return self;
 }
 
 AbstractMemory*
-rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass)
+rbffi_AbstractMemory_Cast(VALUE obj, const rb_data_type_t *data_type)
 {
-    if (rb_obj_is_kind_of(obj, klass)) {
-        AbstractMemory* memory;
-        TypedData_Get_Struct(obj, AbstractMemory, &rbffi_abstract_memory_data_type, memory);
-        return memory;
-    }
-
-    rb_raise(rb_eArgError, "Invalid Memory object");
-    return NULL;
+    AbstractMemory* memory;
+    TypedData_Get_Struct(obj, AbstractMemory, data_type, memory);
+    return memory;
 }
 
 void

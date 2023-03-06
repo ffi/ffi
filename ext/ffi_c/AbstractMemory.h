@@ -92,7 +92,7 @@ extern MemoryOps rbffi_AbstractMemoryOps;
 
 extern void rbffi_AbstractMemory_Init(VALUE ffiModule);
 
-extern AbstractMemory* rbffi_AbstractMemory_Cast(VALUE obj, VALUE klass);
+extern AbstractMemory* rbffi_AbstractMemory_Cast(VALUE obj, const rb_data_type_t *data_type);
 
 extern void rbffi_AbstractMemory_Error(AbstractMemory *, int op);
 
@@ -162,7 +162,7 @@ get_memory_op(Type* type)
     }
 }
 
-#define MEMORY(obj) rbffi_AbstractMemory_Cast((obj), rbffi_AbstractMemoryClass)
+#define MEMORY(obj) rbffi_AbstractMemory_Cast((obj), &rbffi_abstract_memory_data_type)
 #define MEMORY_PTR(obj) MEMORY((obj))->address
 #define MEMORY_LEN(obj) MEMORY((obj))->size
 
