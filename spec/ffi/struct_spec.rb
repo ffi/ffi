@@ -1027,6 +1027,40 @@ describe "variable-length arrays" do
   end
 end
 
+describe "Struct memsize functions", skip: RUBY_ENGINE != "ruby" do
+  class SmallCustomStruct < FFI::Struct
+    layout :pointer, :pointer
+  end
+
+  class LargerCustomStruct < FFI::Struct
+    layout :pointer, :pointer,
+      :c, :char,
+      :i, :int
+  end
+
+  it "StructLayout has a memsize function" do
+    base_size = ObjectSpace.memsize_of(Object.new)
+
+    layout = SmallCustomStruct.layout
+    size = ObjectSpace.memsize_of(layout)
+    expect(size).to be > base_size
+    base_size = size
+
+    layout = LargerCustomStruct.layout
+    size = ObjectSpace.memsize_of(layout)
+    expect(size).to be > base_size
+  end
+
+  it "StructField has a memsize function" do
+    base_size = ObjectSpace.memsize_of(Object.new)
+
+    layout = SmallCustomStruct.layout
+    size = ObjectSpace.memsize_of(layout[:pointer])
+    expect(size).to be > base_size
+  end
+end
+
+
 describe "Struct order" do
   before :all do
     @struct = Class.new(FFI::Struct) do
