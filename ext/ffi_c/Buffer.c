@@ -52,16 +52,20 @@ static VALUE buffer_initialize(int argc, VALUE* argv, VALUE self);
 static void buffer_release(void *data);
 static void buffer_mark(void *data);
 static VALUE buffer_free(VALUE self);
+static size_t allocated_buffer_memsize(const void *data);
+static size_t buffer_memsize(const void *data);
 
 static const rb_data_type_t buffer_data_type = {
     .wrap_struct_name = "FFI::Buffer",
     .function = {
         .dmark = buffer_mark,
         .dfree = RUBY_TYPED_DEFAULT_FREE,
-        .dsize = NULL,
+        .dsize = buffer_memsize,
     },
     .parent = &rbffi_abstract_memory_data_type,
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static const rb_data_type_t allocated_buffer_data_type = {
@@ -69,10 +73,12 @@ static const rb_data_type_t allocated_buffer_data_type = {
     .function = {
         .dmark = NULL,
         .dfree = buffer_release,
-        .dsize = NULL,
+        .dsize = allocated_buffer_memsize,
     },
     .parent = &buffer_data_type,
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+    // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+    // macro to update VALUE references, as to trigger write barriers.
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 
@@ -85,7 +91,7 @@ buffer_allocate(VALUE klass)
     VALUE obj;
 
     obj = TypedData_Make_Struct(klass, Buffer, &allocated_buffer_data_type, buffer);
-    buffer->data.rbParent = Qnil;
+    RB_OBJ_WRITE(obj, &buffer->data.rbParent, Qnil);
     buffer->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
@@ -204,7 +210,7 @@ slice(VALUE self, long offset, long len)
     result->memory.size = len;
     result->memory.flags = ptr->memory.flags;
     result->memory.typeSize = ptr->memory.typeSize;
-    result->data.rbParent = self;
+    RB_OBJ_WRITE(obj, &result->data.rbParent, self);
 
     return obj;
 }
@@ -332,6 +338,23 @@ buffer_mark(void *data)
 {
     Buffer *ptr = (Buffer *)data;
     rb_gc_mark(ptr->data.rbParent);
+}
+
+static size_t
+buffer_memsize(const void *data)
+{
+    return sizeof(Buffer);
+}
+
+static size_t
+allocated_buffer_memsize(const void *data)
+{
+    const Buffer *ptr = (const Buffer *)data;
+    size_t memsize = sizeof(Buffer);
+    if ((ptr->memory.flags & MEM_EMBED) == 0 && ptr->data.storage != NULL) {
+        memsize += ptr->memory.size;
+    }
+    return memsize;
 }
 
 void
