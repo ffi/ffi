@@ -157,7 +157,7 @@ type_inspect(VALUE self)
 
     TypedData_Get_Struct(self, Type, &rbffi_type_data_type, type);
 
-    snprintf(buf, sizeof(buf), "#<%s:%p size=%d alignment=%d>",
+    snprintf(buf, sizeof(buf), "#<%s::%p size=%d alignment=%d>",
             rb_obj_classname(self), type, (int) type->ffiType->size, (int) type->ffiType->alignment);
 
     return rb_str_new2(buf);
@@ -198,7 +198,7 @@ builtin_type_inspect(VALUE self)
     BuiltinType *type;
 
     TypedData_Get_Struct(self, BuiltinType, &builtin_type_data_type, type);
-    snprintf(buf, sizeof(buf), "#<%s:%s size=%d alignment=%d>",
+    snprintf(buf, sizeof(buf), "#<%s::%s size=%d alignment=%d>",
             rb_obj_classname(self), type->name, (int) type->type.ffiType->size, type->type.ffiType->alignment);
 
     return rb_str_new2(buf);
