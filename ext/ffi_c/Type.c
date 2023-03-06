@@ -39,13 +39,14 @@
 #include "Types.h"
 #include "Type.h"
 
+static size_t type_memsize(const void *);
 
 typedef struct BuiltinType_ {
     Type type;
-    char* name;
+    const char* name;
 } BuiltinType;
 
-static void builtin_type_free(void *);
+static size_t builtin_type_memsize(const void *);
 
 VALUE rbffi_TypeClass = Qnil;
 
@@ -59,21 +60,31 @@ const rb_data_type_t rbffi_type_data_type = { /* extern */
   .function = {
       .dmark = NULL,
       .dfree = RUBY_TYPED_DEFAULT_FREE,
-      .dsize = NULL,
+      .dsize = type_memsize,
   },
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+  // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+  // macro to update VALUE references, as to trigger write barriers.
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 static const rb_data_type_t builtin_type_data_type = {
   .wrap_struct_name = "FFI::Type::Builtin",
   .function = {
       .dmark = NULL,
-      .dfree = builtin_type_free,
-      .dsize = NULL,
+      .dfree = RUBY_TYPED_DEFAULT_FREE,
+      .dsize = builtin_type_memsize,
   },
   .parent = &rbffi_type_data_type,
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+  // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+  // macro to update VALUE references, as to trigger write barriers.
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
+
+static size_t
+type_memsize(const void *data)
+{
+    return sizeof(Type);
+}
 
 static VALUE
 type_allocate(VALUE klass)
@@ -83,7 +94,7 @@ type_allocate(VALUE klass)
 
     type->nativeType = -1;
     type->ffiType = &ffi_type_void;
-    
+
     return obj;
 }
 
@@ -170,20 +181,18 @@ builtin_type_new(VALUE klass, int nativeType, ffi_type* ffiType, const char* nam
     VALUE obj = Qnil;
 
     obj = TypedData_Make_Struct(klass, BuiltinType, &builtin_type_data_type, type);
-    
-    type->name = strdup(name);
+
+    type->name = name;
     type->type.nativeType = nativeType;
     type->type.ffiType = ffiType;
 
     return obj;
 }
 
-static void
-builtin_type_free(void *data)
+static size_t
+builtin_type_memsize(const void *data)
 {
-    BuiltinType *type = (BuiltinType *)data;
-    free(type->name);
-    xfree(type);
+    return sizeof(BuiltinType) + sizeof(ffi_type);
 }
 
 /*

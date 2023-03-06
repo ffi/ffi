@@ -44,7 +44,7 @@ extern "C" {
 typedef struct Type_ Type;
 
 #include "Types.h"
-    
+
 struct Type_ {
     NativeType nativeType;
     ffi_type* ffiType;

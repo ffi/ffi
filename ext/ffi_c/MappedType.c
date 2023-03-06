@@ -39,6 +39,7 @@
 static VALUE mapped_allocate(VALUE);
 static VALUE mapped_initialize(VALUE, VALUE);
 static void mapped_mark(void *);
+static size_t mapped_memsize(const void *);
 static ID id_native_type, id_to_native, id_from_native;
 
 VALUE rbffi_MappedTypeClass = Qnil;
@@ -48,10 +49,12 @@ static const rb_data_type_t mapped_type_data_type = {
   .function = {
       .dmark = mapped_mark,
       .dfree = RUBY_TYPED_DEFAULT_FREE,
-      .dsize = NULL,
+      .dsize = mapped_memsize,
   },
   .parent = &rbffi_type_data_type,
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+  // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
+  // macro to update VALUE references, as to trigger write barriers.
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
 };
 
 
@@ -62,8 +65,8 @@ mapped_allocate(VALUE klass)
 
     VALUE obj = TypedData_Make_Struct(klass, MappedType, &mapped_type_data_type, m);
 
-    m->rbConverter = Qnil;
-    m->rbType = Qnil;
+    RB_OBJ_WRITE(obj, &m->rbConverter, Qnil);
+    RB_OBJ_WRITE(obj, &m->rbType, Qnil);
     m->type = NULL;
     m->base.nativeType = NATIVE_MAPPED;
     m->base.ffiType = &ffi_type_void;
@@ -95,12 +98,12 @@ mapped_initialize(VALUE self, VALUE rbConverter)
     }
 
     TypedData_Get_Struct(self, MappedType, &mapped_type_data_type, m);
-    m->rbType = rb_funcall2(rbConverter, id_native_type, 0, NULL);
+    RB_OBJ_WRITE(self, &m->rbType, rb_funcall2(rbConverter, id_native_type, 0, NULL));
     if (!(rb_obj_is_kind_of(m->rbType, rbffi_TypeClass))) {
         rb_raise(rb_eTypeError, "native_type did not return instance of FFI::Type");
     }
 
-    m->rbConverter = rbConverter;
+    RB_OBJ_WRITE(self, &m->rbConverter, rbConverter);
     TypedData_Get_Struct(m->rbType, Type, &rbffi_type_data_type, m->type);
     m->base.ffiType = m->type->ffiType;
 
@@ -113,6 +116,12 @@ mapped_mark(void* data)
     MappedType* m = (MappedType*)data;
     rb_gc_mark(m->rbType);
     rb_gc_mark(m->rbConverter);
+}
+
+static size_t
+mapped_memsize(const void *data)
+{
+    return sizeof(MappedType);
 }
 
 /*
