@@ -9,7 +9,7 @@ logfile = File.join(File.dirname(__FILE__), 'log')
 
 file types_conf do |task|
   options = {}
-  FileUtils.mkdir_p(File.dirname(task.name), { :mode => 0755 })
+  FileUtils.mkdir_p(File.dirname(task.name), mode: 0755)
   File.open(task.name, File::CREAT|File::TRUNC|File::RDWR, 0644) do |f|
     f.puts FFI::TypesGenerator.generate(options)
   end
