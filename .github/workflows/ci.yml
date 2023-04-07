@@ -4,66 +4,162 @@ permissions:
   contents: read
 
 jobs:
-  system-libffi:
-    # Run on latest MRI with explicit selection of system or builtin libffi
+  # system-libffi:
+  #   # Run on latest MRI with explicit selection of system or builtin libffi
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ ubuntu, macos, windows ]
+  #       extconfopts: [ --disable-system-libffi, --enable-system-libffi ]
+  #       extconfopts2: [ --disable-libffi-alloc, --enable-libffi-alloc ]
+  #   runs-on: ${{ matrix.os }}-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - uses: ruby/setup-ruby@v1
+  #     with:
+  #       ruby-version: 2.7
+  #
+  #   - if: matrix.os == 'macos'
+  #     run: brew install automake libffi pkg-config
+  #
+  #   - if: matrix.os == 'windows' && matrix.extconfopts == '--enable-system-libffi'
+  #     shell: cmd
+  #     run: ridk exec sh -c "pacman --sync --refresh --needed --noconfirm  ${MINGW_PACKAGE_PREFIX}-libffi"
+  #
+  #   - run: bundle install
+  #   - run: bundle exec rake libffi
+  #   - run: bundle exec rake compile -- ${{ matrix.extconfopts }} ${{ matrix.extconfopts2 }}
+  #     env:
+  #       # work around misconfiguration of libffi on MacOS with homebrew
+  #       PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}:/usr/local/opt/libffi/lib/pkgconfig
+  #   - run: bundle exec rake test FFI_TEST_GC=true
+  #   - run: bundle exec rake types_conf && git --no-pager diff
+  #
+  # specs:
+  #   # Run all specs on all ruby implementations
+  #   # Use automatic libffi selection on MRI
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ ubuntu, macos, windows ]
+  #       ruby: [ 2.3, 2.4, 2.5, 2.6, 2.7, '3.0', 3.1, 3.2, ruby-head, truffleruby-head, jruby-head ]
+  #       exclude:
+  #       - os: windows
+  #         ruby: truffleruby-head
+  #       - os: windows
+  #         ruby: 2.3 # compilation fails
+  #   runs-on: ${{ matrix.os }}-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - uses: ruby/setup-ruby@v1
+  #     with:
+  #       ruby-version: ${{ matrix.ruby }}
+  #
+  #   - run: brew install automake
+  #     if: matrix.os == 'macos'
+  #
+  #   - run: bundle install
+  #   - run: bundle exec rake libffi
+  #   - run: bundle exec rake compile
+  #
+  #   - if: matrix.os != 'windows'
+  #     run: bundle exec rake test FFI_TEST_GC=true
+  #
+  #   - run: bundle exec rake bench:all
+  #     if: ${{ matrix.ruby != 'truffleruby-head' && matrix.ruby != 'jruby-head' }}
+  #     env:
+  #       ITER: 10
+
+  rcd_build:
+    name: build fat binary gems
+
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu, macos, windows ]
-        extconfopts: [ --disable-system-libffi, --enable-system-libffi ]
-        extconfopts2: [ --disable-libffi-alloc, --enable-libffi-alloc ]
-    runs-on: ${{ matrix.os }}-latest
+        platform:
+          - x86-mingw32
+          - x64-mingw-ucrt
+          - x64-mingw32
+          - x86-linux
+          - x86_64-linux
+          - x86_64-darwin
+          - arm64-darwin
+          - arm-linux
+          - aarch64-linux
+
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM: ${{ matrix.platform }}
     steps:
-    - uses: actions/checkout@v3
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 2.7
+      - uses: actions/checkout@v3
 
-    - if: matrix.os == 'macos'
-      run: brew install automake libffi pkg-config
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
 
-    - if: matrix.os == 'windows' && matrix.extconfopts == '--enable-system-libffi'
-      shell: cmd
-      run: ridk exec sh -c "pacman --sync --refresh --needed --noconfirm  ${MINGW_PACKAGE_PREFIX}-libffi"
+      - name: Build ffi.gem
+        run: |
+          bundle install
+          bundle exec rake libffi
+          bundle exec rake gem:${PLATFORM}
 
-    - run: bundle install
-    - run: bundle exec rake libffi
-    - run: bundle exec rake compile -- ${{ matrix.extconfopts }} ${{ matrix.extconfopts2 }}
-      env:
-        # work around misconfiguration of libffi on MacOS with homebrew
-        PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}:/usr/local/opt/libffi/lib/pkgconfig
-    - run: bundle exec rake test FFI_TEST_GC=true
-    - run: bundle exec rake types_conf && git --no-pager diff
+      - name: Upload binary gem
+        uses: actions/upload-artifact@v3
+        with:
+          name: gem-${{ matrix.platform }}
+          path: pkg/*-*-*.gem
 
-  specs:
-    # Run all specs on all ruby implementations
-    # Use automatic libffi selection on MRI
+  job_test_native:
+    name: native test
+    needs: rcd_build
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu, macos, windows ]
-        ruby: [ 2.5, 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, ruby-head, truffleruby-head, jruby-head ]
+        os:
+          - windows
+          - macos
+          - ubuntu
+        ruby:
+          - "3.2"
+          - "3.1"
+          - "3.0"
+          - "2.7"
+          - "2.6"
+          - "2.5"
+          - "2.4"
+        include:
+          - os: windows
+            platform: x64-mingw32
+          - os: macos
+            platform: x86_64-darwin
+          - os: ubuntu
+            platform: x86_64-linux
+          - os: windows
+            ruby: "3.1"
+            platform: x64-mingw-ucrt
+          - os: windows
+            ruby: "3.2"
+            platform: x64-mingw-ucrt
         exclude:
-        - os: windows
-          ruby: truffleruby-head
+          - os: windows
+            ruby: "3.1"
+          - os: windows
+            ruby: "3.2"
+
     runs-on: ${{ matrix.os }}-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby }}
-
-    - run: brew install automake
-      if: matrix.os == 'macos'
-
-    - run: bundle install
-    - run: bundle exec rake libffi
-    - run: bundle exec rake compile
-
-    - if: matrix.os != 'windows'
-      run: bundle exec rake test FFI_TEST_GC=true
-
-    - run: bundle exec rake bench:all
-      if: ${{ matrix.ruby != 'truffleruby-head' && matrix.ruby != 'jruby-head' }}
-      env:
-        ITER: 10
+      - uses: actions/checkout@v3
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - run: ruby --version
+      - name: Download gem-${{matrix.platform}}
+        uses: actions/download-artifact@v3
+        with:
+          name: gem-${{ matrix.platform }}
+      - name: Install gem-${{matrix.platform}}
+        run: gem install --local *.gem --verbose
+      - name: Run tests
+        run: |
+          bundle install
+          ruby -rffi -S rake test

@@ -13,7 +13,7 @@ BUILD_EXT_DIR = File.join(BUILD_DIR, "#{RbConfig::CONFIG['arch']}", 'ffi_c', RUB
 
 gem_spec = Bundler.load_gemspec('ffi.gemspec')
 
-RSpec::Core::RakeTask.new(:spec => :compile) do |config|
+RSpec::Core::RakeTask.new(:spec) do |config|
   config.rspec_opts = YAML.load_file 'spec/spec.opts'
 end
 
