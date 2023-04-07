@@ -1,0 +1,23 @@
+ARG from_image
+FROM ${from_image}
+
+RUN uname -a
+
+# Change download address of Centos-8 which is EOL
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+
+RUN yum install -y ruby git gcc make
+
+RUN ruby --version
+RUN gem env
+
+# centos-8 comes with Ruby 2.5, and this is the last version of bundler that supports it
+RUN gem install bundler -v2.2.28
+
+WORKDIR /build
+
+CMD ruby -e "puts Gem::Platform.local.to_s" && \
+  gem install --local *.gem --verbose --no-document && \
+  bundle install && \
+  ruby -rffi -S rake test
