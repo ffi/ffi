@@ -137,7 +137,9 @@ jobs:
           - os: macos
             platform: x86_64-darwin
           - os: ubuntu
-            platform: x86_64-linux
+            platform: x86_64-linux-gnu
+          - os: ubuntu
+            platform: x86_64-linux-musl
           - os: windows
             ruby: "3.1"
             platform: x64-mingw-ucrt
@@ -167,3 +169,39 @@ jobs:
         run: |
           bundle install
           ruby -rffi -S rake test
+
+  job_fat_binary_multiarch:
+    name: multiarch (${{matrix.platform}} on ${{matrix.from_image}})
+    needs: rcd_build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - from_image: amd64/centos
+            platform: x86_64-linux-gnu
+            dockerfile: centos
+          - from_image: navikey/raspbian-bullseye
+            platform: arm-linux-gnu
+            dockerfile: debian
+          - from_image: arm64v8/ubuntu
+            platform: aarch64-linux-gnu
+            dockerfile: debian
+          - from_image: i386/alpine
+            platform: x86-linux-musl
+            dockerfile: alpine
+          - from_image: arm32v6/alpine
+            platform: arm-linux-musl
+            dockerfile: alpine
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download gem-${{matrix.platform}}
+        uses: actions/download-artifact@v3
+        with:
+          name: gem-${{ matrix.platform }}
+      - name: Build image and Run tests
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          docker build --rm --build-arg from_image=${{matrix.from_image}} -t ruby-test -f spec/env/Dockerfile.${{matrix.dockerfile}} .
+          docker run --rm -t --network=host -v `pwd`:/build ruby-test
