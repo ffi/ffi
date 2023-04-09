@@ -61,6 +61,7 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   append_ldflags "-pthread"
 
   ffi_alloc_default = RbConfig::CONFIG['host_os'] =~ /darwin/i && RbConfig::CONFIG['host'] =~ /arm|aarch64/i
+  ffi_alloc_default = ffi_alloc_default || RbConfig::CONFIG['host'] =~ /hppa/i
   if enable_config('libffi-alloc', ffi_alloc_default)
     $defs << "-DUSE_FFI_ALLOC"
   end
