@@ -52,6 +52,7 @@
 static VALUE fntype_allocate(VALUE klass);
 static VALUE fntype_initialize(int argc, VALUE* argv, VALUE self);
 static void fntype_mark(void *);
+static void fntype_compact(void *);
 static void fntype_free(void *);
 static size_t fntype_memsize(const void *);
 
@@ -61,6 +62,7 @@ const rb_data_type_t rbffi_fntype_data_type = { /* extern */
         .dmark = fntype_mark,
         .dfree = fntype_free,
         .dsize = fntype_memsize,
+        ffi_compact_callback( fntype_compact )
     },
     .parent = &rbffi_type_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -91,11 +93,27 @@ static void
 fntype_mark(void *data)
 {
     FunctionType *fnInfo = (FunctionType *)data;
-    rb_gc_mark(fnInfo->rbReturnType);
-    rb_gc_mark(fnInfo->rbParameterTypes);
-    rb_gc_mark(fnInfo->rbEnums);
+    rb_gc_mark_movable(fnInfo->rbReturnType);
+    rb_gc_mark_movable(fnInfo->rbParameterTypes);
+    rb_gc_mark_movable(fnInfo->rbEnums);
     if (fnInfo->callbackCount > 0 && fnInfo->callbackParameters != NULL) {
-        rb_gc_mark_locations(&fnInfo->callbackParameters[0], &fnInfo->callbackParameters[fnInfo->callbackCount]);
+        for (size_t index = 0; index < fnInfo->callbackCount; index++) {
+            rb_gc_mark_movable(fnInfo->callbackParameters[index]);
+        }
+    }
+}
+
+static void
+fntype_compact(void *data)
+{
+    FunctionType *fnInfo = (FunctionType *)data;
+    ffi_gc_location(fnInfo->rbReturnType);
+    ffi_gc_location(fnInfo->rbParameterTypes);
+    ffi_gc_location(fnInfo->rbEnums);
+    if (fnInfo->callbackCount > 0 && fnInfo->callbackParameters != NULL) {
+        for (size_t index = 0; index < fnInfo->callbackCount; index++) {
+            ffi_gc_location(fnInfo->callbackParameters[index]);
+        }
     }
 }
 

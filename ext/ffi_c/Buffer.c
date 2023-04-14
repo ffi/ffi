@@ -51,6 +51,7 @@ static VALUE buffer_allocate(VALUE klass);
 static VALUE buffer_initialize(int argc, VALUE* argv, VALUE self);
 static void buffer_release(void *data);
 static void buffer_mark(void *data);
+static void buffer_compact(void *data);
 static VALUE buffer_free(VALUE self);
 static size_t allocated_buffer_memsize(const void *data);
 static size_t buffer_memsize(const void *data);
@@ -61,6 +62,7 @@ static const rb_data_type_t buffer_data_type = {
         .dmark = buffer_mark,
         .dfree = RUBY_TYPED_DEFAULT_FREE,
         .dsize = buffer_memsize,
+        ffi_compact_callback( buffer_compact )
     },
     .parent = &rbffi_abstract_memory_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -337,7 +339,14 @@ static void
 buffer_mark(void *data)
 {
     Buffer *ptr = (Buffer *)data;
-    rb_gc_mark(ptr->data.rbParent);
+    rb_gc_mark_movable(ptr->data.rbParent);
+}
+
+static void
+buffer_compact(void *data)
+{
+    Buffer *ptr = (Buffer *)data;
+    ffi_gc_location(ptr->data.rbParent);
 }
 
 static size_t

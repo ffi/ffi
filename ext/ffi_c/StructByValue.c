@@ -50,6 +50,7 @@
 static VALUE sbv_allocate(VALUE);
 static VALUE sbv_initialize(VALUE, VALUE);
 static void sbv_mark(void *);
+static void sbv_compact(void *);
 static void sbv_free(void *);
 static size_t sbv_memsize(const void *);
 
@@ -61,6 +62,7 @@ static const rb_data_type_t sbv_type_data_type = {
       .dmark = sbv_mark,
       .dfree = sbv_free,
       .dsize = sbv_memsize,
+      ffi_compact_callback( sbv_compact )
   },
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -106,7 +108,7 @@ sbv_initialize(VALUE self, VALUE rbStructClass)
 
     /* We can just use everything from the ffi_type directly */
     *sbv->base.ffiType = *layout->base.ffiType;
-    
+
     return self;
 }
 
@@ -114,8 +116,16 @@ static void
 sbv_mark(void *data)
 {
     StructByValue *sbv = (StructByValue *)data;
-    rb_gc_mark(sbv->rbStructClass);
-    rb_gc_mark(sbv->rbStructLayout);
+    rb_gc_mark_movable(sbv->rbStructClass);
+    rb_gc_mark_movable(sbv->rbStructLayout);
+}
+
+static void
+sbv_compact(void *data)
+{
+    StructByValue *sbv = (StructByValue *)data;
+    ffi_gc_location(sbv->rbStructClass);
+    ffi_gc_location(sbv->rbStructLayout);
 }
 
 static void

@@ -62,11 +62,13 @@ typedef struct InlineArray_ {
 
 
 static void struct_mark(void *data);
+static void struct_compact(void *data);
 static void struct_free(void *data);
 static size_t struct_memsize(const void *);
 static VALUE struct_class_layout(VALUE klass);
 static void struct_malloc(VALUE self, Struct* s);
 static void inline_array_mark(void *);
+static void inline_array_compact(void *);
 static size_t inline_array_memsize(const void *);
 static void store_reference_value(VALUE self, StructField* f, Struct* s, VALUE value);
 
@@ -76,6 +78,7 @@ const rb_data_type_t rbffi_struct_data_type = { /* extern */
         .dmark = struct_mark,
         .dfree = struct_free,
         .dsize = struct_memsize,
+        ffi_compact_callback( struct_compact )
     },
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
@@ -262,10 +265,25 @@ static void
 struct_mark(void *data)
 {
     Struct *s = (Struct *)data;
-    rb_gc_mark(s->rbPointer);
-    rb_gc_mark(s->rbLayout);
+    rb_gc_mark_movable(s->rbPointer);
+    rb_gc_mark_movable(s->rbLayout);
     if (s->rbReferences != NULL) {
-        rb_gc_mark_locations(&s->rbReferences[0], &s->rbReferences[s->layout->referenceFieldCount]);
+        for (size_t index = 0; index < s->layout->referenceFieldCount; index++) {
+            rb_gc_mark_movable(s->rbReferences[index]);
+        }
+    }
+}
+
+static void
+struct_compact(void *data)
+{
+    Struct *s = (Struct *)data;
+    ffi_gc_location(s->rbPointer);
+    ffi_gc_location(s->rbLayout);
+    if (s->rbReferences != NULL) {
+        for (size_t index = 0; index < s->layout->referenceFieldCount; index++) {
+            ffi_gc_location(s->rbReferences[index]);
+        }
     }
 }
 
@@ -522,6 +540,7 @@ static const rb_data_type_t inline_array_data_type = {
         .dmark = inline_array_mark,
         .dfree = RUBY_TYPED_DEFAULT_FREE,
         .dsize = inline_array_memsize,
+        ffi_compact_callback( inline_array_compact )
     },
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
@@ -545,8 +564,16 @@ static void
 inline_array_mark(void *data)
 {
     InlineArray *array = (InlineArray *)data;
-    rb_gc_mark(array->rbField);
-    rb_gc_mark(array->rbMemory);
+    rb_gc_mark_movable(array->rbField);
+    rb_gc_mark_movable(array->rbMemory);
+}
+
+static void
+inline_array_compact(void *data)
+{
+    InlineArray *array = (InlineArray *)data;
+    ffi_gc_location(array->rbField);
+    ffi_gc_location(array->rbMemory);
 }
 
 static size_t

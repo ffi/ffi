@@ -61,6 +61,7 @@ static size_t library_memsize(const void *);
 static VALUE symbol_allocate(VALUE klass);
 static VALUE symbol_new(VALUE library, void* address, VALUE name);
 static void symbol_mark(void *data);
+static void symbol_compact(void *data);
 static size_t symbol_memsize(const void *data);
 
 static const rb_data_type_t rbffi_library_data_type = {
@@ -81,6 +82,7 @@ static const rb_data_type_t library_symbol_data_type = {
         .dmark = symbol_mark,
         .dfree = RUBY_TYPED_DEFAULT_FREE,
         .dsize = symbol_memsize,
+        ffi_compact_callback( symbol_compact )
     },
     .parent = &rbffi_pointer_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -273,8 +275,16 @@ static void
 symbol_mark(void *data)
 {
     LibrarySymbol *sym = (LibrarySymbol *)data;
-    rb_gc_mark(sym->base.rbParent);
-    rb_gc_mark(sym->name);
+    rb_gc_mark_movable(sym->base.rbParent);
+    rb_gc_mark_movable(sym->name);
+}
+
+static void
+symbol_compact(void *data)
+{
+    LibrarySymbol *sym = (LibrarySymbol *)data;
+    ffi_gc_location(sym->base.rbParent);
+    ffi_gc_location(sym->name);
 }
 
 static size_t
