@@ -105,7 +105,7 @@ static const rb_data_type_t thread_data_data_type = {
     },
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 static ID id_thread_data;
@@ -173,7 +173,6 @@ get_last_winapi_error(VALUE self)
 static VALUE
 set_last_error(VALUE self, VALUE error)
 {
-
 #ifdef _WIN32
     SetLastError(NUM2INT(error));
 #else

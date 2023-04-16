@@ -219,7 +219,7 @@ module FFI
         end
         builder.size = @size if defined?(@size) && @size > builder.size
         cspec = builder.build
-        @layout = cspec unless self == Struct
+        @layout = FFI.make_shareable(cspec) unless self == Struct
         @size = cspec.size
         return cspec
       end

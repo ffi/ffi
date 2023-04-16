@@ -9,6 +9,7 @@ require 'objspace'
 
 RSpec.configure do |c|
   c.filter_run_excluding :broken => true
+  c.filter_run_excluding( :ractor ) unless defined?(Ractor)
 end
 
 module TestLibrary

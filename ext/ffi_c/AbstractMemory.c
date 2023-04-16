@@ -70,7 +70,7 @@ const rb_data_type_t rbffi_abstract_memory_data_type = { /* extern */
     },
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 static size_t
@@ -316,6 +316,7 @@ static VALUE
 memory_clear(VALUE self)
 {
     AbstractMemory* ptr = MEMORY(self);
+    checkWrite(ptr);
     memset(ptr->address, 0, ptr->size);
     return self;
 }
@@ -685,6 +686,20 @@ memory_copy_from(VALUE self, VALUE rbsrc, VALUE rblen)
     memcpy(dst->address, rbffi_AbstractMemory_Cast(rbsrc, &rbffi_abstract_memory_data_type)->address, NUM2INT(rblen));
 
     return self;
+}
+
+/*
+ * call-seq:
+ *    res.freeze
+ *
+ * Freeze the AbstractMemory object and unset the writable flag.
+ */
+static VALUE
+memory_freeze(VALUE self)
+{
+    AbstractMemory* ptr = MEMORY(self);
+    ptr->flags &= ~MEM_WR;
+    return rb_call_super(0, NULL);
 }
 
 AbstractMemory*
@@ -1102,6 +1117,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "type_size", memory_type_size, 0);
     rb_define_method(classMemory, "[]", memory_aref, 1);
     rb_define_method(classMemory, "__copy_from__", memory_copy_from, 2);
+    rb_define_method(classMemory, "freeze", memory_freeze, 0 );
 
     id_to_ptr = rb_intern("to_ptr");
     id_call = rb_intern("call");

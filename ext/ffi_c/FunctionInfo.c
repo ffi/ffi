@@ -67,7 +67,7 @@ const rb_data_type_t rbffi_fntype_data_type = { /* extern */
     .parent = &rbffi_type_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 VALUE rbffi_FunctionTypeClass = Qnil;

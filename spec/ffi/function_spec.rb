@@ -48,6 +48,30 @@ describe FFI::Function do
     expect(LibTest.testFunctionAdd(10, 10, function_add)).to eq(20)
   end
 
+  def adder(a, b)
+    a + b
+  end
+
+  it "should be shareable for Ractor", :ractor do
+    add = FFI::Function.new(:int, [:int, :int], &method(:adder))
+    Ractor.make_shareable(add)
+
+    res = Ractor.new(add) do |add2|
+      LibTest.testFunctionAdd(10, 10, add2)
+    end.take
+
+    expect( res ).to eq(20)
+  end
+
+  it "should be usable with Ractor", :ractor do
+    res = Ractor.new(@conninfo) do |conninfo|
+      function_add = FFI::Function.new(:int, [:int, :int]) { |a, b| a + b }
+      LibTest.testFunctionAdd(10, 10, function_add)
+    end.take
+
+    expect( res ).to eq(20)
+  end
+
   it 'can be used to wrap an existing function pointer' do
     expect(FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd')).call(10, 10)).to eq(20)
   end

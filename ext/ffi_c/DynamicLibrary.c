@@ -73,7 +73,7 @@ static const rb_data_type_t rbffi_library_data_type = {
     },
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 static const rb_data_type_t library_symbol_data_type = {
@@ -87,7 +87,7 @@ static const rb_data_type_t library_symbol_data_type = {
     .parent = &rbffi_pointer_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 static VALUE LibraryClass = Qnil, SymbolClass = Qnil;

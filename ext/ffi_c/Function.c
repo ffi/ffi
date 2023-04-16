@@ -108,7 +108,7 @@ static const rb_data_type_t function_data_type = {
     .parent = &rbffi_pointer_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 VALUE rbffi_FunctionClass = Qnil;
@@ -462,6 +462,7 @@ function_set_autorelease(VALUE self, VALUE autorelease)
 {
     Function* fn;
 
+    rb_check_frozen(self);
     TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
     fn->autorelease = RTEST(autorelease);
