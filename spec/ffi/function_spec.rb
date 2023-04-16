@@ -59,6 +59,16 @@ describe FFI::Function do
     expect(Foo.add(10, 10)).to eq(20)
   end
 
+  it 'can be attached to two modules' do
+    module Foo1; end
+    module Foo2; end
+    fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
+    fp.attach(Foo1, 'add')
+    fp.attach(Foo2, 'add')
+    expect(Foo1.add(11, 11)).to eq(22)
+    expect(Foo2.add(12, 12)).to eq(24)
+  end
+
   it 'can be used to extend an object' do
     fp = FFI::Function.new(:int, [:int, :int], @libtest.find_function('testAdd'))
     foo = Object.new
