@@ -57,6 +57,8 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     append_ldflags "-Wl,--exclude-libs,ALL"
   end
 
+  have_func 'rb_gc_mark_movable' # since ruby-2.7
+
   # Some linux archs need explicit linking to pthread, see https://github.com/ffi/ffi/issues/893
   append_ldflags "-pthread"
 

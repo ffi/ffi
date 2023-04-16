@@ -79,4 +79,13 @@
 #  define RB_GC_GUARD(x) (x)
 #endif
 
+#ifdef HAVE_RB_GC_MARK_MOVABLE
+#define ffi_compact_callback(x) .dcompact = (x),
+#define ffi_gc_location(x) x = rb_gc_location(x)
+#else
+#define rb_gc_mark_movable(x) rb_gc_mark(x)
+#define ffi_compact_callback(x)
+#define ffi_gc_location(x)
+#endif
+
 #endif /* RBFFI_COMPAT_H */

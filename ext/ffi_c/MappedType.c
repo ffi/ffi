@@ -31,6 +31,7 @@
 
 #include <ffi.h>
 #include "rbffi.h"
+#include "compat.h"
 
 #include "Type.h"
 #include "MappedType.h"
@@ -39,6 +40,7 @@
 static VALUE mapped_allocate(VALUE);
 static VALUE mapped_initialize(VALUE, VALUE);
 static void mapped_mark(void *);
+static void mapped_compact(void *);
 static size_t mapped_memsize(const void *);
 static ID id_native_type, id_to_native, id_from_native;
 
@@ -50,6 +52,7 @@ static const rb_data_type_t mapped_type_data_type = {
       .dmark = mapped_mark,
       .dfree = RUBY_TYPED_DEFAULT_FREE,
       .dsize = mapped_memsize,
+      ffi_compact_callback( mapped_compact )
   },
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -70,7 +73,7 @@ mapped_allocate(VALUE klass)
     m->type = NULL;
     m->base.nativeType = NATIVE_MAPPED;
     m->base.ffiType = &ffi_type_void;
-    
+
     return obj;
 }
 
@@ -84,7 +87,7 @@ static VALUE
 mapped_initialize(VALUE self, VALUE rbConverter)
 {
     MappedType* m = NULL;
-    
+
     if (!rb_respond_to(rbConverter, id_native_type)) {
         rb_raise(rb_eNoMethodError, "native_type method not implemented");
     }
@@ -114,8 +117,16 @@ static void
 mapped_mark(void* data)
 {
     MappedType* m = (MappedType*)data;
-    rb_gc_mark(m->rbType);
-    rb_gc_mark(m->rbConverter);
+    rb_gc_mark_movable(m->rbType);
+    rb_gc_mark_movable(m->rbConverter);
+}
+
+static void
+mapped_compact(void* data)
+{
+    MappedType* m = (MappedType*)data;
+    ffi_gc_location(m->rbType);
+    ffi_gc_location(m->rbConverter);
 }
 
 static size_t
@@ -167,11 +178,11 @@ mapped_from_native(int argc, VALUE* argv, VALUE self)
 void
 rbffi_MappedType_Init(VALUE moduleFFI)
 {
-    /* 
+    /*
      * Document-class: FFI::Type::Mapped < FFI::Type
      */
     rbffi_MappedTypeClass = rb_define_class_under(rbffi_TypeClass, "Mapped", rbffi_TypeClass);
-    
+
     rb_global_variable(&rbffi_MappedTypeClass);
 
     id_native_type = rb_intern("native_type");

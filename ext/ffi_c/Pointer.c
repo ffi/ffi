@@ -43,6 +43,7 @@ VALUE rbffi_NullPointerSingleton = Qnil;
 
 static void ptr_release(void *data);
 static void ptr_mark(void *data);
+static void ptr_compact(void *data);
 static size_t ptr_memsize(const void *data);
 
 const rb_data_type_t rbffi_pointer_data_type = { /* extern */
@@ -51,6 +52,7 @@ const rb_data_type_t rbffi_pointer_data_type = { /* extern */
         .dmark = ptr_mark,
         .dfree = ptr_release,
         .dsize = ptr_memsize,
+        ffi_compact_callback( ptr_compact )
     },
     .parent = &rbffi_abstract_memory_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -471,7 +473,14 @@ static void
 ptr_mark(void *data)
 {
     Pointer *ptr = (Pointer *)data;
-    rb_gc_mark(ptr->rbParent);
+    rb_gc_mark_movable(ptr->rbParent);
+}
+
+static void
+ptr_compact(void *data)
+{
+    Pointer *ptr = (Pointer *)data;
+    ffi_gc_location(ptr->rbParent);
 }
 
 static size_t

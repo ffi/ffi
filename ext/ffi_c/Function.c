@@ -76,6 +76,7 @@ typedef struct Function_ {
 } Function;
 
 static void function_mark(void *data);
+static void function_compact(void *data);
 static void function_free(void *data);
 static size_t function_memsize(const void *data);
 static VALUE function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc);
@@ -102,6 +103,7 @@ static const rb_data_type_t function_data_type = {
         .dmark = function_mark,
         .dfree = function_free,
         .dsize = function_memsize,
+        ffi_compact_callback( function_compact )
     },
     .parent = &rbffi_pointer_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -168,9 +170,18 @@ static void
 function_mark(void *data)
 {
     Function *fn = (Function *)data;
-    rb_gc_mark(fn->base.rbParent);
-    rb_gc_mark(fn->rbProc);
-    rb_gc_mark(fn->rbFunctionInfo);
+    rb_gc_mark_movable(fn->base.rbParent);
+    rb_gc_mark_movable(fn->rbProc);
+    rb_gc_mark_movable(fn->rbFunctionInfo);
+}
+
+static void
+function_compact(void *data)
+{
+    Function *fn = (Function *)data;
+    ffi_gc_location(fn->base.rbParent);
+    ffi_gc_location(fn->rbProc);
+    ffi_gc_location(fn->rbFunctionInfo);
 }
 
 static void

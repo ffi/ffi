@@ -52,9 +52,11 @@
 #define FFI_ALIGN(v, a)  (((((size_t) (v))-1) | ((a)-1))+1)
 
 static void struct_layout_mark(void *);
+static void struct_layout_compact(void *);
 static void struct_layout_free(void *);
 static size_t struct_layout_memsize(const void *);
 static void struct_field_mark(void *);
+static void struct_field_compact(void *);
 static size_t struct_field_memsize(const void *);
 
 VALUE rbffi_StructLayoutFieldClass = Qnil;
@@ -70,6 +72,7 @@ const rb_data_type_t rbffi_struct_layout_data_type = { /* extern */
       .dmark = struct_layout_mark,
       .dfree = struct_layout_free,
       .dsize = struct_layout_memsize,
+      ffi_compact_callback( struct_layout_compact )
   },
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -83,6 +86,7 @@ const rb_data_type_t rbffi_struct_field_data_type = { /* extern */
       .dmark = struct_field_mark,
       .dfree = RUBY_TYPED_DEFAULT_FREE,
       .dsize = struct_field_memsize,
+      ffi_compact_callback( struct_field_compact )
   },
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -107,8 +111,16 @@ static void
 struct_field_mark(void *data)
 {
     StructField *f = (StructField *)data;
-    rb_gc_mark(f->rbType);
-    rb_gc_mark(f->rbName);
+    rb_gc_mark_movable(f->rbType);
+    rb_gc_mark_movable(f->rbName);
+}
+
+static void
+struct_field_compact(void *data)
+{
+    StructField *f = (StructField *)data;
+    ffi_gc_location(f->rbType);
+    ffi_gc_location(f->rbName);
 }
 
 static size_t
@@ -628,12 +640,22 @@ static void
 struct_layout_mark(void *data)
 {
     StructLayout *layout = (StructLayout *)data;
-    rb_gc_mark(layout->rbFieldMap);
-    rb_gc_mark(layout->rbFieldNames);
-    rb_gc_mark(layout->rbFields);
-    for (size_t index = 0; index < FIELD_CACHE_ROWS; index++) {
-        rb_gc_mark(layout->cache_row[index].fieldName);
-    }
+    rb_gc_mark_movable(layout->rbFieldMap);
+    rb_gc_mark_movable(layout->rbFieldNames);
+    rb_gc_mark_movable(layout->rbFields);
+    /* The values stored in layout->cache_row.fieldName are primary stored in layout->rbFieldMap and are marked there */
+}
+
+static void
+struct_layout_compact(void *data)
+{
+    StructLayout *layout = (StructLayout *)data;
+    ffi_gc_location(layout->rbFieldMap);
+    ffi_gc_location(layout->rbFieldNames);
+    ffi_gc_location(layout->rbFields);
+
+    /* Clear the cache, to be safe from changes of fieldName VALUE by GC.compact */
+    memset(&layout->cache_row, 0, sizeof(layout->cache_row));
 }
 
 static void
@@ -645,6 +667,7 @@ struct_layout_free(void *data)
     xfree(layout->fields);
     xfree(layout);
 }
+
 
 static size_t
 struct_layout_memsize(const void * data)

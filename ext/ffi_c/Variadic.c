@@ -66,6 +66,7 @@ static VALUE variadic_allocate(VALUE klass);
 static VALUE variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes,
         VALUE rbReturnType, VALUE options);
 static void variadic_mark(void *);
+static void variadic_compact(void *);
 static size_t variadic_memsize(const void *);
 
 static VALUE classVariadicInvoker = Qnil;
@@ -76,6 +77,7 @@ static const rb_data_type_t variadic_data_type = {
       .dmark = variadic_mark,
       .dfree = RUBY_TYPED_DEFAULT_FREE,
       .dsize = variadic_memsize,
+      ffi_compact_callback( variadic_compact )
   },
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
   // macro to update VALUE references, as to trigger write barriers.
@@ -101,9 +103,18 @@ static void
 variadic_mark(void *data)
 {
     VariadicInvoker *invoker = (VariadicInvoker *)data;
-    rb_gc_mark(invoker->rbEnums);
-    rb_gc_mark(invoker->rbAddress);
-    rb_gc_mark(invoker->rbReturnType);
+    rb_gc_mark_movable(invoker->rbEnums);
+    rb_gc_mark_movable(invoker->rbAddress);
+    rb_gc_mark_movable(invoker->rbReturnType);
+}
+
+static void
+variadic_compact(void *data)
+{
+    VariadicInvoker *invoker = (VariadicInvoker *)data;
+    ffi_gc_location(invoker->rbEnums);
+    ffi_gc_location(invoker->rbAddress);
+    ffi_gc_location(invoker->rbReturnType);
 }
 
 static size_t

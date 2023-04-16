@@ -29,11 +29,13 @@
 
 #include <ruby.h>
 #include <ffi.h>
+#include "compat.h"
 #include "ArrayType.h"
 
 static VALUE array_type_s_allocate(VALUE klass);
 static VALUE array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength);
 static void array_type_mark(void *);
+static void array_type_compact(void *);
 static void array_type_free(void *);
 static size_t array_type_memsize(const void *);
 
@@ -43,6 +45,7 @@ const rb_data_type_t rbffi_array_type_data_type = { /* extern */
       .dmark = array_type_mark,
       .dfree = array_type_free,
       .dsize = array_type_memsize,
+      ffi_compact_callback( array_type_compact )
   },
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -75,7 +78,14 @@ static void
 array_type_mark(void *data)
 {
     ArrayType *array = (ArrayType *)data;
-    rb_gc_mark(array->rbComponentType);
+    rb_gc_mark_movable(array->rbComponentType);
+}
+
+static void
+array_type_compact(void *data)
+{
+    ArrayType *array = (ArrayType *)data;
+    ffi_gc_location(array->rbComponentType);
 }
 
 static void
