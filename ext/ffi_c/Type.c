@@ -14,7 +14,7 @@
  *     * Neither the name of the Ruby FFI project nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -52,8 +52,8 @@ VALUE rbffi_TypeClass = Qnil;
 
 static VALUE classBuiltinType = Qnil;
 static VALUE moduleNativeType = Qnil;
-static VALUE typeMap = Qnil, sizeMap = Qnil;
-static ID id_find_type = 0, id_type_size = 0, id_size = 0;
+static VALUE typeMap = Qnil;
+static ID id_type_size = 0, id_size = 0;
 
 const rb_data_type_t rbffi_type_data_type = { /* extern */
   .wrap_struct_name = "FFI::Type",
@@ -121,7 +121,7 @@ type_initialize(VALUE self, VALUE value)
     } else {
         rb_raise(rb_eArgError, "wrong type");
     }
-    
+
     return self;
 }
 
@@ -217,13 +217,13 @@ int
 rbffi_type_size(VALUE type)
 {
     int t = TYPE(type);
-    
+
     if (t == T_FIXNUM || t == T_BIGNUM) {
         return NUM2INT(type);
-    
+
     } else if (t == T_SYMBOL) {
         /*
-         * Try looking up directly in the type and size maps
+         * Try looking up directly in the type map
          */
         VALUE nType;
         if ((nType = rb_hash_lookup(typeMap, type)) != Qnil) {
@@ -231,7 +231,7 @@ rbffi_type_size(VALUE type)
                 Type* type;
                 TypedData_Get_Struct(nType, Type, &rbffi_type_data_type, type);
                 return (int) type->ffiType->size;
-            
+
             } else if (rb_respond_to(nType, id_size)) {
                 return NUM2INT(rb_funcall2(nType, id_size, 0, NULL));
             }
@@ -239,7 +239,7 @@ rbffi_type_size(VALUE type)
 
         /* Not found - call up to the ruby version to resolve */
         return NUM2INT(rb_funcall2(rbffi_FFIModule, id_type_size, 1, &type));
-    
+
     } else {
         return NUM2INT(rb_funcall2(type, id_size, 0, NULL));
     }
@@ -251,14 +251,14 @@ rbffi_Type_Lookup(VALUE name)
     int t = TYPE(name);
     if (t == T_SYMBOL || t == T_STRING) {
         /*
-         * Try looking up directly in the type Map
+         * Try looking up directly in the type map
          */
         VALUE nType;
         if ((nType = rb_hash_lookup(typeMap, name)) != Qnil && rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
             return nType;
         }
     } else if (rb_obj_is_kind_of(name, rbffi_TypeClass)) {
-    
+
         return name;
     }
 
@@ -282,10 +282,7 @@ rbffi_Type_Init(VALUE moduleFFI)
      * Document-constant: FFI::TypeDefs
      */
     rb_define_const(moduleFFI, "TypeDefs", typeMap = rb_hash_new());
-    rb_define_const(moduleFFI, "SizeTypes", sizeMap = rb_hash_new());
     rb_global_variable(&typeMap);
-    rb_global_variable(&sizeMap);
-    id_find_type = rb_intern("find_type");
     id_type_size = rb_intern("type_size");
     id_size = rb_intern("size");
 
@@ -328,7 +325,7 @@ rbffi_Type_Init(VALUE moduleFFI)
      * * BUFFER_OUT
      * * VARARGS (function takes a variable number of arguments)
      *
-     * All these constants are exported to {FFI} module prefixed with "TYPE_". 
+     * All these constants are exported to {FFI} module prefixed with "TYPE_".
      * They are objets from {FFI::Type::Builtin} class.
      */
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
@@ -349,7 +346,7 @@ rbffi_Type_Init(VALUE moduleFFI)
     /* Make Type::Builtin non-allocatable */
     rb_undef_method(CLASS_OF(classBuiltinType), "new");
     rb_define_method(classBuiltinType, "inspect", builtin_type_inspect, 0);
-    
+
     rb_global_variable(&rbffi_TypeClass);
     rb_global_variable(&classBuiltinType);
 
