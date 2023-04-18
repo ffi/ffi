@@ -132,7 +132,7 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 
     /* Call up into ruby code to adjust the layout */
     if (nargs > 1) {
-        VALUE rbLayout = rb_funcall2(CLASS_OF(self), id_layout, (int) RARRAY_LEN(rest), RARRAY_PTR(rest));
+        VALUE rbLayout = rb_apply(CLASS_OF(self), id_layout, rest);
         RB_OBJ_WRITE(self, &s->rbLayout, rbLayout);
     } else {
         RB_OBJ_WRITE(self, &s->rbLayout, struct_class_layout(klass));
