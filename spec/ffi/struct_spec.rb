@@ -467,6 +467,8 @@ module StructSpecsStructTests
     end
 
     it "Can use CallbackInfo struct field in Ractor", :ractor do
+      skip "sharing structs accross Ractors requires Ruby-3.1" if RUBY_VERSION < "3.1"
+
       res = Ractor.new do
         s = CallbackMember::TestStruct.new
         add_proc = lambda { |a, b| a + b }
@@ -560,11 +562,13 @@ module StructSpecsStructTests
     end
 
     it "should be usable with Ractor", :ractor do
+      skip "Using structs in Ractor requires Ruby-3.1" if RUBY_VERSION < "3.1"
+
       class TestStructRactor < FFI::Struct
         layout :i, :int
       end
 
-      res = Ractor.new(@conninfo) do |conninfo|
+      res = Ractor.new do
         s = TestStructRactor.new
         s[:i] = 0x14
         LibTest.ptr_ret_int32_t(s, 0)
