@@ -33,6 +33,15 @@
 # see {file:README}
 module FFI
 
+  unless defined?(self.custom_typedefs)
+    # Truffleruby and JRuby don't support Ractor so far.
+    # So they don't need separation between builtin and custom types.
+    def self.custom_typedefs
+      TypeDefs
+    end
+    writable_typemap = true
+  end
+
   # @param [Type, DataConverter, Symbol] old type definition used by {FFI.find_type}
   # @param [Symbol] add new type definition's name to add
   # @return [Type]
@@ -206,5 +215,5 @@ module FFI
   rescue Errno::ENOENT
   end
 
-  FFI.make_shareable(TypeDefs)
+  FFI.make_shareable(TypeDefs) unless writable_typemap
 end

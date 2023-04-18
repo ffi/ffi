@@ -37,6 +37,8 @@ describe "MemoryPointer#clear" do
     expect(ptr.read_long).to eq(0)
   end
   it "should deny changes when frozen" do
+    skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+    skip "not yet supported on JRuby" if RUBY_ENGINE == "jruby"
     ptr = MemoryPointer.new(:long).freeze
     expect{ ptr.clear }.to raise_error(RuntimeError, /memory write/)
   end
@@ -102,6 +104,8 @@ describe "#autorelease" do
   end
 
   it "should deny changes when frozen" do
+    skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+    skip "not yet supported on JRuby" if RUBY_ENGINE == "jruby"
     ptr = MemoryPointer.new(8).freeze
     expect{ ptr.autorelease = false }.to raise_error(FrozenError)
   end
