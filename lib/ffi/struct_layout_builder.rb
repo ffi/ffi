@@ -97,7 +97,7 @@ module FFI
 
 
     # List of number types
-    NUMBER_TYPES = [
+    NUMBER_TYPES = FFI.make_shareable([
       Type::INT8,
       Type::UINT8,
       Type::INT16,
@@ -112,7 +112,7 @@ module FFI
       Type::FLOAT64,
       Type::LONGDOUBLE,
       Type::BOOL,
-    ]
+    ])
 
     # @param [String, Symbol] name name of the field
     # @param [Array, DataConverter, Struct, StructLayout::Field, Symbol, Type] type type of the field
