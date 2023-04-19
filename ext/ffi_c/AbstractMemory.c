@@ -150,7 +150,7 @@ memory_put_array_of_##name(VALUE self, VALUE offset, VALUE ary) \
     if (likely(count > 0)) checkWrite(memory); \
     checkBounds(memory, off, count * sizeof(type)); \
     for (i = 0; i < count; i++) { \
-        type tmp = (type) VAL(toNative(RARRAY_PTR(ary)[i]), swap); \
+        type tmp = (type) VAL(toNative(RARRAY_AREF(ary, i)), swap); \
         memcpy(memory->address + off + (i * sizeof(type)), &tmp, sizeof(tmp)); \
     } \
     return self; \
