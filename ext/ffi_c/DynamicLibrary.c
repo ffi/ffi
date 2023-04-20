@@ -225,8 +225,16 @@ dl_open(const char* name, int flags)
 static void
 dl_error(char* buf, int size)
 {
-    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(),
-            0, buf, size, NULL);
+    // Get the last error code
+    DWORD error = GetLastError();
+
+    // Get the associated message
+    LPSTR message = NULL;
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, 
+                   NULL, error, 0, (LPSTR)&message, 0, NULL);
+
+    // Update the passed in buffer
+    snprintf(buf, size, "Failed with error %d: %s", error, message);
 }
 #endif
 
