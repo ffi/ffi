@@ -31,7 +31,7 @@
 require 'ffi/dynamic_library'
 
 module FFI
-  CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = Object.new
+  CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = FFI.make_shareable(Object.new)
 
   # @param [#to_s] lib library name
   # @return [String] library name formatted for current platform

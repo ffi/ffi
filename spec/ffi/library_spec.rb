@@ -322,4 +322,17 @@ describe "Library" do
       expect(val[:data]).to eq(i)
     end
   end
+
+  it "should have shareable constants for Ractor", :ractor do
+    res = Ractor.new do
+      [
+        FFI::Library::LIBC,
+        FFI::Library::CURRENT_PROCESS,
+        FFI::CURRENT_PROCESS,
+        FFI::USE_THIS_PROCESS_AS_LIBRARY,
+      ]
+    end.take
+
+    expect( res.size ).to be > 0
+  end
 end
