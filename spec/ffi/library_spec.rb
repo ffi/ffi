@@ -193,6 +193,19 @@ describe "Library" do
       end
       expect(mod.bool_return_true).to be true
     end
+
+    it "can reveal the function type" do
+      mod = Module.new do |m|
+        m.extend FFI::Library
+        ffi_lib File.expand_path(TestLibrary::PATH)
+        attach_function :bool_return_true, [ :string ], :bool
+      end
+
+      fun = mod.attached_functions
+      expect(fun.keys).to eq(["bool_return_true"])
+      expect(fun["bool_return_true"].param_types).to eq([FFI::Type::STRING])
+      expect(fun["bool_return_true"].result_type).to eq(FFI::Type::BOOL)
+    end
   end
 
   def gvar_lib(name, type)
@@ -320,6 +333,8 @@ describe "Library" do
       lib.gvar[:data] = i
       val = GlobalStruct.new(lib.get)
       expect(val[:data]).to eq(i)
+
+      expect(lib.attached_variables).to eq({ gvar: GlobalStruct })
     end
   end
 

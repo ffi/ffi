@@ -295,9 +295,10 @@ module FFI
         # If it is a global struct, just attach directly to the pointer
         s = s = type.new(address) # Assigning twice to suppress unused variable warning
         self.module_eval <<-code, __FILE__, __LINE__
-          @@ffi_gvar_#{mname} = s
+          @ffi_gvars = {} unless defined?(@ffi_gvars)
+          @ffi_gvars[#{mname.inspect}] = s
           def self.#{mname}
-            @@ffi_gvar_#{mname}
+            @ffi_gvars[#{mname.inspect}]
           end
         code
 
@@ -309,12 +310,13 @@ module FFI
         # Attach to this module as mname/mname=
         #
         self.module_eval <<-code, __FILE__, __LINE__
-          @@ffi_gvar_#{mname} = s
+          @ffi_gvars = {} unless defined?(@ffi_gvars)
+          @ffi_gvars[#{mname.inspect}] = s
           def self.#{mname}
-            @@ffi_gvar_#{mname}[:gvar]
+            @ffi_gvars[#{mname.inspect}][:gvar]
           end
           def self.#{mname}=(value)
-            @@ffi_gvar_#{mname}[:gvar] = value
+            @ffi_gvars[#{mname.inspect}][:gvar] = value
           end
         code
 
@@ -538,6 +540,21 @@ module FFI
         typedef Type::Mapped.new(t), t
 
       end || FFI.find_type(t)
+    end
+
+    def attached_functions
+      @ffi_functions || {}
+    end
+
+    def attached_variables
+      (@ffi_gvars || {}).map do |name, gvar|
+        [name, gvar.class]
+      end.to_h
+    end
+
+    def freeze
+      super
+      FFI.make_shareable(@ffi_functions)
     end
   end
 end

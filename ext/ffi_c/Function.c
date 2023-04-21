@@ -492,8 +492,8 @@ static VALUE
 function_attach(VALUE self, VALUE module, VALUE name)
 {
     Function* fn;
-    char var[1024];
 
+    StringValue(name);
     TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
     if (fn->info->parameterCount == -1) {
@@ -513,8 +513,12 @@ function_attach(VALUE self, VALUE module, VALUE name)
     /*
      * Stash the Function in a module variable so it does not get garbage collected
      */
-    snprintf(var, sizeof(var), "@@%s", StringValueCStr(name));
-    rb_cv_set(module, var, self);
+    VALUE funcs = rb_iv_get(module, "@ffi_functions");
+    if (RB_NIL_P(funcs)) {
+        funcs = rb_hash_new();
+        rb_iv_set(module, "@ffi_functions", funcs);
+    }
+    rb_hash_aset(funcs, name, self);
 
     rb_define_singleton_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);
@@ -553,6 +557,16 @@ function_autorelease_p(VALUE self)
     TypedData_Get_Struct(self, Function, &function_data_type, fn);
 
     return fn->autorelease ? Qtrue : Qfalse;
+}
+
+static VALUE
+function_type(VALUE self)
+{
+    Function* fn;
+
+    TypedData_Get_Struct(self, Function, &function_data_type, fn);
+
+    return fn->rbFunctionInfo;
 }
 
 /*
@@ -1027,6 +1041,7 @@ rbffi_Function_Init(VALUE moduleFFI)
     rb_define_method(rbffi_FunctionClass, "attach", function_attach, 2);
     rb_define_method(rbffi_FunctionClass, "free", function_release, 0);
     rb_define_method(rbffi_FunctionClass, "autorelease=", function_set_autorelease, 1);
+    rb_define_private_method(rbffi_FunctionClass, "type", function_type, 0);
     /*
      * call-seq: autorelease
      * @return [Boolean]

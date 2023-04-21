@@ -64,7 +64,7 @@ describe FFI::Function do
   end
 
   it "should be usable with Ractor", :ractor do
-    res = Ractor.new(@conninfo) do |conninfo|
+    res = Ractor.new do
       function_add = FFI::Function.new(:int, [:int, :int]) { |a, b| a + b }
       LibTest.testFunctionAdd(10, 10, function_add)
     end.take

@@ -1,6 +1,5 @@
 #
-# Copyright (C) 2008, 2009 Wayne Meissner
-# Copyright (C) 2009 Luc Heinrich
+# Copyright (C) 2008-2010 JRuby project
 #
 # This file is part of ruby-ffi.
 #
@@ -28,47 +27,18 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 module FFI
-  class VariadicInvoker
-    def call(*args, &block)
-      param_types = Array.new(@fixed)
-      param_values = Array.new
-      @fixed.each_with_index do |t, i|
-        param_values << args[i]
+  class Function
+    # Only MRI allows function type queries
+    if private_method_defined?(:type)
+      def result_type
+        type.result_type
       end
-      i = @fixed.length
-      while i < args.length
-        param_types << FFI.find_type(args[i], @type_map)
-        param_values << args[i + 1]
-        i += 2
+
+      def param_types
+        type.param_types
       end
-      invoke(param_types, param_values, &block)
-    end
-
-    #
-    # Attach the invoker to module +mod+ as +mname+
-    #
-    def attach(mod, mname)
-      invoker = self
-      params = "*args"
-      call = "call"
-      mod.module_eval <<-code
-        @ffi_functions = {} unless defined?(@ffi_functions)
-        @ffi_functions[#{mname.inspect}] = invoker
-
-        def self.#{mname}(#{params})
-          @ffi_functions[#{mname.inspect}].#{call}(#{params})
-        end
-
-        define_method(#{mname.inspect}, &method(:#{mname}))
-      code
-      invoker
-    end
-
-    def param_types
-      [*@fixed, Type::Builtin::VARARGS]
     end
   end
 end

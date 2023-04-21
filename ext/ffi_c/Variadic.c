@@ -318,6 +318,14 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, retval);
 }
 
+static VALUE
+variadic_result_type(VALUE self)
+{
+    VariadicInvoker* invoker;
+
+    TypedData_Get_Struct(self, VariadicInvoker, &variadic_data_type, invoker);
+    return invoker->rbReturnType;
+}
 
 void
 rbffi_Variadic_Init(VALUE moduleFFI)
@@ -329,5 +337,6 @@ rbffi_Variadic_Init(VALUE moduleFFI)
 
     rb_define_method(classVariadicInvoker, "initialize", variadic_initialize, 4);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoke, 2);
+    rb_define_method(classVariadicInvoker, "result_type", variadic_result_type, 0);
 }
 

@@ -39,5 +39,10 @@ describe FFI::Struct, ' by_ref' do
 
     expect { @api.struct_test(other_class.new) }.to raise_error(TypeError)
   end
+
+  it "can reveal the mapped type converter" do
+    param_type = @api.attached_functions["struct_test"].param_types[0]
+    expect(param_type.converter).to be_a(FFI::StructByReference)
+  end
 end
 
