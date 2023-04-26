@@ -204,7 +204,7 @@ describe "Library" do
       fun = mod.attached_functions
       expect(fun.keys).to eq(["bool_return_true"])
       expect(fun["bool_return_true"].param_types).to eq([FFI::Type::STRING])
-      expect(fun["bool_return_true"].result_type).to eq(FFI::Type::BOOL)
+      expect(fun["bool_return_true"].return_type).to eq(FFI::Type::BOOL)
     end
   end
 

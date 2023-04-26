@@ -8,7 +8,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 describe "FFI::FunctionType", skip: RUBY_ENGINE != "ruby" do
   it 'is initialized with return type and a list of parameter types' do
     function_type = FFI::FunctionType.new(:int, [ :char, :ulong ])
-    expect(function_type.result_type).to be == FFI::Type::Builtin::INT
+    expect(function_type.return_type).to be == FFI::Type::Builtin::INT
     expect(function_type.param_types).to be == [ FFI::Type::Builtin::CHAR, FFI::Type::Builtin::ULONG ]
   end
 

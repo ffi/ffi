@@ -32,8 +32,8 @@ module FFI
   class Function
     # Only MRI allows function type queries
     if private_method_defined?(:type)
-      def result_type
-        type.result_type
+      def return_type
+        type.return_type
       end
 
       def param_types

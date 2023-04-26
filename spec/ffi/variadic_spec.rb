@@ -40,7 +40,7 @@ describe "Function with variadic arguments" do
   it "can reveal its return and parameters" do
     fun = LibTest.attached_functions["testBlockingWRva"]
     expect(fun.param_types).to eq([FFI::Type::POINTER, FFI::Type::CHAR, FFI::Type::VARARGS])
-    expect(fun.result_type).to eq(FFI::Type::INT8)
+    expect(fun.return_type).to eq(FFI::Type::INT8)
   end
 
   it 'can wrap a blocking function with varargs' do
