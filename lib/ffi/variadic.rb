@@ -55,11 +55,10 @@ module FFI
       params = "*args"
       call = "call"
       mod.module_eval <<-code
-        @ffi_functions = {} unless defined?(@ffi_functions)
-        @ffi_functions[#{mname.inspect}] = invoker
+        @ffi_function_#{mname} = invoker
 
         def self.#{mname}(#{params})
-          @ffi_functions[#{mname.inspect}].#{call}(#{params})
+          @ffi_function_#{mname}.#{call}(#{params})
         end
 
         define_method(#{mname.inspect}, &method(:#{mname}))

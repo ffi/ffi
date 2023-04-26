@@ -36,6 +36,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <ruby.h>
+#if HAVE_RB_EXT_RACTOR_SAFE
+#include <ruby/ractor.h>
+#endif
 
 #include <ffi.h>
 #include "rbffi.h"
@@ -181,7 +184,8 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
      * @fixed and @type_map are used by the parameter mangling ruby code
      */
     rb_iv_set(self, "@fixed", fixed);
-    rb_iv_set(self, "@type_map", rb_hash_aref(options, ID2SYM(rb_intern("type_map"))));
+    rb_iv_set(self, "@type_map", rb_obj_dup(rb_hash_aref(options, ID2SYM(rb_intern("type_map")))));
+    rb_ractor_make_shareable(self);
 
     return retval;
 }

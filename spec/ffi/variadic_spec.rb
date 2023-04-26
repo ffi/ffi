@@ -23,8 +23,6 @@ describe "Function with variadic arguments" do
     attach_function :testBlockingClose, [ :pointer ], :void
     attach_function :testCallbackVrDva, :testClosureVrDva, [ :double, :varargs ], :double
     attach_function :testCallbackVrILva, :testClosureVrILva, [ :int, :long, :varargs ], :long
-
-    freeze
   end
 
   it "takes enum arguments" do

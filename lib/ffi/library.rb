@@ -209,7 +209,7 @@ module FFI
             end
             raise LoadError unless function
 
-            invokers << if arg_types.length > 0 && arg_types[arg_types.length - 1] == FFI::NativeType::VARARGS
+            invokers << if arg_types[-1] == FFI::NativeType::VARARGS
               VariadicInvoker.new(function, arg_types, find_type(ret_type), options)
 
             else
@@ -295,10 +295,9 @@ module FFI
         # If it is a global struct, just attach directly to the pointer
         s = s = type.new(address) # Assigning twice to suppress unused variable warning
         self.module_eval <<-code, __FILE__, __LINE__
-          @ffi_gvars = {} unless defined?(@ffi_gvars)
-          @ffi_gvars[#{mname.inspect}] = s
+          @ffi_gsvar_#{mname} = s
           def self.#{mname}
-            @ffi_gvars[#{mname.inspect}]
+            @ffi_gsvar_#{mname}
           end
         code
 
@@ -310,13 +309,12 @@ module FFI
         # Attach to this module as mname/mname=
         #
         self.module_eval <<-code, __FILE__, __LINE__
-          @ffi_gvars = {} unless defined?(@ffi_gvars)
-          @ffi_gvars[#{mname.inspect}] = s
+          @ffi_gvar_#{mname} = s
           def self.#{mname}
-            @ffi_gvars[#{mname.inspect}][:gvar]
+            @ffi_gvar_#{mname}[:gvar]
           end
           def self.#{mname}=(value)
-            @ffi_gvars[#{mname.inspect}][:gvar] = value
+            @ffi_gvar_#{mname}[:gvar] = value
           end
         code
 
@@ -543,18 +541,20 @@ module FFI
     end
 
     def attached_functions
-      @ffi_functions || {}
-    end
-
-    def attached_variables
-      (@ffi_gvars || {}).map do |name, gvar|
-        [name, gvar.class]
+      instance_variables.grep(/\A@ffi_function_(.*)/) do |m|
+        [$1, instance_variable_get(m)]
       end.to_h
     end
 
-    def freeze
-      super
-      FFI.make_shareable(@ffi_functions)
+    def attached_variables
+      (
+        instance_variables.grep(/\A@ffi_gsvar_(.*)/) do |m|
+          [$1, instance_variable_get(m).class]
+        end +
+        instance_variables.grep(/\A@ffi_gvar_(.*)/) do |m|
+          [$1, instance_variable_get(m).layout[:gvar].type]
+        end
+      ).to_h
     end
   end
 end

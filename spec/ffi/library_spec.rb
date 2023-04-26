@@ -333,9 +333,25 @@ describe "Library" do
       lib.gvar[:data] = i
       val = GlobalStruct.new(lib.get)
       expect(val[:data]).to eq(i)
-
-      expect(lib.attached_variables).to eq({ gvar: GlobalStruct })
     end
+  end
+
+  it "can reveal its attached global struct based variables" do
+    lib = Module.new do |m|
+      m.extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      attach_variable :gvari, "gvar_gstruct", GlobalStruct
+    end
+    expect(lib.attached_variables).to eq({ "gvari" => GlobalStruct })
+  end
+
+  it "can reveal its attached global variables" do
+    lib = Module.new do |m|
+      m.extend FFI::Library
+      ffi_lib TestLibrary::PATH
+      attach_variable :gvaro, "gvar_u32", :uint32
+    end
+    expect(lib.attached_variables).to eq({ "gvaro" => FFI::Type::UINT32 })
   end
 
   it "should have shareable constants for Ractor", :ractor do

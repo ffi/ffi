@@ -98,5 +98,8 @@
 #define FFI_RUBY_TYPED_FROZEN_SHAREABLE RUBY_TYPED_FROZEN_SHAREABLE
 #endif
 
+#ifndef HAVE_RB_EXT_RACTOR_SAFE
+#define rb_ractor_make_shareable(self) rb_obj_freeze(self);
+#endif
 
 #endif /* RBFFI_COMPAT_H */
