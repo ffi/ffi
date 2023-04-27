@@ -110,12 +110,10 @@ describe "MemoryPointer" do
   end
 
   it "allows overwriting of a default typedef" do
-    begin
-      FFI.typedef :uint32, :char
-      expect(FFI.find_type(:char)).to eq(FFI::Type::Builtin::UINT32)
-    ensure
-      FFI.typedef FFI::Type::Builtin::CHAR, :char
-    end
+    FFI.typedef :uint32, :char
+    expect(FFI.find_type(:char)).to eq(FFI::Type::Builtin::UINT32)
+  ensure
+    FFI.typedef FFI::Type::Builtin::CHAR, :char
   end
 
   it "allows writing a custom typedef" do
