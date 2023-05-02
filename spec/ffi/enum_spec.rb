@@ -430,4 +430,18 @@ describe "All enums" do
       end
     end.to raise_error(ArgumentError, /duplicate/)
   end
+
+  it "should be usable in Ractor", :ractor do
+    res = Ractor.new do
+      [
+        TestEnum1.test_untagged_enum(:c1),
+        TestEnum3.test_tagged_typedef_enum1(:c1),
+        TestEnum4.test_tagged_nonint_enum4(0x45),
+        TestEnum3.enum_type(:enum_type1)[0],
+        TestEnum4.enum_type(:enum_type6)[0x4242424242424242],
+        TestEnum4.enum_value(:c3)
+      ]
+    end.take
+    expect( res ).to eq( [0, :c1, :c20, :c1, :c28, 2] )
+  end
 end

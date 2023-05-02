@@ -5,6 +5,11 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
+module TestEnumValueRactor
+  extend FFI::Library
+  enum :something, [:one, :two]
+end
+
 describe "Library" do
   describe ".enum_value" do
     m = Module.new do
@@ -19,6 +24,14 @@ describe "Library" do
 
     it "should return nil for an invalid key" do
       expect(m.enum_value(:three)).to be nil
+    end
+
+    it "should be queryable in Ractor", :ractor do
+      res = Ractor.new do
+        TestEnumValueRactor.enum_value(:one)
+      end.take
+
+      expect( res ).to eq(0)
     end
   end
 
