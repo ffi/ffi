@@ -8,7 +8,7 @@ require 'timeout'
 require 'objspace'
 
 RSpec.configure do |c|
-  c.filter_run_excluding :broken => true
+  c.filter_run_excluding gc_dependent: true unless ENV['FFI_TEST_GC'] == 'true'
 end
 
 module TestLibrary

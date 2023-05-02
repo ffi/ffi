@@ -46,6 +46,8 @@ describe "Managed Struct" do
       def self.release(_ptr)
         @@count += 1
       end
+      private_class_method :release
+
       def self.wait_gc(count)
         loop = 5
         while loop > 0 && @@count < count
