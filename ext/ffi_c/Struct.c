@@ -356,10 +356,7 @@ struct_aref(VALUE self, VALUE fieldName)
     s = struct_validate(self);
 
     f = struct_field(s, fieldName);
-    if (f->get != NULL) {
-        return (*f->get)(f, s);
-
-    } else if (f->memoryOp != NULL) {
+    if (f->memoryOp != NULL) {
         return (*f->memoryOp->get)(s->pointer, f->offset);
 
     } else {
@@ -385,10 +382,7 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
     s = struct_validate(self);
 
     f = struct_field(s, fieldName);
-    if (f->put != NULL) {
-        (*f->put)(f, s, value);
-
-    } else if (f->memoryOp != NULL) {
+    if (f->memoryOp != NULL) {
 
         (*f->memoryOp->put)(s->pointer, f->offset, value);
 
