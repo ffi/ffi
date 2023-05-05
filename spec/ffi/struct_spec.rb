@@ -545,7 +545,7 @@ module StructSpecsStructTests
       expect(b.members).to eq([:a, :b])
     end
 
-    it "should be shareable for Ractor", :ractor do
+    it "can be made shareable for Ractor", :ractor do
       a = Class.new(FFI::Struct) do
         layout :a, :char
       end.new
@@ -1108,6 +1108,20 @@ describe "Struct memsize functions", skip: RUBY_ENGINE != "ruby" do
     layout = SmallCustomStruct.layout
     size = ObjectSpace.memsize_of(layout[:pointer])
     expect(size).to be > base_size
+  end
+
+  it "StructLayout should be shareable with Ractor", :ractor do
+    kl = Class.new(FFI::Struct) do
+      layout :ptr, :pointer
+    end
+    expect(Ractor.shareable?(kl.layout)).to eq(true)
+  end
+
+  it "StructField should be shareable with Ractor", :ractor do
+    kl = Class.new(FFI::Struct) do
+      layout :ptr, :pointer
+    end
+    expect(Ractor.shareable?(kl.layout[:ptr])).to eq(true)
   end
 end
 

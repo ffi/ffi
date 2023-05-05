@@ -251,6 +251,8 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
 
     fnInfo->invoke = rbffi_GetInvoker(fnInfo);
 
+    rb_obj_freeze(fnInfo->rbParameterTypes);
+    rb_obj_freeze(self);
     return self;
 }
 

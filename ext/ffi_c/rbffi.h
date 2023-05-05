@@ -39,7 +39,7 @@ extern "C" {
 #define MAX_PARAMETERS (32)
 
 extern VALUE rbffi_FFIModule;
-    
+
 extern void rbffi_Type_Init(VALUE ffiModule);
 extern void rbffi_Buffer_Init(VALUE ffiModule);
 extern void rbffi_Invoker_Init(VALUE ffiModule);

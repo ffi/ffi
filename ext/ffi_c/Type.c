@@ -128,6 +128,8 @@ type_initialize(VALUE self, VALUE value)
         rb_raise(rb_eArgError, "wrong type");
     }
 
+    rb_obj_freeze(self);
+
     return self;
 }
 
@@ -191,6 +193,8 @@ builtin_type_new(VALUE klass, int nativeType, ffi_type* ffiType, const char* nam
     type->name = name;
     type->type.nativeType = nativeType;
     type->type.ffiType = ffiType;
+
+    rb_obj_freeze(obj);
 
     return obj;
 }

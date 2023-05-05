@@ -181,6 +181,8 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
             break;
     }
 
+    rb_obj_freeze(self);
+
     return self;
 }
 
@@ -537,6 +539,11 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     if (ltype->size == 0) {
         rb_raise(rb_eRuntimeError, "Struct size is zero");
     }
+
+    rb_obj_freeze(layout->rbFieldMap);
+    rb_obj_freeze(layout->rbFields);
+    rb_obj_freeze(layout->rbFieldNames);
+    rb_obj_freeze(self);
 
     return self;
 }

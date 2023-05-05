@@ -492,7 +492,7 @@ static VALUE
 function_attach(VALUE self, VALUE module, VALUE name)
 {
     Function* fn;
-    char var[1024];
+    VALUE funcs;
 
     StringValue(name);
     TypedData_Get_Struct(self, Function, &function_data_type, fn);
@@ -514,9 +514,13 @@ function_attach(VALUE self, VALUE module, VALUE name)
     /*
      * Stash the Function in a module variable so it does not get garbage collected and can be inspected by attached_functions
      */
-    snprintf(var, sizeof(var), "@ffi_function_%s", StringValueCStr(name));
-    rb_ractor_make_shareable(self);
-    rb_iv_set(module, var, self);
+
+    funcs = rb_iv_get(module, "@ffi_functions");
+    if (RB_NIL_P(funcs)) {
+        funcs = rb_hash_new();
+        rb_iv_set(module, "@ffi_functions", funcs);
+    }
+    rb_hash_aset(funcs, rb_str_intern(name), self);
 
     rb_define_singleton_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);

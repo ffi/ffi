@@ -295,9 +295,10 @@ module FFI
         # If it is a global struct, just attach directly to the pointer
         s = s = type.new(address) # Assigning twice to suppress unused variable warning
         self.module_eval <<-code, __FILE__, __LINE__
-          @ffi_gsvar_#{mname} = s
+          @ffi_gsvars = {} unless defined?(@ffi_gsvars)
+          @ffi_gsvars[#{mname.inspect}] = s
           def self.#{mname}
-            @ffi_gsvar_#{mname}
+            @ffi_gsvars[#{mname.inspect}]
           end
         code
 
@@ -309,12 +310,13 @@ module FFI
         # Attach to this module as mname/mname=
         #
         self.module_eval <<-code, __FILE__, __LINE__
-          @ffi_gvar_#{mname} = s
+          @ffi_gvars = {} unless defined?(@ffi_gvars)
+          @ffi_gvars[#{mname.inspect}] = s
           def self.#{mname}
-            @ffi_gvar_#{mname}[:gvar]
+            @ffi_gvars[#{mname.inspect}][:gvar]
           end
           def self.#{mname}=(value)
-            @ffi_gvar_#{mname}[:gvar] = value
+            @ffi_gvars[#{mname.inspect}][:gvar] = value
           end
         code
 
@@ -541,20 +543,30 @@ module FFI
     end
 
     def attached_functions
-      instance_variables.grep(/\A@ffi_function_(.*)/) do |m|
-        [$1, instance_variable_get(m)]
-      end.to_h
+      @ffi_functions || {}
     end
 
     def attached_variables
       (
-        instance_variables.grep(/\A@ffi_gsvar_(.*)/) do |m|
-          [$1, instance_variable_get(m).class]
+        (@ffi_gsvars || {}).map do |name, gvar|
+          [name, gvar.class]
         end +
-        instance_variables.grep(/\A@ffi_gvar_(.*)/) do |m|
-          [$1, instance_variable_get(m).layout[:gvar].type]
+        (@ffi_gvars || {}).map do |name, gvar|
+          [name, gvar.layout[:gvar].type]
         end
       ).to_h
+    end
+
+    # Freeze all definitions of the module
+    #
+    # This freezes the module's definitions, so that it can be used in a Ractor.
+    # No further methods or variables can be attached and no further enums or typedefs can be created in this module afterwards.
+    def freeze
+      instance_variables.each do |name|
+        var = instance_variable_get(name)
+        FFI.make_shareable(var)
+      end
+      nil
     end
   end
 end

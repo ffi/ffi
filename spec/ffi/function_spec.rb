@@ -52,7 +52,7 @@ describe FFI::Function do
     a + b
   end
 
-  it "should be shareable for Ractor", :ractor do
+  it "can be made shareable for Ractor", :ractor do
     add = FFI::Function.new(:int, [:int, :int], &method(:adder))
     Ractor.make_shareable(add)
 

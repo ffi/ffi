@@ -161,7 +161,9 @@ library_initialize(VALUE self, VALUE libname, VALUE libflags)
         library->handle = RTLD_DEFAULT;
     }
 #endif
-    rb_iv_set(self, "@name", libname != Qnil ? libname : rb_str_new2("[current process]"));
+    rb_iv_set(self, "@name", libname != Qnil ? rb_str_new_frozen(libname) : rb_str_new2("[current process]"));
+
+    rb_obj_freeze(self);
     return self;
 }
 
@@ -266,8 +268,9 @@ symbol_new(VALUE library, void* address, VALUE name)
     sym->base.memory.typeSize = 1;
     sym->base.memory.flags = MEM_RD | MEM_WR;
     RB_OBJ_WRITE(obj, &sym->base.rbParent, library);
-    RB_OBJ_WRITE(obj, &sym->name, name);
+    RB_OBJ_WRITE(obj, &sym->name, rb_str_new_frozen(name));
 
+    rb_obj_freeze(obj);
     return obj;
 }
 

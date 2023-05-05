@@ -110,6 +110,8 @@ mapped_initialize(VALUE self, VALUE rbConverter)
     TypedData_Get_Struct(m->rbType, Type, &rbffi_type_data_type, m->type);
     m->base.ffiType = m->type->ffiType;
 
+    rb_obj_freeze(self);
+
     return self;
 }
 
