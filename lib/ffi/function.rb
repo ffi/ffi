@@ -32,10 +32,20 @@ module FFI
   class Function
     # Only MRI allows function type queries
     if private_method_defined?(:type)
+      # Retrieve the return type of the function
+      #
+      # This method returns FFI type returned by the function.
+      #
+      # @return [FFI::Type]
       def return_type
         type.return_type
       end
 
+      # Retrieve Array of parameter types
+      #
+      # This method returns an Array of FFI types accepted as function parameters.
+      #
+      # @return [Array<FFI::Type>]
       def param_types
         type.param_types
       end

@@ -67,6 +67,11 @@ module FFI
       invoker
     end
 
+    # Retrieve Array of parameter types
+    #
+    # This method returns an Array of FFI types accepted as function parameters.
+    #
+    # @return [Array<FFI::Type>]
     def param_types
       [*@fixed, Type::Builtin::VARARGS]
     end

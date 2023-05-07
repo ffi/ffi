@@ -542,10 +542,21 @@ module FFI
       end || FFI.find_type(t)
     end
 
+    # Retrieve all attached functions and their function signature
+    #
+    # This method returns a Hash of method names of attached functions connected by #attach_function and the corresponding function type.
+    # The function type responds to #return_type and #param_types which return the FFI types of the function signature.
+    #
+    # @return [Hash< Symbol => [FFI::Function, FFI::VariadicInvoker] >]
     def attached_functions
       @ffi_functions || {}
     end
 
+    # Retrieve all attached variables and their type
+    #
+    # This method returns a Hash of variable names and the corresponding type or variables connected by #attach_variable .
+    #
+    # @return [Hash< Symbol => ffi_type >]
     def attached_variables
       (
         (@ffi_gsvars || {}).map do |name, gvar|
