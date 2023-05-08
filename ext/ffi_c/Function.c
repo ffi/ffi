@@ -492,7 +492,6 @@ static VALUE
 function_attach(VALUE self, VALUE module, VALUE name)
 {
     Function* fn;
-    VALUE funcs;
 
     StringValue(name);
     TypedData_Get_Struct(self, Function, &function_data_type, fn);
@@ -510,17 +509,6 @@ function_attach(VALUE self, VALUE module, VALUE name)
     if (fn->methodHandle == NULL) {
         fn->methodHandle = rbffi_MethodHandle_Alloc(fn->info, fn->base.memory.address);
     }
-
-    /*
-     * Stash the Function in a module variable so it does not get garbage collected and can be inspected by attached_functions
-     */
-
-    funcs = rb_iv_get(module, "@ffi_functions");
-    if (RB_NIL_P(funcs)) {
-        funcs = rb_hash_new();
-        rb_iv_set(module, "@ffi_functions", funcs);
-    }
-    rb_hash_aset(funcs, rb_str_intern(name), self);
 
     rb_define_singleton_method(module, StringValueCStr(name),
             rbffi_MethodHandle_CodeAddress(fn->methodHandle), -1);

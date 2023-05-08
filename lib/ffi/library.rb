@@ -281,6 +281,7 @@ module FFI
     # Attach C variable +cname+ to this module.
     def attach_variable(mname, a1, a2 = nil)
       cname, type = a2 ? [ a1, a2 ] : [ mname.to_s, a1 ]
+      mname = mname.to_sym
       address = nil
       ffi_libraries.each do |lib|
         begin

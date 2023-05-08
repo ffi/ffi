@@ -381,7 +381,7 @@ describe "Library" do
     lib = Module.new do |m|
       m.extend FFI::Library
       ffi_lib TestLibrary::PATH
-      attach_variable :gvaro, "gvar_u32", :uint32
+      attach_variable "gvaro", "gvar_u32", :uint32
     end
     expect(lib.attached_variables).to eq({ gvaro: FFI::Type::UINT32 })
   end

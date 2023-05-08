@@ -50,5 +50,22 @@ module FFI
         type.param_types
       end
     end
+
+    # Stash the Function in a module variable so it can be inspected by attached_functions.
+    # On CRuby it also ensures that it does not get garbage collected.
+    module RegisterAttach
+      def attach(mod, name)
+        funcs = mod.instance_variable_get("@ffi_functions")
+        unless funcs
+          funcs = {}
+          mod.instance_variable_set("@ffi_functions", funcs)
+        end
+        funcs[name.to_sym] = self
+        # Jump to the native attach method of CRuby, JRuby or Tuffleruby
+        super
+      end
+    end
+    private_constant :RegisterAttach
+    prepend RegisterAttach
   end
 end
