@@ -82,7 +82,7 @@ const rb_data_type_t rbffi_struct_data_type = { /* extern */
     },
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 VALUE rbffi_StructClass = Qnil;
 
@@ -379,6 +379,7 @@ struct_aset(VALUE self, VALUE fieldName, VALUE value)
     Struct* s;
     StructField* f;
 
+    rb_check_frozen(self);
     s = struct_validate(self);
 
     f = struct_field(s, fieldName);
@@ -415,6 +416,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
     StructLayout* layout;
     AbstractMemory* memory;
 
+    rb_check_frozen(self);
     if (!rb_obj_is_kind_of(pointer, rbffi_AbstractMemoryClass)) {
         rb_raise(rb_eTypeError, "wrong argument type %s (expected Pointer or Buffer)",
                 rb_obj_classname(pointer));
@@ -465,6 +467,7 @@ struct_set_layout(VALUE self, VALUE layout)
     Struct* s;
     TypedData_Get_Struct(self, Struct, &rbffi_struct_data_type, s);
 
+    rb_check_frozen(self);
     if (!rb_obj_is_kind_of(layout, rbffi_StructLayoutClass)) {
         rb_raise(rb_eTypeError, "wrong argument type %s (expected %s)",
                 rb_obj_classname(layout), rb_class2name(rbffi_StructLayoutClass));
@@ -538,7 +541,7 @@ static const rb_data_type_t inline_array_data_type = {
     },
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 static VALUE
@@ -678,6 +681,7 @@ inline_array_aset(VALUE self, VALUE rbIndex, VALUE rbValue)
 {
     InlineArray* array;
 
+    rb_check_frozen(self);
     TypedData_Get_Struct(self, InlineArray, &inline_array_data_type, array);
 
     if (array->op != NULL) {

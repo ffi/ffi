@@ -36,6 +36,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <ruby.h>
+#if HAVE_RB_EXT_RACTOR_SAFE
+#include <ruby/ractor.h>
+#endif
 
 #include <ffi.h>
 #include "rbffi.h"
@@ -81,7 +84,7 @@ static const rb_data_type_t variadic_data_type = {
   },
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
   // macro to update VALUE references, as to trigger write barriers.
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 
@@ -180,7 +183,7 @@ variadic_initialize(VALUE self, VALUE rbFunction, VALUE rbParameterTypes, VALUE 
     /*
      * @fixed and @type_map are used by the parameter mangling ruby code
      */
-    rb_iv_set(self, "@fixed", fixed);
+    rb_iv_set(self, "@fixed", rb_obj_freeze(fixed));
     rb_iv_set(self, "@type_map", rb_hash_aref(options, ID2SYM(rb_intern("type_map"))));
 
     return retval;
@@ -318,6 +321,14 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     return rbffi_NativeValue_ToRuby(invoker->returnType, invoker->rbReturnType, retval);
 }
 
+static VALUE
+variadic_return_type(VALUE self)
+{
+    VariadicInvoker* invoker;
+
+    TypedData_Get_Struct(self, VariadicInvoker, &variadic_data_type, invoker);
+    return invoker->rbReturnType;
+}
 
 void
 rbffi_Variadic_Init(VALUE moduleFFI)
@@ -329,5 +340,6 @@ rbffi_Variadic_Init(VALUE moduleFFI)
 
     rb_define_method(classVariadicInvoker, "initialize", variadic_initialize, 4);
     rb_define_method(classVariadicInvoker, "invoke", variadic_invoke, 2);
+    rb_define_method(classVariadicInvoker, "return_type", variadic_return_type, 0);
 }
 

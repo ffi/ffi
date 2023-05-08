@@ -5,7 +5,7 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
-describe "FFI::Type" do
+describe FFI::Type do
   it 'has a memsize function', skip: RUBY_ENGINE != "ruby" do
     base_size = ObjectSpace.memsize_of(Object.new)
 
@@ -39,5 +39,38 @@ describe "FFI::Type" do
     # Builtin types are larger as they also have a name and own ffi_type
     size = ObjectSpace.memsize_of(FFI::Type::Builtin::CHAR)
     expect(size).to be > base_size
+  end
+
+  it "should be shareable with Ractor", :ractor do
+    expect(Ractor.shareable?(FFI::Type.new(5))).to eq(true)
+  end
+
+  describe :Builtin do
+    it "should be shareable with Ractor", :ractor do
+      expect(Ractor.shareable?(FFI::Type::INT32)).to eq(true)
+    end
+  end
+
+  describe :Mapped do
+    it "should be shareable with Ractor", :ractor do
+      converter = Module.new do
+        extend FFI::DataConverter
+
+        def self.native_type
+          FFI::Type::INT32
+        end
+
+        def self.to_native(val, ctx)
+          ToNativeMap[val]
+        end
+
+        def self.from_native(val, ctx)
+          FromNativeMap[val]
+        end
+      end
+      expect(Ractor.shareable?(converter)).to eq(true)
+      type = FFI::Type::Mapped.new(converter)
+      expect(Ractor.shareable?(type)).to eq(true)
+    end
   end
 end

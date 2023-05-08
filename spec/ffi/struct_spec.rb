@@ -410,6 +410,7 @@ module StructSpecsStructTests
       s.pointer.put_double(0, 1.0)
       expect(s.pointer.get_double(0)).to eq(1.0)
     end
+
     module EnumFields
       extend FFI::Library
       TestEnum = enum :test_enum, [:c1, 10, :c2, 20, :c3, 30, :c4, 40]
@@ -456,13 +457,24 @@ module StructSpecsStructTests
     end
 
     it "Can have CallbackInfo struct field" do
+      s = CallbackMember::TestStruct.new
+      add_proc = lambda { |a, b| a + b }
+      sub_proc = lambda { |a, b| a - b }
+      s[:add] = add_proc
+      s[:sub] = sub_proc
+      expect(CallbackMember.struct_call_add_cb(s, 40, 2)).to eq(42)
+      expect(CallbackMember.struct_call_sub_cb(s, 44, 2)).to eq(42)
+    end
+
+    it "Can use CallbackInfo struct field in Ractor", :ractor do
+      res = Ractor.new do
         s = CallbackMember::TestStruct.new
-        add_proc = lambda { |a, b| a+b }
-        sub_proc = lambda { |a, b| a-b }
+        add_proc = lambda { |a, b| a + b }
         s[:add] = add_proc
-        s[:sub] = sub_proc
-        expect(CallbackMember.struct_call_add_cb(s, 40, 2)).to eq(42)
-        expect(CallbackMember.struct_call_sub_cb(s, 44, 2)).to eq(42)
+        CallbackMember.struct_call_add_cb(s, 40, 2)
+      end.take
+
+      expect( res ).to eq(42)
     end
 
     it "Can return its members as a list" do
@@ -531,6 +543,34 @@ module StructSpecsStructTests
       end
       expect(a.members).to eq([:a])
       expect(b.members).to eq([:a, :b])
+    end
+
+    it "can be made shareable for Ractor", :ractor do
+      a = Class.new(FFI::Struct) do
+        layout :a, :char
+      end.new
+      a[:a] = -34
+      Ractor.make_shareable(a)
+
+      res = Ractor.new(a) do |a2|
+        a2[:a]
+      end.take
+
+      expect( res ).to eq(-34)
+    end
+
+    it "should be usable with Ractor", :ractor do
+      class TestStructRactor < FFI::Struct
+        layout :i, :int
+      end
+
+      res = Ractor.new do
+        s = TestStructRactor.new
+        s[:i] = 0x14
+        LibTest.ptr_ret_int32_t(s, 0)
+      end.take
+
+      expect( res ).to eq(0x14)
     end
   end
 end
@@ -1068,6 +1108,20 @@ describe "Struct memsize functions", skip: RUBY_ENGINE != "ruby" do
     layout = SmallCustomStruct.layout
     size = ObjectSpace.memsize_of(layout[:pointer])
     expect(size).to be > base_size
+  end
+
+  it "StructLayout should be shareable with Ractor", :ractor do
+    kl = Class.new(FFI::Struct) do
+      layout :ptr, :pointer
+    end
+    expect(Ractor.shareable?(kl.layout)).to eq(true)
+  end
+
+  it "StructField should be shareable with Ractor", :ractor do
+    kl = Class.new(FFI::Struct) do
+      layout :ptr, :pointer
+    end
+    expect(Ractor.shareable?(kl.layout[:ptr])).to eq(true)
   end
 end
 

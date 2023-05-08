@@ -77,7 +77,7 @@ const rb_data_type_t rbffi_struct_layout_data_type = { /* extern */
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
   // macro to update VALUE references, as to trigger write barriers.
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 const rb_data_type_t rbffi_struct_field_data_type = { /* extern */
@@ -91,7 +91,7 @@ const rb_data_type_t rbffi_struct_field_data_type = { /* extern */
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
   // macro to update VALUE references, as to trigger write barriers.
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 static VALUE
@@ -180,6 +180,8 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
                         && RTEST(rb_funcall2(rbType, rb_intern("reference_required?"), 0, NULL)));
             break;
     }
+
+    rb_obj_freeze(self);
 
     return self;
 }
@@ -537,6 +539,11 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     if (ltype->size == 0) {
         rb_raise(rb_eRuntimeError, "Struct size is zero");
     }
+
+    rb_obj_freeze(layout->rbFieldMap);
+    rb_obj_freeze(layout->rbFields);
+    rb_obj_freeze(layout->rbFieldNames);
+    rb_obj_freeze(self);
 
     return self;
 }

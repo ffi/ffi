@@ -56,6 +56,8 @@
 #endif
 
 
+
+/* For compatibility with ruby < 2.7 */
 #ifdef HAVE_RB_GC_MARK_MOVABLE
 #define ffi_compact_callback(x) .dcompact = (x),
 #define ffi_gc_location(x) x = rb_gc_location(x)
@@ -63,6 +65,18 @@
 #define rb_gc_mark_movable(x) rb_gc_mark(x)
 #define ffi_compact_callback(x)
 #define ffi_gc_location(x)
+#endif
+
+
+/* For compatibility with ruby < 3.0 */
+#ifndef RUBY_TYPED_FROZEN_SHAREABLE
+#define FFI_RUBY_TYPED_FROZEN_SHAREABLE 0
+#else
+#define FFI_RUBY_TYPED_FROZEN_SHAREABLE RUBY_TYPED_FROZEN_SHAREABLE
+#endif
+
+#ifndef HAVE_RB_EXT_RACTOR_SAFE
+#define rb_ractor_make_shareable(self) rb_obj_freeze(self);
 #endif
 
 #endif /* RBFFI_COMPAT_H */

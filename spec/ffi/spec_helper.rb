@@ -9,6 +9,7 @@ require 'objspace'
 
 RSpec.configure do |c|
   c.filter_run_excluding gc_dependent: true unless ENV['FFI_TEST_GC'] == 'true'
+  c.filter_run_excluding( :ractor ) unless defined?(Ractor) && RUBY_VERSION >= "3.1"
 end
 
 module TestLibrary

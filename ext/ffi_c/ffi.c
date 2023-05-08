@@ -60,6 +60,10 @@ static VALUE moduleFFI = Qnil;
 void
 Init_ffi_c(void)
 {
+    #ifdef HAVE_RB_EXT_RACTOR_SAFE
+        rb_ext_ractor_safe(1);
+    #endif
+
     /*
      * Document-module: FFI
      *

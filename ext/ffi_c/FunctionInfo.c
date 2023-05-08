@@ -67,7 +67,7 @@ const rb_data_type_t rbffi_fntype_data_type = { /* extern */
     .parent = &rbffi_type_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 VALUE rbffi_FunctionTypeClass = Qnil;
@@ -251,16 +251,18 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
 
     fnInfo->invoke = rbffi_GetInvoker(fnInfo);
 
+    rb_obj_freeze(fnInfo->rbParameterTypes);
+    rb_obj_freeze(self);
     return self;
 }
 
 /*
- * call-seq: result_type
+ * call-seq: return_type
  * @return [Type]
  * Get the return type of the function type
  */
 static VALUE
-fntype_result_type(VALUE self)
+fntype_return_type(VALUE self)
 {
     FunctionType* ft;
 
@@ -311,7 +313,7 @@ rbffi_FunctionInfo_Init(VALUE moduleFFI)
 
     rb_define_alloc_func(rbffi_FunctionTypeClass, fntype_allocate);
     rb_define_method(rbffi_FunctionTypeClass, "initialize", fntype_initialize, -1);
-    rb_define_method(rbffi_FunctionTypeClass, "result_type", fntype_result_type, 0);
+    rb_define_method(rbffi_FunctionTypeClass, "return_type", fntype_return_type, 0);
     rb_define_method(rbffi_FunctionTypeClass, "param_types", fntype_param_types, 0);
 
 }

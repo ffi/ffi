@@ -69,5 +69,5 @@ module TestLibrary
     lib
   end
 
-  PATH = compile_library(".", "libtest.#{FFI::Platform::LIBSUFFIX}")
+  PATH = FFI.make_shareable(compile_library(".", "libtest.#{FFI::Platform::LIBSUFFIX}"))
 end

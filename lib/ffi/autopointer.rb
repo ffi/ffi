@@ -107,6 +107,7 @@ module FFI
     # @return [Boolean] +autorelease+
     # Set +autorelease+ property. See {Pointer Autorelease section at Pointer}.
     def autorelease=(autorelease)
+      raise FrozenError.new("can't modify frozen #{self.class}") if frozen?
       @releaser.autorelease=(autorelease)
     end
 

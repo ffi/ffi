@@ -90,6 +90,13 @@ describe "Pointer" do
       expect(PointerTestLib.ptr_ret_pointer(memory, 0).address).to eq(0xdeadbeef)
     end
 
+    it "#write_pointer frozen object" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+      skip "not yet supported on JRuby" if RUBY_ENGINE == "jruby"
+      memory = FFI::MemoryPointer.new(:pointer).freeze
+      expect{ memory.write_pointer(PointerTestLib.ptr_from_address(0xdeadbeef)) }.to raise_error(RuntimeError, /memory write/)
+    end
+
     it "#read_array_of_pointer" do
       values = [0x12345678, 0xfeedf00d, 0xdeadbeef]
       memory = FFI::MemoryPointer.new :pointer, values.size
@@ -363,6 +370,11 @@ describe "AutoPointer" do
       ptr = ptr_class.new(FFI::Pointer.new(0xdeadbeef))
       ptr.autorelease = false
       expect(ptr.autorelease?).to be false
+    end
+
+    it "should deny changes when frozen" do
+      ptr = ptr_class.new(FFI::Pointer.new(0xdeadbeef)).freeze
+      expect{ ptr.autorelease = false }.to raise_error(FrozenError)
     end
   end
 

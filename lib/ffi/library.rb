@@ -31,7 +31,7 @@
 require 'ffi/dynamic_library'
 
 module FFI
-  CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = Object.new
+  CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = FFI.make_shareable(Object.new)
 
   # @param [#to_s] lib library name
   # @return [String] library name formatted for current platform
@@ -209,7 +209,7 @@ module FFI
             end
             raise LoadError unless function
 
-            invokers << if arg_types.length > 0 && arg_types[arg_types.length - 1] == FFI::NativeType::VARARGS
+            invokers << if arg_types[-1] == FFI::NativeType::VARARGS
               VariadicInvoker.new(function, arg_types, find_type(ret_type), options)
 
             else
@@ -281,6 +281,7 @@ module FFI
     # Attach C variable +cname+ to this module.
     def attach_variable(mname, a1, a2 = nil)
       cname, type = a2 ? [ a1, a2 ] : [ mname.to_s, a1 ]
+      mname = mname.to_sym
       address = nil
       ffi_libraries.each do |lib|
         begin
@@ -295,9 +296,10 @@ module FFI
         # If it is a global struct, just attach directly to the pointer
         s = s = type.new(address) # Assigning twice to suppress unused variable warning
         self.module_eval <<-code, __FILE__, __LINE__
-          @@ffi_gvar_#{mname} = s
+          @ffi_gsvars = {} unless defined?(@ffi_gsvars)
+          @ffi_gsvars[#{mname.inspect}] = s
           def self.#{mname}
-            @@ffi_gvar_#{mname}
+            @ffi_gsvars[#{mname.inspect}]
           end
         code
 
@@ -309,12 +311,13 @@ module FFI
         # Attach to this module as mname/mname=
         #
         self.module_eval <<-code, __FILE__, __LINE__
-          @@ffi_gvar_#{mname} = s
+          @ffi_gvars = {} unless defined?(@ffi_gvars)
+          @ffi_gvars[#{mname.inspect}] = s
           def self.#{mname}
-            @@ffi_gvar_#{mname}[:gvar]
+            @ffi_gvars[#{mname.inspect}][:gvar]
           end
           def self.#{mname}=(value)
-            @@ffi_gvar_#{mname}[:gvar] = value
+            @ffi_gvars[#{mname.inspect}][:gvar] = value
           end
         code
 
@@ -538,6 +541,44 @@ module FFI
         typedef Type::Mapped.new(t), t
 
       end || FFI.find_type(t)
+    end
+
+    # Retrieve all attached functions and their function signature
+    #
+    # This method returns a Hash of method names of attached functions connected by #attach_function and the corresponding function type.
+    # The function type responds to #return_type and #param_types which return the FFI types of the function signature.
+    #
+    # @return [Hash< Symbol => [FFI::Function, FFI::VariadicInvoker] >]
+    def attached_functions
+      @ffi_functions || {}
+    end
+
+    # Retrieve all attached variables and their type
+    #
+    # This method returns a Hash of variable names and the corresponding type or variables connected by #attach_variable .
+    #
+    # @return [Hash< Symbol => ffi_type >]
+    def attached_variables
+      (
+        (@ffi_gsvars || {}).map do |name, gvar|
+          [name, gvar.class]
+        end +
+        (@ffi_gvars || {}).map do |name, gvar|
+          [name, gvar.layout[:gvar].type]
+        end
+      ).to_h
+    end
+
+    # Freeze all definitions of the module
+    #
+    # This freezes the module's definitions, so that it can be used in a Ractor.
+    # No further methods or variables can be attached and no further enums or typedefs can be created in this module afterwards.
+    def freeze
+      instance_variables.each do |name|
+        var = instance_variable_get(name)
+        FFI.make_shareable(var)
+      end
+      nil
     end
   end
 end

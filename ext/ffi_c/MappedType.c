@@ -57,7 +57,7 @@ static const rb_data_type_t mapped_type_data_type = {
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
   // macro to update VALUE references, as to trigger write barriers.
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 
@@ -109,6 +109,8 @@ mapped_initialize(VALUE self, VALUE rbConverter)
     RB_OBJ_WRITE(self, &m->rbConverter, rbConverter);
     TypedData_Get_Struct(m->rbType, Type, &rbffi_type_data_type, m->type);
     m->base.ffiType = m->type->ffiType;
+
+    rb_obj_freeze(self);
 
     return self;
 }
@@ -175,6 +177,15 @@ mapped_from_native(int argc, VALUE* argv, VALUE self)
     return rb_funcall2(m->rbConverter, id_from_native, argc, argv);
 }
 
+static VALUE
+mapped_converter(VALUE self)
+{
+    MappedType*m = NULL;
+    TypedData_Get_Struct(self, MappedType, &mapped_type_data_type, m);
+
+    return m->rbConverter;
+}
+
 void
 rbffi_MappedType_Init(VALUE moduleFFI)
 {
@@ -195,5 +206,6 @@ rbffi_MappedType_Init(VALUE moduleFFI)
     rb_define_method(rbffi_MappedTypeClass, "native_type", mapped_native_type, 0);
     rb_define_method(rbffi_MappedTypeClass, "to_native", mapped_to_native, -1);
     rb_define_method(rbffi_MappedTypeClass, "from_native", mapped_from_native, -1);
+    rb_define_method(rbffi_MappedTypeClass, "converter", mapped_converter, 0);
 }
 

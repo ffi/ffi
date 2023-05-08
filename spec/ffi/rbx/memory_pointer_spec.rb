@@ -104,6 +104,18 @@ describe "MemoryPointer" do
     expect(m.read FFI::Type::BOOL).to eq(false)
   end
 
+  it "allows definition of a custom typedef" do
+    FFI.typedef :uint32, :fubar_t
+    expect(FFI.find_type(:fubar_t)).to eq(FFI::Type::Builtin::UINT32)
+  end
+
+  it "allows overwriting of a default typedef" do
+    FFI.typedef :uint32, :char
+    expect(FFI.find_type(:char)).to eq(FFI::Type::Builtin::UINT32)
+  ensure
+    FFI.typedef FFI::Type::Builtin::CHAR, :char
+  end
+
   it "allows writing a custom typedef" do
     FFI.typedef :uint, :fubar_t
     FFI.typedef :size_t, :fubar2_t

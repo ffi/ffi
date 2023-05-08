@@ -33,6 +33,9 @@
 
 #include <sys/types.h>
 #include <ruby.h>
+#if HAVE_RB_EXT_RACTOR_SAFE
+#include <ruby/ractor.h>
+#endif
 #include <ffi.h>
 #include "rbffi.h"
 #include "compat.h"
@@ -54,6 +57,9 @@ static VALUE classBuiltinType = Qnil;
 static VALUE moduleNativeType = Qnil;
 static VALUE typeMap = Qnil;
 static ID id_type_size = 0, id_size = 0;
+#if HAVE_RB_EXT_RACTOR_SAFE
+static rb_ractor_local_key_t custom_typedefs_key;
+#endif
 
 const rb_data_type_t rbffi_type_data_type = { /* extern */
   .wrap_struct_name = "FFI::Type",
@@ -64,7 +70,7 @@ const rb_data_type_t rbffi_type_data_type = { /* extern */
   },
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
   // macro to update VALUE references, as to trigger write barriers.
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 static const rb_data_type_t builtin_type_data_type = {
@@ -77,7 +83,7 @@ static const rb_data_type_t builtin_type_data_type = {
   .parent = &rbffi_type_data_type,
   // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
   // macro to update VALUE references, as to trigger write barriers.
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 static size_t
@@ -121,6 +127,8 @@ type_initialize(VALUE self, VALUE value)
     } else {
         rb_raise(rb_eArgError, "wrong type");
     }
+
+    rb_obj_freeze(self);
 
     return self;
 }
@@ -186,6 +194,8 @@ builtin_type_new(VALUE klass, int nativeType, ffi_type* ffiType, const char* nam
     type->type.nativeType = nativeType;
     type->type.ffiType = ffiType;
 
+    rb_obj_freeze(obj);
+
     return obj;
 }
 
@@ -245,6 +255,25 @@ rbffi_type_size(VALUE type)
     }
 }
 
+static VALUE
+custom_typedefs(VALUE self)
+{
+#if HAVE_RB_EXT_RACTOR_SAFE
+    VALUE hash = rb_ractor_local_storage_value(custom_typedefs_key);
+    if (hash == Qnil) {
+        hash = rb_hash_new();
+        rb_ractor_local_storage_value_set(custom_typedefs_key, hash);
+    }
+#else
+    static VALUE hash = Qundef;
+    if (hash == Qundef) {
+        rb_global_variable(&hash);
+        hash = rb_hash_new();
+    }
+#endif
+    return hash;
+}
+
 VALUE
 rbffi_Type_Lookup(VALUE name)
 {
@@ -254,6 +283,12 @@ rbffi_Type_Lookup(VALUE name)
          * Try looking up directly in the type map
          */
         VALUE nType;
+        VALUE cust = custom_typedefs(Qnil);
+
+        if ((nType = rb_hash_lookup(cust, name)) != Qnil && rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
+            return nType;
+        }
+
         if ((nType = rb_hash_lookup(typeMap, name)) != Qnil && rb_obj_is_kind_of(nType, rbffi_TypeClass)) {
             return nType;
         }
@@ -285,6 +320,11 @@ rbffi_Type_Init(VALUE moduleFFI)
     rb_global_variable(&typeMap);
     id_type_size = rb_intern("type_size");
     id_size = rb_intern("size");
+
+#if HAVE_RB_EXT_RACTOR_SAFE
+    custom_typedefs_key = rb_ractor_local_storage_value_newkey();
+#endif
+    rb_define_module_function(moduleFFI, "custom_typedefs", custom_typedefs, 0);
 
     /*
      * Document-class: FFI::Type::Builtin

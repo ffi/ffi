@@ -35,7 +35,7 @@ module FFI
       SEARCH_PATH << '/opt/homebrew/lib'
     end
 
-    SEARCH_PATH_MESSAGE = "Searched in <system library path>, #{SEARCH_PATH.join(', ')}"
+    SEARCH_PATH_MESSAGE = "Searched in <system library path>, #{SEARCH_PATH.join(', ')}".freeze
 
     def self.load_library(name, flags)
       if name == FFI::CURRENT_PROCESS

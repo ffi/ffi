@@ -15,6 +15,7 @@ using Ruby-FFI](https://github.com/ffi/ffi/wiki/why-use-ffi).
 * C structs (also nested), enums and global variables
 * Callbacks from C to Ruby
 * Automatic garbage collection of native memory
+* Usable in Ractor
 
 ## Synopsis
 
@@ -62,7 +63,7 @@ On JRuby and TruffleRuby, there are no requirements to install the FFI gem, and 
 From rubygems:
 
     [sudo] gem install ffi
-    
+
 From a Gemfile using git or GitHub
 
     gem 'ffi', github: 'ffi/ffi', submodules: true

@@ -33,6 +33,7 @@
 #include <ruby.h>
 #include "rbffi.h"
 #include "rbffi_endian.h"
+#include "compat.h"
 #include "AbstractMemory.h"
 #include "Pointer.h"
 
@@ -57,7 +58,7 @@ const rb_data_type_t rbffi_pointer_data_type = { /* extern */
     .parent = &rbffi_abstract_memory_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
 VALUE
@@ -397,6 +398,7 @@ ptr_free(VALUE self)
 {
     Pointer* ptr;
 
+    rb_check_frozen(self);
     TypedData_Get_Struct(self, Pointer, &rbffi_pointer_data_type, ptr);
 
     if (ptr->allocated) {
@@ -436,6 +438,7 @@ ptr_autorelease(VALUE self, VALUE autorelease)
 {
     Pointer* ptr;
 
+    rb_check_frozen(self);
     TypedData_Get_Struct(self, Pointer, &rbffi_pointer_data_type, ptr);
     ptr->autorelease = autorelease == Qtrue;
 

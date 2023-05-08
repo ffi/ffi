@@ -173,7 +173,6 @@ get_last_winapi_error(VALUE self)
 static VALUE
 set_last_error(VALUE self, VALUE error)
 {
-
 #ifdef _WIN32
     SetLastError(NUM2INT(error));
 #else
