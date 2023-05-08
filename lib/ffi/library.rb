@@ -34,8 +34,6 @@ module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = FFI.make_shareable(Object.new)
 
   class LibraryPath < ::Struct.new(:name, :abi_number, :root)
-    PATTERN = /(#{Platform::LIBPREFIX})?(?<name>.*?)(\.|\z)/
-
     def self.wrap(value)
       # We allow instances of LibraryPath to pass through transparently:
       return value if value.is_a?(self)
@@ -45,9 +43,7 @@ module FFI
 
       # If provided a relative file name we convert it into a library path:
       if value && File.basename(value) == value
-        if match = PATTERN.match(value)
-          return self.new(match[:name])
-        end
+        return self.new(value)
       end
 
       # Otherwise, we assume it's a full path to a library:
@@ -66,7 +62,13 @@ module FFI
         end
       else
         # Otherwise we just use a generic format:
-        "#{Platform::LIBPREFIX}#{name}.#{Platform::LIBSUFFIX}"
+        lib = name
+        # Add library prefix if missing
+        lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
+        # Add library extension if missing
+        r = Platform::IS_WINDOWS || Platform::IS_MAC ? "\\.#{Platform::LIBSUFFIX}$" : "\\.so($|\\.[1234567890]+)"
+        lib += ".#{Platform::LIBSUFFIX}" unless lib =~ /#{r}/
+        lib
       end
     end
 
