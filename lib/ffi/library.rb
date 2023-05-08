@@ -33,55 +33,6 @@ require 'ffi/dynamic_library'
 module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = FFI.make_shareable(Object.new)
 
-  class LibraryPath < ::Struct.new(:name, :abi_number, :root)
-    def self.wrap(value)
-      # We allow instances of LibraryPath to pass through transparently:
-      return value if value.is_a?(self)
-
-      # We special case a library named 'c' to be the standard C library:
-      return Library::LIBC if value == 'c'
-
-      # If provided a relative file name we convert it into a library path:
-      if value && File.basename(value) == value
-        return self.new(value)
-      end
-
-      # Otherwise, we assume it's a full path to a library:
-      return value
-    end
-
-    def full_name
-      # If the abi_number is given, we format it specifically according to platform rules:
-      if abi_number
-        if Platform.windows?
-          "#{Platform::LIBPREFIX}#{name}-#{abi_number}.#{Platform::LIBSUFFIX}"
-        elsif Platform.mac?
-          "#{Platform::LIBPREFIX}#{name}.#{abi_number}.#{Platform::LIBSUFFIX}"
-        else # Linux? BSD? etc.
-          "#{Platform::LIBPREFIX}#{name}.#{Platform::LIBSUFFIX}.#{abi_number}"
-        end
-      else
-        # Otherwise we just use a generic format:
-        lib = name
-        # Add library prefix if missing
-        lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
-        # Add library extension if missing
-        r = Platform::IS_WINDOWS || Platform::IS_MAC ? "\\.#{Platform::LIBSUFFIX}$" : "\\.so($|\\.[1234567890]+)"
-        lib += ".#{Platform::LIBSUFFIX}" unless lib =~ /#{r}/
-        lib
-      end
-    end
-
-    def to_s
-      if root
-        # If the root path is given, we generate the full path:
-        File.join(root, full_name)
-      else
-        full_name
-      end
-    end
-  end
-
   # @param [#to_s] lib library name
   # @return [String] library name formatted for current platform
   # Transform a generic library name to a platform library name
