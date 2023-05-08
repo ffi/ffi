@@ -24,6 +24,15 @@ describe "FFI" do
       expect(FFI.map_library_name('c')).to eq(FFI::Library::LIBC)
     end
 
+    it "should return library path with abi version" do
+      expect(FFI.map_library_name(FFI::LibraryPath.new('vips', 42))).to be =~ /#{prefix}vips.*42/
+    end
+
+    it "should return library path with root" do
+      root = "/non/existant/root"
+
+      expect(FFI.map_library_name(FFI::LibraryPath.new('vips', 42, root))).to be =~ /#{root}/#{prefix}vips.*42/
+    end
   end
 
   describe "VERSION" do
