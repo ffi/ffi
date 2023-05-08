@@ -41,6 +41,9 @@ describe FFI::Struct, ' by_ref' do
   end
 
   it "can reveal the mapped type converter" do
+    skip 'this is not yet implemented on JRuby' if RUBY_ENGINE == 'jruby'
+    skip 'this is not yet implemented on Truffleruby' if RUBY_ENGINE == 'truffleruby'
+
     param_type = @api.attached_functions[:struct_test].param_types[0]
     expect(param_type).to be_a(FFI::Type::Mapped)
     expect(param_type.converter).to be_a(FFI::StructByReference)

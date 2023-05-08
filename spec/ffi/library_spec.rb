@@ -228,6 +228,9 @@ describe "Library" do
   end
 
   it "can reveal the function type" do
+    skip 'this is not yet implemented on JRuby' if RUBY_ENGINE == 'jruby'
+    skip 'this is not yet implemented on Truffleruby' if RUBY_ENGINE == 'truffleruby'
+
     mod = Module.new do |m|
       m.extend FFI::Library
       ffi_lib File.expand_path(TestLibrary::PATH)
