@@ -34,6 +34,11 @@ module FFI
     if FFI::Platform::ARCH == 'aarch64' && FFI::Platform.mac?
       SEARCH_PATH << '/opt/homebrew/lib'
     end
+    if FFI::Platform.mac?
+      from_env_vars = ENV.fetch('DYLD_LIBRARY_PATH', '').split(':')
+      from_env_vars += ENV.fetch('DYLD_FALLBACK_LIBRARY_PATH', '').split(':')
+      SEARCH_PATH.unshift(*from_env_vars)
+    end
 
     SEARCH_PATH_MESSAGE = "Searched in <system library path>, #{SEARCH_PATH.join(', ')}".freeze
 
