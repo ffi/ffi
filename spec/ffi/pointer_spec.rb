@@ -245,8 +245,8 @@ describe "Pointer" do
     end
   end
 
-  describe "#initialise" do
-    it 'can use adresses with high bit set' do
+  describe "#initialize" do
+    it 'can use addresses with high bit set' do
       max_address = 2**FFI::Platform::ADDRESS_SIZE - 1
       pointer = FFI::Pointer.new(:uint8, max_address)
       expect(pointer.address).to eq(max_address)
