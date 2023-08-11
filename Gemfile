@@ -12,3 +12,7 @@ group :doc do
   gem 'kramdown'
   gem 'yard', '~> 0.9'
 end
+
+group :type_check do
+  gem 'rbs', '~> 3.0'
+end
