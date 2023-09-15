@@ -33,7 +33,7 @@ require 'ffi/dynamic_library'
 module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = FFI.make_shareable(Object.new)
 
-  # @param [#to_s] lib library name
+  # @param [String, FFI::LibraryPath] lib library name or LibraryPath object
   # @return [String] library name formatted for current platform
   # Transform a generic library name to a platform library name
   # @example
@@ -43,9 +43,9 @@ module FFI
   #  # Windows
   #  FFI.map_library_name 'c'     # -> "msvcrt.dll"
   #  FFI.map_library_name 'jpeg'  # -> "jpeg.dll"
-  def self.map_library_name(value)
+  def self.map_library_name(lib)
     # Mangle the library name to reflect the native library naming conventions
-    LibraryPath.wrap(value).to_s
+    LibraryPath.wrap(lib).to_s
   end
 
   # Exception raised when a function is not found in libraries

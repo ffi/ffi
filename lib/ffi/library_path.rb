@@ -29,7 +29,36 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.#
 
 module FFI
-  class LibraryPath < ::Struct.new(:name, :abi_number, :root)
+  # Transform a generic library name and ABI number to a platform library name
+  #
+  # Example:
+  #   module LibVips
+  #     extend FFI::Library
+  #     ffi_lib LibraryPath.new("vips", abi_number: 42)
+  #   end
+  #
+  # This translates to the following library file names:
+  #   libvips-42.dll    on Windows
+  #   libvips.so.42     on Linux
+  #   libvips.42.dylib  on Macos
+  #
+  # See https://packaging.ubuntu.com/html/libraries.html for more information about library naming.
+  class LibraryPath
+    attr_reader :name
+    attr_reader :abi_number
+    attr_reader :root
+
+    # Build a new library path
+    #
+    # * <tt>name</tt> :  The name of the library without file prefix or suffix.
+    # * <tt>abi_number</tt> :  The ABI number of the library.
+    # * <tt>root</tt> :  An optional base path prepended to the library name.
+    def initialize(name, abi_number: nil, root: nil)
+      @name = name
+      @abi_number = abi_number
+      @root = root
+    end
+
     def self.wrap(value)
       # We allow instances of LibraryPath to pass through transparently:
       return value if value.is_a?(self)
@@ -57,12 +86,12 @@ module FFI
           "#{Platform::LIBPREFIX}#{name}.#{Platform::LIBSUFFIX}.#{abi_number}"
         end
       else
-        # Otherwise we just use a generic format:
+        # Otherwise we just add prefix and suffix:
         lib = name
         # Add library prefix if missing
         lib = Platform::LIBPREFIX + lib unless lib =~ /^#{Platform::LIBPREFIX}/
         # Add library extension if missing
-        r = Platform::IS_WINDOWS || Platform::IS_MAC ? "\\.#{Platform::LIBSUFFIX}$" : "\\.so($|\\.[1234567890]+)"
+        r = Platform.windows? || Platform.mac? ? "\\.#{Platform::LIBSUFFIX}$" : "\\.so($|\\.[1234567890]+)"
         lib += ".#{Platform::LIBSUFFIX}" unless lib =~ /#{r}/
         lib
       end

@@ -39,13 +39,13 @@ describe "FFI" do
     end
 
     it "should return library path with abi version" do
-      expect(FFI.map_library_name(FFI::LibraryPath.new('vips', 42))).to be =~ /#{prefix}vips.*42/
+      expect(FFI.map_library_name(FFI::LibraryPath.new('vips', abi_number: 42))).to be =~ /#{prefix}vips.*42/
     end
 
     it "should return library path with root" do
       root = "/non/existant/root"
 
-      expect(FFI.map_library_name(FFI::LibraryPath.new('vips', 42, root))).to be =~ /#{root}/#{prefix}vips.*42/
+      expect(FFI.map_library_name(FFI::LibraryPath.new('vips', abi_number: 42, root: root))).to be =~ /#{root}/#{prefix}vips.*42/
     end
   end
 
