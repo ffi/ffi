@@ -30,7 +30,7 @@ CLEAN.include 'spec/ffi/fixtures/libtest.{dylib,so,dll}'
 CLEAN.include 'spec/ffi/fixtures/*.o'
 CLEAN.include 'spec/ffi/embed-test/ext/*.{o,def}'
 CLEAN.include 'spec/ffi/embed-test/ext/Makefile'
-CLEAN.include "pkg/ffi-*-{mingw32,java}"
+CLEAN.include "pkg/ffi-*-*/"
 CLEAN.include 'lib/{2,3}.*'
 
 # clean all shipped files, that are not in git
