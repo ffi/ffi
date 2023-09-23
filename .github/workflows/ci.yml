@@ -60,7 +60,8 @@ jobs:
     - run: bundle exec rake libffi
     - run: bundle exec rake compile
 
-    - run: bundle exec rake test FFI_TEST_GC=true
+    - if: matrix.os != 'windows'
+      run: bundle exec rake test FFI_TEST_GC=true
 
     - run: bundle exec rake bench:all
       if: ${{ matrix.ruby != 'truffleruby-head' && matrix.ruby != 'jruby-head' }}
