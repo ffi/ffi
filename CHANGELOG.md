@@ -18,7 +18,7 @@ Added:
 * Make FFI Ractor compatible. #1023
   Modules extended per `extend FFI::Library` need to be frozen in order to be used by non-main Ractors.
   This can be done by calling `freeze` below of all C interface definitions.
-  In a Ractor it's possible to:
+  * In a Ractor it's possible to:
     * load DLLs and call its functions, access its global variables
     * use builtin typedefs
     * use and modify ractor local typedefs
@@ -27,7 +27,7 @@ Added:
     * use frozen FFI::Library based modules with all attributes (enums, structs, typedefs, functions, callbacks)
     * invoke frozen functions and callbacks defined in the main Ractor
     * use FFI::Struct definitions from the main Ractor
-  In a Ractor it's impossible to:
+  * In a Ractor it's impossible to:
     * create new FFI::Library based modules
     * create new FFI::Struct definitions
     * use custom global typedefs
@@ -43,6 +43,8 @@ Added:
 * Allow private release method for FFI::ManagedStruct and FFI::AutoPointer. #1029
 * Add support for passing ABI version to FFI.map_library_name. #963
   This adds the new class FFI::LibraryPath .
+* Add support for ruby-3.2 to windows binary gem. #1047
+* Enable debug symbols for `rake compile` builds to ease debugging. #1048
 
 Removed:
 * Remove allocator of AbstractMemory. #1013
