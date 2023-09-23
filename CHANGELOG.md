@@ -1,3 +1,55 @@
+1.16.0 / 2023-??-??
+-------------------
+
+Fixed:
+* Fix an issue with signed bitmasks when using flags on the most significant bit. #949
+* Fix FFI::Pointer#initialize using NUM2LL instead of NUM2ULL.
+* Fix FFI::Type#inspect to properly display the constant name. #1002
+* Use libffi closure allocations on hppa-Linux. #1017
+  Previously they would segfault.
+* Fix class name of Symbol#inspect.
+* Fix MSVC support of libtest. #1028
+* Fix attach_function of functions ending in ? or ! #971
+
+Added:
+* Convert all C-based classes to TypedData and use write barriers. #994, #995, #996, #997, #998, #999, #1000, #1001, #1003, #1004, #1005, #1006, #1007, #1008, #1009, #1010, #1011, #1012
+  This results in less pressure on the garbage collector, since the objects can be promoted to the old generation, which means they only get marked on major GC.
+* Implement `ObjectSpace.memsize_of()` of all C-based classes.
+* Make FFI Ractor compatible. #1023
+  Modules extended per `extend FFI::Library` need to be frozen in order to be used by non-main Ractors.
+  This can be done by calling `freeze` below of all C interface definitions.
+  In a Ractor it's possible to:
+    * load DLLs and call its functions, access its global variables
+    * use builtin typedefs
+    * use and modify ractor local typedefs
+    * define callbacks
+    * receive async callbacks from non-ruby threads
+    * use frozen FFI::Library based modules with all attributes (enums, structs, typedefs, functions, callbacks)
+    * invoke frozen functions and callbacks defined in the main Ractor
+    * use FFI::Struct definitions from the main Ractor
+  In a Ractor it's impossible to:
+    * create new FFI::Library based modules
+    * create new FFI::Struct definitions
+    * use custom global typedefs
+    * use non-frozen FFI::Library based modules
+* Allow type retrieval of attached functions+variables. #1023
+* Make FFI classes `GC.compact` friendly. #1021
+* Update libffi and disable custom trampoline when using libffi closure allocation. #1020
+  This is because libffi changed the way how closures are allocated to static trampolines.
+* Add types.conf for loongarch64-linux. #943
+* Add types.conf for sw_64-linux (Shen Wei 64-bit, based on Alpha).  #1018
+* Add support for aarch64-windows. #1035
+* Windows: Update LoadLibrary error message to include error code. #1026
+* Allow private release method for FFI::ManagedStruct and FFI::AutoPointer. #1029
+* Add support for passing ABI version to FFI.map_library_name. #963
+  This adds the new class FFI::LibraryPath .
+
+Removed:
+* Remove allocator of AbstractMemory. #1013
+  This disables AbstractMemory.new, which has no practical use.
+* Remove unused FFI::SizeTypes. #1022
+
+
 1.15.5 / 2022-01-10
 -------------------
 
