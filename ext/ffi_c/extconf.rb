@@ -75,7 +75,13 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
 
   unless system_libffi
     File.open("Makefile", "a") do |mf|
-      mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
+      if RbConfig::CONFIG['host_alias'] == "i386-w64-mingw32"
+        host = "i686-w64-mingw32" # Work around host name without matching compiler name in rake-compiler-dock-1.3.0 on platform x86-mingw32
+      elsif RbConfig::CONFIG.has_key?("host_alias")
+        host = RbConfig::CONFIG['host_alias']
+      end
+      mf.puts "LIBFFI_HOST=--host=#{host}" if host
+
       if RbConfig::CONFIG['host_os'] =~ /darwin/i
         if RbConfig::CONFIG['host'] =~ /arm|aarch64/i
           mf.puts "LIBFFI_HOST=--host=aarch64-apple-#{RbConfig::CONFIG['host_os']}"

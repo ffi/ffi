@@ -86,6 +86,8 @@ task 'gem:java' => 'java:gem'
 FfiGemHelper.install_tasks
 # Register windows gems to be pushed to rubygems.org
 Bundler::GemHelper.instance.cross_platforms = %w[x86-mingw32 x64-mingw-ucrt x64-mingw32]
+# These platforms are not yet enabled, since there are issues on musl-based distors (alpine-linux):
+# + %w[x86-linux x86_64-linux arm-linux aarch64-linux x86_64-darwin arm64-darwin]
 
 if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   require 'rake/extensiontask'
@@ -120,8 +122,8 @@ namespace "gem" do
     desc "Build the native gem for #{plat}"
     task plat => ['prepare', 'build'] do
       RakeCompilerDock.sh <<-EOT, platform: plat
-        sudo apt-get update &&
-        sudo apt-get install -y libltdl-dev && bundle --local &&
+        #{ "sudo apt-get update && sudo apt-get install -y libltdl-dev &&" if plat !~ /linux/ }
+        bundle --local &&
         rake native:#{plat} pkg/#{gem_spec.full_name}-#{plat}.gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=${RUBY_CC_VERSION/:2.2.2/}
       EOT
     end
