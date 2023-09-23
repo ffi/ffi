@@ -35,8 +35,8 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   # solaris 10 needs -c99 for <stdbool.h>
   $CFLAGS << " -g -std=c99" if RbConfig::CONFIG['host_os'] =~ /solaris(!?2\.11)/
   if enable_config("debug")
-    $CPPFLAGS += " -ggdb"
-    $LDFLAGS += " -ggdb"
+    $CPPFLAGS += " #{RbConfig::CONFIG["debugflags"]}"
+    $LDFLAGS += " #{RbConfig::CONFIG["debugflags"]}"
   end
 
   # Check whether we use system libffi
@@ -80,7 +80,7 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   unless system_libffi
     File.open("Makefile", "a") do |mf|
       if enable_config("debug")
-        mf.puts "LIBFFI_DEBUG=--enable-debug CPPFLAGS='-ggdb' LDFLAGS='-ggdb'"
+        mf.puts "LIBFFI_DEBUG=--enable-debug CPPFLAGS='#{RbConfig::CONFIG["debugflags"]}' LDFLAGS='#{RbConfig::CONFIG["debugflags"]}'"
       end
 
       if RbConfig::CONFIG['host_alias'] == "i386-w64-mingw32"
