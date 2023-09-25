@@ -166,14 +166,18 @@ static void
 async_cb_dispatcher_mark(void *ptr)
 {
     struct async_cb_dispatcher *ctx = (struct async_cb_dispatcher *)ptr;
-    rb_gc_mark(ctx->thread);
+    if (ctx) {
+        rb_gc_mark(ctx->thread);
+    }
 }
 
 static void
 async_cb_dispatcher_free(void *ptr)
 {
     struct async_cb_dispatcher *ctx = (struct async_cb_dispatcher *)ptr;
-    xfree(ctx);
+    if (ctx) {
+        xfree(ctx);
+    }
 }
 
 struct rb_ractor_local_storage_type async_cb_dispatcher_key_type = {
