@@ -97,7 +97,8 @@ fntype_mark(void *data)
     rb_gc_mark_movable(fnInfo->rbParameterTypes);
     rb_gc_mark_movable(fnInfo->rbEnums);
     if (fnInfo->callbackCount > 0 && fnInfo->callbackParameters != NULL) {
-        for (size_t index = 0; index < fnInfo->callbackCount; index++) {
+        size_t index;
+        for (index = 0; index < fnInfo->callbackCount; index++) {
             rb_gc_mark_movable(fnInfo->callbackParameters[index]);
         }
     }
@@ -111,7 +112,8 @@ fntype_compact(void *data)
     ffi_gc_location(fnInfo->rbParameterTypes);
     ffi_gc_location(fnInfo->rbEnums);
     if (fnInfo->callbackCount > 0 && fnInfo->callbackParameters != NULL) {
-        for (size_t index = 0; index < fnInfo->callbackCount; index++) {
+        size_t index;
+        for (index = 0; index < fnInfo->callbackCount; index++) {
             ffi_gc_location(fnInfo->callbackParameters[index]);
         }
     }
