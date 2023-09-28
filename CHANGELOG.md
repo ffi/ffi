@@ -1,3 +1,10 @@
+1.16.3 / YYYY-MM-DD
+-------------------
+
+Fixed:
+* Fix gcc error when building on CentOS 7. #1052
+
+
 1.16.2 / 2023-09-25
 -------------------
 
