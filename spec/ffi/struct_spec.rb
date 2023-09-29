@@ -215,6 +215,19 @@ module StructSpecsStructTests
       expect(s[:b]).to eq(0xdeadcafebabe)
     end
 
+    it "Can use DataConverter in an embedded array" do
+      class Blub #< FFI::Struct
+        extend FFI::DataConverter
+        native_type FFI::Type::INT
+      end
+
+      class Zork < FFI::Struct
+        layout :c, [Blub, 2], 2
+      end
+      z = Zork.new
+      expect(z[:c].to_a).to eq [0, 0]
+    end
+
     it "Can use Struct subclass as parameter type" do
       expect(module StructParam
         extend FFI::Library

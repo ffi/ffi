@@ -87,7 +87,8 @@ module FFI
       TypeDefs[name]
 
     elsif name.is_a?(DataConverter)
-      (type_map || TypeDefs)[name] = Type::Mapped.new(name)
+      tm = (type_map || custom_typedefs)
+      tm[name] = Type::Mapped.new(name)
     else
       raise TypeError, "unable to resolve type '#{name}'"
     end
