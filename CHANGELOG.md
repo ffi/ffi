@@ -1,8 +1,9 @@
-1.16.3 / YYYY-MM-DD
+1.16.3 / 2023-10-04
 -------------------
 
 Fixed:
 * Fix gcc error when building on CentOS 7. #1052
+* Avoid trying to store new DataConverter type in frozen TypeDefs hash. #1057
 
 
 1.16.2 / 2023-09-25
