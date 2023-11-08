@@ -34,7 +34,9 @@ module FFI
     if FFI::Platform::ARCH == 'aarch64' && FFI::Platform.mac?
       SEARCH_PATH << '/opt/homebrew/lib'
     end
-
+    %w[LD_LIBRARY_PATH DYLD_LIBRARY_PATH].each do |custom_path|
+      SEARCH_PATH += ENV.fetch(custom_path,"").split(":")
+    end
     SEARCH_PATH_MESSAGE = "Searched in <system library path>, #{SEARCH_PATH.join(', ')}".freeze
 
     def self.load_library(name, flags)
