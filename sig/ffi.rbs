@@ -2,9 +2,9 @@ module FFI
   type ffi_type = Type | DataConverter | Symbol
   type type_map = Hash[Symbol, Type]
 
-  CallbackInfo: singleton(FunctionType)
-  FunctionInfo: singleton(FunctionType)
-  NativeLibrary: singleton(DynamicLibrary)
+  class CallbackInfo = FunctionType
+  class FunctionInfo = FunctionType
+  class NativeLibrary = DynamicLibrary
 
   VERSION: String
   CURRENT_PROCESS: Object
@@ -13,9 +13,11 @@ module FFI
 
   #TODO NativeType embeds
 
+  def self.custom_typedefs: () -> type_map
   def self.errno: () -> Numeric
   def self.errno=: (Numeric) -> nil
-  def self.find_type: (ffi_type name, ?type_map type_map) -> Type
+  def self.find_type: (ffi_type name, ?type_map? type_map) -> Type
+  def self.make_shareable: [T] (T obj) -> T
   def self.map_library_name: (_ToS lib) -> String
   def self.type_size: (ffi_type type) -> Numeric
   def self.typedef: (ffi_type old, Symbol add) -> Type
