@@ -15,7 +15,7 @@ using Ruby-FFI](https://github.com/ffi/ffi/wiki/why-use-ffi).
 * C structs (also nested), enums and global variables
 * Callbacks from C to Ruby
 * Automatic garbage collection of native memory
-* Usable in Ractor
+* Usable in Ractor: [How-to-use-FFI-in-Ruby-Ractors](https://github.com/ffi/ffi/wiki/Ractors)
 
 ## Synopsis
 

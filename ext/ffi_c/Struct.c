@@ -189,9 +189,11 @@ struct_initialize_copy(VALUE self, VALUE other)
     }
 
     if (src->layout->referenceFieldCount > 0) {
+        size_t index;
+
         dst->rbReferences = ALLOC_N(VALUE, dst->layout->referenceFieldCount);
         memcpy(dst->rbReferences, src->rbReferences, dst->layout->referenceFieldCount * sizeof(VALUE));
-        for (size_t index = 0; index < dst->layout->referenceFieldCount; index++) {
+        for ( index = 0; index < dst->layout->referenceFieldCount; index++) {
             RB_OBJ_WRITTEN(self, Qundef, &dst->rbReferences[index]);
         }
     }
@@ -268,7 +270,8 @@ struct_mark(void *data)
     rb_gc_mark_movable(s->rbPointer);
     rb_gc_mark_movable(s->rbLayout);
     if (s->rbReferences != NULL) {
-        for (size_t index = 0; index < s->layout->referenceFieldCount; index++) {
+        size_t index;
+        for (index = 0; index < s->layout->referenceFieldCount; index++) {
             rb_gc_mark_movable(s->rbReferences[index]);
         }
     }
@@ -281,7 +284,8 @@ struct_compact(void *data)
     ffi_gc_location(s->rbPointer);
     ffi_gc_location(s->rbLayout);
     if (s->rbReferences != NULL) {
-        for (size_t index = 0; index < s->layout->referenceFieldCount; index++) {
+        size_t index;
+        for (index = 0; index < s->layout->referenceFieldCount; index++) {
             ffi_gc_location(s->rbReferences[index]);
         }
     }

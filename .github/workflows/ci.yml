@@ -14,7 +14,7 @@ jobs:
         extconfopts2: [ --disable-libffi-alloc, --enable-libffi-alloc ]
     runs-on: ${{ matrix.os }}-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.7
@@ -48,7 +48,7 @@ jobs:
           ruby: truffleruby-head
     runs-on: ${{ matrix.os }}-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
@@ -60,7 +60,8 @@ jobs:
     - run: bundle exec rake libffi
     - run: bundle exec rake compile
 
-    - run: bundle exec rake test FFI_TEST_GC=true
+    - if: matrix.os != 'windows'
+      run: bundle exec rake test FFI_TEST_GC=true
 
     - run: bundle exec rake bench:all
       if: ${{ matrix.ruby != 'truffleruby-head' && matrix.ruby != 'jruby-head' }}

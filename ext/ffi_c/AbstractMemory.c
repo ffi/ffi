@@ -350,6 +350,7 @@ memory_get(VALUE self, VALUE type_name, VALUE offset)
     AbstractMemory* ptr;
     VALUE nType;
     Type *type;
+    MemoryOp *op;
 
     nType = rbffi_Type_Lookup(type_name);
     if(NIL_P(nType)) goto undefined_type;
@@ -357,7 +358,7 @@ memory_get(VALUE self, VALUE type_name, VALUE offset)
     TypedData_Get_Struct(self, AbstractMemory, &rbffi_abstract_memory_data_type, ptr);
     TypedData_Get_Struct(nType, Type, &rbffi_type_data_type, type);
 
-    MemoryOp *op = get_memory_op(type);
+    op = get_memory_op(type);
     if(op == NULL) goto undefined_type;
 
     return op->get(ptr, NUM2LONG(offset));
@@ -382,6 +383,7 @@ memory_put(VALUE self, VALUE type_name, VALUE offset, VALUE value)
     AbstractMemory* ptr;
     VALUE nType;
     Type *type;
+    MemoryOp *op;
 
     nType = rbffi_Type_Lookup(type_name);
     if(NIL_P(nType)) goto undefined_type;
@@ -389,7 +391,7 @@ memory_put(VALUE self, VALUE type_name, VALUE offset, VALUE value)
     TypedData_Get_Struct(self, AbstractMemory, &rbffi_abstract_memory_data_type, ptr);
     TypedData_Get_Struct(nType, Type, &rbffi_type_data_type, type);
 
-    MemoryOp *op = get_memory_op(type);
+    op = get_memory_op(type);
     if(op == NULL) goto undefined_type;
 
     op->put(ptr, NUM2LONG(offset), value);

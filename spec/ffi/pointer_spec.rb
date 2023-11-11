@@ -245,13 +245,27 @@ describe "Pointer" do
     end
   end
 
-  describe "#initialise" do
-    it 'can use adresses with high bit set' do
+  describe "#initialize" do
+    it 'can use addresses with high bit set' do
       max_address = 2**FFI::Platform::ADDRESS_SIZE - 1
       pointer = FFI::Pointer.new(:uint8, max_address)
       expect(pointer.address).to eq(max_address)
     end
   end if (RUBY_ENGINE != "truffleruby" && RUBY_ENGINE != "jruby")
+
+  describe "#inspect" do
+    it "should include the address" do
+      FFI::Pointer.new(1234).inspect.should =~ /address=0x0*4d2/
+    end
+
+    it "should not include the size if the pointer is unsized" do
+      FFI::Pointer.new(1234).inspect.should_not =~ /size=/
+    end
+
+    it "should include the size if there is one" do
+      FFI::MemoryPointer.new(:char, 16).inspect.should =~ /size=16/
+    end
+  end
 end
 
 describe "AutoPointer" do

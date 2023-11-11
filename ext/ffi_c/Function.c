@@ -166,14 +166,18 @@ static void
 async_cb_dispatcher_mark(void *ptr)
 {
     struct async_cb_dispatcher *ctx = (struct async_cb_dispatcher *)ptr;
-    rb_gc_mark(ctx->thread);
+    if (ctx) {
+        rb_gc_mark(ctx->thread);
+    }
 }
 
 static void
 async_cb_dispatcher_free(void *ptr)
 {
     struct async_cb_dispatcher *ctx = (struct async_cb_dispatcher *)ptr;
-    xfree(ctx);
+    if (ctx) {
+        xfree(ctx);
+    }
 }
 
 struct rb_ractor_local_storage_type async_cb_dispatcher_key_type = {
@@ -949,10 +953,10 @@ invoke_callback(VALUE data)
 
             } else if (rb_obj_is_kind_of(rbReturnValue, rb_cProc) || rb_respond_to(rbReturnValue, id_call)) {
                 VALUE function;
+                AbstractMemory* memory;
 
                 function = rbffi_Function_ForProc(rbReturnType, rbReturnValue);
 
-                AbstractMemory* memory;
                 TypedData_Get_Struct(function, AbstractMemory, &rbffi_abstract_memory_data_type, memory);
 
                 *((void **) retval) = memory->address;
@@ -964,8 +968,10 @@ invoke_callback(VALUE data)
         case NATIVE_STRUCT:
             if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_StructClass)) {
                 Struct* s;
+                AbstractMemory* memory;
+
                 TypedData_Get_Struct(rbReturnValue, Struct, &rbffi_struct_data_type, s);
-                AbstractMemory* memory = s->pointer;
+                memory = s->pointer;
 
                 if (memory->address != NULL) {
                     memcpy(retval, memory->address, returnType->ffiType->size);

@@ -427,8 +427,10 @@ getPointer(VALUE value, int type)
     } else if (type == T_DATA && rb_obj_is_kind_of(value, rbffi_StructClass)) {
 
         Struct* s;
+        AbstractMemory* memory;
+
         TypedData_Get_Struct(value, Struct, &rbffi_struct_data_type, s);
-        AbstractMemory* memory = s->pointer;
+        memory = s->pointer;
         return memory != NULL ? memory->address : NULL;
 
     } else if (type == T_STRING) {
@@ -464,7 +466,9 @@ rbffi_GetInvoker(FunctionType *fnInfo)
 static void*
 callback_param(VALUE proc, VALUE cbInfo)
 {
-    VALUE callback ;
+    VALUE callback;
+    AbstractMemory *mem;
+
     if (unlikely(proc == Qnil)) {
         return NULL ;
     }
@@ -479,7 +483,6 @@ callback_param(VALUE proc, VALUE cbInfo)
     callback = rbffi_Function_ForProc(cbInfo, proc);
     RB_GC_GUARD(callback);
 
-    AbstractMemory *mem;
     TypedData_Get_Struct(callback, AbstractMemory, &rbffi_abstract_memory_data_type, mem);
     return mem->address;
 }

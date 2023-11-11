@@ -33,54 +33,7 @@ require 'ffi/dynamic_library'
 module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = FFI.make_shareable(Object.new)
 
-  class LibraryPath < ::Struct.new(:name, :abi_number, :root)
-    PATTERN = /(#{Platform::LIBPREFIX})?(?<name>.*?)(\.|\z)/
-
-    def self.wrap(value)
-      # We allow instances of LibraryPath to pass through transparently:
-      return value if value.is_a?(self)
-
-      # We special case a library named 'c' to be the standard C library:
-      return Library::LIBC if value == 'c'
-
-      # If provided a relative file name we convert it into a library path:
-      if value && File.basename(value) == value
-        if match = PATTERN.match(value)
-          return self.new(match[:name])
-        end
-      end
-
-      # Otherwise, we assume it's a full path to a library:
-      return value
-    end
-
-    def full_name
-      # If the abi_number is given, we format it specifically according to platform rules:
-      if abi_number
-        if Platform.windows?
-          "#{Platform::LIBPREFIX}#{name}-#{abi_number}.#{Platform::LIBSUFFIX}"
-        elsif Platform.mac?
-          "#{Platform::LIBPREFIX}#{name}.#{abi_number}.#{Platform::LIBSUFFIX}"
-        else # Linux? BSD? etc.
-          "#{Platform::LIBPREFIX}#{name}.#{Platform::LIBSUFFIX}.#{abi_number}"
-        end
-      else
-        # Otherwise we just use a generic format:
-        "#{Platform::LIBPREFIX}#{name}.#{Platform::LIBSUFFIX}"
-      end
-    end
-
-    def to_s
-      if root
-        # If the root path is given, we generate the full path:
-        File.join(root, full_name)
-      else
-        full_name
-      end
-    end
-  end
-
-  # @param [#to_s] lib library name
+  # @param [String, FFI::LibraryPath] lib library name or LibraryPath object
   # @return [String] library name formatted for current platform
   # Transform a generic library name to a platform library name
   # @example
@@ -90,9 +43,9 @@ module FFI
   #  # Windows
   #  FFI.map_library_name 'c'     # -> "msvcrt.dll"
   #  FFI.map_library_name 'jpeg'  # -> "jpeg.dll"
-  def self.map_library_name(value)
+  def self.map_library_name(lib)
     # Mangle the library name to reflect the native library naming conventions
-    LibraryPath.wrap(value).to_s
+    LibraryPath.wrap(lib).to_s
   end
 
   # Exception raised when a function is not found in libraries
