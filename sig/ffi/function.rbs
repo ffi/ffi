@@ -1,0 +1,15 @@
+module FFI
+  interface _Function
+    #TODO
+  end
+
+  class Function
+    include _Function
+    #TODO
+  end
+
+  class VariadicInvoker
+    include _Function
+    #TODO
+  end
+end

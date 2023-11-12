@@ -1,0 +1,13 @@
+module FFI
+  class Enums
+    #TODO
+  end
+
+  class Enum
+    #TODO
+  end
+
+  class Bitmask < Enum
+    #TODO
+  end
+end

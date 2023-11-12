@@ -1,3 +1,7 @@
 class FFI::Type
   #TODO
+
+  class Mapped
+    #TODO
+  end
 end

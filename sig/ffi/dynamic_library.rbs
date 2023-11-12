@@ -1,3 +1,7 @@
 class FFI::DynamicLibrary
   #TODO
+
+  class Symbol
+    #TODO
+  end
 end

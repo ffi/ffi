@@ -7,9 +7,11 @@ module FFI
   class NativeLibrary = DynamicLibrary
 
   VERSION: String
-  CURRENT_PROCESS: Object
-  USE_THIS_PROCESS_AS_LIBRARY: Object
   TypeDefs: type_map
+  
+  type current_process = Object
+  CURRENT_PROCESS: current_process
+  USE_THIS_PROCESS_AS_LIBRARY: current_process
 
   #TODO NativeType embeds
 
