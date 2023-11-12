@@ -1,7 +1,24 @@
-class FFI::Type
-  #TODO
+module FFI
+  class Type
+    class Struct = StructByValue
 
-  class Mapped
-    #TODO
+    #TODO NativeType embeds
+
+    def initialize: (Integer | Type value) -> self
+    def inspect: ...
+
+    def alignment: () -> Integer
+    def size: () -> Integer
+
+    class Builtin < Type
+      def inspect: ...
+    end
+
+    class Mapped[X < _DataConverter[N, R, C], N, R, C]
+      include _DataConverter[N, R, C]
+
+      def initialize: (X converter) -> self
+      def converter: () -> X
+    end
   end
 end

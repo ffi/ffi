@@ -1,0 +1,4 @@
+module FFI
+  class StructByValue < Type
+  end
+end

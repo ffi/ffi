@@ -35,7 +35,7 @@ module FFI
     def function_names: (_ToS name, Array[Type | singleton(Struct)] arg_types) -> Array[String]
     def typedef: [T < Type] (T old, Symbol add, ?untyped) -> T
                | (Symbol old, Symbol add, ?untyped) -> (Type | Enum)
-               | (DataConverter old, Symbol add, ?untyped) -> Type::Mapped
+               | [X < DataConverter[N, R, C], N, R, C] (X old, Symbol add, ?untyped) -> Type::Mapped[X, N, R, C]
                | (:enum old, Array[Symbol | Integer] add, ?untyped) -> Enum
                | (:enum old, Symbol | Type add, Array[Symbol | Integer] info) -> Enum
   end

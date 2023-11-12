@@ -1,5 +1,5 @@
 module FFI
-  type ffi_type = Type | DataConverter | Symbol
+  type ffi_type = Type | DataConverter[untyped, untyped, untyped] | Symbol
   type type_map = Hash[Symbol, Type]
 
   class CallbackInfo = FunctionType
