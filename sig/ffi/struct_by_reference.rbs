@@ -1,5 +1,5 @@
 module FFI
-  class StructByValue < Type
+  class StructByReference
     #TODO
   end
 end
