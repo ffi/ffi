@@ -13,8 +13,6 @@ module FFI
   CURRENT_PROCESS: current_process
   USE_THIS_PROCESS_AS_LIBRARY: current_process
 
-  #TODO NativeType embeds
-
   def self.custom_typedefs: () -> type_map
   def self.errno: () -> Numeric
   def self.errno=: (Numeric) -> nil

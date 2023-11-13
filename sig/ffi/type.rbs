@@ -1,8 +1,8 @@
 module FFI
   class Type
+    class Array = ArrayType
+    class Function = FunctionType
     class Struct = StructByValue
-
-    #TODO NativeType embeds
 
     def initialize: (Integer | Type value) -> self
     def inspect: ...
