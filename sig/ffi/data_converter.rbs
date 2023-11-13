@@ -4,7 +4,7 @@ module FFI
     def native_type: (?ffi_type? type) -> Type
     def to_native: (R value, C ctx) -> N
   end
-  module DataConverter[N, R, C]
+  module DataConverter[N, R, in C]
     include _DataConverter[N, R, C]
   end
 end
