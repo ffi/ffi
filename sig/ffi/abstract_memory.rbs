@@ -1,0 +1,5 @@
+module FFI
+  class AbstractMemory
+    #TODO
+  end
+end

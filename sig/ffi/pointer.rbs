@@ -1,0 +1,8 @@
+module FFI
+  class Pointer < AbstractMemory
+    type order_out = :big | :little
+    type order_in = order_out | :network
+
+    #TODO
+  end
+end

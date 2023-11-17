@@ -1,9 +1,6 @@
 module FFI
-  class Struct
+  class Struct[out P < AbstractMemory, unchecked out E]
     type layout = Library::ffi_lib_type | singleton(StructLayout::Field) | Array[layout]
-
-    def self.alignment: () -> Integer
-    def self.auto_ptr: () -> Type::Mapped[ManagedStructConverter, __todo__, __todo__, __todo__]
 
     type ptr = Type::Mapped[StructByReference, __todo__, __todo__, __todo__]
     def self.ptr: (?:inout | :in | :out flags) -> ptr
@@ -13,13 +10,34 @@ module FFI
     def self.val: () -> StructByValue
     alias self.by_value self.val
 
+    alias self.alloc_in self.new
+    alias self.alloc_out self.new
+    alias self.alloc_inout self.new
+    alias self.new_in self.new
+    alias self.new_out self.new
+    alias self.new_inout self.new
+
+    def self.auto_ptr: () -> Type::Mapped[ManagedStructConverter, __todo__, __todo__, __todo__]
     def self.layout: (*layout | Integer) -> StructLayout
               | (Hash[Symbol, layout]) -> StructLayout
-    def self.members: () -> Array[Symbol]
-    def self.offset_of: (Symbol name) -> Numeric
-    def self.offsets: () -> Array[[Symbol, Numeric]]
-    def self.size: -> Numeric
     def self.size=: [N < Numeric] (N size) -> N
+
+    def self?.alignment: () -> Integer
+    def self?.members: () -> Array[Symbol]
+    def self?.offset_of: (Symbol name) -> Numeric
+    def self?.offsets: () -> Array[[Symbol, Numeric]]
+    def self?.size: -> Numeric
+
+    def initialize: (P pointer, *layout args) -> self
+    def []: (Symbol field_name) -> E
+    def []=: (Symbol field_name, E value) -> E
+    alias align alignment
+    def clear: () -> self
+    def order: (?Pointer::order_in order) -> Pointer::order_out
+    def null?: () -> bool
+    def pointer: () -> P
+    alias to_ptr pointer
+    def values: () -> Array[E]
 
     class ManagedStructConverter
       #TODO
