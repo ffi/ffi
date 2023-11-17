@@ -39,8 +39,29 @@ module FFI
     alias to_ptr pointer
     def values: () -> Array[E]
 
+    class InlineArray[out P < AbstractMemory, unchecked out E]
+      include Enumerable[E]
+
+      def initialize: (P memory, StructLayout::Field field) -> self
+      def []: (Numeric index) -> E
+      def []=: (Numeric index, E value) -> E
+      def each: () { (E) -> void } -> self
+      def size: () -> Numeric
+      def to_a: () -> Array[E]
+      def to_ptr: () -> P
+    end
+
     class ManagedStructConverter
       #TODO
     end
+  end
+
+  class ManagedStruct[out P < AutoPointer, unchecked out E] < Struct[P, E]
+    def self.release: (AbstractMemory ptr) -> void 
+    def initialize: (Pointer pointer) -> self
+  end
+
+  class Union[out P < AbstractMemory, unchecked out E] < Struct[P, E]
+    def self.builder: () -> StructLayoutBuilder
   end
 end
