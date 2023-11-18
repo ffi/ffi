@@ -30,9 +30,9 @@ module FFI
 
     def self?.alignment: () -> Integer
     def self?.members: () -> Array[Symbol]
-    def self?.offset_of: (Symbol name) -> Numeric
-    def self?.offsets: () -> Array[[Symbol, Numeric]]
-    def self?.size: -> Numeric
+    def self?.offset_of: (Symbol name) -> Integer
+    def self?.offsets: () -> Array[[Symbol, Integer]]
+    def self?.size: -> Integer
 
     def initialize: (P pointer, *layout args) -> self
     def []: (Symbol field_name) -> E
@@ -52,7 +52,7 @@ module FFI
       def []: (Numeric index) -> E
       def []=: (Numeric index, E value) -> E
       def each: () { (E) -> void } -> self
-      def size: () -> Numeric
+      def size: () -> Integer
       def to_a: () -> Array[E]
       def to_ptr: () -> P
     end
