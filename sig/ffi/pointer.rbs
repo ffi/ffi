@@ -1,5 +1,9 @@
 module FFI
   class Pointer < AbstractMemory
+    interface _ToPtr
+      def to_ptr: () -> Pointer
+    end
+    
     type order_out = :big | :little
     type order_in = order_out | :network
 
