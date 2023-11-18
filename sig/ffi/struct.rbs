@@ -2,7 +2,10 @@ module FFI
   class Struct[out P < AbstractMemory, unchecked out E]
     type layout = Library::ffi_lib_type | singleton(StructLayout::Field) | Array[layout]
 
-    type ptr = Type::Mapped[StructByReference, __todo__, __todo__, __todo__]
+    type ptr = Type::Mapped[
+      StructByReference[Struct[AbstractMemory, untyped], AbstractMemory],
+      AbstractMemory, instance, untyped
+    ]
     def self.ptr: (?:inout | :in | :out flags) -> ptr
     alias self.by_ref self.ptr
     def self.in: () -> ptr
@@ -17,7 +20,10 @@ module FFI
     alias self.new_out self.new
     alias self.new_inout self.new
 
-    def self.auto_ptr: () -> Type::Mapped[ManagedStructConverter, __todo__, __todo__, __todo__]
+    def self.auto_ptr: () -> Type::Mapped[
+        ManagedStructConverter[ManagedStruct[AutoPointer, untyped], AutoPointer],
+        Pointer, instance, untyped
+      ]
     def self.layout: (*layout | Integer) -> StructLayout
               | (Hash[Symbol, layout]) -> StructLayout
     def self.size=: [N < Numeric] (N size) -> N
@@ -51,8 +57,9 @@ module FFI
       def to_ptr: () -> P
     end
 
-    class ManagedStructConverter
-      #TODO
+    class ManagedStructConverter[S < ManagedStruct[P, untyped], P < AutoPointer] < StructByReference[S, P]
+      def initialize: ...
+      def from_native: (Pointer ptr, untyped ctx) -> S
     end
   end
 
