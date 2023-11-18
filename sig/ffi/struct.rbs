@@ -10,7 +10,7 @@ module FFI
     alias self.by_ref self.ptr
     def self.in: () -> ptr
     def self.out: () -> ptr
-    def self.val: () -> StructByValue
+    def self.val: () -> StructByValue[singleton(Struct)]
     alias self.by_value self.val
 
     alias self.alloc_in self.new
