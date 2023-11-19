@@ -324,7 +324,7 @@ memory_clear(VALUE self)
 /*
  * call-seq: memory.size
  * Return memory size in bytes (alias: #total)
- * @return [Numeric]
+ * @return [Integer]
  */
 static VALUE
 memory_size(VALUE self)
@@ -340,7 +340,7 @@ memory_size(VALUE self)
  * call-seq: memory.get(type, offset)
  * Return data of given type contained in memory.
  * @param [Symbol, Type] type_name type of data to get
- * @param [Numeric] offset point in buffer to start from
+ * @param [Integer] offset point in buffer to start from
  * @return [Object]
  * @raise {ArgumentError} if type is not supported
  */
@@ -373,7 +373,7 @@ undefined_type: {
 /*
  * call-seq: memory.put(type, offset, value)
  * @param [Symbol, Type] type_name type of data to put
- * @param [Numeric] offset point in buffer to start from
+ * @param [Integer] offset point in buffer to start from
  * @return [nil]
  * @raise {ArgumentError} if type is not supported
  */
@@ -407,8 +407,8 @@ undefined_type: {
 /*
  * call-seq: memory.get_string(offset, length=nil)
  * Return string contained in memory.
- * @param [Numeric] offset point in buffer to start from
- * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
+ * @param [Integer] offset point in buffer to start from
+ * @param [Integer] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
  * @return [String]
  * @raise {IndexError} if +length+ is too great
  * @raise {NullPointerError} if memory not initialized
@@ -435,8 +435,8 @@ memory_get_string(int argc, VALUE* argv, VALUE self)
 /*
  * call-seq: memory.get_array_of_string(offset, count=nil)
  * Return an array of strings contained in memory.
- * @param [Numeric] offset point in memory to start from
- * @param [Numeric] count number of strings to get. If nil, return all strings
+ * @param [Integer] offset point in memory to start from
+ * @param [Integer] count number of strings to get. If nil, return all strings
  * @return [Array<String>]
  * @raise {IndexError} if +offset+ is too great
  * @raise {NullPointerError} if memory not initialized
@@ -485,7 +485,7 @@ memory_get_array_of_string(int argc, VALUE* argv, VALUE self)
  * call-seq: memory.read_array_of_string(count=nil)
  * Return an array of strings contained in memory. Same as:
  *  memory.get_array_of_string(0, count)
- * @param [Numeric] count number of strings to get. If nil, return all strings
+ * @param [Integer] count number of strings to get. If nil, return all strings
  * @return [Array<String>]
  */
 static VALUE
@@ -505,7 +505,7 @@ memory_read_array_of_string(int argc, VALUE* argv, VALUE self)
 
 /*
  * call-seq: memory.put_string(offset, str)
- * @param [Numeric] offset
+ * @param [Integer] offset
  * @param [String] str
  * @return [self]
  * @raise {SecurityError} when writing unsafe string to memory
@@ -535,8 +535,8 @@ memory_put_string(VALUE self, VALUE offset, VALUE str)
 /*
  * call-seq: memory.get_bytes(offset, length)
  * Return string contained in memory.
- * @param [Numeric] offset point in buffer to start from
- * @param [Numeric] length string's length in bytes.
+ * @param [Integer] offset point in buffer to start from
+ * @param [Integer] length string's length in bytes.
  * @return [String]
  * @raise {IndexError} if +length+ is too great
  * @raise {NullPointerError} if memory not initialized
@@ -559,10 +559,10 @@ memory_get_bytes(VALUE self, VALUE offset, VALUE length)
 /*
  * call-seq: memory.put_bytes(offset, str, index=0, length=nil)
  * Put a string in memory.
- * @param [Numeric] offset point in buffer to start from
+ * @param [Integer] offset point in buffer to start from
  * @param [String] str string to put to memory
- * @param [Numeric] index
- * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
+ * @param [Integer] index
+ * @param [Integer] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
  * @return [self]
  * @raise {IndexError} if +length+ is too great
  * @raise {NullPointerError} if memory not initialized
@@ -601,7 +601,7 @@ memory_put_bytes(int argc, VALUE* argv, VALUE self)
 
 /*
  * call-seq: memory.read_bytes(length)
- * @param [Numeric] length of string to return
+ * @param [Integer] length of string to return
  * @return [String]
  * equivalent to :
  *  memory.get_bytes(0, length)
@@ -615,8 +615,8 @@ memory_read_bytes(VALUE self, VALUE length)
 /*
  * call-seq: memory.write_bytes(str, index=0, length=nil)
  * @param [String] str string to put to memory
- * @param [Numeric] index
- * @param [Numeric] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
+ * @param [Integer] index
+ * @param [Integer] length string's length in bytes. If nil, a (memory size - offset) length string is returned).
  * @return [self]
  * equivalent to :
  *  memory.put_bytes(0, str, index, length)
@@ -637,7 +637,7 @@ memory_write_bytes(int argc, VALUE* argv, VALUE self)
 
 /*
  * call-seq: memory.type_size
- * @return [Numeric] type size in bytes
+ * @return [Integer] type size in bytes
  * Get the memory's type size.
  */
 static VALUE
@@ -653,7 +653,7 @@ memory_type_size(VALUE self)
 /*
  * Document-method: []
  * call-seq: memory[idx]
- * @param [Numeric] idx index to access in memory
+ * @param [Integer] idx index to access in memory
  * @return
  * Memory read accessor.
  */
@@ -862,8 +862,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: put_float32
      * call-seq: memory.put_float32offset, value)
-     * @param [Numeric] offset
-     * @param [Numeric] value
+     * @param [Integer] offset
+     * @param [Integer] value
      * @return [self]
      * Put +value+ as a 32-bit float in memory at offset +offset+ (alias: #put_float).
      */
@@ -871,7 +871,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: get_float32
      * call-seq: memory.get_float32(offset)
-     * @param [Numeric] offset
+     * @param [Integer] offset
      * @return [Float]
      * Get a 32-bit float from memory at offset +offset+ (alias: #get_float).
      */
@@ -881,7 +881,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: write_float
      * call-seq: memory.write_float(value)
-     * @param [Numeric] value
+     * @param [Integer] value
      * @return [self]
      * Write +value+ as a 32-bit float in memory.
      *
@@ -902,8 +902,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: put_array_of_float32
      * call-seq: memory.put_array_of_float32(offset, ary)
-     * @param [Numeric] offset
-     * @param [Array<Numeric>] ary
+     * @param [Integer] offset
+     * @param [Array<Integer>] ary
      * @return [self]
      * Put values from +ary+ as 32-bit floats in memory from offset +offset+ (alias: #put_array_of_float).
      */
@@ -911,8 +911,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: get_array_of_float32
      * call-seq: memory.get_array_of_float32(offset, length)
-     * @param [Numeric] offset
-     * @param [Numeric] length number of Float to get
+     * @param [Integer] offset
+     * @param [Integer] length number of Float to get
      * @return [Array<Float>]
      * Get 32-bit floats in memory from offset +offset+ (alias: #get_array_of_float).
      */
@@ -931,7 +931,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: read_array_of_float
      * call-seq: memory.read_array_of_float(length)
-     * @param [Numeric] length number of Float to read
+     * @param [Integer] length number of Float to read
      * @return [Array<Float>]
      * Read 32-bit floats from memory.
      *
@@ -944,7 +944,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: put_float64
      * call-seq: memory.put_float64(offset, value)
-     * @param [Numeric] offset
+     * @param [Integer] offset
      * @param [Numeric] value
      * @return [self]
      * Put +value+ as a 64-bit float (double) in memory at offset +offset+ (alias: #put_double).
@@ -953,7 +953,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: get_float64
      * call-seq: memory.get_float64(offset)
-     * @param [Numeric] offset
+     * @param [Integer] offset
      * @return [Float]
      * Get a 64-bit float (double) from memory at offset +offset+ (alias: #get_double).
      */
@@ -984,7 +984,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: put_array_of_float64
      * call-seq: memory.put_array_of_float64(offset, ary)
-     * @param [Numeric] offset
+     * @param [Integer] offset
      * @param [Array<Numeric>] ary
      * @return [self]
      * Put values from +ary+ as 64-bit floats (doubles) in memory from offset +offset+ (alias: #put_array_of_double).
@@ -993,8 +993,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: get_array_of_float64
      * call-seq: memory.get_array_of_float64(offset, length)
-     * @param [Numeric] offset
-     * @param [Numeric] length number of Float to get
+     * @param [Integer] offset
+     * @param [Integer] length number of Float to get
      * @return [Array<Float>]
      * Get 64-bit floats (doubles) in memory from offset +offset+ (alias: #get_array_of_double).
      */
@@ -1013,7 +1013,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: read_array_of_double
      * call-seq: memory.read_array_of_double(length)
-     * @param [Numeric] length number of Float to read
+     * @param [Integer] length number of Float to read
      * @return [Array<Float>]
      * Read 64-bit floats (doubles) from memory.
      *
@@ -1026,7 +1026,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: put_pointer
      * call-seq: memory.put_pointer(offset, value)
-     * @param [Numeric] offset
+     * @param [Integer] offset
      * @param [nil,Pointer, Integer, #to_ptr] value
      * @return [self]
      * Put +value+ in memory from +offset+..
@@ -1035,7 +1035,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: get_pointer
      * call-seq: memory.get_pointer(offset)
-     * @param [Numeric] offset
+     * @param [Integer] offset
      * @return [Pointer]
      * Get a {Pointer} to the memory from +offset+.
      */
@@ -1064,7 +1064,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: put_array_of_pointer
      * call-seq: memory.put_array_of_pointer(offset, ary)
-     * @param [Numeric] offset
+     * @param [Integer] offset
      * @param [Array<#to_ptr>] ary
      * @return [self]
      * Put an array of {Pointer} into memory from +offset+.
@@ -1073,8 +1073,8 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: get_array_of_pointer
      * call-seq: memory.get_array_of_pointer(offset, length)
-     * @param [Numeric] offset
-     * @param [Numeric] length
+     * @param [Integer] offset
+     * @param [Integer] length
      * @return [Array<Pointer>]
      * Get an array of {Pointer} of length +length+ from +offset+.
      */
@@ -1093,7 +1093,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: read_array_of_pointer
      * call-seq: memory.read_array_of_pointer(length)
-     * @param [Numeric] length
+     * @param [Integer] length
      * @return [Array<Pointer>]
      * Read an array of {Pointer} of length +length+.
      *

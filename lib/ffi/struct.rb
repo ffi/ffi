@@ -41,7 +41,7 @@ module FFI
   class Struct
 
     # Get struct size
-    # @return [Numeric]
+    # @return [Integer]
     def size
       self.class.size
     end
@@ -87,13 +87,13 @@ module FFI
     end
 
     # Get struct size
-    # @return [Numeric]
+    # @return [Integer]
     def self.size
       defined?(@layout) ? @layout.size : defined?(@size) ? @size : 0
     end
 
     # set struct size
-    # @param [Numeric] size
+    # @param [Integer] size
     # @return [size]
     def self.size=(size)
       raise ArgumentError, "Size already set" if defined?(@size) || defined?(@layout)

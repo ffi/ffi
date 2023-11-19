@@ -219,7 +219,7 @@ slice(VALUE self, long offset, long len)
 
 /*
  * call-seq: + offset
- * @param [Numeric] offset
+ * @param [Integer] offset
  * @return [Buffer] a new instance of Buffer pointing from offset until end of previous buffer.
  * Add a Buffer with an offset
  */
@@ -236,8 +236,8 @@ buffer_plus(VALUE self, VALUE rbOffset)
 
 /*
  * call-seq: slice(offset, length)
- * @param [Numeric] offset
- * @param [Numeric] length
+ * @param [Integer] offset
+ * @param [Integer] length
  * @return [Buffer] a new instance of Buffer
  * Slice an existing Buffer.
  */
