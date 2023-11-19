@@ -3,10 +3,40 @@ module FFI
     interface _ToPtr
       def to_ptr: () -> Pointer
     end
-    
+    include _ToPtr
+
     type order_out = :big | :little
     type order_in = order_out | :network
 
-    #TODO
+    SIZE: Integer
+    NULL: Pointer
+    def self.size: () -> Integer
+
+    def initialize: (Pointer pointer) -> self
+                  | (Type type, Integer address) -> self
+    def +: (Numeric offset) -> Pointer
+    def ==: (Pointer other) -> bool
+    def address: () -> Integer
+    alias to_i address
+    # https://github.com/ffi/ffi/pull/1042#issuecomment-1817746165
+    def autorelease=: (bool autorelease) -> bool
+    def autorelease?: () -> bool
+    def free: () -> self
+    def inspect: ...
+    def null? () -> bool
+    def order: () -> order_out
+             | (order_in) -> Pointer
+    def read: (Symbol | String | Type type) -> top
+    def read_array_of_type: (ffi_type type, Symbol reader, Integer length) -> Array[top]
+    def read_string: (?Numeric? len) -> String
+    def read_string_length: (Numeric len) -> String
+    def read_string_to_null: () -> String
+    def slice: (Numeric offset, Numeric length) -> Pointer
+    def to_ptr: () -> self
+    def type_size: () -> Integer
+    def write: (Symbol | String | Type type, bot value) -> nil
+    def write_array_of_type: (ffi_type type, Symbol writer, Array[top]) -> self
+    def write_string: (String str, ?Numeric? len) -> self
+    def write_string_length(String str, Numeric len) -> self
   end
 end
