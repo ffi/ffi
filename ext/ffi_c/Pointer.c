@@ -440,7 +440,7 @@ ptr_autorelease(VALUE self, VALUE autorelease)
 
     rb_check_frozen(self);
     TypedData_Get_Struct(self, Pointer, &rbffi_pointer_data_type, ptr);
-    ptr->autorelease = autorelease == Qtrue;
+    ptr->autorelease = RB_TEST(autorelease);
 
     return autorelease;
 }
