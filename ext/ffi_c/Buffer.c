@@ -114,7 +114,7 @@ buffer_release(void *data)
 /*
  * call-seq: initialize(size, count=1, clear=false)
  * @param [Integer, Symbol, #size] Type or size in bytes of a buffer cell
- * @param [Fixnum] count number of cell in the Buffer
+ * @param [Integer] count number of cell in the Buffer
  * @param [Boolean] clear if true, set the buffer to all-zero
  * @return [self]
  * @raise {NoMemoryError} if failed to allocate memory for Buffer

@@ -78,7 +78,7 @@ module FFI
     # @overload packed=(packed) Set alignment and packed attributes to
     #   +packed+.
     #
-    #   @param [Fixnum] packed
+    #   @param [Integer] packed
     #
     #   @return [packed]
     # @overload packed=(packed) Set packed attribute.

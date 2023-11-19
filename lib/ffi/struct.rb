@@ -46,7 +46,7 @@ module FFI
       self.class.size
     end
 
-    # @return [Fixnum] Struct alignment
+    # @return [Integer] Struct alignment
     def alignment
       self.class.alignment
     end

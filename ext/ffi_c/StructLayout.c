@@ -132,7 +132,7 @@ struct_field_memsize(const void *data)
 /*
  * call-seq: initialize(name, offset, type)
  * @param [String,Symbol] name
- * @param [Fixnum] offset
+ * @param [Integer] offset
  * @param [FFI::Type] type
  * @return [self]
  * A new FFI::StructLayout::Field instance.
