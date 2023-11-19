@@ -229,7 +229,7 @@ slice(VALUE self, long offset, long size)
 /*
  * Document-method: +
  * call-seq: ptr + offset
- * @param [Numeric] offset
+ * @param [Integer] offset
  * @return [Pointer]
  * Return a new {Pointer} from an existing pointer and an +offset+.
  */
@@ -246,8 +246,8 @@ ptr_plus(VALUE self, VALUE offset)
 
 /*
  * call-seq: ptr.slice(offset, length)
- * @param [Numeric] offset
- * @param [Numeric] length
+ * @param [Integer] offset
+ * @param [Integer] length
  * @return [Pointer]
  * Return a new {Pointer} from an existing one. This pointer points on same contents
  * from +offset+ for a length +length+.
@@ -319,7 +319,7 @@ ptr_equals(VALUE self, VALUE other)
 
 /*
  * call-seq: ptr.address
- * @return [Numeric] pointer's base address
+ * @return [Integer] pointer's base address
  * Return +self+'s base address (alias: #to_i).
  */
 static VALUE

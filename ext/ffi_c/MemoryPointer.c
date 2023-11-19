@@ -80,8 +80,8 @@ memptr_allocate(VALUE klass)
 
 /*
  * call-seq: initialize(size, count=1, clear=true)
- * @param [Fixnum, Bignum, Symbol, FFI::Type] size size of a memory cell (in bytes, or type whom size will be used)
- * @param [Numeric] count number of cells in memory
+ * @param [Integer, Bignum, Symbol, FFI::Type] size size of a memory cell (in bytes, or type whom size will be used)
+ * @param [Integer] count number of cells in memory
  * @param [Boolean] clear set memory to all-zero if +true+
  * @return [self]
  * A new instance of FFI::MemoryPointer.

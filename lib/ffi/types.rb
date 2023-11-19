@@ -195,7 +195,7 @@ module FFI
   __typedef(StrPtrConverter, :strptr)
 
   # @param type +type+ is an instance of class accepted by {FFI.find_type}
-  # @return [Numeric]
+  # @return [Integer]
   # Get +type+ size, in bytes.
   def self.type_size(type)
     find_type(type).size

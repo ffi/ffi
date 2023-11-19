@@ -132,7 +132,7 @@ struct_field_memsize(const void *data)
 /*
  * call-seq: initialize(name, offset, type)
  * @param [String,Symbol] name
- * @param [Fixnum] offset
+ * @param [Integer] offset
  * @param [FFI::Type] type
  * @return [self]
  * A new FFI::StructLayout::Field instance.
@@ -188,7 +188,7 @@ struct_field_initialize(int argc, VALUE* argv, VALUE self)
 
 /*
  * call-seq: offset
- * @return [Numeric]
+ * @return [Integer]
  * Get the field offset.
  */
 static VALUE
@@ -201,7 +201,7 @@ struct_field_offset(VALUE self)
 
 /*
  * call-seq: size
- * @return [Numeric]
+ * @return [Integer]
  * Get the field size.
  */
 static VALUE
@@ -214,7 +214,7 @@ struct_field_size(VALUE self)
 
 /*
  * call-seq: alignment
- * @return [Numeric]
+ * @return [Integer]
  * Get the field alignment.
  */
 static VALUE
@@ -474,8 +474,8 @@ struct_layout_allocate(VALUE klass)
 /*
  * call-seq: initialize(fields, size, align)
  * @param [Array<StructLayout::Field>] fields
- * @param [Numeric] size
- * @param [Numeric] align
+ * @param [Integer] size
+ * @param [Integer] align
  * @return [self]
  * A new StructLayout instance.
  */

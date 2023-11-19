@@ -141,7 +141,7 @@ thread_data_get(void)
 
 /*
  * call-seq: error
- * @return [Numeric]
+ * @return [Integer]
  * Get +errno+ value.
  */
 static VALUE
@@ -153,7 +153,7 @@ get_last_error(VALUE self)
 #if defined(_WIN32) || defined(__CYGWIN__)
 /*
  * call-seq: winapi_error
- * @return [Numeric]
+ * @return [Integer]
  * Get +GetLastError()+ value. Only Windows or Cygwin.
  */
 static VALUE
@@ -166,7 +166,7 @@ get_last_winapi_error(VALUE self)
 
 /*
  * call-seq: error(error)
- * @param [Numeric] error
+ * @param [Integer] error
  * @return [nil]
  * Set +errno+ value.
  */
@@ -185,7 +185,7 @@ set_last_error(VALUE self, VALUE error)
 #if defined(_WIN32) || defined(__CYGWIN__)
 /*
  * call-seq: error(error)
- * @param [Numeric] error
+ * @param [Integer] error
  * @return [nil]
  * Set +GetLastError()+ value. Only on Windows and Cygwin.
  */

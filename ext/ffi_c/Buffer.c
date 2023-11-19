@@ -114,7 +114,7 @@ buffer_release(void *data)
 /*
  * call-seq: initialize(size, count=1, clear=false)
  * @param [Integer, Symbol, #size] Type or size in bytes of a buffer cell
- * @param [Fixnum] count number of cell in the Buffer
+ * @param [Integer] count number of cell in the Buffer
  * @param [Boolean] clear if true, set the buffer to all-zero
  * @return [self]
  * @raise {NoMemoryError} if failed to allocate memory for Buffer
@@ -219,7 +219,7 @@ slice(VALUE self, long offset, long len)
 
 /*
  * call-seq: + offset
- * @param [Numeric] offset
+ * @param [Integer] offset
  * @return [Buffer] a new instance of Buffer pointing from offset until end of previous buffer.
  * Add a Buffer with an offset
  */
@@ -236,8 +236,8 @@ buffer_plus(VALUE self, VALUE rbOffset)
 
 /*
  * call-seq: slice(offset, length)
- * @param [Numeric] offset
- * @param [Numeric] length
+ * @param [Integer] offset
+ * @param [Integer] length
  * @return [Buffer] a new instance of Buffer
  * Slice an existing Buffer.
  */

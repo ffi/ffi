@@ -110,7 +110,7 @@ array_type_memsize(const void *data)
 /*
  * call-seq: initialize(component_type, length)
  * @param [Type] component_type
- * @param [Numeric] length
+ * @param [Integer] length
  * @return [self]
  * A new instance of ArrayType.
  */
@@ -140,7 +140,7 @@ array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
 
 /*
  * call-seq: length
- * @return [Numeric]
+ * @return [Integer]
  * Get array's length
  */
 static VALUE

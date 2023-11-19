@@ -107,7 +107,7 @@ type_allocate(VALUE klass)
 /*
  * Document-method: initialize
  * call-seq: initialize(value)
- * @param [Fixnum,Type] value
+ * @param [Integer,Type] value
  * @return [self]
  */
 static VALUE
@@ -135,7 +135,7 @@ type_initialize(VALUE self, VALUE value)
 
 /*
  * call-seq: type.size
- * @return [Fixnum]
+ * @return [Integer]
  * Return type's size, in bytes.
  */
 static VALUE
@@ -150,7 +150,7 @@ type_size(VALUE self)
 
 /*
  * call-seq: type.alignment
- * @return [Fixnum]
+ * @return [Integer]
  * Get Type alignment.
  */
 static VALUE
@@ -362,7 +362,7 @@ rbffi_Type_Init(VALUE moduleFFI)
      * * VARARGS (function takes a variable number of arguments)
      *
      * They are objects of the class {FFI::Type::Builtin}.
-     * 
+     *
      * Non-alias (the first name in each bullet point) constants are also exported to modules +FFI::NativeType+ and (prefixed with +TYPE_+) {FFI}.
      * All constants and aliases above are exported to the {FFI::Type} class, as well as the following aliases:
      * * Array ({FFI::ArrayType})
