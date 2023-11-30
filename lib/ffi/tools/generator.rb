@@ -19,6 +19,7 @@ module FFI
   #
   #     class ZStream < FFI::Struct
   #
+  #       @@@
   #       struct do |s|
   #         s.name "struct z_stream_s"
   #         s.include "zlib.h"
