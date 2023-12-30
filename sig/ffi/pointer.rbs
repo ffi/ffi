@@ -14,7 +14,7 @@ module FFI
 
     def initialize: (Pointer pointer) -> self
                   | (Type type, Integer address) -> self
-    def +: (Numeric offset) -> Pointer
+    def +: (Integer offset) -> Pointer
     def ==: (Pointer other) -> bool
     def address: () -> Integer
     alias to_i address
@@ -22,20 +22,20 @@ module FFI
     def autorelease=: (boolish autorelease) -> boolish
     def free: () -> self
     def inspect: ...
-    def null? () -> bool
+    def null?: () -> bool
     def order: () -> order_out
              | (order_in) -> Pointer
     def read: (Symbol | String | Type type) -> top
     def read_array_of_type: (ffi_type type, Symbol reader, Integer length) -> Array[top]
-    def read_string: (?Numeric? len) -> String
-    def read_string_length: (Numeric len) -> String
+    def read_string: (?Integer? len) -> String
+    def read_string_length: (Integer len) -> String
     def read_string_to_null: () -> String
-    def slice: (Numeric offset, Numeric length) -> Pointer
+    def slice: (Integer offset, Integer length) -> Pointer
     def to_ptr: () -> self
     def type_size: () -> Integer
     def write: (Symbol | String | Type type, bot value) -> nil
     def write_array_of_type: (ffi_type type, Symbol writer, Array[top]) -> self
-    def write_string: (String str, ?Numeric? len) -> self
-    def write_string_length(String str, Numeric len) -> self
+    def write_string: (String str, ?Integer? len) -> self
+    def write_string_length: (String str, Integer len) -> self
   end
 end

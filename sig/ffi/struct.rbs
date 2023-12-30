@@ -26,7 +26,7 @@ module FFI
       ]
     def self.layout: (*layout | Integer) -> StructLayout
               | (Hash[Symbol, layout]) -> StructLayout
-    def self.size=: [N < Numeric] (N size) -> N
+    def self.size=: (Integer size) -> Integer
 
     def self?.alignment: () -> Integer
     def self?.members: () -> Array[Symbol]
@@ -49,8 +49,8 @@ module FFI
       include Enumerable[E]
 
       def initialize: (P memory, StructLayout::Field field) -> self
-      def []: (Numeric index) -> E
-      def []=: (Numeric index, E value) -> E
+      def []: (Integer index) -> E
+      def []=: (Integer index, E value) -> E
       def each: () { (E) -> void } -> self
       def size: () -> Integer
       def to_a: () -> Array[E]
