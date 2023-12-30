@@ -107,7 +107,7 @@ type_allocate(VALUE klass)
 /*
  * Document-method: initialize
  * call-seq: initialize(value)
- * @param [Fixnum,Type] value
+ * @param [Integer,Type] value
  * @return [self]
  */
 static VALUE
@@ -135,7 +135,7 @@ type_initialize(VALUE self, VALUE value)
 
 /*
  * call-seq: type.size
- * @return [Fixnum]
+ * @return [Integer]
  * Return type's size, in bytes.
  */
 static VALUE
@@ -150,7 +150,7 @@ type_size(VALUE self)
 
 /*
  * call-seq: type.alignment
- * @return [Fixnum]
+ * @return [Integer]
  * Get Type alignment.
  */
 static VALUE
@@ -333,10 +333,10 @@ rbffi_Type_Init(VALUE moduleFFI)
     classBuiltinType = rb_define_class_under(rbffi_TypeClass, "Builtin", rbffi_TypeClass);
     /*
      * Document-module: FFI::NativeType
-     * This module defines constants for native (C) types.
+     * This module defines constants for C native types.
      *
      * ==Native type constants
-     * Native types are defined by constants :
+     * Native types are defined by constants and aliases:
      * * INT8, SCHAR, CHAR
      * * UINT8, UCHAR
      * * INT16, SHORT, SSHORT
@@ -349,24 +349,25 @@ rbffi_Type_Init(VALUE moduleFFI)
      * * ULONG
      * * FLOAT32, FLOAT
      * * FLOAT64, DOUBLE
+     * * LONGDOUBLE (if the native platform has `long double`)
      * * POINTER
-     * * CALLBACK
-     * * FUNCTION
-     * * CHAR_ARRAY
      * * BOOL
-     * * STRING (immutable string, nul terminated)
-     * * STRUCT (struct-b-value param or result)
-     * * ARRAY (array type definition)
-     * * MAPPED (custom native type)
-     * For function return type only :
+     * * STRING (immutable string, null terminated)
+     * For function return type only:
      * * VOID
-     * For function argument type only :
+     * For function argument type only:
      * * BUFFER_IN
      * * BUFFER_OUT
+     * * BUFFER_INOUT
      * * VARARGS (function takes a variable number of arguments)
      *
-     * All these constants are exported to {FFI} module prefixed with "TYPE_".
-     * They are objets from {FFI::Type::Builtin} class.
+     * They are objects of the class {FFI::Type::Builtin}.
+     *
+     * Non-alias (the first name in each bullet point) constants are also exported to modules +FFI::NativeType+ and (prefixed with +TYPE_+) {FFI}.
+     * All constants and aliases above are exported to the {FFI::Type} class, as well as the following aliases:
+     * * Array ({FFI::ArrayType})
+     * * Function ({FFI::FunctionType})
+     * * Struct ({FFI::StructByValue})
      */
     moduleNativeType = rb_define_module_under(moduleFFI, "NativeType");
 

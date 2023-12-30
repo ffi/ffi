@@ -128,7 +128,7 @@ library_open(VALUE klass, VALUE libname, VALUE libflags)
 /*
  * call-seq: initialize(libname, libflags)
  * @param [String] libname name of library to open
- * @param [Fixnum] libflags flags for library to open
+ * @param [Integer] libflags flags for library to open
  * @return [FFI::DynamicLibrary]
  * @raise {LoadError} if +libname+ cannot be opened
  * A new DynamicLibrary instance.
@@ -232,7 +232,7 @@ dl_error(char* buf, int size)
 
     // Get the associated message
     LPSTR message = NULL;
-    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, 
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
                    NULL, error, 0, (LPSTR)&message, 0, NULL);
 
     // Update the passed in buffer

@@ -56,7 +56,7 @@ describe "Pointer" do
     expect(PointerTestLib.ptr_ret_int32_t(ptr, 0)).to eq(magic)
   end
 
-  it "Fixnum cannot be used as a Pointer argument" do
+  it "Integer cannot be used as a Pointer argument" do
     expect { PointerTestLib.ptr_ret_int32_t(0, 0) }.to raise_error(ArgumentError)
   end
 

@@ -45,12 +45,12 @@ module FFI
     SIZE = Platform::ADDRESS_SIZE / 8 unless const_defined?(:SIZE)
 
     # Return the size of a pointer on the current platform, in bytes
-    # @return [Numeric]
+    # @return [Integer]
     def self.size
       SIZE
     end unless respond_to?(:size)
 
-    # @param [nil,Numeric] len length of string to return
+    # @param [nil,Integer] len length of string to return
     # @return [String]
     # Read pointer's contents as a string, or the first +len+ bytes of the
     # equivalent string if +len+ is not +nil+.
@@ -63,7 +63,7 @@ module FFI
       end
     end unless method_defined?(:read_string)
 
-    # @param [Numeric] len length of string to return
+    # @param [Integer] len length of string to return
     # @return [String]
     # Read the first +len+ bytes of pointer's contents as a string.
     #
@@ -83,7 +83,7 @@ module FFI
     end unless method_defined?(:read_string_to_null)
 
     # @param [String] str string to write
-    # @param [Numeric] len length of string to return
+    # @param [Integer] len length of string to return
     # @return [self]
     # Write +len+ first bytes of +str+ in pointer's contents.
     #
@@ -94,7 +94,7 @@ module FFI
     end unless method_defined?(:write_string_length)
 
     # @param [String] str string to write
-    # @param [Numeric] len length of string to return
+    # @param [Integer] len length of string to return
     # @return [self]
     # Write +str+ in pointer's contents, or first +len+ bytes if
     # +len+ is not +nil+.
@@ -106,7 +106,7 @@ module FFI
 
     # @param [Type] type type of data to read from pointer's contents
     # @param [Symbol] reader method to send to +self+ to read +type+
-    # @param [Numeric] length
+    # @param [Integer] length
     # @return [Array]
     # Read an array of +type+ of length +length+.
     # @example

@@ -616,7 +616,7 @@ inline_array_initialize(VALUE self, VALUE rbMemory, VALUE rbField)
 
 /*
  * call-seq: size
- * @return [Numeric]
+ * @return [Integer]
  * Get size
  */
 static VALUE
@@ -641,7 +641,7 @@ inline_array_offset(InlineArray* array, int index)
 
 /*
  * call-seq: [](index)
- * @param [Numeric] index
+ * @param [Integer] index
  * @return [Type, Struct]
  */
 static VALUE
@@ -676,7 +676,7 @@ inline_array_aref(VALUE self, VALUE rbIndex)
 
 /*
  * call-seq: []=(index, value)
- * @param [Numeric] index
+ * @param [Integer] index
  * @param [Type, Struct]
  * @return [value]
  */
