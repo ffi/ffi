@@ -861,9 +861,9 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
 
     /*
      * Document-method: put_float32
-     * call-seq: memory.put_float32offset, value)
+     * call-seq: memory.put_float32(offset, value)
      * @param [Integer] offset
-     * @param [Integer] value
+     * @param [Numeric] value
      * @return [self]
      * Put +value+ as a 32-bit float in memory at offset +offset+ (alias: #put_float).
      */
@@ -881,7 +881,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     /*
      * Document-method: write_float
      * call-seq: memory.write_float(value)
-     * @param [Integer] value
+     * @param [Numeric] value
      * @return [self]
      * Write +value+ as a 32-bit float in memory.
      *
@@ -903,7 +903,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
      * Document-method: put_array_of_float32
      * call-seq: memory.put_array_of_float32(offset, ary)
      * @param [Integer] offset
-     * @param [Array<Integer>] ary
+     * @param [Array<Numeric>] ary
      * @return [self]
      * Put values from +ary+ as 32-bit floats in memory from offset +offset+ (alias: #put_array_of_float).
      */
