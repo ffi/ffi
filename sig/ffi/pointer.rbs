@@ -18,9 +18,8 @@ module FFI
     def ==: (Pointer other) -> bool
     def address: () -> Integer
     alias to_i address
-    # https://github.com/ffi/ffi/pull/1042#issuecomment-1817746165
-    def autorelease=: (bool autorelease) -> bool
     def autorelease?: () -> bool
+    def autorelease=: (boolish autorelease) -> boolish
     def free: () -> self
     def inspect: ...
     def null? () -> bool
