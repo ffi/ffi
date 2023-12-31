@@ -18,9 +18,9 @@ module FFI
         ?blocking: boolish, ?convention: Library::convention, ?enums: Enums
       ) -> self
 
-    def autorelease?: () -> bool
+    def autorelease?: ...
     alias autorelease autorelease?
-    def autorelease=: (boolish autorelease) -> self
+    def autorelease=: ...
     def free: () -> self
   end
 

@@ -38,4 +38,9 @@ module FFI
     def write_string: (String str, ?Integer? len) -> self
     def write_string_length: (String str, Integer len) -> self
   end
+
+  class MemoryPointer < Pointer
+    def initialize: (Integer|ffi_type size, ?Integer count, ?boolish clear) -> self
+    def self.from_string: (String s) -> instance
+  end
 end
