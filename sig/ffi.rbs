@@ -1,5 +1,6 @@
 module FFI
-  type ffi_type = Type | DataConverter[untyped, untyped, untyped] | Symbol
+  type ffi_type = Type | Symbol
+  type ffi_auto_type = ffi_type | DataConverter[untyped, untyped, untyped]
   type type_map = Hash[Symbol, Type]
 
   class CallbackInfo = FunctionType
@@ -16,10 +17,10 @@ module FFI
   def self.custom_typedefs: () -> type_map
   def self.errno: () -> Integer
   def self.errno=: (Integer) -> nil
-  def self.find_type: (ffi_type name, ?type_map? type_map) -> Type
+  def self.find_type: (ffi_auto_type name, ?type_map? type_map) -> Type
   def self.make_shareable: [T] (T obj) -> T
   def self.map_library_name: (_ToS lib) -> String
-  def self.type_size: (ffi_type type) -> Integer
-  def self.typedef: (ffi_type old, Symbol add) -> Type
+  def self.type_size: (ffi_auto_type type) -> Integer
+  def self.typedef: (ffi_auto_type old, Symbol add) -> Type
   alias self.add_typedef self.typedef
 end

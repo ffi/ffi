@@ -3,8 +3,8 @@ module FFI
     def []: (Integer idx) -> instance
     def clear: () -> self
     def freeze: ...
-    def get: (Symbol | String | Type type, Integer offset) -> top
-    def put: (Symbol | String | Type type, Integer offset, bot value) -> nil
+    def get: (ffi_type type, Integer offset) -> top
+    def put: (ffi_type type, Integer offset, bot value) -> nil
     def size_limit?: () -> bool
     def size: () -> Integer
     alias total size

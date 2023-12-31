@@ -3,7 +3,7 @@ module FFI
     #TODO
   end
 
-  class Function
+  class Function < Pointer
     include _Function
     #TODO
   end

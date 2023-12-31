@@ -2,7 +2,7 @@ module FFI
   module Library
     type convention = :default | :stdcall
     type ffi_lib_flag = :global | :local | :lazy | :now
-    type ffi_lib_type = ffi_type | singleton(Struct)
+    type ffi_lib_type = ffi_auto_type | singleton(Struct)
 
     CURRENT_PROCESS: current_process
     LIBC: String

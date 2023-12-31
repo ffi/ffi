@@ -1,7 +1,9 @@
-class FFI::DynamicLibrary
-  #TODO
+module FFI
+  class DynamicLibrary
+    # TODO
 
-  class Symbol
-    #TODO
+    class Symbol < Pointer
+      # TODO
+    end
   end
 end
