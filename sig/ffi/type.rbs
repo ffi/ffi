@@ -21,4 +21,20 @@ module FFI
       def converter: () -> X
     end
   end
+
+  class ArrayType
+    def initialize: (Type component_type, Integer length) -> self
+    def element_type: -> Type
+    def length: -> Integer
+  end
+
+  class FunctionType < Type
+    def initialize:
+      (
+        ffi_type return_type, Array[ffi_type] param_types,
+        ?blocking: boolish, ?convention: Library::convention, ?enums: Enums
+      ) -> self
+    def param_types: () -> Array[Type]
+    def return_type: () -> Type
+  end
 end
