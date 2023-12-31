@@ -60,7 +60,7 @@ module FFI
 
   class << self
     private def __typedef(old, add)
-      TypeDefs[add] = self.find_type(old)
+      TypeDefs[add] = self.find_type(old, TypeDefs)
     end
 
     private :custom_typedefs
