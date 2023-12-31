@@ -6,6 +6,9 @@ module FFI
     include _Size
     type type_size = Integer | _Size | Symbol
 
+    type order_out = :big | :little
+    type order_in = order_out | :network
+
     def []: (Integer idx) -> instance
     def clear: () -> self
     def freeze: ...

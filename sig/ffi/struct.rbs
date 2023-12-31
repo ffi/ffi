@@ -39,7 +39,7 @@ module FFI
     def []=: (Symbol field_name, E value) -> E
     alias align alignment
     def clear: () -> self
-    def order: (?Pointer::order_in order) -> Pointer::order_out
+    def order: (?AbstractMemory::order_in order) -> AbstractMemory::order_out
     def null?: () -> bool
     def pointer: () -> P
     alias to_ptr pointer

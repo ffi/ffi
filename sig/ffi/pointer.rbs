@@ -5,9 +5,6 @@ module FFI
     end
     include _ToPtr
 
-    type order_out = :big | :little
-    type order_in = order_out | :network
-
     SIZE: Integer
     NULL: Pointer
     def self.size: () -> Integer
@@ -23,8 +20,8 @@ module FFI
     def free: () -> self
     def inspect: ...
     def null?: () -> bool
-    def order: () -> order_out
-             | (order_in) -> Pointer
+    def order: () -> AbstractMemory::order_out
+             | (AbstractMemory::order_in) -> Pointer
     def read: (ffi_type type) -> top
     def read_array_of_type: (ffi_auto_type type, Symbol reader, Integer length) -> Array[top]
     def read_string: (?Integer? len) -> String
