@@ -47,12 +47,12 @@ module FFI
 
     class InlineArray[out P < AbstractMemory, unchecked out E]
       include Enumerable[E]
+      include AbstractMemory::_Size
 
       def initialize: (P memory, StructLayout::Field field) -> self
       def []: (Integer index) -> E
       def []=: (Integer index, E value) -> E
       def each: () { (E) -> void } -> self
-      def size: () -> Integer
       def to_a: () -> Array[E]
       def to_ptr: () -> P
     end

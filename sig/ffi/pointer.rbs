@@ -13,7 +13,7 @@ module FFI
     def self.size: () -> Integer
 
     def initialize: (Pointer pointer) -> self
-                  | (Type type, Integer address) -> self
+                  | (AbstractMemory::type_size type, Integer address) -> self
     def +: (Integer offset) -> Pointer
     def ==: (Pointer other) -> bool
     def address: () -> Integer
@@ -40,7 +40,7 @@ module FFI
   end
 
   class MemoryPointer < Pointer
-    def initialize: (Integer|ffi_type size, ?Integer count, ?boolish clear) -> self
+    def initialize: (AbstractMemory::type_size size, ?Integer count, ?boolish clear) -> self
     def self.from_string: (String s) -> instance
   end
 end

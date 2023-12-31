@@ -4,11 +4,10 @@ module FFI
     class Function = FunctionType
     class Struct = StructByValue
 
+    include AbstractMemory::_Size
     def initialize: (Integer | Type value) -> self
-    def inspect: ...
-
     def alignment: () -> Integer
-    def size: () -> Integer
+    def inspect: ...
 
     class Builtin < Type
       def inspect: ...

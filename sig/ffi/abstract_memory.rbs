@@ -1,14 +1,19 @@
 module FFI
   class AbstractMemory
+    interface _Size
+      def size: () -> Integer
+    end
+    include _Size
+    type type_size = Integer | _Size | Symbol
+
     def []: (Integer idx) -> instance
     def clear: () -> self
     def freeze: ...
     def get: (ffi_type type, Integer offset) -> top
     def put: (ffi_type type, Integer offset, bot value) -> nil
     def size_limit?: () -> bool
-    def size: () -> Integer
-    alias total size
     def type_size: () -> Integer
+    alias total size
 
     def get_int8: (Integer offset) -> Integer
     def get_int16: (Integer offset) -> Integer
