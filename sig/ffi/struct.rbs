@@ -6,19 +6,19 @@ module FFI
       StructByReference[Struct[AbstractMemory, untyped], AbstractMemory],
       AbstractMemory, instance, untyped
     ]
-    def self.ptr: (?:inout | :in | :out flags) -> ptr
+    def self.ptr: (?untyped flags) -> ptr # https://github.com/ffi/ffi/issues/1073
     alias self.by_ref self.ptr
     def self.in: () -> ptr
     def self.out: () -> ptr
     def self.val: () -> StructByValue[singleton(Struct)]
     alias self.by_value self.val
 
+    alias self.alloc_inout self.new
     alias self.alloc_in self.new
     alias self.alloc_out self.new
-    alias self.alloc_inout self.new
+    alias self.new_inout self.new
     alias self.new_in self.new
     alias self.new_out self.new
-    alias self.new_inout self.new
 
     def self.auto_ptr: () -> Type::Mapped[
         ManagedStructConverter[ManagedStruct[AutoPointer, untyped], AutoPointer],
@@ -39,8 +39,9 @@ module FFI
     def []=: (Symbol field_name, E value) -> E
     alias align alignment
     def clear: () -> self
-    def order: (?AbstractMemory::order_in order) -> AbstractMemory::order_out
+    def layout: () -> StructLayout
     def null?: () -> bool
+    def order: (?AbstractMemory::order_in order) -> AbstractMemory::order_out
     def pointer: () -> P
     alias to_ptr pointer
     def values: () -> Array[E]
