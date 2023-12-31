@@ -1,15 +1,37 @@
 module FFI
   interface _Function
-    #TODO
+    def attach: (Module mod, String name) -> self
+    def call: (*untyped args) -> untyped
+    def param_types: () -> Array[Type]
+    def return_type: () -> Type
   end
 
   class Function < Pointer
     include _Function
-    #TODO
+    def initialize:
+      (
+        ffi_type return_type, Array[ffi_type] param_types,
+        ?blocking: boolish, ?convention: Library::convention, ?enums: Enums
+      ) { (*untyped) -> untyped } -> self
+    | (
+        ffi_type return_type, Array[ffi_type] param_types, Proc|Pointer proc,
+        ?blocking: boolish, ?convention: Library::convention, ?enums: Enums
+      ) -> self
+
+    def autorelease?: () -> bool
+    alias autorelease autorelease?
+    def autorelease=: (boolish autorelease) -> self
+    def free: () -> self
   end
 
   class VariadicInvoker
     include _Function
-    #TODO
+    def initialize:
+      (
+        Pointer function, Array[ffi_type] parameter_types, ffi_type return_type,
+        Hash[Symbol, untyped] options #TODO
+      ) -> void
+
+    def invoke: (Array[Type] parameter_types, Array[untyped] parameter_values) -> untyped
   end
 end
