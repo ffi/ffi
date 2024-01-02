@@ -14,5 +14,7 @@ group :doc do
 end
 
 group :type_check do
-  gem 'rbs', '~> 3.0'
+  if RUBY_VERSION >= "2.6" && %w[ ruby truffleruby ].include?(RUBY_ENGINE)
+    gem 'rbs', '~> 3.0'
+  end
 end
