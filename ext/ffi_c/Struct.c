@@ -114,6 +114,7 @@ struct_allocate(VALUE klass)
 
 /*
  * call-seq: initialize
+ * @overload initialize
  * @overload initialize(pointer, *args)
  *  @param [AbstractMemory] pointer
  *  @param [Array] args
