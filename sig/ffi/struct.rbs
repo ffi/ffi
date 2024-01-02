@@ -34,7 +34,7 @@ module FFI
     def self?.offsets: () -> Array[[Symbol, Integer]]
     def self?.size: -> Integer
 
-    def initialize: (P pointer, *layout args) -> self
+    def initialize: (?P pointer, *layout args) -> instance
     def []: (Symbol field_name) -> E
     def []=: (Symbol field_name, E value) -> E
     alias align alignment
@@ -65,7 +65,7 @@ module FFI
   end
 
   class ManagedStruct[out P < AutoPointer, unchecked out E] < Struct[P, E]
-    def self.release: (AbstractMemory ptr) -> void 
+    def self.release: (AbstractMemory ptr) -> void
     def initialize: (Pointer pointer) -> self
   end
 

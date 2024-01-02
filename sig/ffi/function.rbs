@@ -1,6 +1,7 @@
 module FFI
   interface _Function
-    def attach: (Module mod, String name) -> self
+    # TODO: leads to a endless recursion when used with -rrbs/test/setup
+    # def attach: (Module mod, String name) -> self
     def call: (*untyped args) -> untyped
     def param_types: () -> Array[Type]
     def return_type: () -> Type
@@ -11,13 +12,14 @@ module FFI
     def initialize:
       (
         ffi_type return_type, Array[ffi_type] param_types,
-        ?blocking: boolish, ?convention: Library::convention, ?enums: Enums
+        ?Hash[Symbol, untyped] options
       ) { (*untyped) -> untyped } -> self
     | (
         ffi_type return_type, Array[ffi_type] param_types, Proc|Pointer proc,
-        ?blocking: boolish, ?convention: Library::convention, ?enums: Enums
+        ?Hash[Symbol, untyped] options
       ) -> self
 
+#        ?blocking: boolish?, ?convention: Library::convention?, ?enums: Enums?
     def autorelease?: ...
     alias autorelease autorelease?
     def autorelease=: ...

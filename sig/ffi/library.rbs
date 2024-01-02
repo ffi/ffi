@@ -25,7 +25,7 @@ module FFI
     def enum_type: (Symbol name) -> Enum?
     def enum_for: (Symbol name) -> Integer?
 
-    def callback: (Symbol? name, Array[ffi_lib_type] params, ffi_lib_type ret) -> CallbackInfo
+    def callback: (?Symbol name, Array[ffi_lib_type] params, ffi_lib_type ret) -> CallbackInfo
     def ffi_convention: (?convention? convention) -> convention
     def ffi_lib: (*_ToS names) -> Array[DynamicLibrary]
     def ffi_lib_flags: (*ffi_lib_flag flags) -> Integer
@@ -33,7 +33,7 @@ module FFI
     def find_type: (ffi_lib_type t) -> Type
     def freeze: () -> void
     def function_names: (_ToS name, Array[Type | singleton(Struct)] arg_types) -> Array[String]
-    def typedef: [T < Type] (T old, Symbol add, ?untyped) -> T
+    def typedef: [T < Type] (T old, (Symbol | DataConverter) add, ?untyped) -> T
                | (Symbol old, Symbol add, ?untyped) -> (Type | Enum)
                | [X < DataConverter[N, R, C], N, R, C] (X old, Symbol add, ?untyped) -> Type::Mapped[X, N, R, C]
                | (:enum old, Array[Symbol | Integer] add, ?untyped) -> Enum

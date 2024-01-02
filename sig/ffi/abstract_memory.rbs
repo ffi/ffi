@@ -107,7 +107,7 @@ module FFI
     def get_array_of_float32: (Integer offset, Integer length) -> Array[Float]
     def get_array_of_float64: (Integer offset, Integer length) -> Array[Float]
     def get_array_of_pointer: (Integer offset, Integer length) -> Array[Pointer]
-    def get_array_of_string: (Integer offset, Integer length) -> Array[String]
+    def get_array_of_string: (Integer offset, ?Integer? count) -> Array[String?]
     alias get_array_of_float get_array_of_float32
     alias get_array_of_double get_array_of_float64
 
@@ -125,7 +125,7 @@ module FFI
     def put_array_of_long_long: (Integer offset, Array[Integer] ary) -> self
     def put_array_of_float32: (Integer offset, Array[Numeric] ary) -> self
     def put_array_of_float64: (Integer offset, Array[Numeric] ary) -> self
-    def put_array_of_pointer: (Integer offset, Array[Pointer::_ToPtr] ary) -> self
+    def put_array_of_pointer: (Integer offset, Array[Pointer::_ToPtr?] ary) -> self
     alias put_array_of_float put_array_of_float32
     alias put_array_of_double put_array_of_float64
 
@@ -159,6 +159,6 @@ module FFI
     def write_array_of_long_long: (Array[Integer] ary) -> self
     def write_array_of_float: (Array[Numeric] ary) -> self
     def write_array_of_double: (Array[Numeric] ary) -> self
-    def write_array_of_pointer: (Array[Pointer::_ToPtr] ary) -> self
+    def write_array_of_pointer: (Array[Pointer::_ToPtr?] ary) -> self
   end
 end

@@ -9,10 +9,9 @@ module FFI
     NULL: Pointer
     def self.size: () -> Integer
 
-    def initialize: (Pointer pointer) -> self
-                  | (AbstractMemory::type_size type, Integer address) -> self
+    def initialize: (?AbstractMemory::type_size type, (Pointer | Integer) address) -> instance
     def +: (Integer offset) -> Pointer
-    def ==: (Pointer other) -> bool
+    def ==: (Pointer? other) -> bool
     def address: () -> Integer
     alias to_i address
     def autorelease?: () -> bool
