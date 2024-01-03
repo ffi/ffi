@@ -1,6 +1,6 @@
 module FFI
   class Struct[out P < AbstractMemory, unchecked out E]
-    type layout = Library::ffi_lib_type | singleton(StructLayout::Field) | Array[layout]
+    type layout = Library::ffi_lib_type | singleton(StructLayout::Field) | [layout, Integer]
 
     type ptr = Type::Mapped[
       StructByReference[Struct[AbstractMemory, untyped], AbstractMemory],
