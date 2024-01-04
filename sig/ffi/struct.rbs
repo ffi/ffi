@@ -34,7 +34,7 @@ module FFI
     def self?.offsets: () -> Array[[Symbol, Integer]]
     def self?.size: -> Integer
 
-    def initialize: (?P pointer, *layout args) -> instance
+    def initialize: (?P pointer, *layout args) -> void
     def []: (Symbol field_name) -> E
     def []=: (Symbol field_name, E value) -> E
     alias align alignment

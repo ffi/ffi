@@ -1,6 +1,6 @@
 module FFI
   class Enums
-    def initialize: () -> instance
+    def initialize: () -> void
 
     def <<: (Enum enum) -> void
     def __map_symbol: (Symbol symbol) -> Integer?
