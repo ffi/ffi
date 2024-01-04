@@ -28,7 +28,7 @@ module FFI
     def read_string_to_null: () -> String
     def slice: (Integer offset, Integer length) -> Pointer
     def type_size: () -> Integer
-    def write: (ffi_type type, bot value) -> nil
+    def write: (ffi_type type, top value) -> nil
     def write_array_of_type: (ffi_auto_type type, Symbol writer, Array[top]) -> self
     def write_string: (String str, ?Integer? len) -> self
     def write_string_length: (String str, Integer len) -> self
