@@ -1,7 +1,7 @@
 module FFI
   type ffi_type = Type | Symbol
   type ffi_auto_type = ffi_type | DataConverter[untyped, untyped, untyped]
-  type type_map = Hash[Symbol, Type]
+  type type_map = Hash[Symbol | DataConverter[untyped, untyped, untyped], Type]
 
   class CallbackInfo = FunctionType
   class FunctionInfo = FunctionType
