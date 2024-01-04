@@ -13,7 +13,7 @@ module FFI
     def clear: () -> self
     def freeze: ...
     def get: (ffi_type type, Integer offset) -> top
-    def put: (ffi_type type, Integer offset, bot value) -> nil
+    def put: (ffi_type type, Integer offset, top value) -> nil
     def size_limit?: () -> bool
     def type_size: () -> Integer
     alias total size
