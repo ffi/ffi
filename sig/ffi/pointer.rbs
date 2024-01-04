@@ -1,4 +1,5 @@
 module FFI
+  type pointer = Pointer::_ToPtr? | Integer
   class Pointer < AbstractMemory
     interface _ToPtr
       def to_ptr: () -> Pointer

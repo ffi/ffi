@@ -52,7 +52,7 @@ module FFI
     def put_long_long: (Integer offset, int value) -> self
     def put_float32: (Integer offset, Numeric value) -> self
     def put_float64: (Integer offset, Numeric value) -> self
-    def put_pointer: (Integer offset, Pointer::_ToPtr | Integer? value) -> self
+    def put_pointer: (Integer offset, pointer value) -> self
     def put_bytes: (Integer offset, String str, ?Integer index, ?Integer? length) -> self
     def put_string: (Integer offset, String value) -> self
     alias put_float put_float32
@@ -89,7 +89,7 @@ module FFI
     def write_long_long: (int value) -> self
     def write_float: (Numeric value) -> self
     def write_double: (Numeric value) -> self
-    def write_pointer: (Pointer::_ToPtr | Integer? value) -> self
+    def write_pointer: (pointer value) -> self
     def write_bytes: (String str, ?Integer index, ?Integer? length) -> self
 
     def get_array_of_int8: (Integer offset, Integer length) -> Array[Integer]
@@ -125,7 +125,7 @@ module FFI
     def put_array_of_long_long: (Integer offset, Array[int] ary) -> self
     def put_array_of_float32: (Integer offset, Array[Numeric] ary) -> self
     def put_array_of_float64: (Integer offset, Array[Numeric] ary) -> self
-    def put_array_of_pointer: (Integer offset, Array[Pointer::_ToPtr?] ary) -> self
+    def put_array_of_pointer: (Integer offset, Array[pointer] ary) -> self
     alias put_array_of_float put_array_of_float32
     alias put_array_of_double put_array_of_float64
 
@@ -159,6 +159,6 @@ module FFI
     def write_array_of_long_long: (Array[int] ary) -> self
     def write_array_of_float: (Array[Numeric] ary) -> self
     def write_array_of_double: (Array[Numeric] ary) -> self
-    def write_array_of_pointer: (Array[Pointer::_ToPtr?] ary) -> self
+    def write_array_of_pointer: (Array[pointer] ary) -> self
   end
 end
