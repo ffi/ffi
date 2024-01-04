@@ -41,7 +41,8 @@ module FFI
     def clear: () -> self
     def layout: () -> StructLayout
     def null?: () -> bool
-    def order: (?AbstractMemory::order_in order) -> AbstractMemory::order_out
+    def order: (AbstractMemory::order_in order) -> Struct[P, E]
+              | () -> AbstractMemory::order_out
     def pointer: () -> P
     alias to_ptr pointer
     def values: () -> Array[E]
