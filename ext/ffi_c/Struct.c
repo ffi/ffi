@@ -91,6 +91,7 @@ VALUE rbffi_StructLayoutCharArrayClass = Qnil;
 
 static ID id_pointer_ivar = 0, id_layout_ivar = 0;
 static ID id_get = 0, id_put = 0, id_to_ptr = 0, id_to_s = 0, id_layout = 0;
+static ID id_initialize = 0;
 
 static inline char*
 memory_address(VALUE self)
@@ -666,8 +667,12 @@ inline_array_aref(VALUE self, VALUE rbIndex)
         VALUE rbOffset = INT2NUM(inline_array_offset(array, NUM2INT(rbIndex)));
         VALUE rbLength = INT2NUM(array->componentType->ffiType->size);
         VALUE rbPointer = rb_funcall(array->rbMemory, rb_intern("slice"), 2, rbOffset, rbLength);
+        VALUE obj;
 
-        return rb_class_new_instance(1, &rbPointer, ((StructByValue *) array->componentType)->rbStructClass);
+         /* We avoid rb_class_new_instance here, to avoid passing the method block */
+         obj = rb_obj_alloc(((StructByValue *) array->componentType)->rbStructClass);
+         rb_funcallv(obj, id_initialize, 1, &rbPointer);
+         return obj;
     } else {
 
         rb_raise(rb_eArgError, "get not supported for %s", rb_obj_classname(array->arrayType->rbComponentType));
@@ -894,5 +899,6 @@ rbffi_Struct_Init(VALUE moduleFFI)
     id_put = rb_intern("put");
     id_to_ptr = rb_intern("to_ptr");
     id_to_s = rb_intern("to_s");
+    id_initialize = rb_intern("initialize");
 }
 
