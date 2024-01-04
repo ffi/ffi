@@ -395,6 +395,26 @@ module FFI
       end
     end
 
+    # @param [DataConverter, Type, Struct, Symbol] t type to find
+    # @return [Type]
+    # Find a type definition.
+    def find_type(t)
+      if t.kind_of?(Type)
+        t
+
+      elsif defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(t)
+        @ffi_typedefs[t]
+
+      elsif t.is_a?(Class) && t < Struct
+        Type::POINTER
+
+      elsif t.is_a?(DataConverter)
+        # Add a typedef so next time the converter is used, it hits the cache
+        typedef Type::Mapped.new(t), t
+
+      end || FFI.find_type(t)
+    end
+
     private
     # Generic enum builder
     #  @param [Class] klass can be one of FFI::Enum or FFI::Bitmask
@@ -513,26 +533,6 @@ module FFI
     # Find an enum by a symbol it contains.
     def enum_value(symbol)
       @ffi_enums.__map_symbol(symbol)
-    end
-
-    # @param [DataConverter, Type, Struct, Symbol] t type to find
-    # @return [Type]
-    # Find a type definition.
-    def find_type(t)
-      if t.kind_of?(Type)
-        t
-
-      elsif defined?(@ffi_typedefs) && @ffi_typedefs.has_key?(t)
-        @ffi_typedefs[t]
-
-      elsif t.is_a?(Class) && t < Struct
-        Type::POINTER
-
-      elsif t.is_a?(DataConverter)
-        # Add a typedef so next time the converter is used, it hits the cache
-        typedef Type::Mapped.new(t), t
-
-      end || FFI.find_type(t)
     end
 
     # Retrieve all attached functions and their function signature
