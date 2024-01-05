@@ -12,7 +12,7 @@ module FFI
     def inspect: ...
     def order: () -> AbstractMemory::order_out
              | (AbstractMemory::order_in order) -> Buffer
-             | (untyped order) -> (self|Buffer)
+             | (untyped order) -> (self | Buffer)
     def slice: (Integer offset, Integer length) -> Buffer
   end
 end

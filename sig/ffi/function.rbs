@@ -9,17 +9,17 @@ module FFI
 
   class Function < Pointer
     include _Function
+    # ?blocking: boolish?, ?convention: Library::convention?, ?enums: Enums?
     def initialize:
       (
         ffi_type return_type, Array[ffi_type] param_types,
         ?Hash[Symbol, untyped] options
       ) { (*untyped) -> untyped } -> self
     | (
-        ffi_type return_type, Array[ffi_type] param_types, Proc|Pointer proc,
+        ffi_type return_type, Array[ffi_type] param_types, Proc | Pointer proc,
         ?Hash[Symbol, untyped] options
       ) -> self
 
-#        ?blocking: boolish?, ?convention: Library::convention?, ?enums: Enums?
     def autorelease?: ...
     alias autorelease autorelease?
     def autorelease=: ...

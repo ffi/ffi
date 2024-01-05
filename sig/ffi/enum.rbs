@@ -15,7 +15,7 @@ module FFI
     def initialize: (Enumerable[Symbol | Integer], ?Symbol? tag, *untyped) -> void
                   | (Type native_type, Enumerable[Symbol | Integer], ?Symbol? tag, *untyped) -> void
 
-    def []: (Symbol query) -> Integer
+    def []: (Symbol query) -> Integer?
           | (Integer query) -> Symbol?
     def symbol_map: () -> Hash[Symbol, Integer]
     alias to_h symbol_map
