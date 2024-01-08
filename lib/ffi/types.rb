@@ -64,7 +64,7 @@ module FFI
     end
 
     private def __typedef(old, add)
-      TypeDefs[add] = find_type(old)
+      TypeDefs[add] = find_type(old, TypeDefs)
     end
 
     # @param [Type, DataConverter, Symbol] name

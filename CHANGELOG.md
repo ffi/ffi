@@ -1,3 +1,21 @@
+1.16.4 / 2023-12-31
+-------------------
+
+Fixed:
+* Fix type definitions on `aarch64-linux`. #1067, #1066
+* Use RB_TEST for `Pointer.autorelease=` . #1065
+  So that `false` and `nil` are treated as falsey and anything else as truthy.
+* Replace Fixnum by Integer. #1064
+  Fixnum is no longer present in the ruby language.
+* Update `FFI::NativeType` doc. #1061
+
+Added:
+* Add Windows fat binary gem for Ruby-3.3
+
+Removed:
+* Remove `enum CHAR_ARRAY` which is no longer used. #1063
+
+
 1.16.3 / 2023-10-04
 -------------------
 
