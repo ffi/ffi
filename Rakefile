@@ -13,7 +13,7 @@ BUILD_EXT_DIR = File.join(BUILD_DIR, "#{RbConfig::CONFIG['arch']}", 'ffi_c', RUB
 
 gem_spec = Bundler.load_gemspec('ffi.gemspec')
 
-RSpec::Core::RakeTask.new(:spec => :compile) do |config|
+RSpec::Core::RakeTask.new(:spec) do |config|
   config.rspec_opts = YAML.load_file 'spec/spec.opts'
 end
 
@@ -85,7 +85,21 @@ task 'gem:java' => 'java:gem'
 
 FfiGemHelper.install_tasks
 # Register windows gems to be pushed to rubygems.org
-Bundler::GemHelper.instance.cross_platforms = %w[x86-mingw32 x64-mingw-ucrt x64-mingw32]
+Bundler::GemHelper.instance.cross_platforms = %w[
+  x86-mingw32
+  x64-mingw-ucrt
+  x64-mingw32
+  x86-linux-gnu
+  x86-linux-musl
+  x86_64-linux-gnu
+  x86_64-linux-musl
+  arm-linux-gnu
+  arm-linux-musl
+  aarch64-linux-gnu
+  aarch64-linux-musl
+  x86_64-darwin
+  arm64-darwin
+]
 # These platforms are not yet enabled, since there are issues on musl-based distors (alpine-linux):
 # + %w[x86-linux x86_64-linux arm-linux aarch64-linux x86_64-darwin arm64-darwin]
 
