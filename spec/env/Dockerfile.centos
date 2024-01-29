@@ -12,6 +12,8 @@ RUN yum install -y ruby git gcc make
 RUN ruby --version
 RUN gem env
 
+RUN gem install rubygems-update:3.3.26 --no-doc && \
+  update_rubygems
 # centos-8 comes with Ruby 2.5, and this is the last version of bundler that supports it
 RUN gem install bundler -v2.2.28
 
