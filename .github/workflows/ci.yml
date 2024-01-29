@@ -177,31 +177,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - from_image: amd64/centos
-            platform: x86_64-linux-gnu
+          - from_image: centos
+            image_platform: linux/x86_64
+            gem_platform: x86_64-linux-gnu
             dockerfile: centos
           - from_image: navikey/raspbian-bullseye
-            platform: arm-linux-gnu
+            image_platform: linux/arm
+            gem_platform: arm-linux-gnu
             dockerfile: debian
-          - from_image: arm64v8/ubuntu
-            platform: aarch64-linux-gnu
+          - from_image: ubuntu
+            image_platform: linux/arm64v8
+            gem_platform: aarch64-linux-gnu
             dockerfile: debian
-          - from_image: i386/alpine
-            platform: x86-linux-musl
+          - from_image: alpine
+            image_platform: linux/i386
+            gem_platform: x86-linux-musl
             dockerfile: alpine
-          - from_image: arm32v6/alpine
-            platform: arm-linux-musl
+          - from_image: alpine
+            image_platform: linux/arm32v6
+            gem_platform: arm-linux-musl
             dockerfile: alpine
 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Download gem-${{matrix.platform}}
+      - name: Download gem-${{matrix.gem_platform}}
         uses: actions/download-artifact@v3
         with:
-          name: gem-${{ matrix.platform }}
+          name: gem-${{ matrix.gem_platform }}
       - name: Build image and Run tests
         run: |
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-          docker build --rm --build-arg from_image=${{matrix.from_image}} -t ruby-test -f spec/env/Dockerfile.${{matrix.dockerfile}} .
+          docker build --rm --platform ${{matrix.image_platform}} --build-arg from_image=${{matrix.from_image}} -t ruby-test -f spec/env/Dockerfile.${{matrix.dockerfile}} .
           docker run --rm -t --network=host -v `pwd`:/build ruby-test
