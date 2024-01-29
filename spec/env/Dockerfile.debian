@@ -19,7 +19,8 @@ RUN gem inst bundler
 
 WORKDIR /build
 
-CMD  ruby -e "puts Gem::Platform.local.to_s" && \
+CMD  ruby -v && \
+  ruby -e "puts Gem::Platform.local.to_s" && \
   gem install --local *.gem --verbose --no-document && \
   bundle install && \
   ruby -rffi -S rake test
