@@ -55,7 +55,7 @@ module FFI
     # On CRuby it also ensures that it does not get garbage collected.
     module RegisterAttach
       def attach(mod, name)
-        funcs = mod.instance_variable_get("@ffi_functions")
+        funcs = mod.instance_variable_defined?("@ffi_functions") && mod.instance_variable_get("@ffi_functions")
         unless funcs
           funcs = {}
           mod.instance_variable_set("@ffi_functions", funcs)
