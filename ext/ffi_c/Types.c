@@ -41,6 +41,7 @@
 #include "LongDouble.h"
 
 static ID id_from_native = 0;
+static ID id_initialize = 0;
 
 
 VALUE
@@ -95,6 +96,7 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
         case NATIVE_STRUCT: {
             StructByValue* sbv = (StructByValue *)type;
             AbstractMemory* mem;
+            VALUE obj;
             VALUE rbMemory = rbffi_MemoryPointer_NewInstance(1, sbv->base.ffiType->size, false);
 
             TypedData_Get_Struct(rbMemory, AbstractMemory, &rbffi_abstract_memory_data_type, mem);
@@ -102,7 +104,10 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
             RB_GC_GUARD(rbMemory);
             RB_GC_GUARD(rbType);
 
-            return rb_class_new_instance(1, &rbMemory, sbv->rbStructClass);
+            /* We avoid rb_class_new_instance here, to avoid passing the method block */
+            obj = rb_obj_alloc(sbv->rbStructClass);
+            rb_funcallv(obj, id_initialize, 1, &rbMemory);
+            return obj;
         }
 
         case NATIVE_MAPPED: {
@@ -134,5 +139,6 @@ void
 rbffi_Types_Init(VALUE moduleFFI)
 {
     id_from_native = rb_intern("from_native");
+    id_initialize = rb_intern("initialize");
 }
 

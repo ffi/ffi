@@ -6,14 +6,16 @@ install:
   - ridk version
   - gem --version
   - gem install bundler --quiet --no-document
-  - bundle install
   - ridk exec sh -c "pacman -S --noconfirm --needed ${MINGW_PACKAGE_PREFIX}-libffi ${MINGW_PACKAGE_PREFIX}-gcc autoconf automake libtool"
+  - bundle install
 build: off
 build_script:
   - bundle exec rake libffi compile -- %EXTCONFOPTS% || bundle exec rake compile -- %EXTCONFOPTS%
 test_script:
   - bundle exec rake test
   - bundle exec rake types_conf && git --no-pager diff
+on_failure:
+  - ridk exec sh -c "find -name mkmf.log | xargs cat"
 environment:
   matrix:
     - RUBYVER: 25

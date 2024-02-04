@@ -95,12 +95,10 @@ ptr_allocate(VALUE klass)
 }
 
 /*
- * @overload initialize(pointer)
- *  @param [Pointer] pointer another pointer to initialize from
- *  Create a new pointer from another {Pointer}.
+ * @overload initialize(address)
  * @overload initialize(type, address)
- *  @param [Type] type type for pointer
- *  @param [Integer] address base address for pointer
+ *  @param [Type] type Optional type for pointer (defaults to byte)
+ *  @param [Pointer, Integer] address base address for pointer
  *  Create a new pointer from a {Type} and a base address
  * @return [self]
  * A new instance of Pointer.
