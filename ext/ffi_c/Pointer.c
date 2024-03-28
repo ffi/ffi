@@ -314,7 +314,12 @@ ptr_equals(VALUE self, VALUE other)
         return ptr->memory.address == NULL ? Qtrue : Qfalse;
     }
 
-    return ptr->memory.address == POINTER(other)->address ? Qtrue : Qfalse;
+    if (!rb_obj_is_kind_of(other, rbffi_PointerClass)) {
+        return Qfalse;
+    }
+    else {
+        return ptr->memory.address == POINTER(other)->address ? Qtrue : Qfalse;
+    }
 }
 
 /*
