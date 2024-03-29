@@ -552,10 +552,10 @@ module FFI
     # @return [Hash< Symbol => ffi_type >]
     def attached_variables
       (
-        (@ffi_gsvars || {}).map do |name, gvar|
+        (defined?(@ffi_gsvars) ? @ffi_gsvars : {}).map do |name, gvar|
           [name, gvar.class]
         end +
-        (@ffi_gvars || {}).map do |name, gvar|
+        (defined?(@ffi_gvars) ? @ffi_gvars : {}).map do |name, gvar|
           [name, gvar.layout[:gvar].type]
         end
       ).to_h
