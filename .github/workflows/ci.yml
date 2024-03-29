@@ -67,3 +67,162 @@ jobs:
       if: ${{ matrix.ruby != 'truffleruby-head' && matrix.ruby != 'jruby-head' }}
       env:
         ITER: 10
+
+  rcd_build:
+    name: build fat binary gems
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - x86-mingw32
+          - x64-mingw-ucrt
+          - x64-mingw32
+          - x86-linux-gnu
+          - x86-linux-musl
+          - x86_64-linux-gnu
+          - x86_64-linux-musl
+          - x86_64-darwin
+          - arm64-darwin
+          - arm-linux-gnu
+          - arm-linux-musl
+          - aarch64-linux-gnu
+          - aarch64-linux-musl
+
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+
+      - name: Build ffi.gem
+        run: |
+          bundle install
+          bundle exec rake libffi
+          bundle exec rake gem:${PLATFORM}
+
+      - name: Upload binary gem
+        uses: actions/upload-artifact@v4
+        with:
+          name: gem-${{ matrix.platform }}
+          path: pkg/*-*-*.gem
+
+  job_test_native:
+    name: native test
+    needs: rcd_build
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows
+          - macos
+          - ubuntu
+        ruby:
+          - "3.3"
+          - "3.2"
+          - "3.1"
+          - "3.0"
+          - "2.7"
+          - "2.6"
+          - "2.5"
+        include:
+          - os: windows
+            platform: x64-mingw32
+          - os: macos
+            platform: x86_64-darwin
+          - os: ubuntu
+            platform: x86_64-linux-gnu
+          - os: windows
+            ruby: "3.1"
+            platform: x64-mingw-ucrt
+          - os: windows
+            ruby: "3.2"
+            platform: x64-mingw-ucrt
+          - os: windows
+            ruby: "3.3"
+            platform: x64-mingw-ucrt
+        exclude:
+          - os: windows
+            ruby: "3.1"
+          - os: windows
+            ruby: "3.2"
+          - os: windows
+            ruby: "3.3"
+
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - run: ruby --version
+      - name: Download gem-${{matrix.platform}}
+        uses: actions/download-artifact@v4
+        with:
+          name: gem-${{ matrix.platform }}
+      - name: Update rubygems - ruby-3.0
+        if: matrix.ruby == '3.0'
+        run: |
+          gem install --no-doc rubygems-update -v 3.5.7
+          update_rubygems
+      - name: Update rubygems - ruby-2.6 to 2.7
+        if: matrix.ruby == '2.6' || matrix.ruby == '2.7'
+        run: |
+          gem install --no-doc rubygems-update -v 3.4.22
+          update_rubygems
+      - name: Update rubygems - ruby-2.5
+        if: matrix.ruby == '2.5'
+        run: |
+          gem install --no-doc rubygems-update -v 3.3.27
+          update_rubygems
+      - name: Install gem-${{matrix.platform}}
+        run: gem install --local *.gem --verbose
+      - name: Run tests
+        run: |
+          bundle install
+          ruby -rffi -S rake test
+
+  job_fat_binary_multiarch:
+    name: multiarch (${{matrix.platform}} on ${{matrix.from_image}} ${{matrix.image_platform}})
+    needs: rcd_build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - from_image: centos
+            image_platform: linux/x86_64
+            gem_platform: x86_64-linux-gnu
+            dockerfile: centos
+          - from_image: navikey/raspbian-bullseye
+            image_platform: linux/arm
+            gem_platform: arm-linux-gnu
+            dockerfile: debian
+          - from_image: ubuntu
+            image_platform: linux/arm64/v8
+            gem_platform: aarch64-linux-gnu
+            dockerfile: debian
+          - from_image: alpine
+            image_platform: linux/386
+            gem_platform: x86-linux-musl
+            dockerfile: alpine
+          - from_image: alpine
+            image_platform: linux/arm/v6
+            gem_platform: arm-linux-musl
+            dockerfile: alpine
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download gem-${{matrix.gem_platform}}
+        uses: actions/download-artifact@v4
+        with:
+          name: gem-${{ matrix.gem_platform }}
+      - name: Build image and Run tests
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          docker build --rm --platform ${{matrix.image_platform}} --build-arg from_image=${{matrix.from_image}} -t ruby-test -f spec/env/Dockerfile.${{matrix.dockerfile}} .
+          docker run --rm -t --network=host -v `pwd`:/build ruby-test
