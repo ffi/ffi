@@ -14,7 +14,7 @@ jobs:
         extconfopts2: [ --disable-libffi-alloc, --enable-libffi-alloc ]
     runs-on: ${{ matrix.os }}-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.7
@@ -48,7 +48,7 @@ jobs:
           ruby: truffleruby-head
     runs-on: ${{ matrix.os }}-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
