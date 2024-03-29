@@ -268,15 +268,15 @@ describe "Pointer" do
 
   describe "#inspect" do
     it "should include the address" do
-      FFI::Pointer.new(1234).inspect.should =~ /address=0x0*4d2/
+      expect(FFI::Pointer.new(1234).inspect).to match(/address=0x0*4d2/)
     end
 
     it "should not include the size if the pointer is unsized" do
-      FFI::Pointer.new(1234).inspect.should_not =~ /size=/
+      expect(FFI::Pointer.new(1234).inspect).not_to match(/size=/)
     end
 
     it "should include the size if there is one" do
-      FFI::MemoryPointer.new(:char, 16).inspect.should =~ /size=16/
+      expect(FFI::MemoryPointer.new(:char, 16).inspect).to match(/size=16/)
     end
   end
 end
