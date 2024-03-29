@@ -76,6 +76,16 @@ describe "Pointer" do
     expect(FFI::Pointer::NULL.to_ptr).to eq(FFI::Pointer::NULL)
   end
 
+  it "equals itself" do
+    memory = FFI::MemoryPointer.new :pointer
+    expect(memory == memory).to be true
+  end
+
+  it "does not equal non pointers" do
+    memory = FFI::MemoryPointer.new :pointer
+    expect(memory == Hash.new).to be false
+  end
+
   describe "pointer type methods" do
 
     it "#read_pointer" do
@@ -149,6 +159,9 @@ describe "Pointer" do
     end
     it 'returns true when compared with nil' do
       expect((FFI::Pointer::NULL == nil)).to be true
+    end
+    it 'returns false when compared with a non-pointer object' do
+      expect((FFI::Pointer::NULL == Array.new)).to be false
     end
     it 'should not raise an error when attempting read/write zero length array' do
       null_ptr = FFI::Pointer::NULL
