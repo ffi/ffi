@@ -1,0 +1,18 @@
+ARG from_image
+FROM ${from_image}
+
+RUN uname -a
+RUN apk add ruby ruby-etc ruby-rake git gcc make musl-dev gcompat
+
+RUN ruby --version
+RUN ruby -e 'puts File.read("/proc/#{Process.pid}/maps")'
+RUN gem env
+RUN gem inst bundler --conservative
+
+WORKDIR /build
+
+CMD ruby -v && \
+  ruby -e "puts Gem::Platform.local.to_s" && \
+  gem install --local *.gem --verbose --no-document && \
+  bundle install && \
+  ruby -rffi -S rake test

@@ -1,11 +1,11 @@
 source 'https://rubygems.org'
 
 group :development do
-  gem 'bigdecimal'
+  gem 'bigdecimal' unless RUBY_VERSION =~ /^2\.[4567]|^3\.[012]\./ # necessary on ruby-3.3+
   gem 'bundler', '>= 1.16', '< 3'
   gem 'rake', '~> 13.0'
   gem 'rake-compiler', '~> 1.1'
-  gem 'rake-compiler-dock', '~> 1.0'
+  gem 'rake-compiler-dock', '~> 1.0.pre'
   gem 'rspec', '~> 3.0'
 end
 

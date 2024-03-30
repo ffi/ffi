@@ -1,0 +1,28 @@
+ARG from_image
+FROM ${from_image}
+
+# To prevent installed tzdata deb package to show interactive dialog.
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN uname -a
+RUN apt-get update -qq && \
+  apt-get install -yq \
+  -o Dpkg::Options::='--force-confnew' \
+  ruby \
+  git \
+  gcc \
+  make
+
+RUN ruby --version
+RUN gem env
+RUN gem install rubygems-update --no-doc && \
+  update_rubygems
+RUN gem inst bundler
+
+WORKDIR /build
+
+CMD  ruby -v && \
+  ruby -e "puts Gem::Platform.local.to_s" && \
+  gem install --local *.gem --verbose --no-document && \
+  bundle install && \
+  ruby -rffi -S rake test
