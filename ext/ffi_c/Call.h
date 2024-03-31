@@ -73,9 +73,10 @@ typedef union {
 
 extern void rbffi_Call_Init(VALUE moduleFFI);
 
-extern void rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
+extern VALUE rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
         FFIStorage* paramStorage, void** ffiValues,
-        VALUE* callbackParameters, int callbackCount, VALUE enums);
+        VALUE* callbackParameters, int callbackCount,
+        VALUE enums);
 
 struct FunctionType_;
 extern VALUE rbffi_CallFunction(int argc, VALUE* argv, void* function, struct FunctionType_* fnInfo);

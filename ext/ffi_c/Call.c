@@ -86,10 +86,11 @@ static inline void* getPointer(VALUE value, int type);
 
 static ID id_to_ptr, id_map_symbol, id_to_native;
 
-void
+VALUE
 rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
         FFIStorage* paramStorage, void** ffiValues,
-        VALUE* callbackParameters, int callbackCount, VALUE enums)
+        VALUE* callbackParameters, int callbackCount,
+        VALUE enums)
 {
     VALUE callbackProc = Qnil;
     FFIStorage* param = &paramStorage[0];
@@ -327,6 +328,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
                 rb_raise(rb_eArgError, "Invalid parameter type: %d", paramType->nativeType);
         }
     }
+    return callbackProc;
 }
 
 static void *
@@ -362,6 +364,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
     FFIStorage* params;
     VALUE rbReturnValue;
     rbffi_frame_t frame = { 0 };
+    VALUE callbackProc;
 
     retval = alloca(MAX(fnInfo->ffi_cif.rtype->size, FFI_SIZEOF_ARG));
 
@@ -379,9 +382,10 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         bc->params = params;
         bc->frame = &frame;
 
-        rbffi_SetupCallParams(argc, argv,
+        callbackProc = rbffi_SetupCallParams(argc, argv,
             fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
-            fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
+            fnInfo->callbackParameters, fnInfo->callbackCount,
+            fnInfo->rbEnums);
 
         rbffi_frame_push(&frame);
         rb_rescue2(rbffi_do_blocking_call, (VALUE) bc, rbffi_save_frame_exception, (VALUE) &frame, rb_eException, (VALUE) 0);
@@ -392,14 +396,16 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         ffiValues = ALLOCA_N(void *, fnInfo->parameterCount);
         params = ALLOCA_N(FFIStorage, fnInfo->parameterCount);
 
-        rbffi_SetupCallParams(argc, argv,
+        callbackProc = rbffi_SetupCallParams(argc, argv,
             fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,
-            fnInfo->callbackParameters, fnInfo->callbackCount, fnInfo->rbEnums);
+            fnInfo->callbackParameters, fnInfo->callbackCount,
+            fnInfo->rbEnums);
 
         rbffi_frame_push(&frame);
         ffi_call(&fnInfo->ffi_cif, FFI_FN(function), retval, ffiValues);
         rbffi_frame_pop(&frame);
     }
+    RB_GC_GUARD(callbackProc);
 
     if (unlikely(!fnInfo->ignoreErrno)) {
         rbffi_save_errno();
