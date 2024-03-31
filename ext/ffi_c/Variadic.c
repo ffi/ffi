@@ -202,6 +202,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     Type** paramTypes;
     VALUE* argv;
     VALUE* callbackParameters;
+    VALUE callbackProc;
     int paramCount = 0, fixedCount = 0, callbackCount = 0, i;
     ffi_status ffiStatus;
     rbffi_frame_t frame = { 0 };
@@ -290,8 +291,9 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
             rb_raise(rb_eArgError, "Unknown FFI error");
     }
 
-    rbffi_SetupCallParams(paramCount, argv, -1, paramTypes, params,
-        ffiValues, callbackParameters, callbackCount, invoker->rbEnums);
+    callbackProc = rbffi_SetupCallParams(paramCount, argv, -1, paramTypes, params,
+        ffiValues, callbackParameters, callbackCount,
+        invoker->rbEnums);
 
     rbffi_frame_push(&frame);
 
@@ -309,6 +311,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     } else {
         ffi_call(&cif, FFI_FN(invoker->function), retval, ffiValues);
     }
+    RB_GC_GUARD(callbackProc);
 
     rbffi_frame_pop(&frame);
 
