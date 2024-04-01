@@ -114,7 +114,7 @@ The following people have submitted code, bug reports, or otherwise contributed 
 * Jurij Smakov <jurij@wooyd.org>
 * KISHIMOTO, Makoto <ksmakoto@dd.iij4u.or.jp>
 * Kim Burgestrand <kim@burgestrand.se>
-* Lars Kanis <kanis@comcard.de>
+* Lars Kanis <lars@greiz-reinsdorf.de>
 * Luc Heinrich <luc@honk-honk.com>
 * Luis Lavena <luislavena@gmail.com>
 * Matijs van Zuijlen <matijs@matijs.net>
