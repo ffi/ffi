@@ -1,5 +1,17 @@
 name: CI
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * 3" # At 05:00 on Wednesday # https://crontab.guru/#0_5_*_*_3
+  push:
+    branches:
+      - master
+    tags:
+      - "*.*.*"
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - "*"
 permissions:
   contents: read
 
