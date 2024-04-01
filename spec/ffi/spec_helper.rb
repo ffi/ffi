@@ -58,3 +58,14 @@ module OrderHelper
     raise
   end
 end
+
+if ENV['FFI_GC_STRESS'] == 'true'
+  RSpec.configure do |config|
+    config.before :each do
+      GC.stress=true
+    end
+    config.after :each do
+      GC.stress=false
+    end
+  end
+end

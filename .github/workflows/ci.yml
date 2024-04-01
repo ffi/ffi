@@ -68,6 +68,29 @@ jobs:
       env:
         ITER: 10
 
+  gc_stress:
+    if: github.ref == 'refs/heads/master'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu ]
+        ruby: [ ruby-head ]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+
+    - run: bundle install
+    - run: bundle exec rake libffi
+    - name: Play dice if we run the tests or don't
+      id: run_it
+      run: ruby -e "puts 'RUN_IT=true' if rand < 0.1" >> $GITHUB_OUTPUT
+    - name: Run all tests with GC.stress=true
+      if: steps.run_it.outputs.RUN_IT == 'true'
+      run: bundle exec rake compile test FFI_GC_STRESS=true
+
   rcd_build:
     name: build fat binary gems
 
