@@ -46,6 +46,9 @@ jobs:
         exclude:
         - os: windows
           ruby: truffleruby-head
+        include:
+        - os: windows
+          ruby: ruby-mswin
     runs-on: ${{ matrix.os }}-latest
     steps:
     - uses: actions/checkout@v4
@@ -59,6 +62,9 @@ jobs:
     - run: bundle install
     - run: bundle exec rake libffi
     - run: bundle exec rake compile
+
+    - if: matrix.os == 'windows'
+      run: bundle exec rake test
 
     - if: matrix.os != 'windows'
       run: bundle exec rake test FFI_TEST_GC=true
