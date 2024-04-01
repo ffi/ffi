@@ -58,6 +58,9 @@ jobs:
         exclude:
         - os: windows-latest
           ruby: truffleruby-head
+        include:
+        - os: windows-latest
+          ruby: ruby-mswin
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -72,10 +75,14 @@ jobs:
     - run: bundle exec rake libffi
     - run: bundle exec rake compile
 
+    - if: matrix.os == 'windows-latest'
+      # force the use of GNU make.exe on MSWIN platform for building libtest.dll
+      run: bundle exec rake test MAKE=make
+
     - if: matrix.os != 'windows-latest'
       run: bundle exec rake test FFI_TEST_GC=true
 
-    - run: bundle exec rake bench:all
+    - run: bundle exec rake bench:all MAKE=make
       if: ${{ matrix.ruby != 'truffleruby-head' && matrix.ruby != 'jruby-head' }}
       env:
         ITER: 10

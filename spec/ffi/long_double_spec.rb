@@ -47,4 +47,8 @@ describe ":long_double arguments and return values" do
       expect(v).to be_within(0.01).of(0.1)
     end
   end
-end unless ['truffleruby', 'jruby'].include?(RUBY_ENGINE) || /x64-mingw32/ =~ RUBY_PLATFORM
+
+  # * Truffleruby and JRuby don't support long double
+  # * x64-mingw32 with MSVCRT crashes
+  # * The libtest.dll on mswin is built by gcc currently (since the GNUmakefile is not compatible to MSVC), which crashes at long double
+end unless ['truffleruby', 'jruby'].include?(RUBY_ENGINE) || /x64-mingw32|mswin/ =~ RUBY_PLATFORM
