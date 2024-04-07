@@ -1,4 +1,4 @@
-1.16.4 / 2023-12-31
+1.17.0.rc1 / 2024-04-07
 -------------------
 
 Fixed:
@@ -8,9 +8,19 @@ Fixed:
 * Replace Fixnum by Integer. #1064
   Fixnum is no longer present in the ruby language.
 * Update `FFI::NativeType` doc. #1061
+* Store FFI::Type::Mapped of FFI::StrPtrConverter in global instead of custom type map
+* Various documentation fixes. #1042
+* Update `FFI::Pointer#==` to return `false` if a pointer is compared to a non-pointer object, which is the expected behavior. #1083
+* Avoid warning about undefined wariable `@ffi_functions` #1085
+* Fix a very unlikely GC bug when using a callback block. # 1089
 
 Added:
+* Provide binary gems for many platforms. #990
 * Add Windows fat binary gem for Ruby-3.3
+* Add RBS type definitions for many user facing parts of the FFI API. #1042
+* Improve fallback search path logic. #1088
+  Respect LD_LIBRARY_PATH and DYLD_LIBRARY_PATH on Macos.
+* Update libffi to current git master branch.
 
 Removed:
 * Remove `enum CHAR_ARRAY` which is no longer used. #1063
