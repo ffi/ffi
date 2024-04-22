@@ -183,7 +183,7 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
     Check_Type(rbParamTypes, T_ARRAY);
 
     TypedData_Get_Struct(self, FunctionType, &rbffi_fntype_data_type, fnInfo);
-    fnInfo->parameterCount = (int) RARRAY_LEN(rbParamTypes);
+    fnInfo->parameterCount = RARRAY_LENINT(rbParamTypes);
     fnInfo->parameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->parameterTypes));
     fnInfo->ffiParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(ffi_type *));
     fnInfo->nativeParameterTypes = xcalloc(fnInfo->parameterCount, sizeof(*fnInfo->nativeParameterTypes));

@@ -211,7 +211,7 @@ variadic_invoke(VALUE self, VALUE parameterTypes, VALUE parameterValues)
     Check_Type(parameterValues, T_ARRAY);
 
     TypedData_Get_Struct(self, VariadicInvoker, &variadic_data_type, invoker);
-    paramCount = (int) RARRAY_LEN(parameterTypes);
+    paramCount = RARRAY_LENINT(parameterTypes);
     paramTypes = ALLOCA_N(Type *, paramCount);
     ffiParamTypes = ALLOCA_N(ffi_type *, paramCount);
     params = ALLOCA_N(FFIStorage, paramCount);

@@ -487,7 +487,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     int i;
 
     TypedData_Get_Struct(self, StructLayout, &rbffi_struct_layout_data_type, layout);
-    layout->fieldCount = (int) RARRAY_LEN(fields);
+    layout->fieldCount = RARRAY_LENINT(fields);
     RB_OBJ_WRITE(self, &layout->rbFieldMap, rb_hash_new());
     RB_OBJ_WRITE(self, &layout->rbFieldNames, rb_ary_new2(layout->fieldCount));
     layout->size = (int) FFI_ALIGN(NUM2INT(size),  NUM2INT(align));
