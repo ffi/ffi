@@ -460,9 +460,9 @@ struct_layout_allocate(VALUE klass)
     VALUE obj;
 
     obj = TypedData_Make_Struct(klass, StructLayout, &rbffi_struct_layout_data_type, layout);
-    layout->rbFieldMap = Qnil;
-    layout->rbFieldNames = Qnil;
-    layout->rbFields = Qnil;
+    RB_OBJ_WRITE(obj, &layout->rbFieldMap, Qnil);
+    RB_OBJ_WRITE(obj, &layout->rbFieldNames, Qnil);
+    RB_OBJ_WRITE(obj, &layout->rbFields, Qnil);
     layout->base.ffiType = xcalloc(1, sizeof(*layout->base.ffiType));
     layout->base.ffiType->size = 0;
     layout->base.ffiType->alignment = 0;
@@ -487,7 +487,7 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     int i;
 
     TypedData_Get_Struct(self, StructLayout, &rbffi_struct_layout_data_type, layout);
-    layout->fieldCount = (int) RARRAY_LEN(fields);
+    layout->fieldCount = RARRAY_LENINT(fields);
     RB_OBJ_WRITE(self, &layout->rbFieldMap, rb_hash_new());
     RB_OBJ_WRITE(self, &layout->rbFieldNames, rb_ary_new2(layout->fieldCount));
     layout->size = (int) FFI_ALIGN(NUM2INT(size),  NUM2INT(align));
