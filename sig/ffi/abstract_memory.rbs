@@ -144,6 +144,7 @@ module FFI
     def read_array_of_float: (Integer length) -> Array[Float]
     def read_array_of_double: (Integer length) -> Array[Float]
     def read_array_of_pointer: (Integer length) -> Array[Pointer]
+    def read_array_of_string: (?Integer? count) -> Array[String?]
 
     def write_array_of_int8: (Array[int] ary) -> self
     def write_array_of_int16: (Array[int] ary) -> self

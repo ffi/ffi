@@ -1109,6 +1109,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     rb_define_method(classMemory, "read_bytes", memory_read_bytes, 1);
     rb_define_method(classMemory, "write_bytes", memory_write_bytes, -1);
     rb_define_method(classMemory, "get_array_of_string", memory_get_array_of_string, -1);
+    rb_define_method(classMemory, "read_array_of_string", memory_read_array_of_string, -1);
 
     rb_define_method(classMemory, "get", memory_get, 2);
     rb_define_method(classMemory, "put", memory_put, 3);
