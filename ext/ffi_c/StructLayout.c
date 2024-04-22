@@ -460,9 +460,9 @@ struct_layout_allocate(VALUE klass)
     VALUE obj;
 
     obj = TypedData_Make_Struct(klass, StructLayout, &rbffi_struct_layout_data_type, layout);
-    layout->rbFieldMap = Qnil;
-    layout->rbFieldNames = Qnil;
-    layout->rbFields = Qnil;
+    RB_OBJ_WRITE(obj, &layout->rbFieldMap, Qnil);
+    RB_OBJ_WRITE(obj, &layout->rbFieldNames, Qnil);
+    RB_OBJ_WRITE(obj, &layout->rbFields, Qnil);
     layout->base.ffiType = xcalloc(1, sizeof(*layout->base.ffiType));
     layout->base.ffiType->size = 0;
     layout->base.ffiType->alignment = 0;
