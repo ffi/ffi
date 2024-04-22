@@ -488,13 +488,13 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
 
     TypedData_Get_Struct(self, StructLayout, &rbffi_struct_layout_data_type, layout);
     layout->fieldCount = (int) RARRAY_LEN(fields);
-    layout->rbFieldMap = rb_hash_new();
-    layout->rbFieldNames = rb_ary_new2(layout->fieldCount);
+    RB_OBJ_WRITE(self, &layout->rbFieldMap, rb_hash_new());
+    RB_OBJ_WRITE(self, &layout->rbFieldNames, rb_ary_new2(layout->fieldCount));
     layout->size = (int) FFI_ALIGN(NUM2INT(size),  NUM2INT(align));
     layout->align = NUM2INT(align);
     layout->fields = xcalloc(layout->fieldCount, sizeof(StructField *));
     layout->ffiTypes = xcalloc(layout->fieldCount + 1, sizeof(ffi_type *));
-    layout->rbFields = rb_ary_new2(layout->fieldCount);
+    RB_OBJ_WRITE(self, &layout->rbFields, rb_ary_new2(layout->fieldCount));
     layout->referenceFieldCount = 0;
     layout->base.ffiType->elements = layout->ffiTypes;
     layout->base.ffiType->size = layout->size;
