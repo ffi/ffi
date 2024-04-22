@@ -1,3 +1,10 @@
+1.17.0.rc2 / 2024-04-22
+-------------------
+
+Fixed:
+* Add missing write barriers to StructLayout#initialize causing a segfault with GC.stress. #1079
+
+
 1.17.0.rc1 / 2024-04-08
 -------------------
 
