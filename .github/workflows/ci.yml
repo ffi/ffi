@@ -153,9 +153,10 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - windows
-          - macos
-          - ubuntu
+          - windows-latest
+          - macos-13
+          - macos-latest
+          - ubuntu-latest
         ruby:
           - "3.3"
           - "3.2"
@@ -165,30 +166,34 @@ jobs:
           - "2.6"
           - "2.5"
         include:
-          - os: windows
+          - os: windows-latest
             platform: x64-mingw32
-          - os: macos
+          - os: macos-13
             platform: x86_64-darwin
-          - os: ubuntu
+          - os: macos-latest
+            platform: arm64-darwin
+          - os: ubuntu-latest
             platform: x86_64-linux-gnu
-          - os: windows
+          - os: windows-latest
             ruby: "3.1"
             platform: x64-mingw-ucrt
-          - os: windows
+          - os: windows-latest
             ruby: "3.2"
             platform: x64-mingw-ucrt
-          - os: windows
+          - os: windows-latest
             ruby: "3.3"
             platform: x64-mingw-ucrt
         exclude:
-          - os: windows
+          - os: macos-latest
+            ruby: "2.5"
+          - os: windows-latest
             ruby: "3.1"
-          - os: windows
+          - os: windows-latest
             ruby: "3.2"
-          - os: windows
+          - os: windows-latest
             ruby: "3.3"
 
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
