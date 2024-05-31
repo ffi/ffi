@@ -1,3 +1,10 @@
+1.17.0 / 2024-05-31
+-------------------
+
+Fixed:
+* Add FFI::AbstractMemory#read_array_of_string . It was defined but not exposed to Ruby nor tested. #1070
+
+
 1.17.0.rc2 / 2024-04-22
 -------------------
 
