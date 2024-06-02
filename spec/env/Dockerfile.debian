@@ -8,7 +8,7 @@ RUN uname -a
 RUN apt-get update -qq && \
   apt-get install -yq \
   -o Dpkg::Options::='--force-confnew' \
-  ruby \
+  ruby-dev \
   git \
   gcc \
   make
