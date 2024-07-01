@@ -12,7 +12,7 @@ module FFI
       def release: (Pointer ptr) -> void
     end
 
-    def initialize: (Pointer pointer, Method | ^(self) -> void | Releaser::_Proc[self] callable) -> self
+    def initialize: (Pointer pointer, Method | ^(self) -> void | Releaser::_Proc[instance] callable) -> self
                 # | (Pointer pointer) { (self) -> void } -> self # https://github.com/ffi/ffi/issues/1071
                   | (Pointer pointer) -> self # where class < `def self.release: (instance pointer) -> void`
 

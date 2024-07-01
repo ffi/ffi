@@ -33,7 +33,7 @@ module FFI
     def find_type: (ffi_lib_type t) -> Type
     def freeze: () -> void
     def function_names: (_ToS name, Array[Type | singleton(Struct)] arg_types) -> Array[String]
-    def typedef: [T < Type] (T old, Symbol | DataConverter add, ?untyped) -> T
+    def typedef: [T < Type, N, R, C] (T old, Symbol | DataConverter[N, R, C] add, ?untyped) -> T
                | (Symbol old, Symbol add, ?untyped) -> (Type | Enum)
                | [X < DataConverter[N, R, C], N, R, C] (X old, Symbol add, ?untyped) -> Type::Mapped[X, N, R, C]
                | (:enum old, Array[Symbol | Integer] add, ?untyped) -> Enum

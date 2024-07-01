@@ -13,7 +13,9 @@ module FFI
       def inspect: ...
     end
 
-    class Mapped[X < _DataConverter[N, R, C], N, R, C]
+    # FIXME
+    # class Mapped[X < _DataConverter[N, R, C], N, R, C]
+    class Mapped[X, N, R, C]
       include _DataConverter[N, R, C]
 
       def initialize: (X converter) -> self
