@@ -9,7 +9,9 @@ require 'objspace'
 
 RSpec.configure do |c|
   c.filter_run_excluding gc_dependent: true unless ENV['FFI_TEST_GC'] == 'true'
-  c.filter_run_excluding( :ractor ) unless defined?(Ractor) && RUBY_VERSION >= "3.1" && (RUBY_VERSION !~ /^3.3./ || RUBY_PLATFORM !~ /mingw/)
+
+  # Ractor is only usable on ruby-3.1+, but it hangs on Windows on ruby-3.3 and 3.4
+  c.filter_run_excluding( :ractor ) unless defined?(Ractor) && RUBY_VERSION >= "3.1" && (RUBY_VERSION !~ /^3.[34]./ || RUBY_PLATFORM !~ /mingw|mswin/)
 end
 
 module TestLibrary

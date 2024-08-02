@@ -18,7 +18,11 @@ old = Dir.pwd
 Dir.chdir(File.dirname(EXT))
 
 nul = File.open(File::NULL)
-make = system('type gmake', { :out => nul, :err => nul }) && 'gmake' || 'make'
+make = if RUBY_PLATFORM =~ /mswin/i
+  'nmake'
+else
+  system('type gmake', { :out => nul, :err => nul }) && 'gmake' || 'make'
+end
 
 # create Makefile
 system(RbConfig.ruby, "extconf.rb")
