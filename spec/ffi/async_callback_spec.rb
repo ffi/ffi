@@ -13,6 +13,10 @@ describe "async callback" do
 
     @blocking = true
     attach_function :testAsyncCallback, [ AsyncIntCallback, :int ], :void
+    @blocking = true
+    attach_function :testAsyncCallbackDelayedRegister, [ AsyncIntCallback ], :void
+    @blocking = true
+    attach_function :testAsyncCallbackDelayedTrigger, [ :int ], :void
   end
 
   it ":int (0x7fffffff) argument" do
@@ -73,4 +77,38 @@ describe "async callback" do
     expect(res).to eq([0x7fffffff, true, true])
   end
 
+  it "works in forks" do
+    skip "no forking on this ruby" unless Process.respond_to?(:fork)
+
+    v = 0
+    LibTest.testAsyncCallbackDelayedRegister { |i| v = i }
+    IO.popen('-') do |pipe|
+      if pipe
+        begin
+          # Parent process - read the value and assert it.
+          # Wait two seconds for the pipe to be readable (since the write of a four-byte int
+          # is < PIPE_BUF, there should be no possibility of only _some_ of the data being ready)
+          IO.select([pipe], [], [], 2)
+          data = pipe.read_nonblock(4)
+          expect(data).to_not be_nil
+          child_v = data.unpack1('l')
+          expect(child_v).to eq(125512)
+        ensure
+          # Make sure we don't wait forever for this test if the child process hangs.
+          Process.kill :KILL, pipe.pid
+        end
+      else
+        begin
+          # Child process - call the callback and write the result
+          LibTest.testAsyncCallbackDelayedTrigger(125512)
+          $stdout.write [v].pack('l')
+        rescue Exception => e
+          $stderr.puts e.inspect
+        ensure
+          # Make sure control never returns to the test runner
+          exit! 0
+        end
+      end
+    end
+  end
 end

@@ -215,6 +215,52 @@ async_cb_dispatcher_set(struct async_cb_dispatcher *ctx)
     async_cb_dispatcher = ctx;
 }
 #endif
+
+static void
+async_cb_dispatcher_initialize(struct async_cb_dispatcher *ctx)
+{
+        ctx->async_cb_list = NULL;
+
+#if !defined(_WIN32)
+        /* n.b. we _used_ to try and destroy the mutex/cond before initializing here,
+         * but it's undefined what happens if you try and destory an unitialized cond.
+         * glibc in particular seems to wait for any concurrent waiters to finish before
+         * destroying a condvar, trying to destroy a condvar after fork that someone was
+         * waiting on pre-fork won't work. Just re-init he memory directly. */
+        pthread_mutex_init(&ctx->async_cb_mutex, NULL);
+        pthread_cond_init(&ctx->async_cb_cond, NULL);
+#else
+        InitializeCriticalSection(&ctx->async_cb_lock);
+        ctx->async_cb_cond = CreateEvent(NULL, FALSE, FALSE, NULL);
+#endif
+    ctx->thread = rb_thread_create(async_cb_event, ctx);
+
+    /* Name thread, for better debugging */
+    rb_funcall(ctx->thread, rb_intern("name="), 1, rb_str_new2("FFI Callback Dispatcher"));
+}
+
+static struct async_cb_dispatcher *
+async_cb_dispatcher_ensure_created(void)
+{
+    struct async_cb_dispatcher *ctx = async_cb_dispatcher_get();
+    if (ctx == NULL) {
+        ctx = (struct async_cb_dispatcher*)ALLOC(struct async_cb_dispatcher);
+        async_cb_dispatcher_initialize(ctx);
+        async_cb_dispatcher_set(ctx);
+    }
+    return ctx;
+}
+
+
+static VALUE
+async_cb_dispatcher_atfork_child(VALUE self)
+{
+    struct async_cb_dispatcher *ctx = async_cb_dispatcher_get();
+    if (ctx) {
+        async_cb_dispatcher_initialize(ctx);
+    }
+    return Qnil;
+}
 #endif
 
 static VALUE
@@ -391,15 +437,6 @@ rbffi_Function_ForProc(VALUE rbFunctionInfo, VALUE proc)
     return callback;
 }
 
-#if !defined(_WIN32) && defined(DEFER_ASYNC_CALLBACK)
-static void
-after_fork_callback(void)
-{
-    /* Ensure that a new dispatcher thread is started in a forked process */
-    async_cb_dispatcher_set(NULL);
-}
-#endif
-
 static VALUE
 function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 {
@@ -426,31 +463,7 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
         }
 
 #if defined(DEFER_ASYNC_CALLBACK)
-        {
-            struct async_cb_dispatcher *ctx = async_cb_dispatcher_get();
-            if (ctx == NULL) {
-                ctx = (struct async_cb_dispatcher*)ALLOC(struct async_cb_dispatcher);
-                ctx->async_cb_list = NULL;
-
-#if !defined(_WIN32)
-                pthread_mutex_init(&ctx->async_cb_mutex, NULL);
-                pthread_cond_init(&ctx->async_cb_cond, NULL);
-                if( pthread_atfork(NULL, NULL, after_fork_callback) ){
-                    rb_warn("FFI: unable to register fork callback");
-                }
-#else
-                InitializeCriticalSection(&ctx->async_cb_lock);
-                ctx->async_cb_cond = CreateEvent(NULL, FALSE, FALSE, NULL);
-#endif
-                ctx->thread = rb_thread_create(async_cb_event, ctx);
-
-                /* Name thread, for better debugging */
-                rb_funcall(ctx->thread, rb_intern("name="), 1, rb_str_new2("FFI Callback Dispatcher"));
-
-                async_cb_dispatcher_set(ctx);
-            }
-            fn->dispatcher = ctx;
-        }
+        fn->dispatcher = async_cb_dispatcher_ensure_created();
 #endif
 
         fn->closure = rbffi_Closure_Alloc(fn->info->closurePool);
@@ -1059,5 +1072,10 @@ rbffi_Function_Init(VALUE moduleFFI)
     id_from_native = rb_intern("from_native");
 #if defined(DEFER_ASYNC_CALLBACK) && defined(HAVE_RB_EXT_RACTOR_SAFE)
     async_cb_dispatcher_key = rb_ractor_local_storage_ptr_newkey(&async_cb_dispatcher_key_type);
+#endif
+#ifdef DEFER_ASYNC_CALLBACK
+  /* Ruby code will call this method in a Process._fork patch */
+  rb_define_singleton_method(moduleFFI, "_async_cb_dispatcher_atfork_child",
+                             async_cb_dispatcher_atfork_child, 0);
 #endif
 }

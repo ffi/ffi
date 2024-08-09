@@ -150,3 +150,14 @@ void __stdcall testStdcallManyParams(long *a1, char a2, short int a3, int a4, __
             struct StructUCDP a6, struct StructUCDP *a7, float a8, double a9) {
 }
 #endif
+
+static void (*testAsyncCallbackDelayedCb)(int);
+void testAsyncCallbackDelayedRegister(void (*fn)(int))
+{
+  testAsyncCallbackDelayedCb = fn;
+}
+
+void testAsyncCallbackDelayedTrigger(int value)
+{
+  testAsyncCallback(testAsyncCallbackDelayedCb, value);
+}
