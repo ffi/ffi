@@ -33,16 +33,17 @@ module FFI
     SEARCH_PATH = []
 
     # The following search paths are tried, if the library could not be loaded in the first attempt.
-    # They are only executed on Macos in the following order:
-    if FFI::Platform.mac?
-
+    # They are only executed on Unix systems in the following order:
+    if FFI::Platform.unix?
       # 1. Try library paths possibly defined in LD_LIBRARY_PATH DYLD_LIBRARY_PATH first.
       # This is because dlopen doesn't respect LD_LIBRARY_PATH and DYLD_LIBRARY_PATH is deleted by SIP-protected binaries.
       # See here for details: https://github.com/ffi/ffi/issues/923#issuecomment-1872565313
       %w[LD_LIBRARY_PATH DYLD_LIBRARY_PATH].each do |custom_path|
         SEARCH_PATH.concat ENV.fetch(custom_path,"").split(File::PATH_SEPARATOR)
       end
+    end
 
+    if FFI::Platform.mac?
       # 2. Then on macos/arm64 try /opt/homebrew/lib, since this is a typical standard directory.
       # FFI is often used together with homebrew, so that we hardcode the path for arm64 here.
       if FFI::Platform::ARCH == 'aarch64'
