@@ -856,14 +856,21 @@ module CallbackInteropSpecs
     module LibTestFFI
       extend FFI::Library
       ffi_lib TestLibrary::PATH
-      attach_function :testCallbackVrV, :testClosureVrV, [ :pointer ], :void
-      attach_function :testCallbackVrV_blocking, :testClosureVrV, [ :pointer ], :void, blocking: true
+      @cb = attach_function :testCallbackVrV, :testClosureVrV, [ :pointer ], :void
+      @cb_blocking = attach_function :testCallbackVrV_blocking, :testClosureVrV, [ :pointer ], :void, blocking: true
     end
 
     module LibTestFiddle
       extend Fiddle::Importer
       dlload TestLibrary::PATH
       extern 'void testClosureVrV(void *fp)'
+    end
+
+    after do
+      LibTestFFI.instance_variable_set(:@cb, nil)
+      LibTestFFI.instance_variable_set(:@cb_blocking, nil)
+      GC.start
+      expect(ObjectSpace.each_object(Fiddle::Closure) {}).to eq(0)
     end
 
     def assert_callback_in_same_thread_called_once
