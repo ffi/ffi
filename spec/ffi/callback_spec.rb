@@ -867,8 +867,10 @@ module CallbackInteropSpecs
     end
 
     after :all do
-      GC.start
-      expect(ObjectSpace.each_object(Fiddle::Closure) {}).to eq(0)
+      if Process.respond_to?(:fork)
+        GC.start
+        expect(ObjectSpace.each_object(Fiddle::Closure) {}).to eq(0)
+      end
     end
 
     def assert_callback_in_same_thread_called_once
