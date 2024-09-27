@@ -866,6 +866,11 @@ module CallbackInteropSpecs
       extern 'void testClosureVrV(void *fp)'
     end
 
+    after :all do
+      GC.start
+      expect(ObjectSpace.each_object(Fiddle::Closure) {}).to eq(0)
+    end
+
     def assert_callback_in_same_thread_called_once
       called = 0
       thread = nil
