@@ -56,6 +56,11 @@ module FFI
       # /usr/lib is there, because it was always there.
       SEARCH_PATH.concat %w[/opt/local/lib /usr/local/lib /usr/lib]
     end
+    if FFI::Platform.mac?
+      from_env_vars = ENV.fetch('DYLD_LIBRARY_PATH', '').split(':')
+      from_env_vars += ENV.fetch('DYLD_FALLBACK_LIBRARY_PATH', '').split(':')
+      SEARCH_PATH.unshift(*from_env_vars)
+    end
 
     # On Linux the library lookup paths are usually defined through /etc/ld.so.conf, which can be changed at will with root permissions.
     # Also LD_LIBRARY_PATH is respected by the dynamic loader, so that there's usually no need and no advantage to do a fallback handling.
