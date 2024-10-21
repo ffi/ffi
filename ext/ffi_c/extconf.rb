@@ -72,6 +72,8 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     $defs << "-DUSE_FFI_ALLOC"
   end
 
+  have_func('rb_current_thread_scheduler')
+
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
 
   create_header
