@@ -443,6 +443,10 @@ getPointer(VALUE value, int type)
 
         return StringValuePtr(value);
 
+    } else if (type == T_FIXNUM || type == T_BIGNUM) {
+
+        return (void*) (uintptr_t) NUM2ULL(value);
+
     } else if (type == T_NIL) {
 
         return NULL;
