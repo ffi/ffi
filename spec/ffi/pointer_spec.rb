@@ -61,7 +61,7 @@ describe "Pointer" do
     magic = 0x12345678
     memory.put_int32(0, magic)
     adr = memory.address
-    expect(PointerTestLib.ptr_ret_int32_t(adr, 0))
+    expect(PointerTestLib.ptr_ret_int32_t(adr, 0)).to eq(magic)
   end
 
   it "String can be used as a Pointer argument" do
