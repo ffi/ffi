@@ -1,3 +1,12 @@
+1.17.1 / 2024-12-30
+-------------------
+
+Fixed:
+* #1117 Restart async callback dispatcher thread after fork.
+* #1133 Add ruby-3.4 native gem.
+* #1134 Fix FFI::DataConverter non-generic usage in RBS files.
+
+
 1.17.0 / 2024-06-02
 -------------------
 
