@@ -136,7 +136,7 @@ namespace "gem" do
     desc "Build the native gem for #{plat}"
     task plat => ['prepare', 'build'] do
       RakeCompilerDock.sh <<-EOT, platform: plat
-        #{ "sudo apt-get update && sudo apt-get install -y libltdl-dev &&" if plat !~ /linux/ }
+        sudo apt-get update && sudo apt-get install -y libltdl-dev &&
         bundle --local &&
         rake native:#{plat} pkg/#{gem_spec.full_name}-#{plat}.gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=${RUBY_CC_VERSION/:2.4.0/}
       EOT
