@@ -11,7 +11,8 @@ RUN apt-get update -qq && \
   ruby-dev \
   git \
   gcc \
-  make
+  make \
+  libffi-dev
 
 RUN ruby --version
 RUN gem env

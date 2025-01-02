@@ -2,7 +2,7 @@ ARG from_image
 FROM ${from_image}
 
 RUN uname -a
-RUN apk add ruby ruby-etc ruby-rake ruby-dev git gcc make musl-dev gcompat
+RUN apk add ruby ruby-etc ruby-rake ruby-dev git gcc make musl-dev gcompat libffi-dev
 
 RUN ruby --version
 RUN ruby -e 'puts File.read("/proc/#{Process.pid}/maps")'
