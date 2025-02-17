@@ -33,6 +33,7 @@ MyLib.puts 'Hello, World using libc!'
 
 For less minimalistic and more examples you may look at:
 
+* The [documentation](https://www.rubydoc.info/gems/ffi)
 * the `samples/` folder
 * the examples on the [wiki](https://github.com/ffi/ffi/wiki)
 * the projects using FFI listed on the wiki: https://github.com/ffi/ffi/wiki/projects-using-ffi
