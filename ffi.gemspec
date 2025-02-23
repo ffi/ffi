@@ -40,4 +40,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake-compiler', '~> 1.1'
   s.add_development_dependency 'rake-compiler-dock', '~> 1.0'
   s.add_development_dependency 'rspec', '~> 2.14.1'
+
+  s.metadata['msys2_mingw_dependencies'] = 'libffi'
 end
