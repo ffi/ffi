@@ -31,6 +31,9 @@ jobs:
       with:
         ruby-version: 2.7
 
+    - if: matrix.os == 'ubuntu-latest'
+      run: sudo apt update && sudo apt install -y libltdl-dev
+
     - if: matrix.os == 'macos-13'
       run: brew install automake libffi pkg-config
 
@@ -67,6 +70,9 @@ jobs:
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
+
+    - if: matrix.os == 'ubuntu-latest'
+      run: sudo apt update && sudo apt install -y libltdl-dev
 
     - run: brew install automake
       if: matrix.os == 'macos-13'
@@ -140,6 +146,9 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
+
+      - name: Install libltdl-dev
+        run: sudo apt update && sudo apt install -y libltdl-dev
 
       - name: Build ffi.gem
         run: |
@@ -232,6 +241,8 @@ jobs:
         run: |
           gem install --no-doc rubygems-update -v 3.3.27
           update_rubygems
+      - if: matrix.os == 'ubuntu-latest'
+        run: sudo apt update && sudo apt install -y libltdl-dev
       - name: Install gem-${{matrix.platform}}
         run: gem install --local *.gem --verbose
       - name: Run tests
