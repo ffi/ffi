@@ -257,7 +257,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - from_image: centos
+          - from_image: centos:8
             image_platform: linux/x86_64
             gem_platform: x86_64-linux-gnu
             dockerfile: centos
