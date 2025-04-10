@@ -35,7 +35,7 @@ jobs:
       run: sudo apt update && sudo apt install -y libltdl-dev
 
     - if: matrix.os == 'macos-13'
-      run: brew install automake libffi pkg-config
+      run: brew update && brew install automake libffi pkg-config
 
     - if: matrix.os == 'windows-latest' && matrix.extconfopts == '--enable-system-libffi'
       shell: cmd
