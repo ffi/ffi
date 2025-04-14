@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 group :development do
+  gem 'benchmark' # necessary on ruby-3.5+
   gem 'bigdecimal' # necessary on ruby-3.3+
   gem 'bundler', '>= 1.16', '< 3'
   gem 'fiddle', platforms: %i[mri windows] # necessary on ruby-3.5+
