@@ -1,3 +1,11 @@
+1.17.2 / 2025-04-15
+-------------------
+
+Fixed:
+* #1144, #1145 Update libffi to 3.4.8 to fix installation issues on latest Macos on ARM64
+* Various adjustments to run the specs cleanly on Ruby-3.5 master branch.
+
+
 1.17.1 / 2024-12-30
 -------------------
 
