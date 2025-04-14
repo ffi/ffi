@@ -7,7 +7,7 @@ group :development do
   gem 'fiddle', platforms: %i[mri windows] # necessary on ruby-3.5+
   gem 'rake', '~> 13.0'
   gem 'rake-compiler', '~> 1.1'
-  gem 'rake-compiler-dock', '~> 1.7.0'
+  gem 'rake-compiler-dock', '~> 1.9.0'
   gem 'rspec', '~> 3.0'
 end
 
