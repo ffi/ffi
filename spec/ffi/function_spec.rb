@@ -48,12 +48,14 @@ describe FFI::Function do
     expect(LibTest.testFunctionAdd(10, 10, function_add)).to eq(20)
   end
 
-  def adder(a, b)
-    a + b
+  module TestShareable
+    def self.call(a, b)
+      a + b
+    end
   end
 
   it "can be made shareable for Ractor", :ractor do
-    add = FFI::Function.new(:int, [:int, :int], &method(:adder))
+    add = FFI::Function.new(:int, [:int, :int], TestShareable)
     Ractor.make_shareable(add)
 
     res = Ractor.new(add) do |add2|
