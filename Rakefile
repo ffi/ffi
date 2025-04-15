@@ -138,7 +138,7 @@ namespace "gem" do
       RakeCompilerDock.sh <<-EOT, platform: plat
         sudo apt-get update && sudo apt-get install -y libltdl-dev &&
         bundle --local &&
-        rake native:#{plat} pkg/#{gem_spec.full_name}-#{plat}.gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=${RUBY_CC_VERSION/:2.4.0/}
+        rake native:#{plat} pkg/#{gem_spec.full_name}-#{plat}.gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=#{RakeCompilerDock.ruby_cc_version("~>2.5", "~>3.0")}
       EOT
     end
   end
