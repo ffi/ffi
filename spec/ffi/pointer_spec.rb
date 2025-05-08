@@ -94,6 +94,11 @@ describe "Pointer" do
       expect(memory.read_pointer.address).to eq(0xdeadbeef)
     end
 
+    it "#read_pointer returns a pointer with #type_size 1" do
+      memory = FFI::MemoryPointer.new :pointer
+      expect(memory.read_pointer.type_size).to eq(1)
+    end
+
     it "#write_pointer" do
       memory = FFI::MemoryPointer.new :pointer
       memory.write_pointer(PointerTestLib.ptr_from_address(0xdeadbeef))
