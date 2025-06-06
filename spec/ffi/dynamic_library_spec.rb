@@ -12,7 +12,7 @@ describe FFI::DynamicLibrary do
 
     res = Ractor.new(libtest) do |libtest2|
       libtest2.find_symbol("testClosureVrV").address
-    end.take
+    end.value
 
     expect( res ).to be > 0
   end
@@ -22,7 +22,7 @@ describe FFI::DynamicLibrary do
       libtest = FFI::DynamicLibrary.open(TestLibrary::PATH,
           FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_GLOBAL)
       libtest.find_symbol("testClosureVrV")
-    end.take
+    end.value
 
     expect(res.address).to be > 0
   end

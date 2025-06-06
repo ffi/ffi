@@ -72,7 +72,7 @@ describe "async callback" do
       LibTest.testAsyncCallback(cb, 0x7fffffff)
 
       [v, correct_ractor, correct_thread]
-    end.take
+    end.value
 
     expect(res).to eq([0x7fffffff, true, true])
   end

@@ -60,7 +60,7 @@ describe FFI::Function do
 
     res = Ractor.new(add) do |add2|
       LibTest.testFunctionAdd(10, 10, add2)
-    end.take
+    end.value
 
     expect( res ).to eq(20)
   end
@@ -69,7 +69,7 @@ describe FFI::Function do
     res = Ractor.new do
       function_add = FFI::Function.new(:int, [:int, :int]) { |a, b| a + b }
       LibTest.testFunctionAdd(10, 10, function_add)
-    end.take
+    end.value
 
     expect( res ).to eq(20)
   end

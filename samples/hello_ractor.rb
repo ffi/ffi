@@ -1,5 +1,10 @@
 require 'ffi'
 
+class Ractor
+  # compat with Ruby-3.4 and older
+  alias value take unless method_defined? :value
+end
+
 module Foo
   extend FFI::Library
   ffi_lib FFI::Library::LIBC
@@ -8,4 +13,4 @@ module Foo
 end
 Ractor.new do
   Foo.cputs("Hello, World via libc puts using FFI in a Ractor")
-end.take
+end.value

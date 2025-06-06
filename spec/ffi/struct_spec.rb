@@ -485,7 +485,7 @@ module StructSpecsStructTests
         add_proc = lambda { |a, b| a + b }
         s[:add] = add_proc
         CallbackMember.struct_call_add_cb(s, 40, 2)
-      end.take
+      end.value
 
       expect( res ).to eq(42)
     end
@@ -567,7 +567,7 @@ module StructSpecsStructTests
 
       res = Ractor.new(a) do |a2|
         a2[:a]
-      end.take
+      end.value
 
       expect( res ).to eq(-34)
     end
@@ -581,7 +581,7 @@ module StructSpecsStructTests
         s = TestStructRactor.new
         s[:i] = 0x14
         LibTest.ptr_ret_int32_t(s, 0)
-      end.take
+      end.value
 
       expect( res ).to eq(0x14)
     end

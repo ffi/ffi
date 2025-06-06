@@ -1,5 +1,10 @@
 require 'ffi'
 
+class Ractor
+  # compat with Ruby-3.4 and older
+  alias value take unless method_defined? :value
+end
+
 module LibC
   extend FFI::Library
   ffi_lib FFI::Library::LIBC
@@ -23,6 +28,6 @@ res = Ractor.new(p) do |p|
     i1 < i2 ? -1 : i1 > i2 ? 1 : 0
   end
   puts "After qsort #{p.get_array_of_int32(0, 3).join(', ')}"
-end.take
+end.value
 
 puts "After ractor termination #{p.get_array_of_int32(0, 3).join(', ')}"

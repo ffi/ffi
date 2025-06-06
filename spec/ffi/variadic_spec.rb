@@ -119,7 +119,7 @@ describe "Function with variadic arguments" do
     res = Ractor.new do
       pr = proc { 42.0 }
       LibTest.testCallbackVrDva(3.0, :cbVrD, pr)
-    end.take
+    end.value
 
     expect(res).to be_within(0.0000001).of(45.0)
   end
