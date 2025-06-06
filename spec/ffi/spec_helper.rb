@@ -7,6 +7,13 @@ require_relative 'fixtures/compile'
 require 'timeout'
 require 'objspace'
 
+if defined? Ractor
+  class Ractor
+    # compat with Ruby-3.4 and older
+    alias value take unless method_defined? :value
+  end
+end
+
 RSpec.configure do |c|
   c.filter_run_excluding gc_dependent: true unless ENV['FFI_TEST_GC'] == 'true'
 

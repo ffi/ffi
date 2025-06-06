@@ -30,7 +30,7 @@ describe "Library" do
     it "should be queryable in Ractor", :ractor do
       res = Ractor.new do
         TestEnumValueRactor.enum_value(:one)
-      end.take
+      end.value
 
       expect( res ).to eq(0)
     end
@@ -397,7 +397,7 @@ describe "Library" do
         FFI::CURRENT_PROCESS,
         FFI::USE_THIS_PROCESS_AS_LIBRARY,
       ]
-    end.take
+    end.value
 
     expect( res.size ).to be > 0
   end
