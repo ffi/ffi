@@ -1,3 +1,6 @@
+# See the ffi wiki for how to use FFI with Ractors:
+# https://github.com/ffi/ffi/wiki/Ractors
+
 require 'ffi'
 
 class Ractor
