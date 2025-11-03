@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 group :development do
   gem 'benchmark' # necessary on ruby-3.5+
   gem 'bigdecimal' # necessary on ruby-3.3+
-  gem 'bundler', '>= 1.16', '< 3'
+  gem 'bundler', '>= 1.16', '< 5.dev'
   gem 'fiddle', platforms: %i[mri windows] # necessary on ruby-3.5+
   gem 'rake', '~> 13.0'
   gem 'rake-compiler', '~> 1.1'
