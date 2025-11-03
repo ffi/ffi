@@ -237,6 +237,8 @@ async_cb_dispatcher_initialize(struct async_cb_dispatcher *ctx)
 
     /* Name thread, for better debugging */
     rb_funcall(ctx->thread, rb_intern("name="), 1, rb_str_new2("FFI Callback Dispatcher"));
+    /* Advise multi-threaded app servers to ignore this thread for the purposes of fork safety warnings */
+    rb_funcall(ctx->thread, rb_intern("thread_variable_set"), 2, ID2SYM(rb_intern("fork_safe")), Qtrue);
 }
 
 static struct async_cb_dispatcher *
