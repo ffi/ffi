@@ -61,6 +61,8 @@ jobs:
         exclude:
         - os: windows-latest
           ruby: truffleruby-head
+        - os: windows-latest
+          ruby: 2.5
         include:
         - os: windows-latest
           ruby: ruby-mswin
