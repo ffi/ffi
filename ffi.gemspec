@@ -15,6 +15,7 @@ Gem::Specification.new do |s|
     s.metadata['wiki_uri'] = 'https://github.com/ffi/ffi/wiki'
     s.metadata['source_code_uri'] = 'https://github.com/ffi/ffi/'
     s.metadata['mailing_list_uri'] = 'http://groups.google.com/group/ruby-ffi'
+    s.metadata['rubygems_mfa_required'] = 'true'
   end
   s.files = `git ls-files -z`.split("\x0").reject do |f|
     f =~ /^(\.|bench|gen|libtest|nbproject|spec)/
