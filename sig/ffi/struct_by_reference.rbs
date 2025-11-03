@@ -5,7 +5,7 @@ module FFI
 
     def initialize: (S struct_class) -> void
     def from_native: (P value, untyped ctx) -> S
-    def native_type: () -> Type::Builtin
+    def native_type: (?ffi_auto_type? type) -> Type
     def to_native: (S? value, untyped ctx) -> P
   end
 end

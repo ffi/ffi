@@ -4,7 +4,7 @@ module FFI
 
     type ptr = Type::Mapped[
       StructByReference[Struct[AbstractMemory, untyped], AbstractMemory],
-      AbstractMemory, instance, untyped
+      AbstractMemory, Struct[AbstractMemory, untyped], untyped
     ]
     def self.ptr: (?untyped flags) -> ptr # https://github.com/ffi/ffi/issues/1073
     alias self.by_ref self.ptr
@@ -22,7 +22,7 @@ module FFI
 
     def self.auto_ptr: () -> Type::Mapped[
         ManagedStructConverter[ManagedStruct[AutoPointer, untyped], AutoPointer],
-        Pointer, instance, untyped
+        Pointer, ManagedStruct[AutoPointer, untyped], untyped
       ]
     def self.layout: (*layout | Integer) -> StructLayout
               | (Hash[Symbol, layout]) -> StructLayout
