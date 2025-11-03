@@ -16,3 +16,8 @@ $(LIBFFI):
 		sh $(LIBFFI_CONFIGURE) $(LIBFFI_HOST) > /dev/null; \
 	fi
 	$(MAKE) -C "$(LIBFFI_BUILD_DIR)"
+
+install: install-cleanup
+
+install-cleanup: $(DLLIB)
+	rm -rf "$(LIBFFI_BUILD_DIR)"
