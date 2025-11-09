@@ -19,6 +19,7 @@ module TestEnum1
   enum [:c13, 42, :c14, 4242, :c15, 424242, :c16, 42424242]
 
   attach_function :test_untagged_enum, [:int], :int
+  freeze
 end
 
 module TestEnum3

@@ -5,6 +5,7 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
+module AsyncCallbackSpec
 describe "async callback" do
   module LibTest
     extend FFI::Library
@@ -17,6 +18,7 @@ describe "async callback" do
     attach_function :testAsyncCallbackDelayedRegister, [ AsyncIntCallback ], :void
     @blocking = true
     attach_function :testAsyncCallbackDelayedTrigger, [ :int ], :void
+    freeze
   end
 
   it ":int (0x7fffffff) argument" do
@@ -111,4 +113,5 @@ describe "async callback" do
       end
     end
   end
+end
 end

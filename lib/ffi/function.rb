@@ -51,6 +51,27 @@ module FFI
       end
     end
 
+    if RUBY_PLATFORM == 'aarch64-mingw-ucrt'
+      def attach(mod, name)
+        this = self
+        body = proc do |*args, &block|
+          this.call(*args, &block)
+        end
+
+        mod.define_method(name, body)
+        mod.define_singleton_method(name, body)
+
+        funcs = mod.instance_variable_defined?("@ffi_function_procs") && mod.instance_variable_get("@ffi_function_procs")
+        unless funcs
+          funcs = {}
+          mod.instance_variable_set("@ffi_function_procs", funcs)
+        end
+        funcs[name] = self
+
+        self
+      end
+    end
+
     # Stash the Function in a module variable so it can be inspected by attached_functions.
     # On CRuby it also ensures that it does not get garbage collected.
     module RegisterAttach

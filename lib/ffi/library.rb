@@ -287,7 +287,7 @@ module FFI
       if type.is_a?(Class) && type < FFI::Struct
         # If it is a global struct, just attach directly to the pointer
         s = s = type.new(address) # Assigning twice to suppress unused variable warning
-        self.module_eval <<-code, __FILE__, __LINE__
+        self.module_eval(<<-code, __FILE__, __LINE__)
           @ffi_gsvars = {} unless defined?(@ffi_gsvars)
           @ffi_gsvars[#{mname.inspect}] = s
           def self.#{mname}
@@ -302,7 +302,7 @@ module FFI
         #
         # Attach to this module as mname/mname=
         #
-        self.module_eval <<-code, __FILE__, __LINE__
+        self.module_eval(<<-code, __FILE__, __LINE__)
           @ffi_gvars = {} unless defined?(@ffi_gvars)
           @ffi_gvars[#{mname.inspect}] = s
           def self.#{mname}
@@ -566,10 +566,20 @@ module FFI
     # This freezes the module's definitions, so that it can be used in a Ractor.
     # No further methods or variables can be attached and no further enums or typedefs can be created in this module afterwards.
     def freeze
-      instance_variables.each do |name|
-        var = instance_variable_get(name)
-        FFI.make_shareable(var)
+      @ffi_function_procs&.each do |name, func|
+        this = Ractor.make_shareable(func)
+        body = Ractor.shareable_proc(self: nil) do |*args, &block|
+          this.call(*args, &block)
+        end
+        undef_method(name)
+        singleton_class.undef_method(name)
+
+        define_method(name, body)
+        define_singleton_method(name, body)
       end
+
+      FFI.make_shareable(self)
+
       nil
     end
   end
