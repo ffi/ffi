@@ -5,6 +5,7 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
+module VariadicSpec
 describe "Function with variadic arguments" do
   module LibTest
     extend FFI::Library
@@ -176,4 +177,5 @@ describe "Function with variadic arguments" do
       end
     end
   end
+end
 end

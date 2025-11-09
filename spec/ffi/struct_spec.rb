@@ -62,6 +62,7 @@ module StructSpecsStructTests
       [ 's8', 's16', 's32', 's64', 'f32', 'f64', 'long' ].each do |t|
         attach_function "struct_align_#{t}", [ :pointer ], StructTypes[t]
       end
+      freeze
     end
     class PointerMember < FFI::Struct
       layout :pointer, :pointer
@@ -467,6 +468,7 @@ module StructSpecsStructTests
       end
       attach_function :struct_call_add_cb, [TestStruct.in, :int, :int], :int
       attach_function :struct_call_sub_cb, [TestStruct.in, :int, :int], :int
+      freeze
     end
 
     it "Can have CallbackInfo struct field" do
@@ -599,6 +601,7 @@ describe FFI::Struct, ".layout" do
         # NetBSD uses #define instead of typedef for these
         attach_function :ptr_ret_int32_t, :ptr_ret___int32_t, [ :pointer, :int ], :int
       end
+      freeze
     end
   end
 
