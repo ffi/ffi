@@ -287,7 +287,7 @@ module FFI
       if type.is_a?(Class) && type < FFI::Struct
         # If it is a global struct, just attach directly to the pointer
         s = s = type.new(address) # Assigning twice to suppress unused variable warning
-        self.module_eval <<-code, __FILE__, __LINE__
+        self.module_eval(<<-code, __FILE__, __LINE__)
           @ffi_gsvars = {} unless defined?(@ffi_gsvars)
           @ffi_gsvars[#{mname.inspect}] = s
           def self.#{mname}
@@ -302,7 +302,7 @@ module FFI
         #
         # Attach to this module as mname/mname=
         #
-        self.module_eval <<-code, __FILE__, __LINE__
+        self.module_eval(<<-code, __FILE__, __LINE__)
           @ffi_gvars = {} unless defined?(@ffi_gvars)
           @ffi_gvars[#{mname.inspect}] = s
           def self.#{mname}
