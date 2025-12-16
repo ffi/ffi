@@ -109,6 +109,8 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
 
+    - run: sudo apt update && sudo apt install -y libltdl-dev
+
     - run: bundle install
     - run: bundle exec rake libffi
     - name: Play dice if we run the tests or don't
