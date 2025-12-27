@@ -126,7 +126,7 @@ end
 namespace "gem" do
   task 'prepare' do
     require 'rake_compiler_dock'
-    sh "bundle package --all"
+    sh "bundle package"
   end
 
   Bundler::GemHelper.instance.cross_platforms.each do |plat|
@@ -137,8 +137,8 @@ namespace "gem" do
     task plat => ['prepare', 'build'] do
       RakeCompilerDock.sh <<-EOT, platform: plat
         sudo apt-get update && sudo apt-get install -y libltdl-dev &&
-        bundle --local &&
-        rake native:#{plat} pkg/#{gem_spec.full_name}-#{plat}.gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=#{RakeCompilerDock.ruby_cc_version("~>2.5", "~>3.0")}
+        bundle install --local &&
+        rake native:#{plat} pkg/#{gem_spec.full_name}-#{plat}.gem MAKE='nice make -j`nproc`' RUBY_CC_VERSION=#{RakeCompilerDock.ruby_cc_version("~>4.0", "~>3.0")}
       EOT
     end
   end
