@@ -111,6 +111,7 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     ext.cross_platform = Bundler::GemHelper.instance.cross_platforms
     ext.cross_compiling do |spec|
       spec.files.reject! { |path| File.fnmatch?('ext/*', path) }
+      spec.required_ruby_version = '>= 2.5, < 4.1.dev'
     end
     # Enable debug info for 'rake compile' but not for 'gem install'
     ext.config_options << "--enable-debug"
