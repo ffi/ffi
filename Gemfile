@@ -4,7 +4,7 @@ group :development do
   gem 'benchmark' # necessary on ruby-3.5+
   gem 'bigdecimal' # necessary on ruby-3.3+
   gem 'bundler', '>= 1.16', '< 5.dev'
-  gem 'fiddle', platforms: %i[mri windows] # necessary on ruby-3.5+
+  gem 'fiddle' # necessary on ruby-4.0+
   gem 'rake', '~> 13.0'
   gem 'rake-compiler', '~> 1.1'
   gem 'rake-compiler-dock', '~> 1.11.0'
