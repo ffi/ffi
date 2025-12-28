@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
     s.metadata['rubygems_mfa_required'] = 'true'
   end
   s.files = `git ls-files -z`.split("\x0").reject do |f|
-    f =~ /^(\.|bench|gen|libtest|nbproject|spec)/
+    f =~ /^(\.|bench|gen|libtest|nbproject|spec|rakelib)/
   end
 
   # Add libffi git files
