@@ -89,6 +89,12 @@ module FFI
       self
     end
 
+    def dup
+      raise RuntimeError, "cannot duplicate FFI::AutoPointer"
+    end
+
+    alias clone dup
+
     # @return [nil]
     # Free the pointer.
     def free
