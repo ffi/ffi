@@ -601,6 +601,12 @@ describe FFI::Struct, ".layout" do
         # NetBSD uses #define instead of typedef for these
         attach_function :ptr_ret_int32_t, :ptr_ret___int32_t, [ :pointer, :int ], :int
       end
+
+      typedef :uint, :custom_int
+      class TestStructCustomInt < FFI::Struct
+        layout :number, :custom_int
+      end
+
       freeze
     end
   end
@@ -628,15 +634,7 @@ describe FFI::Struct, ".layout" do
     end
 
     it "resolves a type from the enclosing module" do
-      module FFISpecs::LibTest
-        typedef :uint, :custom_int
-
-        class TestStruct < FFI::Struct
-          layout :number, :custom_int
-        end
-      end
-
-      instance = FFISpecs::LibTest::TestStruct.new
+      instance = FFISpecs::LibTest::TestStructCustomInt.new
       instance[:number] = 0xA1
       expect(FFISpecs::LibTest.ptr_ret_int32_t(instance, 0)).to eq(0xA1)
     end

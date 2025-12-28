@@ -585,7 +585,7 @@ module FFI
         var = instance_variable_get(name)
         FFI.make_shareable(var)
       end
-      FFI.make_shareable(self)
+      super
       nil
     end
   end
