@@ -17,8 +17,8 @@ end
 RSpec.configure do |c|
   c.filter_run_excluding gc_dependent: true unless ENV['FFI_TEST_GC'] == 'true'
 
-  # Ractor is only usable on ruby-3.1+, but it hangs on Windows on ruby-3.3 and 3.4
-  c.filter_run_excluding( :ractor ) unless defined?(Ractor) && RUBY_VERSION >= "3.1" && (RUBY_VERSION !~ /^3.[34]./ || RUBY_PLATFORM !~ /mingw|mswin/)
+  # Ractor is only usable on ruby-3.1+, but it hangs on Windows on ruby-3.3+
+  c.filter_run_excluding( :ractor ) unless defined?(Ractor) && RUBY_VERSION >= "3.1" && (RUBY_VERSION !~ /^3.[34].|^4.[0]./ || RUBY_PLATFORM !~ /mingw|mswin/)
 end
 
 module TestLibrary
@@ -31,11 +31,6 @@ module TestLibrary
       GC.start
     end
   end
-end
-
-module LibTest
-  extend FFI::Library
-  ffi_lib TestLibrary::PATH
 end
 
 def external_run(cmd, rb_file, options: [], timeout: 60)

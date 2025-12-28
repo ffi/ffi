@@ -5,7 +5,10 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
+module UnionSpec
 module LibTest
+  extend FFI::Library
+  ffi_lib TestLibrary::PATH
   Types = {
     's8' => [:char, :c, 1],
     's16' => [:short, :s, 0xff0],
@@ -64,4 +67,5 @@ describe 'Union' do
   it 'should return a size equals to the size of the biggest field' do
     expect(LibTest::TestUnion.size).to eq(LibTest.union_size)
   end
+end
 end

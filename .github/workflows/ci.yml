@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-15-intel, windows-latest ]
+        os: [ ubuntu-latest, macos-15-intel, windows-latest, windows-11-arm ]
         extconfopts: [ --disable-system-libffi, --enable-system-libffi ]
         extconfopts2: [ --disable-libffi-alloc, --enable-libffi-alloc ]
     runs-on: ${{ matrix.os }}
@@ -29,7 +29,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.7
+        ruby-version: 3.4
 
     - if: matrix.os == 'ubuntu-latest'
       run: sudo apt update && sudo apt install -y libltdl-dev
@@ -66,10 +66,15 @@ jobs:
         include:
         - os: windows-latest
           ruby: ruby-mswin
+        - os: windows-11-arm
+          ruby: 3.4
+        - os: windows-11-arm
+          ruby: ruby-head
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - uses: ruby/setup-ruby@v1
+    # - uses: ruby/setup-ruby@v1 # workaround missing ruby-4.0 on Windows
+    - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
       with:
         ruby-version: ${{ matrix.ruby }}
 
@@ -83,11 +88,11 @@ jobs:
     - run: bundle exec rake libffi
     - run: bundle exec rake compile
 
-    - if: matrix.os == 'windows-latest'
+    - if: matrix.os == 'windows-latest' || matrix.os != 'windows-11-arm'
       # force the use of GNU make.exe on MSWIN platform for building libtest.dll
       run: bundle exec rake test MAKE=make
 
-    - if: matrix.os != 'windows-latest'
+    - if: matrix.os != 'windows-latest' && matrix.os != 'windows-11-arm'
       run: bundle exec rake test FFI_TEST_GC=true
 
     - run: bundle exec rake bench:all MAKE=make
@@ -140,6 +145,7 @@ jobs:
           - arm-linux-musl
           - aarch64-linux-gnu
           - aarch64-linux-musl
+          - aarch64-mingw-ucrt
 
     runs-on: ubuntu-latest
     env:
@@ -208,6 +214,12 @@ jobs:
           - os: windows-latest
             ruby: "4.0"
             platform: x64-mingw-ucrt
+          - os: windows-11-arm
+            ruby: "3.4"
+            platform: aarch64-mingw-ucrt
+          - os: windows-11-arm
+            ruby: "4.0"
+            platform: aarch64-mingw-ucrt
         exclude:
           - os: windows-latest
             ruby: "3.1"
@@ -223,7 +235,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
+      # - uses: ruby/setup-ruby@v1 # workaround missing ruby-4.0 on Windows
+      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
         with:
           ruby-version: ${{ matrix.ruby }}
       - run: ruby --version

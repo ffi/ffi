@@ -287,7 +287,7 @@ module FFI
       if type.is_a?(Class) && type < FFI::Struct
         # If it is a global struct, just attach directly to the pointer
         s = s = type.new(address) # Assigning twice to suppress unused variable warning
-        self.module_eval <<-code, __FILE__, __LINE__
+        self.module_eval(<<-code, __FILE__, __LINE__)
           @ffi_gsvars = {} unless defined?(@ffi_gsvars)
           @ffi_gsvars[#{mname.inspect}] = s
           def self.#{mname}
@@ -302,7 +302,7 @@ module FFI
         #
         # Attach to this module as mname/mname=
         #
-        self.module_eval <<-code, __FILE__, __LINE__
+        self.module_eval(<<-code, __FILE__, __LINE__)
           @ffi_gvars = {} unless defined?(@ffi_gvars)
           @ffi_gvars[#{mname.inspect}] = s
           def self.#{mname}
@@ -564,12 +564,28 @@ module FFI
     # Freeze all definitions of the module
     #
     # This freezes the module's definitions, so that it can be used in a Ractor.
-    # No further methods or variables can be attached and no further enums or typedefs can be created in this module afterwards.
+    # No further functions or variables can be attached and no further enums or typedefs can be created in this module afterwards.
     def freeze
+      # @ffi_function_procs is only used on aarch64-mingw-ucrt
+      instance_variable_get("@ffi_function_procs")&.each do |name, func|
+        # Redefine attached functions as Ractor-shareable.
+        # The function Proc can't be shareable from the beginning, since it references enums and typedefs.
+        this = FFI.make_shareable(func)
+        body = FFI.shareable_proc(self: nil) do |*args, &block|
+          this.call(*args, &block)
+        end
+        undef_method(name)
+        singleton_class.undef_method(name)
+
+        define_method(name, body)
+        define_singleton_method(name, body)
+      end
+
       instance_variables.each do |name|
         var = instance_variable_get(name)
         FFI.make_shareable(var)
       end
+      super
       nil
     end
   end

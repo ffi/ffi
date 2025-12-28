@@ -336,11 +336,13 @@ rbffi_MethodHandle_Init(VALUE module)
         rb_raise(rb_eFatal, "Could not locate offsets in trampoline code");
     }
 #else
+
+    /* static VALUE function_call(int argc, VALUE* argv, VALUE self) */
     methodHandleParamTypes[0] = &ffi_type_sint;
     methodHandleParamTypes[1] = &ffi_type_pointer;
-    methodHandleParamTypes[2] = &ffi_type_ulong;
+    methodHandleParamTypes[2] = &ffi_type_pointer;
 
-    ffiStatus = ffi_prep_cif(&mh_cif, FFI_DEFAULT_ABI, 3, &ffi_type_ulong,
+    ffiStatus = ffi_prep_cif(&mh_cif, FFI_DEFAULT_ABI, 3, &ffi_type_pointer,
             methodHandleParamTypes);
     if (ffiStatus != FFI_OK) {
         rb_raise(rb_eFatal, "ffi_prep_cif failed.  status=%#x", ffiStatus);

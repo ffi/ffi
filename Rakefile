@@ -97,6 +97,7 @@ Bundler::GemHelper.instance.cross_platforms = %w[
   arm-linux-musl
   aarch64-linux-gnu
   aarch64-linux-musl
+  aarch64-mingw-ucrt
   x86_64-darwin
   arm64-darwin
 ]

@@ -5,11 +5,13 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
 
+module FunctionSpec
 describe FFI::Function do
   module LibTest
     extend FFI::Library
     ffi_lib TestLibrary::PATH
     attach_function :testFunctionAdd, [:int, :int, :pointer], :int
+    freeze
   end
   before do
     @libtest = FFI::DynamicLibrary.open(TestLibrary::PATH,
@@ -149,4 +151,5 @@ describe FFI::Function do
     size = ObjectSpace.memsize_of(function)
     expect(size).to be > base_size
   end
+end
 end

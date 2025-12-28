@@ -236,7 +236,7 @@ dl_error(char* buf, int size)
                    NULL, error, 0, (LPSTR)&message, 0, NULL);
 
     // Update the passed in buffer
-    snprintf(buf, size, "Failed with error %d: %s", error, message);
+    snprintf(buf, size, "Failed with error %lu: %s", error, message);
 
     // Free the allocated message
     LocalFree(message);
