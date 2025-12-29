@@ -36,14 +36,14 @@ module FFI
 
     BIG_ENDIAN: Integer
 
-    def self?.bsd?: () -> bool
-    def self?.windows?: () -> bool
-    def self?.mac?: () -> bool
-    def self?.solaris?: () -> bool
-    def self?.unix?: () -> bool
+    def self.bsd?: () -> bool
+    def self.windows?: () -> bool
+    def self.mac?: () -> bool
+    def self.solaris?: () -> bool
+    def self.unix?: () -> bool
 
     private
 
-    def self?.is_os(String os) -> bool
+    def self.is_os: (String os) -> bool
   end
 end
