@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+gemspec
+
 group :development do
   gem 'benchmark' # necessary on ruby-3.5+
   gem 'bigdecimal' # necessary on ruby-3.3+
