@@ -437,6 +437,30 @@ describe "AutoPointer" do
     end
   end
 
+  module AutoPointerSpec
+    class CPtr < FFI::AutoPointer
+      def self.release(ptr)
+        C.free(ptr)
+      end
+    end
+
+    module C
+      extend FFI::Library
+      ffi_lib FFI::Library::LIBC
+
+      attach_function :malloc, [:size_t], CPtr
+      attach_function :free, [CPtr], :void
+    end
+  end
+
+  describe "#dup" do
+    it "denies duplication" do
+      aptr = AutoPointerSpec::C.malloc(4)
+      expect{ aptr.dup }.to raise_error(RuntimeError, /cannot duplicate/)
+      expect{ aptr.clone }.to raise_error(RuntimeError, /cannot duplicate/)
+    end
+  end
+
   it "has a memsize function", skip: RUBY_ENGINE != "ruby" do
     base_size = ObjectSpace.memsize_of(Object.new)
 
