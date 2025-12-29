@@ -343,7 +343,15 @@ call_blocking_function(void* data)
 VALUE
 rbffi_do_blocking_call(VALUE data)
 {
-    rb_thread_call_without_gvl(call_blocking_function, (void*)data, (rb_unblock_function_t *) -1, NULL);
+#if defined(HAVE_RB_CURRENT_THREAD_SCHEDULER)
+    VALUE scheduler = rb_current_thread_scheduler();
+    if (scheduler != Qnil) {
+        rbffi_blocking_region(call_blocking_function, (void*)data, (rb_unblock_function_t *) -1, NULL);
+    } else
+#endif
+    {
+        rb_thread_call_without_gvl(call_blocking_function, (void*)data, (rb_unblock_function_t *) -1, NULL);
+    }
 
     return Qnil;
 }
