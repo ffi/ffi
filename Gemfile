@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+gemspec
+
 group :development do
   gem 'benchmark' # necessary on ruby-3.5+
   gem 'bigdecimal' # necessary on ruby-3.3+
@@ -17,7 +19,8 @@ group :doc do
 end
 
 group :type_check do
-  if RUBY_VERSION >= "2.6" && %w[ ruby truffleruby ].include?(RUBY_ENGINE)
+  if RUBY_VERSION >= "3.0" && %w[ ruby truffleruby ].include?(RUBY_ENGINE)
     gem 'rbs', '~> 3.0'
+    gem 'steep', '~> 1.6'
   end
 end
