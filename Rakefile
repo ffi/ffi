@@ -112,6 +112,8 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
     ext.cross_platform = Bundler::GemHelper.instance.cross_platforms
     ext.cross_compiling do |spec|
       spec.files.reject! { |path| File.fnmatch?('ext/*', path) }
+      # Binary gems don't need libffi header+lib files
+      spec.metadata.delete("msys2_mingw_dependencies")
     end
     # Enable debug info for 'rake compile' but not for 'gem install'
     ext.config_options << "--enable-debug"
