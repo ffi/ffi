@@ -1,3 +1,28 @@
+1.17.3 / 2025-12-29
+-------------------
+
+Fixed:
+* Opt-in for MFA requirement explicitly. #1159
+* Fix type signature for FFI::AutoPointer#initialize, FFI::StructByReference#native_type and FFI::Struct#auto_ptr . #1158
+* Fix function signature of function_call in FFI trampoline. #1154
+  It failed on `aarch64-mingw-ucrt`.
+* Add workaround for segmentation faults on `aarch64-mingw-ucrt`. #1154
+* Call super in `Library#freeze` . #1154
+* Deny duplication of AutoPointer per #dup and #clone . #1173
+  They led to double free before.
+
+Added:
+* Add binary gems for Ruby-4.0, now providing binary gems for Ruby-3.0 to 4.0.
+* Add msys2_mingw_dependencies for Windows Mingw for automatic installation of libffi. #1143
+* Mark callback dispatcher thread as fork safe for Puma. #1156
+* Add missing FFI::Platform module and LastError signatures. #1169
+
+Removed:
+* Drop fat binary gems for Ruby-2.7
+* Remove `FFI::TypesGenerator` from distributed gems. #1164
+* Remove libffi build dir after install, safing some install space. #1157
+
+
 1.17.2 / 2025-04-15
 -------------------
 
