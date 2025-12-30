@@ -18,7 +18,7 @@ Added:
 * Add missing FFI::Platform module and LastError signatures. #1169
 
 Removed:
-* Drop fat binary gems for Ruby-2.7
+* Drop fat binary gems for Ruby < 3.0
 * Remove `FFI::TypesGenerator` from distributed gems. #1164
 * Remove libffi build dir after install, safing some install space. #1157
 
