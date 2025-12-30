@@ -89,8 +89,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    # - uses: ruby/setup-ruby@v1 # workaround missing ruby-4.0 on Windows
-    - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
+    - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
 
@@ -251,8 +250,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      # - uses: ruby/setup-ruby@v1 # workaround missing ruby-4.0 on Windows
-      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
       - run: ruby --version
