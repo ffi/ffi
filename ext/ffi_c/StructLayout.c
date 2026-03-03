@@ -554,23 +554,81 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
  * @return [StructLayout::Field]
  * Get a field from the layout.
  */
+/*
+ * Recursively check if an ffi_type is composed entirely of floating-point types.
+ * Returns true for float, double, longdouble, and structs/arrays whose elements
+ * are all floating-point.
+ */
+static bool
+is_float_type(const ffi_type *type)
+{
+    int i;
+    if (type->type == FFI_TYPE_FLOAT || type->type == FFI_TYPE_DOUBLE || type->type == FFI_TYPE_LONGDOUBLE) {
+        return true;
+    }
+    if (type->type == FFI_TYPE_STRUCT && type->elements != NULL) {
+        for (i = 0; type->elements[i] != NULL; i++) {
+            if (!is_float_type(type->elements[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 static VALUE
 struct_layout_union_bang(VALUE self)
 {
     const ffi_type *alignment_types[] = { &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64,
                                           &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
+    const ffi_type *float_types[] = { &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
     StructLayout* layout;
     ffi_type *t = NULL;
     int count, i;
+    bool all_float;
 
     TypedData_Get_Struct(self, StructLayout, &rbffi_struct_layout_data_type, layout);
 
-    for (i = 0; alignment_types[i] != NULL; ++i) {
-        if (alignment_types[i]->alignment == layout->align) {
-            t = (ffi_type *) alignment_types[i];
-            break;
+    /*
+     * On ARM64, the calling convention for passing/returning structs by value
+     * depends on whether the type is a "Homogeneous Floating-point Aggregate"
+     * (HFA). HFAs are passed in floating-point registers (d0-d3), while
+     * non-HFAs use integer registers or memory.
+     *
+     * Since __union! replaces the real field types with a repeated filler type,
+     * we must choose a filler type in the same register class (integer vs float)
+     * as the actual fields. Otherwise libffi will use the wrong ABI, causing
+     * garbage values on ARM64.
+     *
+     * Check if all union fields are floating-point to determine which type
+     * family to use for the filler.
+     */
+    all_float = (layout->fieldCount > 0);
+    for (i = 0; i < (int) layout->fieldCount && all_float; ++i) {
+        if (layout->ffiTypes[i] == NULL || !is_float_type(layout->ffiTypes[i])) {
+            all_float = false;
         }
     }
+
+    if (all_float) {
+        for (i = 0; float_types[i] != NULL; ++i) {
+            if (float_types[i]->alignment == layout->align) {
+                t = (ffi_type *) float_types[i];
+                break;
+            }
+        }
+    }
+
+    if (t == NULL) {
+        for (i = 0; alignment_types[i] != NULL; ++i) {
+            if (alignment_types[i]->alignment == layout->align) {
+                t = (ffi_type *) alignment_types[i];
+                break;
+            }
+        }
+    }
+
     if (t == NULL) {
         rb_raise(rb_eRuntimeError, "cannot create libffi union representation for alignment %d", layout->align);
         return Qnil;

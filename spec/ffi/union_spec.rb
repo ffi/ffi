@@ -73,4 +73,58 @@ describe 'Union' do
     expect(LibTest::TestUnion.size).to eq(LibTest.union_size)
   end
 end
+
+describe 'Union by_value' do
+  module ByValueLibTest
+    extend FFI::Library
+    ffi_lib TestLibrary::PATH
+
+    class PjXyzt < FFI::Struct
+      layout :x, :double, :y, :double, :z, :double, :t, :double
+    end
+
+    class UnionDouble < FFI::Union
+      layout :v, [:double, 4],
+             :coord, PjXyzt
+    end
+
+    attach_function :union_double_coord, [:double, :double, :double, :double], UnionDouble.by_value
+    attach_function :union_double_get_x, [UnionDouble.by_value], :double
+    attach_function :union_double_get_y, [UnionDouble.by_value], :double
+    attach_function :union_double_get_z, [UnionDouble.by_value], :double
+    attach_function :union_double_get_t, [UnionDouble.by_value], :double
+    attach_function :union_double_add, [UnionDouble.by_value, UnionDouble.by_value], UnionDouble.by_value
+  end
+
+  it 'should return a union of doubles by value' do
+    u = ByValueLibTest.union_double_coord(1.5, 2.5, 3.5, 4.5)
+    expect(u[:coord][:x]).to eq(1.5)
+    expect(u[:coord][:y]).to eq(2.5)
+    expect(u[:coord][:z]).to eq(3.5)
+    expect(u[:coord][:t]).to eq(4.5)
+  end
+
+  it 'should pass a union of doubles by value' do
+    u = ByValueLibTest.union_double_coord(10.0, 20.0, 30.0, 40.0)
+    expect(ByValueLibTest.union_double_get_x(u)).to eq(10.0)
+    expect(ByValueLibTest.union_double_get_y(u)).to eq(20.0)
+    expect(ByValueLibTest.union_double_get_z(u)).to eq(30.0)
+    expect(ByValueLibTest.union_double_get_t(u)).to eq(40.0)
+  end
+
+  it 'should pass and return a union of doubles by value' do
+    a = ByValueLibTest.union_double_coord(1.0, 2.0, 3.0, 4.0)
+    b = ByValueLibTest.union_double_coord(0.5, 0.5, 0.5, 0.5)
+    r = ByValueLibTest.union_double_add(a, b)
+    expect(r[:coord][:x]).to eq(1.5)
+    expect(r[:coord][:y]).to eq(2.5)
+    expect(r[:coord][:z]).to eq(3.5)
+    expect(r[:coord][:t]).to eq(4.5)
+  end
+
+  it 'should access union doubles via array field' do
+    u = ByValueLibTest.union_double_coord(1.5, 2.5, 3.5, 4.5)
+    expect(u[:v].to_a).to eq([1.5, 2.5, 3.5, 4.5])
+  end
+end if RUBY_ENGINE != "truffleruby"
 end
