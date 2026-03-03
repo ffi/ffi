@@ -9,6 +9,7 @@ module UnionSpec
 module LibTest
   extend FFI::Library
   ffi_lib TestLibrary::PATH
+
   Types = {
     's8' => [:char, :c, 1],
     's16' => [:short, :s, 0xff0],
@@ -18,6 +19,7 @@ module LibTest
     'f32' => [:float, :f, 1.0001],
     'f64' => [:double, :d, 1.000000001]
   }
+
   class TestUnion < FFI::Union
     layout( :a, [:char, 10],
             :i, :int,
@@ -28,6 +30,7 @@ module LibTest
             :j, :long_long,
             :c, :char )
   end
+
   Types.keys.each do |k|
     attach_function "union_align_#{k}", [ :pointer ], Types[k][0]
     attach_function "union_make_union_with_#{k}", [ Types[k][0] ], :pointer
@@ -43,23 +46,25 @@ describe 'Union' do
   it 'should place all the fields at offset 0' do
     expect(LibTest::TestUnion.members.all? { |m| LibTest::TestUnion.offset_of(m) == 0 }).to be true
   end
-  LibTest::Types.each do |k, type|
-    it "should correctly align/write a #{type[0]} value" do
-      @u[type[1]] = type[2]
+
+  LibTest::Types.each do |k, (type, name, val)|
+    it "should correctly align/write a #{type} value" do
+      @u[name] = val
       if k == 'f32' or k == 'f64'
-        expect((@u[type[1]] - LibTest.send("union_align_#{k}", @u.to_ptr)).abs).to be < 0.00001
+        expect((@u[name] - LibTest.send("union_align_#{k}", @u.to_ptr)).abs).to be < 0.00001
       else
-        expect(@u[type[1]]).to eq(LibTest.send("union_align_#{k}", @u.to_ptr))
+        expect(@u[name]).to eq(LibTest.send("union_align_#{k}", @u.to_ptr))
       end
     end
   end
-  LibTest::Types.each do |k, type|
-    it "should read a #{type[0]} value from memory" do
-      @u = LibTest::TestUnion.new(LibTest.send("union_make_union_with_#{k}", type[2]))
+
+  LibTest::Types.each do |k, (type, name, val)|
+    it "should read a #{type} value from memory" do
+      @u = LibTest::TestUnion.new(LibTest.send("union_make_union_with_#{k}", val))
       if k == 'f32' or k == 'f64'
-        expect((@u[type[1]] - type[2]).abs).to be < 0.00001
+        expect((@u[name] - val).abs).to be < 0.00001
       else
-        expect(@u[type[1]]).to eq(type[2])
+        expect(@u[name]).to eq(val)
       end
     end
   end
