@@ -41,3 +41,40 @@ T(d, f64);
 T(l, long);
 
 unsigned int union_size() { return sizeof(union_test_t); }
+
+
+/*
+ * Union by-value tests.
+ *
+ * On ARM64, unions composed entirely of doubles are Homogeneous Floating-point
+ * Aggregates (HFA) and must be passed/returned in floating-point registers.
+ * If libffi describes the union with integer filler types instead of double,
+ * values end up in the wrong registers and come back as garbage.
+ */
+typedef union {
+  double v[4];
+  struct { double x, y, z, t; } coord;
+} union_double_t;
+
+union_double_t union_double_coord(double x, double y, double z, double t) {
+  union_double_t u;
+  u.coord.x = x;
+  u.coord.y = y;
+  u.coord.z = z;
+  u.coord.t = t;
+  return u;
+}
+
+double union_double_get_x(union_double_t u) { return u.coord.x; }
+double union_double_get_y(union_double_t u) { return u.coord.y; }
+double union_double_get_z(union_double_t u) { return u.coord.z; }
+double union_double_get_t(union_double_t u) { return u.coord.t; }
+
+union_double_t union_double_add(union_double_t a, union_double_t b) {
+  union_double_t r;
+  r.coord.x = a.coord.x + b.coord.x;
+  r.coord.y = a.coord.y + b.coord.y;
+  r.coord.z = a.coord.z + b.coord.z;
+  r.coord.t = a.coord.t + b.coord.t;
+  return r;
+}
