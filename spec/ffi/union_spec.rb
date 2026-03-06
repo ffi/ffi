@@ -11,16 +11,22 @@ module LibTest
   ffi_lib TestLibrary::PATH
 
   Types = {
-    's8' => [:char, :c, 1],
-    's16' => [:short, :s, 0xff0],
-    's32' => [:int, :i, 0xff00],
-    's64' => [:long_long, :j, 0xffff00],
-    'long' => [:long, :l, 0xffff],
-    'f32' => [:float, :f, 1.0001],
-    'f64' => [:double, :d, 1.000000001]
+    [:union_test_t, 's8'] => [:char, :c, 1],
+    [:union_test_t, 's16'] => [:short, :s, 0xff0],
+    [:union_test_t, 's32'] => [:int, :i, 0xff00],
+    [:union_test_t, 's64'] => [:long_long, :j, 0xffff00],
+    [:union_test_t, 'long'] => [:long, :l, 0xffff],
+    [:union_test_t, 'f32'] => [:float, :f, 1.0001],
+    [:union_test_t, 'f64'] => [:double, :d, 1.000000001],
+    [:union_small_test_t, 's8'] => [:char, :c, 74],
+    [:union_small_test_t, 's16'] => [:short, :s, 0x2439],
+    [:union_mixed_test_t, 's8'] => [:char, :c, 74],
+    [:union_mixed_test_t, 'f32'] => [:float, :f, 4.555],
+    [:union_float_test_t, 'f32'] => [:float, :f, 3.444],
+    [:union_float_test_t, 'f64'] => [:double, :d, 2.0000000000001],
   }
 
-  class TestUnion < FFI::Union
+  class Test_union_test_t < FFI::Union
     layout( :a, [:char, 10],
             :i, :int,
             :f, :float,
@@ -30,37 +36,75 @@ module LibTest
             :j, :long_long,
             :c, :char )
   end
+  class Test_union_small_test_t < FFI::Union
+    layout( :c, :char,
+            :s, :short)
+  end
+  class Test_union_mixed_test_t < FFI::Union
+    layout( :f, :float,
+            :c, :char)
+  end
+  class Test_union_float_test_t < FFI::Union
+    layout( :f, :float,
+            :d, :double)
+  end
 
-  Types.keys.each do |k|
-    attach_function "union_align_#{k}", [ :pointer ], Types[k][0]
-    attach_function "union_make_union_with_#{k}", [ Types[k][0] ], :pointer
+  Types.keys.each do |(uni, k)|
+    attach_function "#{uni}_ptr_align_#{k}", [ :pointer ], Types[[uni, k]][0]
+    attach_function "#{uni}_ptr_make_union_with_#{k}", [ Types[[uni, k]][0] ], :pointer
+    attach_function "#{uni}_val_align_#{k}", [ LibTest.const_get("Test_#{uni}").by_value ], Types[[uni, k]][0]
+    attach_function "#{uni}_val_make_union_with_#{k}", [ Types[[uni, k]][0] ], LibTest.const_get("Test_#{uni}").by_value
   end
   attach_function :union_size, [], :uint
+  attach_function :union_small_size, [], :uint
+  attach_function :union_mixed_size, [], :uint
+  attach_function :union_float_size, [], :uint
 end
 
 describe 'Union' do
-  before do
-    @u = LibTest::TestUnion.new
-  end
-
   it 'should place all the fields at offset 0' do
-    expect(LibTest::TestUnion.members.all? { |m| LibTest::TestUnion.offset_of(m) == 0 }).to be true
+    expect(LibTest::Test_union_test_t.members.all? { |m| LibTest::Test_union_test_t.offset_of(m) == 0 }).to be true
   end
 
-  LibTest::Types.each do |k, (type, name, val)|
-    it "should correctly align/write a #{type} value" do
+  LibTest::Types.each do |(uni, k), (type, name, val)|
+    it "should correctly align/write a #{type} value to #{uni} by pointer" do
+      @u = LibTest.const_get("Test_#{uni}").new
       @u[name] = val
       if k == 'f32' or k == 'f64'
-        expect((@u[name] - LibTest.send("union_align_#{k}", @u.to_ptr)).abs).to be < 0.00001
+        expect((@u[name] - LibTest.send("#{uni}_ptr_align_#{k}", @u.to_ptr)).abs).to be < 0.00001
       else
-        expect(@u[name]).to eq(LibTest.send("union_align_#{k}", @u.to_ptr))
+        expect(@u[name]).to eq(LibTest.send("#{uni}_ptr_align_#{k}", @u.to_ptr))
       end
     end
   end
 
-  LibTest::Types.each do |k, (type, name, val)|
-    it "should read a #{type} value from memory" do
-      @u = LibTest::TestUnion.new(LibTest.send("union_make_union_with_#{k}", val))
+  LibTest::Types.each do |(uni, k), (type, name, val)|
+    it "should correctly align/write a #{type} value to #{uni} by value" do
+      @u = LibTest.const_get("Test_#{uni}").new
+      @u[name] = val
+      if k == 'f32' or k == 'f64'
+        expect((@u[name] - LibTest.send("#{uni}_val_align_#{k}", @u)).abs).to be < 0.00001
+      else
+        expect(@u[name]).to eq(LibTest.send("#{uni}_val_align_#{k}", @u))
+      end
+    end
+  end
+
+  LibTest::Types.each do |(uni, k), (type, name, val)|
+    it "should read a #{type} value from memory of #{uni} by pointer" do
+      kl = LibTest.const_get("Test_#{uni}")
+      @u = kl.new(LibTest.send("#{uni}_ptr_make_union_with_#{k}", val))
+      if k == 'f32' or k == 'f64'
+        expect((@u[name] - val).abs).to be < 0.00001
+      else
+        expect(@u[name]).to eq(val)
+      end
+    end
+  end
+
+  LibTest::Types.each do |(uni, k), (type, name, val)|
+    it "should read a #{type} value from memory of #{uni} by value" do
+      @u = LibTest.send("#{uni}_val_make_union_with_#{k}", val)
       if k == 'f32' or k == 'f64'
         expect((@u[name] - val).abs).to be < 0.00001
       else
@@ -70,7 +114,19 @@ describe 'Union' do
   end
 
   it 'should return a size equals to the size of the biggest field' do
-    expect(LibTest::TestUnion.size).to eq(LibTest.union_size)
+    expect(LibTest::Test_union_test_t.size).to eq(LibTest.union_size)
+  end
+
+  it 'should return a size equals to the size of the biggest field of a small union' do
+    expect(LibTest::Test_union_small_test_t.size).to eq(LibTest.union_small_size)
+  end
+
+  it 'should return a size equals to the size of the biggest field of a mixed union' do
+    expect(LibTest::Test_union_mixed_test_t.size).to eq(LibTest.union_mixed_size)
+  end
+
+  it 'should return a size equals to the size of the biggest field of a float union' do
+    expect(LibTest::Test_union_float_test_t.size).to eq(LibTest.union_float_size)
   end
 end
 
