@@ -583,6 +583,7 @@ struct_layout_union_bang(VALUE self)
     const ffi_type *alignment_types[] = { &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64,
                                           &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
     const ffi_type *float_types[] = { &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
+    const ffi_type **types = float_types;
     StructLayout* layout;
     ffi_type *t = NULL;
     int count, i;
@@ -604,28 +605,17 @@ struct_layout_union_bang(VALUE self)
      * Check if all union fields are floating-point to determine which type
      * family to use for the filler.
      */
-    all_float = (layout->fieldCount > 0);
-    for (i = 0; i < (int) layout->fieldCount && all_float; ++i) {
+    for (i = 0; i < (int) layout->fieldCount; ++i) {
         if (layout->ffiTypes[i] == NULL || !is_float_type(layout->ffiTypes[i])) {
-            all_float = false;
+            types = alignment_types;
+            break;
         }
     }
 
-    if (all_float) {
-        for (i = 0; float_types[i] != NULL; ++i) {
-            if (float_types[i]->alignment == layout->align) {
-                t = (ffi_type *) float_types[i];
-                break;
-            }
-        }
-    }
-
-    if (t == NULL) {
-        for (i = 0; alignment_types[i] != NULL; ++i) {
-            if (alignment_types[i]->alignment == layout->align) {
-                t = (ffi_type *) alignment_types[i];
-                break;
-            }
+    for (i = 0; types[i] != NULL; ++i) {
+        if (types[i]->alignment == layout->align) {
+            t = (ffi_type *) types[i];
+            break;
         }
     }
 
