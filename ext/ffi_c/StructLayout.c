@@ -548,75 +548,123 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     return self;
 }
 
-/*
- * call-seq: [](field)
- * @param [Symbol] field
- * @return [StructLayout::Field]
- * Get a field from the layout.
- */
-/*
- * Recursively check if an ffi_type is composed entirely of floating-point types.
- * Returns true for float, double, longdouble, and structs/arrays whose elements
- * are all floating-point.
- */
+static const ffi_type * const int_types[] = {
+    &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64, NULL
+};
+
+static const ffi_type * const float_types[] = {
+    &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL
+};
+
+static const ffi_type *
+find_type_by_alignment(const ffi_type * const *types, unsigned short alignment)
+{
+    int i;
+    for (i = 0; types[i] != NULL; i++) {
+        if (types[i]->alignment == alignment) return types[i];
+    }
+    return NULL;
+}
+
 static bool
 is_float_type(const ffi_type *type)
 {
     int i;
-    if (type->type == FFI_TYPE_FLOAT || type->type == FFI_TYPE_DOUBLE || type->type == FFI_TYPE_LONGDOUBLE) {
-        return true;
-    }
-    if (type->type == FFI_TYPE_STRUCT && type->elements != NULL) {
-        for (i = 0; type->elements[i] != NULL; i++) {
-            if (!is_float_type(type->elements[i])) {
-                return false;
-            }
-        }
-        return true;
+    for (i = 0; float_types[i] != NULL; i++) {
+        if (type->type == float_types[i]->type) return true;
     }
     return false;
+}
+
+/*
+ * Recursively inspect the leaf elements of an ffi_type.
+ *
+ * Returns the leaf type if all leaves are the same primitive type, or NULL
+ * if mixed. Sets float_only to false when any non-float leaf is encountered.
+ *
+ * Examples (float_only initially true):
+ *   {double, double}  -> &ffi_type_double, float_only = true
+ *   {float, double}   -> NULL,             float_only = true
+ *   {float, int}      -> NULL,             float_only = false
+ */
+static const ffi_type *
+find_homogeneous_leaf_type(const ffi_type *type, bool *float_only)
+{
+    const ffi_type *result = NULL;
+    int i;
+
+    if (type->type != FFI_TYPE_STRUCT || type->elements == NULL) {
+        if (!is_float_type(type)) {
+            *float_only = false;
+        }
+        return type;
+    }
+
+    for (i = 0; type->elements[i] != NULL; i++) {
+        const ffi_type *elem = find_homogeneous_leaf_type(type->elements[i], float_only);
+
+        if (result == NULL) {
+            result = elem;
+        } else if (elem == NULL || result != elem) {
+            result = NULL;
+        }
+    }
+
+    return result;
 }
 
 static VALUE
 struct_layout_union_bang(VALUE self)
 {
-    const ffi_type *alignment_types[] = { &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64,
-                                          &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
-    const ffi_type *float_types[] = { &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL };
-    const ffi_type **types = float_types;
     StructLayout* layout;
     ffi_type *t = NULL;
     int count, i;
-    bool all_float;
+    bool float_only = true;
+    const ffi_type *homogeneous = NULL;
 
     TypedData_Get_Struct(self, StructLayout, &rbffi_struct_layout_data_type, layout);
 
     /*
-     * On ARM64, the calling convention for passing/returning structs by value
-     * depends on whether the type is a "Homogeneous Floating-point Aggregate"
-     * (HFA). HFAs are passed in floating-point registers (d0-d3), while
-     * non-HFAs use integer registers or memory.
+     * __union! replaces the real field types with a repeated filler type.
+     * The filler must be chosen so that libffi uses the same calling convention
+     * as the C compiler would for the real union.
      *
-     * Since __union! replaces the real field types with a repeated filler type,
-     * we must choose a filler type in the same register class (integer vs float)
-     * as the actual fields. Otherwise libffi will use the wrong ABI, causing
-     * garbage values on ARM64.
+     * The rules vary by architecture:
      *
-     * Check if all union fields are floating-point to determine which type
-     * family to use for the filler.
+     * ARM64: A "Homogeneous Floating-point Aggregate" (HFA) is
+     * passed in floating-point registers (d0-d3). An HFA requires all members
+     * to be the *same* float type. {double, double} is an HFA; {float, double}
+     * is NOT. Non-HFAs use integer registers.
+     *
+     * x86_64 targets using the System V ABI (Linux/macOS/BSD, not Windows):
+     * an eightbyte containing only float/double fields is classified as SSE
+     * and passed in XMM registers, regardless of whether the float types are
+     * mixed. {float, double} is SSE; {int, double} is INTEGER.
+     *
+     * Strategy:
+     * 1. If all fields are the same float type, use that type directly.
+     *    Correct on all platforms.
+     * 2. If fields are mixed float types (e.g. {float, double}):
+     *    - On ARM64: not an HFA, use integer filler.
+     *    - On x86_64 System V targets: still SSE class, use float filler.
+     * 3. Otherwise: use integer filler.
      */
-    for (i = 0; i < (int) layout->fieldCount; ++i) {
-        if (layout->ffiTypes[i] == NULL || !is_float_type(layout->ffiTypes[i])) {
-            types = alignment_types;
-            break;
-        }
-    }
+    homogeneous = find_homogeneous_leaf_type(layout->base.ffiType, &float_only);
 
-    for (i = 0; types[i] != NULL; ++i) {
-        if (types[i]->alignment == layout->align) {
-            t = (ffi_type *) types[i];
-            break;
-        }
+    if (homogeneous != NULL && float_only) {
+        /* Case 1: all fields are the same float type. */
+        t = (ffi_type *) homogeneous;
+    }
+#if defined(__x86_64__) && !defined(_WIN32)
+    else if (float_only) {
+        /* Case 2: mixed float types use float filler on SysV x86_64. */
+        t = (ffi_type *) find_type_by_alignment(float_types, layout->align);
+    }
+#endif
+
+    if (t == NULL) {
+        /* Case 3: integer or mixed int/float — use integer filler */
+        t = (ffi_type *) find_type_by_alignment(int_types, layout->align);
     }
 
     if (t == NULL) {
@@ -636,6 +684,12 @@ struct_layout_union_bang(VALUE self)
     return self;
 }
 
+/*
+ * call-seq: [](field)
+ * @param [Symbol] field
+ * @return [StructLayout::Field]
+ * Get a field from the layout.
+ */
 static VALUE
 struct_layout_aref(VALUE self, VALUE field)
 {
@@ -814,4 +868,3 @@ rbffi_StructLayout_Init(VALUE moduleFFI)
     rb_define_method(rbffi_StructLayoutClass, "__union!", struct_layout_union_bang, 0);
 
 }
-
