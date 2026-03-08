@@ -548,13 +548,28 @@ struct_layout_initialize(VALUE self, VALUE fields, VALUE size, VALUE align)
     return self;
 }
 
-static const ffi_type * const int_types[] = {
-    &ffi_type_sint8, &ffi_type_sint16, &ffi_type_sint32, &ffi_type_sint64, NULL
-};
+static const ffi_type * const *
+get_int_types(void)
+{
+    static const ffi_type *types[5];
+    types[0] = &ffi_type_sint8;
+    types[1] = &ffi_type_sint16;
+    types[2] = &ffi_type_sint32;
+    types[3] = &ffi_type_sint64;
+    types[4] = NULL;
+    return types;
+}
 
-static const ffi_type * const float_types[] = {
-    &ffi_type_float, &ffi_type_double, &ffi_type_longdouble, NULL
-};
+static const ffi_type * const *
+get_float_types(void)
+{
+    static const ffi_type *types[4];
+    types[0] = &ffi_type_float;
+    types[1] = &ffi_type_double;
+    types[2] = &ffi_type_longdouble;
+    types[3] = NULL;
+    return types;
+}
 
 static const ffi_type *
 find_type_by_alignment(const ffi_type * const *types, unsigned short alignment)
@@ -570,8 +585,9 @@ static bool
 is_float_type(const ffi_type *type)
 {
     int i;
-    for (i = 0; float_types[i] != NULL; i++) {
-        if (type->type == float_types[i]->type) return true;
+    const ffi_type * const *ftypes = get_float_types();
+    for (i = 0; ftypes[i] != NULL; i++) {
+        if (type->type == ftypes[i]->type) return true;
     }
     return false;
 }
@@ -658,13 +674,13 @@ struct_layout_union_bang(VALUE self)
 #if defined(__x86_64__) && !defined(_WIN32)
     else if (float_only) {
         /* Case 2: mixed float types use float filler on SysV x86_64. */
-        t = (ffi_type *) find_type_by_alignment(float_types, layout->align);
+        t = (ffi_type *) find_type_by_alignment(get_float_types(), layout->align);
     }
 #endif
 
     if (t == NULL) {
         /* Case 3: integer or mixed int/float — use integer filler */
-        t = (ffi_type *) find_type_by_alignment(int_types, layout->align);
+        t = (ffi_type *) find_type_by_alignment(get_int_types(), layout->align);
     }
 
     if (t == NULL) {
