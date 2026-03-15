@@ -16,8 +16,11 @@ RUN apt-get update -qq && \
 
 RUN ruby --version
 RUN gem env
-RUN gem install rubygems-update --no-doc && \
-  update_rubygems
+# Update Rubygems on Ruby < 3.2.0 due to install error of binary gem
+RUN if (echo a 3.2.0; ruby --version) | sort -k2 | head -1 | grep -q ruby ; then \
+      gem install rubygems-update --no-doc && \
+      update_rubygems; \
+    fi
 RUN gem inst bundler
 
 WORKDIR /build
