@@ -1,3 +1,12 @@
+1.17.4 / 2026-03-26
+-------------------
+
+Fixed:
+* Fix union by-value ABI mismatch with float and double types on ARM64 and X86_64.
+  See #1177 and #1178 for details.
+* Exclude libffi files, which are unnecessary. #1176
+
+
 1.17.3 / 2025-12-29
 -------------------
 
