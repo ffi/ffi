@@ -34,6 +34,14 @@ describe "Pointer#dup" do
     # first char will be excised
     expect(p2.get_string(0)).to eq("est123")
   end
+
+  it "cloned pointer can be freed" do
+    p1 = FFI::MemoryPointer.new(:char, 1024)
+    p1.put_string(0, "test123")
+    p2 = p1[1].dup
+
+    expect { p2.free }.not_to raise_error
+  end
 end
 
 

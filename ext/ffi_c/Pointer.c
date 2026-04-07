@@ -181,11 +181,13 @@ ptr_initialize_copy(VALUE self, VALUE other)
     }
 
     if (dst->storage != NULL) {
-        xfree(dst->storage);
+        /* Keep pair with malloc() used for pointer-owned storage. */
+        free(dst->storage);
         dst->storage = NULL;
     }
 
-    dst->storage = xmalloc(src->size + 7);
+    /* Pointer-owned storage is libc-backed for allocator symmetry. */
+    dst->storage = malloc(src->size + 7);
     if (dst->storage == NULL) {
         rb_raise(rb_eNoMemError, "failed to allocate memory size=%lu bytes", src->size);
         return Qnil;
@@ -406,7 +408,8 @@ ptr_free(VALUE self)
 
     if (ptr->allocated) {
         if (ptr->storage != NULL) {
-            xfree(ptr->storage);
+            /* Keep pair with malloc() used for pointer-owned storage. */
+            free(ptr->storage);
             ptr->storage = NULL;
         }
         ptr->allocated = false;
@@ -469,7 +472,8 @@ ptr_release(void *data)
 {
     Pointer *ptr = (Pointer *)data;
     if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
-        xfree(ptr->storage);
+        /* Keep pair with malloc() used for pointer-owned storage. */
+        free(ptr->storage);
         ptr->storage = NULL;
     }
     xfree(ptr);

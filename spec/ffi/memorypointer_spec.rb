@@ -76,6 +76,36 @@ describe "MemoryPointer argument" do
     expect(p2.get_int(0)).not_to eql 0
   end
 end
+
+describe "MemoryPointer allocated memory ownership" do
+  module ForeignFree
+    extend FFI::Library
+    ffi_lib FFI::Platform::LIBC
+
+    attach_function :free, [:pointer], :void
+  end
+
+  it "can be released by libc free when created with from_string" do
+    ptr = MemoryPointer.from_string("ffi")
+    ptr.autorelease = false
+
+    expect { ForeignFree.free(ptr) }.not_to raise_error
+  end
+
+  it "can be freed via MemoryPointer#free" do
+    ptr = MemoryPointer.new(8)
+    expect { ptr.free }.not_to raise_error
+  end
+
+  it "can be duplicated and both instances can be freed" do
+    original = MemoryPointer.new(8)
+    copy = original.dup
+
+    expect { copy.free }.not_to raise_error
+    expect { original.free }.not_to raise_error
+  end
+end
+
 describe "MemoryPointer return value" do
   module Stdio
     extend FFI::Library
