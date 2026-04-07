@@ -468,29 +468,21 @@ rbffi_llvm_jit_value_to_pointer(VALUE value)
     return getPointer(value, TYPE(value));
 }
 
-VALUE
-rbffi_llvm_jit_pointer_to_value(void* ptr)
-{
-    return rbffi_Pointer_NewInstance(ptr);
-}
-
 static VALUE
-ffi_init_llvm_jit_pointer_handlers(VALUE self)
+ffi_init_llvm_jit_to_native_handlers(VALUE self)
 {
     static ID id_add_symbol = 0;
-    VALUE llvm_c, name;
+    VALUE llvm_c, fn_ptr;
 
     if (!id_add_symbol) id_add_symbol = rb_intern("add_symbol");
 
     llvm_c = rb_const_get(rb_const_get(rb_cObject, rb_intern("LLVM")), rb_intern("C"));
+    fn_ptr = rbffi_Pointer_NewInstance((void *)(uintptr_t)(void *)rbffi_llvm_jit_value_to_pointer);
 
-    name = rb_str_new_cstr("ffi_llvm_jit_value_to_pointer");
-    rb_funcall(llvm_c, id_add_symbol, 2, name,
-               rbffi_Pointer_NewInstance((void *)(uintptr_t)(void *)rbffi_llvm_jit_value_to_pointer));
-
-    name = rb_str_new_cstr("ffi_llvm_jit_pointer_to_value");
-    rb_funcall(llvm_c, id_add_symbol, 2, name,
-               rbffi_Pointer_NewInstance((void *)(uintptr_t)(void *)rbffi_llvm_jit_pointer_to_value));
+    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_pointer"),      fn_ptr);
+    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_in"),    fn_ptr);
+    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_out"),   fn_ptr);
+    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_inout"), fn_ptr);
 
     return Qnil;
 }
@@ -533,7 +525,7 @@ rbffi_Call_Init(VALUE moduleFFI)
     id_to_ptr = rb_intern("to_ptr");
     id_to_native = rb_intern("to_native");
     id_map_symbol = rb_intern("__map_symbol");
-    rb_define_private_method(rb_singleton_class(moduleFFI), "init_llvm_jit_pointer_handlers",
-                             ffi_init_llvm_jit_pointer_handlers, 0);
+    rb_define_private_method(rb_singleton_class(moduleFFI), "init_llvm_jit_to_native_handlers",
+                             ffi_init_llvm_jit_to_native_handlers, 0);
 }
 
