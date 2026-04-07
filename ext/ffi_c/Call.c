@@ -484,6 +484,10 @@ ffi_init_llvm_jit_to_native_handlers(VALUE self)
     rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_out"),   fn_ptr);
     rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_inout"), fn_ptr);
 
+    // It's exported now, but let's register all deps here anyway
+    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_save_errno"),
+               rbffi_Pointer_NewInstance((void *)rbffi_save_errno));
+
     return Qnil;
 }
 
