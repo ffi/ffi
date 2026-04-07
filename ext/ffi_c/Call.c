@@ -471,13 +471,13 @@ rbffi_llvm_jit_value_to_pointer(VALUE value)
 static VALUE
 ffi_init_llvm_jit_to_native_handlers(VALUE self)
 {
-    static ID id_add_symbol = 0;
+    ID id_add_symbol;
     VALUE llvm_c, fn_ptr;
 
-    if (!id_add_symbol) id_add_symbol = rb_intern("add_symbol");
+    id_add_symbol = rb_intern("add_symbol");
 
     llvm_c = rb_const_get(rb_const_get(rb_cObject, rb_intern("LLVM")), rb_intern("C"));
-    fn_ptr = rbffi_Pointer_NewInstance((void *)(uintptr_t)(void *)rbffi_llvm_jit_value_to_pointer);
+    fn_ptr = rbffi_Pointer_NewInstance((void *)rbffi_llvm_jit_value_to_pointer);
 
     rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_pointer"),      fn_ptr);
     rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_in"),    fn_ptr);
