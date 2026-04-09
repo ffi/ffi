@@ -462,31 +462,27 @@ getPointer(VALUE value, int type)
     return NULL;
 }
 
-void*
-rbffi_llvm_jit_value_to_pointer(VALUE value)
+static void*
+rbffi_value_to_pointer(VALUE value)
 {
     return getPointer(value, TYPE(value));
 }
 
 static VALUE
-ffi_init_llvm_jit_to_native_handlers(VALUE self)
+rbffi_value_to_native_converters(VALUE self)
 {
-    ID id_add_symbol;
-    VALUE llvm_c, fn_ptr;
+    VALUE fn_ptr;
 
-    id_add_symbol = rb_intern("add_symbol");
+    fn_ptr = rbffi_Pointer_NewInstance((void *)rbffi_value_to_pointer);
 
-    llvm_c = rb_const_get(rb_const_get(rb_cObject, rb_intern("LLVM")), rb_intern("C"));
-    fn_ptr = rbffi_Pointer_NewInstance((void *)rbffi_llvm_jit_value_to_pointer);
-
-    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_pointer"),      fn_ptr);
-    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_in"),    fn_ptr);
-    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_out"),   fn_ptr);
-    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_value_to_buffer_inout"), fn_ptr);
+    rb_yield_values(2, rb_str_new_cstr("value_to_pointer"),      fn_ptr);
+    rb_yield_values(2, rb_str_new_cstr("value_to_buffer_in"),    fn_ptr);
+    rb_yield_values(2, rb_str_new_cstr("value_to_buffer_out"),   fn_ptr);
+    rb_yield_values(2, rb_str_new_cstr("value_to_buffer_inout"), fn_ptr);
 
     // It's exported now, but let's register all deps here anyway
-    rb_funcall(llvm_c, id_add_symbol, 2, rb_str_new_cstr("ffi_llvm_jit_save_errno"),
-               rbffi_Pointer_NewInstance((void *)rbffi_save_errno));
+    rb_yield_values(2, rb_str_new_cstr("save_errno"),
+                    rbffi_Pointer_NewInstance((void *)rbffi_save_errno));
 
     return Qnil;
 }
@@ -529,7 +525,7 @@ rbffi_Call_Init(VALUE moduleFFI)
     id_to_ptr = rb_intern("to_ptr");
     id_to_native = rb_intern("to_native");
     id_map_symbol = rb_intern("__map_symbol");
-    rb_define_private_method(rb_singleton_class(moduleFFI), "init_llvm_jit_to_native_handlers",
-                             ffi_init_llvm_jit_to_native_handlers, 0);
+    rb_define_private_method(rb_singleton_class(moduleFFI), "value_to_native_converters",
+                             rbffi_value_to_native_converters, 0);
 }
 
