@@ -112,7 +112,7 @@ buffer_release(void *data)
 }
 
 /*
- * call-seq: initialize(size, count=1, clear=false)
+ * call-seq: initialize(size, count=1, clear=true)
  * @param [Integer, Symbol, #size] Type or size in bytes of a buffer cell
  * @param [Integer] count number of cell in the Buffer
  * @param [Boolean] clear if true, set the buffer to all-zero
