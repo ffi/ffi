@@ -295,3 +295,11 @@ describe "Buffer#memsize_of" do
     expect(size).to be > base_size
   end
 end
+
+describe "Buffer#new_in" do
+  it "fails without arguments but doesn't segfault in GC" do
+    expect do
+      FFI::Buffer.new_in
+    end.to raise_error(ArgumentError)
+  end
+end
