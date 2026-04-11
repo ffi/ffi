@@ -1,6 +1,6 @@
 module FFI
   class Buffer < AbstractMemory
-    def initialize: (AbstractMemory::type_size, ?Integer count, boolish clear) -> self
+    def initialize: (AbstractMemory::type_size, ?Integer count, ?boolish clear) -> self
     alias self.alloc_inout self.new
     alias self.new_inout self.alloc_inout
     alias self.alloc_in self.alloc_inout
