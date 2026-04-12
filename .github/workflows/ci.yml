@@ -86,6 +86,9 @@ jobs:
           # CRuby < 2.6 does not support macos-arm64, so test those on amd64 instead
         - os: macos-latest
           ruby: "2.5"
+          # Truffleruby-34+ doesn't support Macos on AMD64 any longer
+        - os: macos-15-intel
+          ruby: truffleruby-head
         include:
         - os: windows-latest
           ruby: ruby-mswin
