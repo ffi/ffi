@@ -392,6 +392,7 @@ module FFI
         end
       # Convert :foo to the native type
       arg_types = arg_types.map { |e| find_type(e) }
+      ret_type = find_type(ret_type)
       options = {
         convention: ffi_convention,
         type_map: defined?(@ffi_typedefs) ? @ffi_typedefs : nil,
@@ -421,9 +422,9 @@ module FFI
 
     def attach_function_handle(function_handle, mname, arg_types, ret_type, options)
       invoker = if arg_types[-1] == FFI::NativeType::VARARGS
-          VariadicInvoker.new(function_handle, arg_types, find_type(ret_type), options)
+          VariadicInvoker.new(function_handle, arg_types, ret_type, options)
         else
-          Function.new(find_type(ret_type), arg_types, function_handle, options)
+          Function.new(ret_type, arg_types, function_handle, options)
         end
       invoker.attach(self, mname.to_s)
       invoker
