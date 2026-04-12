@@ -41,28 +41,27 @@ typedef struct Buffer {
     AbstractMemory memory;
 
     union {
-        VALUE rbParent; /* link to parent buffer */
-        char* storage; /* start of malloc area */
-        long embed[BUFFER_EMBED_MAXLEN / sizeof(long)]; /* storage for tiny allocations */
+        VALUE rbParent; /* link to parent buffer object if sliced_buffer_data_type */
+        char* storage; /* start of malloc area if MEM_EMBED isn't set */
+        long embed[BUFFER_EMBED_MAXLEN / sizeof(long)]; /* storage for tiny allocations if MEM_EMBED is set */
     } data;
 } Buffer;
 
 static VALUE buffer_allocate(VALUE klass);
 static VALUE buffer_initialize(int argc, VALUE* argv, VALUE self);
-static void buffer_release(void *data);
-static void buffer_mark(void *data);
-static void buffer_compact(void *data);
-static VALUE buffer_free(VALUE self);
+static void allocated_buffer_release(void *data);
+static void sliced_buffer_mark(void *data);
+static void sliced_buffer_compact(void *data);
+static VALUE allocated_buffer_free(VALUE self);
 static size_t allocated_buffer_memsize(const void *data);
-static size_t buffer_memsize(const void *data);
+static size_t sliced_buffer_memsize(const void *data);
 
-static const rb_data_type_t buffer_data_type = {
-    .wrap_struct_name = "FFI::Buffer",
+static const rb_data_type_t allocated_buffer_data_type = {
+    .wrap_struct_name = "FFI::Buffer(allocated)",
     .function = {
-        .dmark = buffer_mark,
-        .dfree = RUBY_TYPED_DEFAULT_FREE,
-        .dsize = buffer_memsize,
-        ffi_compact_callback( buffer_compact )
+        .dmark = NULL,
+        .dfree = allocated_buffer_release,
+        .dsize = allocated_buffer_memsize,
     },
     .parent = &rbffi_abstract_memory_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
@@ -70,14 +69,15 @@ static const rb_data_type_t buffer_data_type = {
     .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
 };
 
-static const rb_data_type_t allocated_buffer_data_type = {
-    .wrap_struct_name = "FFI::Buffer(allocated)",
+static const rb_data_type_t sliced_buffer_data_type = {
+    .wrap_struct_name = "FFI::Buffer(sliced)",
     .function = {
-        .dmark = NULL,
-        .dfree = buffer_release,
-        .dsize = allocated_buffer_memsize,
+        .dmark = sliced_buffer_mark,
+        .dfree = RUBY_TYPED_DEFAULT_FREE,
+        .dsize = sliced_buffer_memsize,
+        ffi_compact_callback( sliced_buffer_compact )
     },
-    .parent = &buffer_data_type,
+    .parent = &allocated_buffer_data_type,
     // IMPORTANT: WB_PROTECTED objects must only use the RB_OBJ_WRITE()
     // macro to update VALUE references, as to trigger write barriers.
     .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED | FFI_RUBY_TYPED_FROZEN_SHAREABLE
@@ -93,14 +93,13 @@ buffer_allocate(VALUE klass)
     VALUE obj;
 
     obj = TypedData_Make_Struct(klass, Buffer, &allocated_buffer_data_type, buffer);
-    RB_OBJ_WRITE(obj, &buffer->data.rbParent, Qnil);
     buffer->memory.flags = MEM_RD | MEM_WR;
 
     return obj;
 }
 
 static void
-buffer_release(void *data)
+allocated_buffer_release(void *data)
 {
     Buffer *ptr = (Buffer *)data;
     if ((ptr->memory.flags & MEM_EMBED) == 0 && ptr->data.storage != NULL) {
@@ -127,7 +126,7 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     Buffer* p;
     int nargs;
 
-    TypedData_Get_Struct(self, Buffer, &buffer_data_type, p);
+    TypedData_Get_Struct(self, Buffer, &allocated_buffer_data_type, p);
 
     nargs = rb_scan_args(argc, argv, "12", &rbSize, &rbCount, &rbClear);
     p->memory.typeSize = rbffi_type_size(rbSize);
@@ -153,7 +152,7 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     }
 
     if (rb_block_given_p()) {
-        return rb_ensure(rb_yield, self, buffer_free, self);
+        return rb_ensure(rb_yield, self, allocated_buffer_free, self);
     }
 
     return self;
@@ -170,8 +169,8 @@ buffer_initialize_copy(VALUE self, VALUE other)
     AbstractMemory* src;
     Buffer* dst;
 
-    TypedData_Get_Struct(self, Buffer, &buffer_data_type, dst);
-    src = rbffi_AbstractMemory_Cast(other, &buffer_data_type);
+    TypedData_Get_Struct(self, Buffer, &allocated_buffer_data_type, dst);
+    src = rbffi_AbstractMemory_Cast(other, &allocated_buffer_data_type);
     if ((dst->memory.flags & MEM_EMBED) == 0 && dst->data.storage != NULL) {
         xfree(dst->data.storage);
     }
@@ -204,10 +203,10 @@ slice(VALUE self, long offset, long len)
     Buffer* result;
     VALUE obj = Qnil;
 
-    TypedData_Get_Struct(self, Buffer, &buffer_data_type, ptr);
+    TypedData_Get_Struct(self, Buffer, &allocated_buffer_data_type, ptr);
     checkBounds(&ptr->memory, offset, len);
 
-    obj = TypedData_Make_Struct(BufferClass, Buffer, &buffer_data_type, result);
+    obj = TypedData_Make_Struct(BufferClass, Buffer, &sliced_buffer_data_type, result);
     result->memory.address = ptr->memory.address + offset;
     result->memory.size = len;
     result->memory.flags = ptr->memory.flags;
@@ -229,7 +228,7 @@ buffer_plus(VALUE self, VALUE rbOffset)
     Buffer* ptr;
     long offset = NUM2LONG(rbOffset);
 
-    TypedData_Get_Struct(self, Buffer, &buffer_data_type, ptr);
+    TypedData_Get_Struct(self, Buffer, &allocated_buffer_data_type, ptr);
 
     return slice(self, offset, ptr->memory.size - offset);
 }
@@ -258,7 +257,7 @@ buffer_inspect(VALUE self)
     char tmp[100];
     Buffer* ptr;
 
-    TypedData_Get_Struct(self, Buffer, &buffer_data_type, ptr);
+    TypedData_Get_Struct(self, Buffer, &allocated_buffer_data_type, ptr);
 
     snprintf(tmp, sizeof(tmp), "#<FFI:Buffer:%p address=%p size=%ld>", ptr, ptr->memory.address, ptr->memory.size);
 
@@ -287,7 +286,7 @@ buffer_order(int argc, VALUE* argv, VALUE self)
 {
     Buffer* ptr;
 
-    TypedData_Get_Struct(self, Buffer, &buffer_data_type, ptr);
+    TypedData_Get_Struct(self, Buffer, &allocated_buffer_data_type, ptr);
     if (argc == 0) {
         int order = (ptr->memory.flags & MEM_SWAP) == 0 ? BYTE_ORDER : SWAPPED_ORDER;
         return order == BIG_ENDIAN ? ID2SYM(rb_intern("big")) : ID2SYM(rb_intern("little"));
@@ -311,7 +310,7 @@ buffer_order(int argc, VALUE* argv, VALUE self)
             Buffer* p2;
             VALUE retval = slice(self, 0, ptr->memory.size);
 
-            TypedData_Get_Struct(retval, Buffer, &buffer_data_type, p2);
+            TypedData_Get_Struct(retval, Buffer, &allocated_buffer_data_type, p2);
             p2->memory.flags |= MEM_SWAP;
             return retval;
         }
@@ -322,11 +321,11 @@ buffer_order(int argc, VALUE* argv, VALUE self)
 
 /* Only used to free the buffer if the yield in the initializer throws an exception */
 static VALUE
-buffer_free(VALUE self)
+allocated_buffer_free(VALUE self)
 {
     Buffer* ptr;
 
-    TypedData_Get_Struct(self, Buffer, &buffer_data_type, ptr);
+    TypedData_Get_Struct(self, Buffer, &allocated_buffer_data_type, ptr);
     if ((ptr->memory.flags & MEM_EMBED) == 0 && ptr->data.storage != NULL) {
         xfree(ptr->data.storage);
         ptr->data.storage = NULL;
@@ -336,21 +335,21 @@ buffer_free(VALUE self)
 }
 
 static void
-buffer_mark(void *data)
+sliced_buffer_mark(void *data)
 {
     Buffer *ptr = (Buffer *)data;
     rb_gc_mark_movable(ptr->data.rbParent);
 }
 
 static void
-buffer_compact(void *data)
+sliced_buffer_compact(void *data)
 {
     Buffer *ptr = (Buffer *)data;
     ffi_gc_location(ptr->data.rbParent);
 }
 
 static size_t
-buffer_memsize(const void *data)
+sliced_buffer_memsize(const void *data)
 {
     return sizeof(Buffer);
 }
