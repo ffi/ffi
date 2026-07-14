@@ -84,6 +84,39 @@ or from the git repository on github:
 * `--enable-libffi-alloc` : Force closure allocation by libffi
 * `--disable-libffi-alloc` : Force closure allocation by builtin method
 
+## Compare ffi to fiddle
+
+There's an alternative gem to call native functions called Fiddle: https://github.com/ruby/fiddle
+Both gems use [libffi](https://github.com/libffi/libffi) under the hood.
+
+These are the major differences between FFI and Fiddle:
+
+* Fiddle is delivered as a bundled gem as part of the ruby standard library.
+* Fiddle is more lightweight than FFI.
+  It has some support for structs but not no other user defined types and type conversions.
+* Fiddle has some features, which are specific to CRuby (MRI).
+  It can read and write CRuby's VALUE type and handle IO types.
+* Fiddle is more low-level than FFI.
+  For instances often handles pointers as raw integer values.
+* Fiddle can not handle asynchronous callbacks from non-ruby threads.
+  This can be a blocker for some use cases.
+* Fiddle has direct support for [MemoryView](https://docs.ruby-lang.org/en/master/contributing/memory_view_md.html).
+
+... and on the other hand:
+
+* FFI must be installed as a gem, it is not bundled with CRuby (but with JRuby and Truffleruby).
+* FFI is more heavyweight than Fiddle.
+  It has user defined types and more type checking and type conversion capabilities.
+* FFI avoids extensions specific to the underlying ruby implementation.
+  It can't handle CRuby's VALUE or IO types.
+* FFI is more high-level than Fiddle.
+  It tries to avoid invalid memory accesses where possible.
+* FFI can handle asynchronous callbacks from non-ruby threads.
+  It spawns a ruby thread to process the callback in ruby.
+
+Both FFI and Fiddle be be used at the same time within one ruby application.
+They can even be mixed for function calls and callbacks like in the interoperability section in `spec/ffi/callback_spec.rb`.
+
 ## License
 
 The ffi library is covered by the BSD license, also see the LICENSE file.
