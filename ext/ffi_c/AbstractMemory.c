@@ -794,7 +794,7 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
      * * read_array_of_uint<i>size</i>(length)
      * where _size_ is 8, 16, 32 or 64. Same methods exist for long type.
      *
-     * Aliases exist : _char_ for _int8_, _short_ for _int16_, _int_ for _int32_ and <i>long_long</i> for _int64_.
+     * Aliases exist : _char_ for _int8_, _short_ for _int16_, _int_ for _int32_, <i>long_long</i> for _int64_, <i>size_t<i> for _uint32_ or _uint64_ depending on the architecture and <i>ssize_t<i> for _int32_ or _int64_ depending on the architecture .
      *
      * Others methods are listed below.
      */
@@ -836,28 +836,32 @@ rbffi_AbstractMemory_Init(VALUE moduleFFI)
     INT(int64);
     INT(long);
 
+#define ALIAS_PREFIX(prefix, name, old) \
+    rb_define_alias(classMemory, "put" #prefix #name, "put" #prefix #old); \
+    rb_define_alias(classMemory, "get" #prefix #name, "get" #prefix #old); \
+    rb_define_alias(classMemory, "write" #prefix #name, "write" #prefix #old); \
+    rb_define_alias(classMemory, "read" #prefix #name, "read" #prefix #old); \
+    rb_define_alias(classMemory, "put_array_of" #prefix #name, "put_array_of" #prefix #old); \
+    rb_define_alias(classMemory, "get_array_of" #prefix #name, "get_array_of" #prefix #old); \
+    rb_define_alias(classMemory, "write_array_of" #prefix #name, "write_array_of" #prefix #old); \
+    rb_define_alias(classMemory, "read_array_of" #prefix #name, "read_array_of" #prefix #old);
+
 #define ALIAS(name, old) \
-    rb_define_alias(classMemory, "put_" #name, "put_" #old); \
-    rb_define_alias(classMemory, "get_" #name, "get_" #old); \
-    rb_define_alias(classMemory, "put_u" #name, "put_u" #old); \
-    rb_define_alias(classMemory, "get_u" #name, "get_u" #old); \
-    rb_define_alias(classMemory, "write_" #name, "write_" #old); \
-    rb_define_alias(classMemory, "read_" #name, "read_" #old); \
-    rb_define_alias(classMemory, "write_u" #name, "write_u" #old); \
-    rb_define_alias(classMemory, "read_u" #name, "read_u" #old); \
-    rb_define_alias(classMemory, "put_array_of_" #name, "put_array_of_" #old); \
-    rb_define_alias(classMemory, "get_array_of_" #name, "get_array_of_" #old); \
-    rb_define_alias(classMemory, "put_array_of_u" #name, "put_array_of_u" #old); \
-    rb_define_alias(classMemory, "get_array_of_u" #name, "get_array_of_u" #old); \
-    rb_define_alias(classMemory, "write_array_of_" #name, "write_array_of_" #old); \
-    rb_define_alias(classMemory, "read_array_of_" #name, "read_array_of_" #old); \
-    rb_define_alias(classMemory, "write_array_of_u" #name, "write_array_of_u" #old); \
-    rb_define_alias(classMemory, "read_array_of_u" #name, "read_array_of_u" #old);
+    ALIAS_PREFIX(_, name, old) \
+    ALIAS_PREFIX(_u, name, old)
 
     ALIAS(char, int8);
     ALIAS(short, int16);
     ALIAS(int, int32);
     ALIAS(long_long, int64);
+
+    if (8 == sizeof(size_t)) {
+        ALIAS_PREFIX(_, size_t, uint64);
+        ALIAS_PREFIX(_, ssize_t, int64);
+    } else if (4 == sizeof(size_t)) {
+        ALIAS_PREFIX(_, size_t, uint32);
+        ALIAS_PREFIX(_, ssize_t, int32);
+    }
 
     /*
      * Document-method: put_float32
