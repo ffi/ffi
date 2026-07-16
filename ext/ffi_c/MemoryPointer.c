@@ -112,7 +112,11 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
 
     msize = size * count;
 
-    p->storage = xmalloc(msize + 7);
+    /*
+     * MemoryPointer buffers may be handed off to native code that
+     * may later release them with libc free().
+     */
+    p->storage = malloc(msize + 7);
     if (p->storage == NULL) {
         rb_raise(rb_eNoMemError, "Failed to allocate memory size=%ld bytes", msize);
         return Qnil;
@@ -141,7 +145,8 @@ memptr_free(VALUE self)
 
     if (ptr->allocated) {
         if (ptr->storage != NULL) {
-            xfree(ptr->storage);
+            /* See memptr_malloc: storage is malloc()-backed. */
+            free(ptr->storage);
             ptr->storage = NULL;
         }
         ptr->allocated = false;
@@ -155,7 +160,8 @@ memptr_release(void *data)
 {
     Pointer *ptr = (Pointer *)data;
     if (ptr->autorelease && ptr->allocated && ptr->storage != NULL) {
-        xfree(ptr->storage);
+        /* See memptr_malloc: storage is malloc()-backed. */
+        free(ptr->storage);
         ptr->storage = NULL;
     }
     xfree(ptr);
