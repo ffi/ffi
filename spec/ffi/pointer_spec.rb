@@ -206,6 +206,42 @@ describe "Pointer" do
     end
   end
 
+  describe "#__copy_from__" do
+    # __copy_from__ is part of the C extension only.
+    before(:each) do
+      skip "not supported on JRuby" if RUBY_ENGINE == "jruby"
+    end
+
+    it "copies the requested number of bytes" do
+      src = FFI::MemoryPointer.new(:char, 8)
+      src.put_bytes(0, "abcdefgh")
+      dst = FFI::MemoryPointer.new(:char, 8)
+      dst.__copy_from__(src, 8)
+      expect(dst.get_bytes(0, 8)).to eq("abcdefgh")
+    end
+
+    it "raises IndexError when the length exceeds the destination" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+      src = FFI::MemoryPointer.new(:char, 64)
+      dst = FFI::MemoryPointer.new(:char, 8)
+      expect { dst.__copy_from__(src, 64) }.to raise_error(IndexError)
+    end
+
+    it "raises IndexError when the length exceeds the source" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+      src = FFI::MemoryPointer.new(:char, 8)
+      dst = FFI::MemoryPointer.new(:char, 64)
+      expect { dst.__copy_from__(src, 64) }.to raise_error(IndexError)
+    end
+
+    it "raises IndexError for a negative length" do
+      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+      src = FFI::MemoryPointer.new(:char, 8)
+      dst = FFI::MemoryPointer.new(:char, 8)
+      expect { dst.__copy_from__(src, -1) }.to raise_error(IndexError)
+    end
+  end
+
   describe "#type_size" do
     it "should be same as FFI.type_size(type)" do
       expect(FFI::MemoryPointer.new(:int, 1).type_size).to eq(FFI.type_size(:int))
