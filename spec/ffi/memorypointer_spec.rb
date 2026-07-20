@@ -110,3 +110,40 @@ describe "#autorelease" do
     expect{ ptr.autorelease = false }.to raise_error(FrozenError)
   end
 end
+
+describe "MemoryPointer allocation size" do
+  # size * count == 2 ** (long_bits - 1), one past the largest positive long,
+  # while each factor on its own stays well in range. Derived from the long
+  # width so the overflow is real on LP64 (2**63) and LLP64 (2**31) alike.
+  long_bits = FFI.type_size(:long) * 8
+  overflow_size = 1 << 20
+  overflow_count = 1 << (long_bits - 21)
+
+  it "raises ArgumentError for a negative count" do
+    expect { MemoryPointer.new(1, -1) }.to raise_error(ArgumentError)
+  end
+
+  it "raises ArgumentError for a negative size" do
+    expect { MemoryPointer.new(-1, 1) }.to raise_error(ArgumentError)
+  end
+
+  it "raises RangeError when size * count overflows a long" do
+    expect { MemoryPointer.new(overflow_size, overflow_count) }.to raise_error(RangeError)
+  end
+
+  it "accepts a zero count" do
+    expect(MemoryPointer.new(1, 0).size).to eq 0
+  end
+
+  it "accepts a zero size" do
+    expect(MemoryPointer.new(0, 1).size).to eq 0
+  end
+
+  it "leaves a normal allocation unchanged" do
+    expect(MemoryPointer.new(:int, 10).size).to eq 40
+  end
+
+  it "rejects a negative count before #dup can copy the bogus size" do
+    expect { MemoryPointer.new(1, -1).dup }.to raise_error(ArgumentError)
+  end
+end

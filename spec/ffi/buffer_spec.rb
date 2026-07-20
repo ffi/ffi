@@ -303,3 +303,38 @@ describe "Buffer#new_in" do
     end.to raise_error(ArgumentError)
   end
 end
+
+describe "Buffer allocation size" do
+  # See the matching examples in memorypointer_spec.rb for how these are derived.
+  long_bits = FFI.type_size(:long) * 8
+  overflow_size = 1 << 20
+  overflow_count = 1 << (long_bits - 21)
+
+  it "raises ArgumentError for a negative count" do
+    expect { FFI::Buffer.new(1, -1) }.to raise_error(ArgumentError)
+  end
+
+  it "raises ArgumentError for a negative size" do
+    expect { FFI::Buffer.new(-1, 1) }.to raise_error(ArgumentError)
+  end
+
+  it "raises RangeError when size * count overflows a long" do
+    expect { FFI::Buffer.new(overflow_size, overflow_count) }.to raise_error(RangeError)
+  end
+
+  it "accepts a zero count" do
+    expect(FFI::Buffer.new(1, 0).size).to eq 0
+  end
+
+  it "accepts a zero size" do
+    expect(FFI::Buffer.new(0, 1).size).to eq 0
+  end
+
+  it "leaves a normal allocation unchanged" do
+    expect(FFI::Buffer.new(:int, 10).size).to eq 40
+  end
+
+  it "rejects a negative count before #dup can copy the bogus size" do
+    expect { FFI::Buffer.new(1, -1).dup }.to raise_error(ArgumentError)
+  end
+end

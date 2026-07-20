@@ -125,12 +125,33 @@ buffer_initialize(int argc, VALUE* argv, VALUE self)
     VALUE rbSize = Qnil, rbCount = Qnil, rbClear = Qnil;
     Buffer* p;
     int nargs;
+    long typeSize, count;
 
     TypedData_Get_Struct(self, Buffer, &allocated_buffer_data_type, p);
 
     nargs = rb_scan_args(argc, argv, "12", &rbSize, &rbCount, &rbClear);
-    p->memory.typeSize = rbffi_type_size(rbSize);
-    p->memory.size = p->memory.typeSize * (nargs > 1 ? NUM2LONG(rbCount) : 1);
+    typeSize = rbffi_type_size(rbSize);
+    count = nargs > 1 ? NUM2LONG(rbCount) : 1;
+
+    if (typeSize < 0) {
+        rb_raise(rb_eArgError, "memory size cannot be negative (%ld)", typeSize);
+    }
+    if (count < 0) {
+        rb_raise(rb_eArgError, "memory count cannot be negative (%ld)", count);
+    }
+    /*
+     * Reject a size*count product that would not fit in a positive long,
+     * leaving room for the alignment padding added by the xmalloc below.
+     * A negative product would otherwise skip the xmalloc entirely by
+     * failing the BUFFER_EMBED_MAXLEN test, leaving only a corrupt size.
+     * See the matching check in MemoryPointer.c memptr_malloc().
+     */
+    if (count != 0 && (unsigned long) typeSize > ((unsigned long) LONG_MAX - 7) / (unsigned long) count) {
+        rb_raise(rb_eRangeError, "requested memory size=%ld count=%ld is too large", typeSize, count);
+    }
+
+    p->memory.typeSize = (int) typeSize;
+    p->memory.size = (long) ((unsigned long) typeSize * (unsigned long) count);
 
     if (p->memory.size > BUFFER_EMBED_MAXLEN) {
         p->data.storage = xmalloc(p->memory.size + 7);
