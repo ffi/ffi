@@ -119,15 +119,25 @@ describe "MemoryPointer allocation size" do
   overflow_size = 1 << 20
   overflow_count = 1 << (long_bits - 21)
 
+  # The guard lives in the C extension; JRuby and TruffleRuby allocate through
+  # their own backends and do not reject these arguments yet.
+  def skip_without_c_ext
+    skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+    skip "not yet supported on JRuby" if RUBY_ENGINE == "jruby"
+  end
+
   it "raises ArgumentError for a negative count" do
+    skip_without_c_ext
     expect { MemoryPointer.new(1, -1) }.to raise_error(ArgumentError)
   end
 
   it "raises ArgumentError for a negative size" do
+    skip_without_c_ext
     expect { MemoryPointer.new(-1, 1) }.to raise_error(ArgumentError)
   end
 
   it "raises RangeError when size * count overflows a long" do
+    skip_without_c_ext
     expect { MemoryPointer.new(overflow_size, overflow_count) }.to raise_error(RangeError)
   end
 
@@ -144,6 +154,7 @@ describe "MemoryPointer allocation size" do
   end
 
   it "rejects a negative count before #dup can copy the bogus size" do
+    skip_without_c_ext
     expect { MemoryPointer.new(1, -1).dup }.to raise_error(ArgumentError)
   end
 end
