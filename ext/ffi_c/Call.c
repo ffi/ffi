@@ -462,6 +462,31 @@ getPointer(VALUE value, int type)
     return NULL;
 }
 
+static void*
+rbffi_value_to_pointer(VALUE value)
+{
+    return getPointer(value, TYPE(value));
+}
+
+static VALUE
+rbffi_value_to_native_converters(VALUE self)
+{
+    VALUE fn_ptr;
+
+    fn_ptr = rbffi_Pointer_NewInstance((void *)rbffi_value_to_pointer);
+
+    rb_yield_values(2, rb_str_new_cstr("value_to_pointer"),      fn_ptr);
+    rb_yield_values(2, rb_str_new_cstr("value_to_buffer_in"),    fn_ptr);
+    rb_yield_values(2, rb_str_new_cstr("value_to_buffer_out"),   fn_ptr);
+    rb_yield_values(2, rb_str_new_cstr("value_to_buffer_inout"), fn_ptr);
+
+    // It's exported now, but let's register all deps here anyway
+    rb_yield_values(2, rb_str_new_cstr("save_errno"),
+                    rbffi_Pointer_NewInstance((void *)rbffi_save_errno));
+
+    return Qnil;
+}
+
 Invoker
 rbffi_GetInvoker(FunctionType *fnInfo)
 {
@@ -500,5 +525,7 @@ rbffi_Call_Init(VALUE moduleFFI)
     id_to_ptr = rb_intern("to_ptr");
     id_to_native = rb_intern("to_native");
     id_map_symbol = rb_intern("__map_symbol");
+    rb_define_private_method(rb_singleton_class(moduleFFI), "value_to_native_converters",
+                             rbffi_value_to_native_converters, 0);
 }
 

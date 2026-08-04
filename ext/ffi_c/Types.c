@@ -43,7 +43,6 @@
 static ID id_from_native = 0;
 static ID id_initialize = 0;
 
-
 VALUE
 rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
 {
@@ -135,10 +134,22 @@ rbffi_NativeValue_ToRuby(Type* type, VALUE rbType, const void* ptr)
     }
 }
 
+static VALUE
+rbffi_native_to_value_converters(VALUE self)
+{
+    // For now we don't need a separate rbffi_pointer_to_value
+    rb_yield_values(2, rb_str_new_cstr("pointer_to_value"),
+                    rbffi_Pointer_NewInstance((void *)rbffi_Pointer_NewInstance));
+
+    return Qnil;
+}
+
 void
 rbffi_Types_Init(VALUE moduleFFI)
 {
     id_from_native = rb_intern("from_native");
     id_initialize = rb_intern("initialize");
+    rb_define_private_method(rb_singleton_class(moduleFFI), "native_to_value_converters",
+                             rbffi_native_to_value_converters, 0);
 }
 

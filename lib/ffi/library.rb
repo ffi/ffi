@@ -91,9 +91,10 @@ module FFI
 
       lib_flags = defined?(@ffi_lib_flags) && @ffi_lib_flags
 
-      @ffi_libs = names.map do |name|
+      @ffi_libs ||= []
+      @ffi_libs.concat(names.map do |name|
         FFI::DynamicLibrary.send(:load_library, name, lib_flags)
-      end
+      end)
     end
 
     # Set the calling convention for {#attach_function} and {#callback}
@@ -175,48 +176,9 @@ module FFI
     #
     # @raise [FFI::NotFoundError] if +func+ cannot be found in the attached libraries (see {#ffi_lib})
     def attach_function(name, func, args, returns = nil, options = nil)
-      mname, a2, a3, a4, a5 = name, func, args, returns, options
-      cname, arg_types, ret_type, opts = (a4 && (a2.is_a?(String) || a2.is_a?(Symbol))) ? [ a2, a3, a4, a5 ] : [ mname.to_s, a2, a3, a4 ]
-
-      # Convert :foo to the native type
-      arg_types = arg_types.map { |e| find_type(e) }
-      options = {
-        :convention => ffi_convention,
-        :type_map => defined?(@ffi_typedefs) ? @ffi_typedefs : nil,
-        :blocking => defined?(@blocking) && @blocking,
-        :enums => defined?(@ffi_enums) ? @ffi_enums : nil,
-      }
-
-      @blocking = false
-      options.merge!(opts) if opts && opts.is_a?(Hash)
-
-      # Try to locate the function in any of the libraries
-      invokers = []
-      ffi_libraries.each do |lib|
-        if invokers.empty?
-          begin
-            function = nil
-            function_names(cname, arg_types).find do |fname|
-              function = lib.find_function(fname)
-            end
-            raise LoadError unless function
-
-            invokers << if arg_types[-1] == FFI::NativeType::VARARGS
-              VariadicInvoker.new(function, arg_types, find_type(ret_type), options)
-
-            else
-              Function.new(find_type(ret_type), arg_types, function, options)
-            end
-
-          rescue LoadError
-          end
-        end
-      end
-      invoker = invokers.compact.shift
-      raise FFI::NotFoundError.new(cname.to_s, ffi_libraries.map { |lib| lib.name }) unless invoker
-
-      invoker.attach(self, mname.to_s)
-      invoker
+      mname, cname, arg_types, ret_type, options = convert_attach_function_params(name, func, args, returns, options)
+      function_handle = find_function_handle(cname, arg_types)
+      attach_function_handle(function_handle, mname, arg_types, ret_type, options)
     end
 
     # @param [#to_s] name function name
@@ -416,6 +378,58 @@ module FFI
     end
 
     private
+
+    def convert_attach_function_params(name, func, args, returns, options)
+      mname = name
+      a2 = func
+      a3 = args
+      a4 = returns
+      a5 = options
+      cname, arg_types, ret_type, opts = if a4 && (a2.is_a?(String) || a2.is_a?(Symbol))
+          [a2, a3, a4, a5]
+        else
+          [mname.to_s, a2, a3, a4]
+        end
+      # Convert :foo to the native type
+      arg_types = arg_types.map { |e| find_type(e) }
+      ret_type = find_type(ret_type)
+      options = {
+        convention: ffi_convention,
+        type_map: defined?(@ffi_typedefs) ? @ffi_typedefs : nil,
+        blocking: defined?(@blocking) && @blocking,
+        enums: defined?(@ffi_enums) ? @ffi_enums : nil,
+      }
+
+      @blocking = false
+      options.merge!(opts) if opts.is_a?(Hash)
+
+      [mname, cname, arg_types, ret_type, options]
+    end
+
+    def find_function_handle(cname, arg_types)
+      ffi_libraries.each do |lib|
+        begin
+          function_names(cname, arg_types).each do |fname|
+            fn = lib.find_function(fname)
+            return fn if fn
+          end
+        rescue LoadError
+        end
+      end
+
+      raise FFI::NotFoundError.new(cname.to_s, ffi_libraries.map(&:name))
+    end
+
+    def attach_function_handle(function_handle, mname, arg_types, ret_type, options)
+      invoker = if arg_types[-1] == FFI::NativeType::VARARGS
+          VariadicInvoker.new(function_handle, arg_types, ret_type, options)
+        else
+          Function.new(ret_type, arg_types, function_handle, options)
+        end
+      invoker.attach(self, mname.to_s)
+      invoker
+    end
+
     # Generic enum builder
     #  @param [Class] klass can be one of FFI::Enum or FFI::Bitmask
     #  @param args (see #enum or #bitmask)
