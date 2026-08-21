@@ -102,6 +102,38 @@ describe "Library" do
       }.to raise_error(LoadError)
     end
 
+    it "loads libraries with RTLD_NODELETE by default" do
+      flags = FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL | FFI::DynamicLibrary::RTLD_NODELETE
+      expect(FFI::DynamicLibrary).to receive(:open).with(TestLibrary::PATH, flags).and_call_original
+
+      Module.new do |m|
+        m.extend FFI::Library
+        ffi_lib TestLibrary::PATH
+      end
+    end
+
+    it "preserves explicit library flags" do
+      flags = FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL
+      expect(FFI::DynamicLibrary).to receive(:open).with(TestLibrary::PATH, flags).and_call_original
+
+      Module.new do |m|
+        m.extend FFI::Library
+        ffi_lib_flags :lazy, :local
+        ffi_lib TestLibrary::PATH
+      end
+    end
+
+    it "accepts RTLD_NODELETE as an explicit library flag" do
+      flags = FFI::DynamicLibrary::RTLD_NOW | FFI::DynamicLibrary::RTLD_LOCAL | FFI::DynamicLibrary::RTLD_NODELETE
+      expect(FFI::DynamicLibrary).to receive(:open).with(TestLibrary::PATH, flags).and_call_original
+
+      Module.new do |m|
+        m.extend FFI::Library
+        ffi_lib_flags :now, :local, :nodelete
+        ffi_lib TestLibrary::PATH
+      end
+    end
+
     it "interprets INPUT() in linker scripts", if: FFI::Platform::IS_GNU && !FFI::Platform.windows? && !FFI::Platform.mac? do
       path = File.dirname(TestLibrary::PATH)
       file = File.basename(TestLibrary::PATH)

@@ -126,7 +126,8 @@ module FFI
       :global => DynamicLibrary::RTLD_GLOBAL,
       :local => DynamicLibrary::RTLD_LOCAL,
       :lazy => DynamicLibrary::RTLD_LAZY,
-      :now => DynamicLibrary::RTLD_NOW
+      :now => DynamicLibrary::RTLD_NOW,
+      :nodelete => DynamicLibrary::RTLD_NODELETE
     }
 
     # Sets library flags for {#ffi_lib}.
