@@ -33,6 +33,11 @@
 module FFI
   class VariadicInvoker
     def call(*args, &block)
+      variadic_length = args.length - @fixed.length
+      unless variadic_length >= 0 && variadic_length.even?
+        raise ArgumentError, "variadic arguments must be type/value pairs"
+      end
+
       param_types = Array.new(@fixed)
       param_values = Array.new
       @fixed.each_with_index do |t, i|
