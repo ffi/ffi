@@ -99,7 +99,7 @@ module FFI
     IS_FREEBSD = is_os("freebsd")
     IS_NETBSD = is_os("netbsd")
     IS_OPENBSD = is_os("openbsd")
-    IS_DRAGONFLYBSD = is_os("dragonfly")
+    IS_DRAGONFLYBSD = is_os("dragonflybsd")
     IS_SOLARIS = is_os("solaris")
     IS_WINDOWS = is_os("windows")
     IS_BSD = IS_MAC || IS_FREEBSD || IS_NETBSD || IS_OPENBSD || IS_DRAGONFLYBSD
@@ -184,4 +184,3 @@ module FFI
     end
   end
 end
-
