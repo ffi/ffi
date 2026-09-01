@@ -197,12 +197,9 @@ library_free(void *data)
 {
     Library *library = (Library*)data;
 
-    /* dlclose() on MacOS tends to segfault - avoid it */
-#ifndef __APPLE__
     if (library->handle != NULL) {
         dl_close(library->handle);
     }
-#endif
     xfree(library);
 }
 
