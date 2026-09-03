@@ -29,6 +29,7 @@
 
 #include <ruby.h>
 #include <ffi.h>
+#include <stdint.h>
 #include "compat.h"
 #include "ArrayType.h"
 
@@ -118,17 +119,27 @@ static VALUE
 array_type_initialize(VALUE self, VALUE rbComponentType, VALUE rbLength)
 {
     ArrayType* array;
+    size_t componentSize;
     int i;
 
     TypedData_Get_Struct(self, ArrayType, &rbffi_array_type_data_type, array);
 
-    array->length = NUM2UINT(rbLength);
+    array->length = NUM2INT(rbLength);
+    if (array->length < 0) {
+        rb_raise(rb_eArgError, "array length must be non-negative");
+    }
     RB_OBJ_WRITE(self, &array->rbComponentType, rbComponentType);
     TypedData_Get_Struct(rbComponentType, Type, &rbffi_type_data_type, array->componentType);
 
-    array->ffiTypes = xcalloc(array->length + 1, sizeof(*array->ffiTypes));
+    componentSize = array->componentType->ffiType->size;
+    if ((size_t) array->length + 1 > SIZE_MAX / sizeof(*array->ffiTypes)
+            || (array->length > 0 && componentSize > SIZE_MAX / (size_t) array->length)) {
+        rb_raise(rb_eRangeError, "array size is too large");
+    }
+
+    array->ffiTypes = xcalloc((size_t) array->length + 1, sizeof(*array->ffiTypes));
     array->base.ffiType->elements = array->ffiTypes;
-    array->base.ffiType->size = array->componentType->ffiType->size * array->length;
+    array->base.ffiType->size = componentSize * (size_t) array->length;
     array->base.ffiType->alignment = array->componentType->ffiType->alignment;
 
     for (i = 0; i < array->length; ++i) {
@@ -195,4 +206,3 @@ rbffi_ArrayType_Init(VALUE moduleFFI)
     rb_define_method(rbffi_ArrayTypeClass, "length", array_type_length, 0);
     rb_define_method(rbffi_ArrayTypeClass, "elem_type", array_type_element_type, 0);
 }
-
