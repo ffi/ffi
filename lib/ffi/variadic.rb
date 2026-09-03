@@ -52,19 +52,20 @@ module FFI
     #
     def attach(mod, mname)
       invoker = self
-      params = "*args"
-      call = "call"
       mname = mname.to_sym
+      implementation = :"__ffi_variadic_#{object_id.to_s(16)}_#{Thread.current.object_id.to_s(16)}"
       mod.module_eval <<-code, __FILE__, __LINE__
         @ffi_functions = {} unless defined?(@ffi_functions)
         @ffi_functions[#{mname.inspect}] = invoker
 
-        def self.#{mname}(#{params})
-          @ffi_functions[#{mname.inspect}].#{call}(#{params})
+        def self.#{implementation}(*args)
+          @ffi_functions[#{mname.inspect}].call(*args)
         end
-
-        define_method(#{mname.inspect}, &method(#{mname.inspect}))
       code
+      mod.singleton_class.alias_method(mname, implementation)
+      mod.singleton_class.remove_method(implementation)
+      mod.define_method(mname, &mod.method(mname))
+
       invoker
     end
 
