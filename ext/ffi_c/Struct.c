@@ -67,6 +67,7 @@ static void struct_free(void *data);
 static size_t struct_memsize(const void *);
 static VALUE struct_class_layout(VALUE klass);
 static void struct_malloc(VALUE self, Struct* s);
+static void struct_check_memory_size(VALUE self, StructLayout* layout, AbstractMemory* memory);
 static void inline_array_mark(void *);
 static void inline_array_compact(void *);
 static size_t inline_array_memsize(const void *);
@@ -148,6 +149,7 @@ struct_initialize(int argc, VALUE* argv, VALUE self)
 
     if (rbPointer != Qnil) {
         s->pointer = MEMORY(rbPointer);
+        struct_check_memory_size(self, s->layout, s->pointer);
         RB_OBJ_WRITE(self, &s->rbPointer, rbPointer);
     } else {
         struct_malloc(self, s);
@@ -263,6 +265,15 @@ struct_malloc(VALUE self, Struct* s)
     }
 
     TypedData_Get_Struct(s->rbPointer, AbstractMemory, &rbffi_abstract_memory_data_type, s->pointer);
+}
+
+static void
+struct_check_memory_size(VALUE self, StructLayout* layout, AbstractMemory* memory)
+{
+    if (layout->base.ffiType->size > (size_t) memory->size) {
+        rb_raise(rb_eArgError, "memory of %ld bytes too small for struct %s (expected at least %ld)",
+                memory->size, rb_obj_classname(self), (long) layout->base.ffiType->size);
+    }
 }
 
 static void
@@ -434,10 +445,7 @@ struct_set_pointer(VALUE self, VALUE pointer)
     TypedData_Get_Struct(pointer, AbstractMemory, &rbffi_abstract_memory_data_type, memory);
     layout = struct_layout(self);
 
-    if ((int) layout->base.ffiType->size > memory->size) {
-        rb_raise(rb_eArgError, "memory of %ld bytes too small for struct %s (expected at least %ld)",
-                memory->size, rb_obj_classname(self), (long) layout->base.ffiType->size);
-    }
+    struct_check_memory_size(self, layout, memory);
 
     s->pointer = MEMORY(pointer);
     RB_OBJ_WRITE(self, &s->rbPointer, pointer);
@@ -901,4 +909,3 @@ rbffi_Struct_Init(VALUE moduleFFI)
     id_to_s = rb_intern("to_s");
     id_initialize = rb_intern("initialize");
 }
-
