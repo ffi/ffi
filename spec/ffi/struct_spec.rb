@@ -699,6 +699,22 @@ describe FFI::Struct, ' with a nested struct field'  do
     expect(LibTest.struct_align_nested_struct(@cs.to_ptr)).to eq(456)
   end
 
+  it 'should assign a whole struct to the nested field' do
+    ns = LibTest::NestedStruct.new
+    ns[:i] = 789
+    @cs[:ns] = ns
+    expect(@cs[:ns][:i]).to eq(789)
+  end
+
+  it 'should raise IndexError when the assigned struct is backed by too little memory' do
+    # Assigning copies the declared field size out of the source struct, so a
+    # source backed by less than that would read past the end of its allocation.
+    skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
+    skip "not yet supported on JRuby" if RUBY_ENGINE == "jruby"
+    ns = LibTest::NestedStruct.new(FFI::MemoryPointer.new(:char, 1))
+    expect { @cs[:ns] = ns }.to raise_error(IndexError)
+  end
+
   it 'should be able to assign struct instance to nested field' do
     cs = LibTest::ContainerStruct.new(LibTest.struct_make_container_struct(123))
     ns = LibTest::NestedStruct.new

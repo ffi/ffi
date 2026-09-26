@@ -682,10 +682,18 @@ static VALUE
 memory_copy_from(VALUE self, VALUE rbsrc, VALUE rblen)
 {
     AbstractMemory* dst;
+    AbstractMemory* src;
+    long len = NUM2LONG(rblen);
 
     TypedData_Get_Struct(self, AbstractMemory, &rbffi_abstract_memory_data_type, dst);
+    src = rbffi_AbstractMemory_Cast(rbsrc, &rbffi_abstract_memory_data_type);
 
-    memcpy(dst->address, rbffi_AbstractMemory_Cast(rbsrc, &rbffi_abstract_memory_data_type)->address, NUM2INT(rblen));
+    checkWrite(dst);
+    checkBounds(dst, 0, len);
+    checkRead(src);
+    checkBounds(src, 0, len);
+
+    memcpy(dst->address, src->address, len);
 
     return self;
 }
