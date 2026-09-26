@@ -55,6 +55,7 @@ typedef struct LibrarySymbol_ {
 
 
 static VALUE library_initialize(VALUE self, VALUE libname, VALUE libflags);
+static VALUE library_begin_shutdown(RB_BLOCK_CALL_FUNC_ARGLIST(yielded_arg, callback_arg));
 static void library_free(void *);
 static size_t library_memsize(const void *);
 
@@ -91,6 +92,8 @@ static const rb_data_type_t library_symbol_data_type = {
 };
 
 static VALUE LibraryClass = Qnil, SymbolClass = Qnil;
+static VALUE library_shutdown_sentinel = Qnil;
+static int library_vm_shutting_down = 0;
 
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)
 static void* dl_open(const char* name, int flags);
@@ -192,6 +195,18 @@ library_dlerror(VALUE self)
     return rb_str_new2(errmsg);
 }
 
+/*
+ * CRuby runs registered finalizers after END handlers and before force-freeing
+ * referenced T_DATA. A finalizer on this rooted sentinel marks that phase
+ * without changing library lifetime during regular GC or END handlers.
+ */
+static VALUE
+library_begin_shutdown(RB_BLOCK_CALL_FUNC_ARGLIST(yielded_arg, callback_arg))
+{
+    library_vm_shutting_down = 1;
+    return Qnil;
+}
+
 static void
 library_free(void *data)
 {
@@ -199,7 +214,7 @@ library_free(void *data)
 
     /* dlclose() on MacOS tends to segfault - avoid it */
 #ifndef __APPLE__
-    if (library->handle != NULL) {
+    if (!library_vm_shutting_down && library->handle != NULL) {
         dl_close(library->handle);
     }
 #endif
@@ -394,4 +409,7 @@ rbffi_DynamicLibrary_Init(VALUE moduleFFI)
     DEF(ALL_MASK);
 #undef DEF
 
+    library_shutdown_sentinel = rb_obj_alloc(rb_cObject);
+    rb_global_variable(&library_shutdown_sentinel);
+    rb_define_finalizer(library_shutdown_sentinel, rb_proc_new(library_begin_shutdown, Qnil));
 }
