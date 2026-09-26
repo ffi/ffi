@@ -190,7 +190,7 @@ struct_initialize_copy(VALUE self, VALUE other)
         dst->pointer = src->pointer;
     }
 
-    if (src->layout->referenceFieldCount > 0) {
+    if (src->layout->referenceFieldCount > 0 && src->rbReferences != NULL) {
         size_t index;
 
         dst->rbReferences = ALLOC_N(VALUE, dst->layout->referenceFieldCount);
