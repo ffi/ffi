@@ -30,6 +30,7 @@
 
 module FFI
   class DynamicLibrary
+    RTLD_NODELETE = 0 unless const_defined?(:RTLD_NODELETE)
     SEARCH_PATH = []
 
     # The following search paths are tried, if the library could not be loaded in the first attempt.
@@ -70,7 +71,7 @@ module FFI
       if name == FFI::CURRENT_PROCESS
         FFI::DynamicLibrary.open(nil, RTLD_LAZY | RTLD_LOCAL)
       else
-        flags ||= RTLD_LAZY | RTLD_LOCAL
+        flags ||= RTLD_LAZY | RTLD_LOCAL | RTLD_NODELETE
 
         libnames = (name.is_a?(::Array) ? name : [name])
         libnames = libnames.map(&:to_s).map { |n| [n, FFI.map_library_name(n)].uniq }.flatten.compact
