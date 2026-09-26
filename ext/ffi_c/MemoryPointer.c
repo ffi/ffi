@@ -110,7 +110,25 @@ memptr_malloc(VALUE self, long size, long count, bool clear)
 
     TypedData_Get_Struct(self, Pointer, &memory_pointer_data_type, p);
 
-    msize = size * count;
+    if (size < 0) {
+        rb_raise(rb_eArgError, "memory size cannot be negative (%ld)", size);
+    }
+    if (count < 0) {
+        rb_raise(rb_eArgError, "memory count cannot be negative (%ld)", count);
+    }
+    /*
+     * Reject a size*count product that would not fit in a positive long,
+     * leaving room for the alignment padding added by the xmalloc below.
+     * Without this the product wraps and memory.size ends up negative or
+     * huge, which later reaches memset/memcpy as an enormous size_t.
+     * The division form is used so this stays portable to compilers with
+     * no overflow builtin, on both LP64 and LLP64.
+     */
+    if (count != 0 && (unsigned long) size > ((unsigned long) LONG_MAX - 7) / (unsigned long) count) {
+        rb_raise(rb_eRangeError, "requested memory size=%ld count=%ld is too large", size, count);
+    }
+
+    msize = (unsigned long) size * (unsigned long) count;
 
     p->storage = xmalloc(msize + 7);
     if (p->storage == NULL) {
