@@ -111,7 +111,7 @@ rbffi_SetupCallParams(int argc, VALUE* argv, int paramCount, Type** paramTypes,
         int type;
 
 
-        if (unlikely(paramType->nativeType == NATIVE_MAPPED)) {
+        while (unlikely(paramType->nativeType == NATIVE_MAPPED)) {
             VALUE values[] = { argv[argidx], Qnil };
             argv[argidx] = rb_funcall2(((MappedType *) paramType)->rbConverter, id_to_native, 2, values);
             paramType = ((MappedType *) paramType)->type;
