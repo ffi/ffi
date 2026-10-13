@@ -586,7 +586,6 @@ module FFI
         FFI.make_shareable(var)
       end
       super
-      nil
     end
   end
 end
