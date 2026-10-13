@@ -532,7 +532,7 @@ module FFI
     # @return [FFI::Enum]
     # Find an enum by a symbol it contains.
     def enum_value(symbol)
-      @ffi_enums.__map_symbol(symbol)
+      @ffi_enums.__map_symbol(symbol) if defined?(@ffi_enums)
     end
 
     # Retrieve all attached functions and their function signature
