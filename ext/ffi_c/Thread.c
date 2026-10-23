@@ -91,6 +91,29 @@ rbffi_frame_pop(rbffi_frame_t* frame)
 #endif
 }
 
+/*
+ * Make +frame+ the current frame of the calling native thread and return the
+ * previous one, without resetting +frame+. Used when a blocking call runs on a
+ * fiber scheduler's worker thread, so callbacks there report exceptions to the
+ * frame of the Ruby call that started it. Safe to call without the GVL.
+ */
+rbffi_frame_t*
+rbffi_frame_swap(rbffi_frame_t* frame)
+{
+    rbffi_frame_t* prev;
+#ifdef _WIN32
+    DWORD err = GetLastError();
+    prev = (rbffi_frame_t *) TlsGetValue(frame_thread_key);
+    TlsSetValue(frame_thread_key, frame);
+    SetLastError(err);
+#else
+    struct thread_data* td = thread_data_get();
+    prev = td->frame;
+    td->frame = frame;
+#endif
+    return prev;
+}
+
 #ifndef _WIN32
 static struct thread_data* thread_data_init(void);
 

@@ -335,7 +335,18 @@ static void *
 call_blocking_function(void* data)
 {
     rbffi_blocking_call_t* b = (rbffi_blocking_call_t *) data;
-    ffi_call(&b->cif, FFI_FN(b->function), b->retval, b->ffiValues);
+
+    if (b->offload) {
+        /* May be running on a fiber scheduler's worker thread */
+        rbffi_frame_t* prev = rbffi_frame_swap(b->frame);
+        ffi_call(&b->cif, FFI_FN(b->function), b->retval, b->ffiValues);
+#ifdef _WIN32
+        b->winapi_errno = GetLastError();
+#endif
+        rbffi_frame_swap(prev);
+    } else {
+        ffi_call(&b->cif, FFI_FN(b->function), b->retval, b->ffiValues);
+    }
 
     return NULL;
 }
@@ -343,7 +354,23 @@ call_blocking_function(void* data)
 VALUE
 rbffi_do_blocking_call(VALUE data)
 {
+#ifdef RB_NOGVL_OFFLOAD_SAFE
+    rbffi_blocking_call_t* b = (rbffi_blocking_call_t *) data;
+
+    /* With blocking: :offload, a fiber scheduler may run the call on a worker
+     * thread (Fiber::Scheduler#blocking_operation_wait), so other fibers on
+     * this thread keep running while it is in C. */
+    rb_nogvl(call_blocking_function, (void*)data, (rb_unblock_function_t *) -1, NULL,
+        b->offload ? RB_NOGVL_OFFLOAD_SAFE : 0);
+#ifdef _WIN32
+    if (b->offload) {
+        /* rb_nogvl copies errno from the worker thread, but not Win32 LastError */
+        SetLastError(b->winapi_errno);
+    }
+#endif
+#else
     rb_thread_call_without_gvl(call_blocking_function, (void*)data, (rb_unblock_function_t *) -1, NULL);
+#endif
 
     return Qnil;
 }
@@ -381,6 +408,7 @@ rbffi_CallFunction(int argc, VALUE* argv, void* function, FunctionType* fnInfo)
         bc->ffiValues = ffiValues;
         bc->params = params;
         bc->frame = &frame;
+        bc->offload = fnInfo->offload;
 
         callbackProc = rbffi_SetupCallParams(argc, argv,
             fnInfo->parameterCount, fnInfo->parameterTypes, params, ffiValues,

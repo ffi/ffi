@@ -65,6 +65,7 @@ struct FunctionType_ {
     VALUE rbEnums;
     bool ignoreErrno;
     bool blocking;
+    bool offload;
     bool hasStruct;
 };
 

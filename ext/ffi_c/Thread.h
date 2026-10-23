@@ -67,6 +67,7 @@ typedef struct rbffi_frame {
 rbffi_frame_t* rbffi_frame_current(void);
 void rbffi_frame_push(rbffi_frame_t* frame);
 void rbffi_frame_pop(rbffi_frame_t* frame);
+rbffi_frame_t* rbffi_frame_swap(rbffi_frame_t* frame);
 
 #ifdef	__cplusplus
 }
