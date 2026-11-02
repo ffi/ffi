@@ -155,7 +155,8 @@ fntype_memsize(const void *data)
  * @param [Type, Symbol] return_type return type for the function
  * @param [Array<Type, Symbol>] param_types array of parameters types
  * @param [Hash] options
- * @option options [Boolean] :blocking set to true if the C function is a blocking call
+ * @option options [Boolean, Symbol] :blocking set to true if the C function is a blocking call,
+ *   or to +:offload+ if it is also safe to run on another native thread (see {FFI::Library#attach_function})
  * @option options [Symbol] :convention calling convention see {FFI::Library#calling_convention}
  * @option options [FFI::Enums] :enums
  * @return [self]
@@ -190,6 +191,7 @@ fntype_initialize(int argc, VALUE* argv, VALUE self)
     RB_OBJ_WRITE(self, &fnInfo->rbParameterTypes, rb_ary_new2(fnInfo->parameterCount));
     RB_OBJ_WRITE(self, &fnInfo->rbEnums, rbEnums);
     fnInfo->blocking = RTEST(rbBlocking);
+    fnInfo->offload = rbBlocking == ID2SYM(rb_intern("offload"));
     fnInfo->hasStruct = false;
 
     for (i = 0; i < fnInfo->parameterCount; ++i) {

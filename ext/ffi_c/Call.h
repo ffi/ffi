@@ -95,6 +95,10 @@ typedef struct rbffi_blocking_call {
     void **ffiValues;
     void* retval;
     void* params;
+    bool offload;
+#ifdef _WIN32
+    DWORD winapi_errno;
+#endif
 } rbffi_blocking_call_t;
 
 VALUE rbffi_do_blocking_call(VALUE data);

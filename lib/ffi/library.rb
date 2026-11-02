@@ -166,7 +166,13 @@ module FFI
     # @param [#to_s] func name of C function to attach
     # @param [Array<Symbol>] args an array of types
     # @param [Symbol] returns type of return value
-    # @option options [Boolean] :blocking (@blocking) set to true if the C function is a blocking call
+    # @option options [Boolean, Symbol] :blocking (@blocking) set to true if the C function is a blocking call.
+    #   The GVL is released while it runs, so other Ruby threads can proceed.
+    #   Set it to +:offload+ instead when the function is also safe to run on another
+    #   native thread: on Ruby 3.4+, a fiber scheduler that implements
+    #   +Fiber::Scheduler#blocking_operation_wait+ can then run the call on a worker
+    #   thread while other fibers on the calling thread keep running. Don't use
+    #   +:offload+ for functions that depend on thread-local state.
     # @option options [Symbol] :convention (:default) calling convention (see {#ffi_convention})
     # @option options [FFI::Enums] :enums
     # @option options [Hash] :type_map
